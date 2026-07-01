@@ -1,0 +1,275 @@
+// ============== CONFIGURACIÓN GENERAL ==============
+const LOG_SPREADSHEET_ID = '1H62pp_AvbbNeg3unyy-_LS8aVsv9s6J59NpAmwq5kpc'; 
+const LOG_SHEET_NAME = 'Registros'; 
+const DICTIONARY_SHEET_NAME = 'Diccionario'; 
+
+// --- CONFIGURACIÓN DE BODEGA FIJA ---
+const ID_BODEGA_APOTECA = '13'; // ID Fijo para la Bodega Apoteca
+
+// URLs de las APIs
+const FIELDBEAT_API_URL = 'https://api.fieldbeat.com/fleets/eyg/tasks/';
+const DOLIBARR_API_URL_BASE = 'http://erm.eygsa.cl/api/index.php/';
+
+// Configuración de notificación
+//const NOTIFICATION_EMAIL = 'datos@eygsa.cl';
+const NOTIFICATION_EMAIL = 'datos@eygsa.cl, rcammalleri@eygsa.cl, mabreu@eygsa.cl';
+
+
+// Carga de credenciales
+const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
+const FIELDBEAT_API_USER = SCRIPT_PROPERTIES.getProperty('FIELDBEAT_API_USER');
+const FIELDBEAT_API_PASS = SCRIPT_PROPERTIES.getProperty('FIELDBEAT_API_PASS');
+const DOLIBARR_API_KEY = SCRIPT_PROPERTIES.getProperty('DOLIBARR_API_KEY');
+
+
+// ============== FUNCIÓN PRINCIPAL ==============
+
+function mainProcessApoteca() {
+  
+  if (!FIELDBEAT_API_USER || !FIELDBEAT_API_PASS || !DOLIBARR_API_KEY) {
+    throw new Error("Credenciales no encontradas en las Propiedades del Script.");
+  }
+  
+  const threads = GmailApp.search('is:unread from:noreply@fieldbeat.com subject:"Reporte de tarea Nº"');
+  if (threads.length === 0) return;
+
+  threads.forEach(thread => {
+    const message = thread.getMessages()[0];
+    if (!message.isUnread()) return;
+
+    const subject = message.getSubject();
+    const match = subject.match(/Reporte de tarea N[º°o.]?\s*(\d+)/i);
+    const taskId = (match && match[1]) ? match[1] : null;
+
+    if (taskId) {
+      try {
+        const taskData = getFieldbeatTaskData(taskId);
+        if (!taskData || !taskData.task) throw new Error("Formato de API inesperado.");
+        
+        const t = taskData.task;
+
+        // --- EXTRACCIÓN DE METADATOS ---
+        const clientName = t.client?.name || "Cliente Desconocido";
+        const taskType = t.type || "Sin Tipo"; // Corregido para que tome t.type directo si no hay description
+        const realDate = getTaskRealDate(t);
+
+        // --- FILTRO IDENTIFICACIÓN APOTECA ---
+        const description = t.description || "";
+        const reportName = t.report ? t.report.name : "";
+        const equipments = t.equipments || [];
+        const isFalp = clientName.toLowerCase().includes('arturo lopez perez');
+        const hasApotecaInDescription = description.toLowerCase().includes('apoteca');
+        const hasApotecaInReport = reportName.toLowerCase().includes('apoteca');
+        const hasApotecaEquipment = equipments.some(eq => eq.internal_id && eq.internal_id.toUpperCase().includes('APOTECA'));
+        
+        const isApotecaTask = isFalp && (hasApotecaInDescription || hasApotecaInReport || hasApotecaEquipment);
+
+        if (!isApotecaTask) {
+             console.log(`Tarea ${taskId} ignorada en P5 (No es Apoteca).`);
+             return; 
+        }
+
+        console.log(`Tarea ${taskId} confirmada como APOTECA FALP.`);
+
+        // --- PROCESAMIENTO DE REPUESTOS ---
+        
+        // CASO 1: Sin atributo .report
+        if (!t.report) { 
+           // Argumentos: dt, t, c, type, status
+           logToSheetSuccess(realDate, taskId, clientName, taskType, 'Éxito (Sin Repuestos)');
+           message.markRead();
+           console.log(`Tarea ${taskId} procesada en Caso 1 (Sin Reporte)`);
+           return; 
+        }
+
+        // CASO 2: Con atributo .report
+        const repuestosGroups = (t.report.groups || []).filter(g => g.name === 'REPUESTOS');
+        let processedCount = 0;
+        
+        if (repuestosGroups.length > 0) {
+          repuestosGroups.forEach(g => { 
+            const result = processInsumosApoteca(g, taskId, clientName, taskType, realDate);
+            if (result > 0) processedCount += result; 
+          });
+        }
+        
+        // Si no se procesó nada válido
+        if (repuestosGroups.length === 0 || processedCount === 0) {
+             logToSheetSuccess(realDate, taskId, clientName, taskType, 'Éxito (Sin Repuestos)');
+        }
+        
+        message.markRead();
+        console.log(`Tarea ${taskId} procesada en Caso 2. Ítems procesados: ${processedCount}`);
+
+      } catch (e) {
+        console.error(`Error crítico en tarea ${taskId}: ${e.message}`);
+        // Ajustamos log de error crítico para respetar columnas: Cliente = 'Sistema'
+        logToSheetError(new Date(), taskId, 'Sistema', 'Sin Tipo', '', '', '', e.message);
+        sendErrorEmail(`⚠️ Error Critico Apoteca - Tarea ${taskId}`, `<p>Error: ${e.message}</p>`);
+        message.markRead(); 
+      }
+    }
+  });
+}
+
+function processInsumosApoteca(group, taskId, clientName, taskType, realDate) {
+  if (!group || !group.fields) return 0;
+  
+  const fields = group.fields;
+  const rawSkuString = getValueFromFields(fields, "NUMERO DE PARTE");
+  
+  // CASO: Campo vacío -> Log informativo y retorno 0
+  if (!rawSkuString || ["N/A", "", "-", " "].includes(rawSkuString.toString().trim())) {
+    return 0;
+  }
+
+  // Obtener Cantidad
+  let rawCantidad = getValueFromFields(fields, "CANTIDAD DE REPUESTOS UTILIZADOS");
+  let cantidadNumerica = 1; 
+
+  if (rawCantidad) {
+    cantidadNumerica = parseFloat(rawCantidad);
+    if (isNaN(cantidadNumerica) || cantidadNumerica <= 0) cantidadNumerica = 1;
+  }
+
+  // Separar SKUs múltiples
+  const skuList = rawSkuString.toString().split(/\s*\/\/\s*|\s*\/\s*/);
+  console.log(`[${taskId}] SKUs detectados: ${skuList.join(', ')}`);
+
+  let itemsProcessedInGroup = 0;
+
+  skuList.forEach(sku => {
+    const cleanSku = sku.trim();
+    if (cleanSku.length > 0) {
+      const success = handleBodegaApotecaDirecta(taskId, clientName, taskType, cleanSku, cantidadNumerica, realDate);
+      if (success) itemsProcessedInGroup++;
+    }
+  });
+  
+  return itemsProcessedInGroup;
+}
+
+
+// ============== CONEXIÓN DIRECTA DOLIBARR (BODEGA 13) ==============
+
+function handleBodegaApotecaDirecta(taskId, clientName, taskType, sku, cantidad, realDate) {
+  try {
+    const productId = getDolibarrProductIdBySku(sku);
+    if (!productId) throw new Error(`SKU "${sku}" no encontrado en Dolibarr.`);
+
+    const labelMovimiento = `Salida Tarea Apoteca N° ${taskId}`;
+    const movementId = createStockMovement(productId, ID_BODEGA_APOTECA, -Math.abs(cantidad), labelMovimiento);
+
+    logToSheetSuccess(realDate, taskId, clientName, taskType, 'Éxito (Con Repuestos)', sku, cantidad, ID_BODEGA_APOTECA, movementId);
+     
+    return true; 
+
+  } catch (e) {
+    console.error(`Error SKU ${sku}: ${e.message}`);
+    logToSheetError(realDate, taskId, clientName, taskType, sku, cantidad, `ID Bodega: ${ID_BODEGA_APOTECA}`, e.message);
+    return false; 
+  }
+}
+
+
+// ============== GESTIÓN DE LOGS (ORDEN ESTRICTO) ==============
+// Columnas: [Timestamp, Estado, ID Tarea, Cliente, Tipo, SKU, Cantidad, Bodega, ID Mov, Error]
+
+const logToSheet = (dt, st, tid, cli, type, sku, qty, bod, mid, err) => 
+    SpreadsheetApp.openById(LOG_SPREADSHEET_ID)
+                  .getSheetByName(LOG_SHEET_NAME)
+                  .appendRow([dt, st, tid, cli, type, sku, qty, bod, mid, err]);
+
+// Wrapper Éxito: Rellena SKU, Qty, Bod, Mov con valores o vacíos
+const logToSheetSuccess = (dt, t, c, type, s, sk='', q='', b='', m='') => 
+    logToSheet(dt, s, t, c, type, sk, q, b, m, '');
+
+// Wrapper Error: Rellena Error al final
+const logToSheetError = (dt, t, c, type, sk, q, b, e) => {
+    logToSheet(dt, 'ERROR', t, c, type, sk, q, b, '', e);
+    sendErrorEmail(
+      `❗❗⚠️ Error Operativo APOTECA FieldBeat-Dolibarr -- Reporte FieldBeat Nº ${t} ⚠️❗❗`,
+
+      `<p>Error procesando el SKU ${sk}: ${e}</p> <p><b>⚠️ Se requiere revisión manual...</b></p>`
+    );
+};
+
+// Wrapper Info: Mensaje en columna Error, guiones en datos técnicos
+const logToSheetInfo = (dt, t, c, type, statusLabel, msg) => 
+    logToSheet(dt, statusLabel, t, c, type, '-', '-', '-', '', msg);
+
+
+// ============== HELPERS DE ARQUITECTURA ==============
+
+function getTaskRealDate(task) {
+  try {
+    const reportGroups = task.report?.groups || [];
+    const TARGET_FIELDS = ["HORA DE TERMINO DEL TRABAJO", "FECHA Y HORA DE ENTREGA", "FECHA DE TÉRMINO", "FECHA FIN"];
+
+    for (const group of reportGroups) {
+      if (!group.fields) continue;
+      for (const field of group.fields) {
+        if (field.name && TARGET_FIELDS.includes(field.name.toUpperCase().trim()) && field.value) {
+          return parseCustomDate(field.value.toString());
+        }
+      }
+    }
+    if (task.completed_at) return new Date(task.completed_at);
+    if (task.date) return new Date(task.date);
+    return new Date(); 
+  } catch (e) { return new Date(); }
+}
+
+function parseCustomDate(dateStr) {
+  if (!dateStr) return new Date();
+  try {
+    const clean = dateStr.toString().trim();
+    if (clean.length > 10) {
+       return Utilities.parseDate(clean, "America/Santiago", "dd/MM/yyyy HH:mm") || new Date();
+    }
+    return new Date();
+  } catch (e) { return new Date(); }
+}
+
+// ============== APIS & HELPERS GENÉRICOS ==============
+
+function getFieldbeatTaskData(taskId) {
+  const url = FIELDBEAT_API_URL + taskId;
+  const credentials = Utilities.base64Encode(`${FIELDBEAT_API_USER}:${FIELDBEAT_API_PASS}`);
+  const options = { 'method': 'get', 'headers': { 'Authorization': `Basic ${credentials}` }, 'muteHttpExceptions': true };
+  const response = UrlFetchApp.fetch(url, options);
+  if (response.getResponseCode() >= 400) throw new Error(`API Error: ${response.getContentText()}`);
+  return JSON.parse(response.getContentText());
+}
+
+function fetchDolibarrAPI(endpoint, method = 'get', payload = null) {
+  const url = DOLIBARR_API_URL_BASE + endpoint;
+  const options = { 'method': method, 'headers': { 'DOLAPIKEY': DOLIBARR_API_KEY }, 'contentType': 'application/json', 'muteHttpExceptions': true };
+  if (payload) options.payload = JSON.stringify(payload);
+  const response = UrlFetchApp.fetch(url, options);
+  const text = response.getContentText();
+  if (response.getResponseCode() >= 400) throw new Error(`Dolibarr Error: ${text}`);
+  if (endpoint === 'stockmovements' && method === 'post') return text; 
+  return text ? JSON.parse(text) : null;
+}
+
+function getDolibarrProductIdBySku(sku) { 
+  const enc = encodeURIComponent(sku);
+  let res = fetchDolibarrAPI(`products?sqlfilters=(t.ref:=:'${enc}')`); 
+  if (res?.length) return res[0].id;
+  res = fetchDolibarrAPI(`products?sqlfilters=(t.ref:like:'${enc}')`);
+  if (res?.length) return res[0].id;
+  res = fetchDolibarrAPI(`products?sqlfilters=(t.barcode:=:'${enc}')`);
+  return res?.length ? res[0].id : null;
+};
+
+const createStockMovement = (productId, warehouseId, qty, label) => 
+  fetchDolibarrAPI('stockmovements', 'post', { "product_id": productId, "warehouse_id": warehouseId, "qty": qty, "label": label });
+
+const getValueFromFields = (fields, fieldNamePartial) => { 
+  if(!fields) return null;
+  const field = fields.find(f => f.name.includes(fieldNamePartial)); 
+  return field ? field.value : null; 
+};
+
+const sendErrorEmail = (s, b) => GmailApp.sendEmail(NOTIFICATION_EMAIL, s, '', { htmlBody: b });

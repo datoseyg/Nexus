@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Desglose Tecnológico y Proyección Arquitectónica — Ecosistema E&amp;G</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --paper: #ffffff;
+      --ink: #0f172a;
+      --muted: #475569;
+      --soft: #e2e8f0;
+      --line: #cbd5e1;
+      --blue: #1d4ed8;
+      --blue-soft: #dbeafe;
+      --cyan-soft: #e0f2fe;
+      --green-soft: #dcfce7;
+      --amber-soft: #fef3c7;
+      --orange-soft: #ffedd5;
+      --red-soft: #fee2e2;
+      --violet-soft: #ede9fe;
+      --gray-soft: #f1f5f9;
+      --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #eef6ff 0%, var(--bg) 280px);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.55;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 36px 0 72px;
+    }
+
+    header.hero {
+      background: var(--paper);
+      border: 1px solid var(--soft);
+      box-shadow: var(--shadow);
+      border-radius: 26px;
+      padding: 40px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header.hero::after {
+      content: "";
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(29, 78, 216, 0.16), transparent 66%);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: #1e3a8a;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 0.86rem;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, h3, h4 { line-height: 1.18; margin: 0; }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 4rem);
+      max-width: 900px;
+      letter-spacing: -0.04em;
+      margin-bottom: 18px;
+    }
+
+    .subtitle {
+      max-width: 900px;
+      font-size: 1.16rem;
+      color: var(--muted);
+      margin: 0 0 26px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    .meta-card {
+      background: #f8fafc;
+      border: 1px solid var(--soft);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .meta-card strong {
+      display: block;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .meta-card span {
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    nav.toc {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--soft);
+      border-radius: 20px;
+      padding: 18px 20px;
+      margin-bottom: 28px;
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+    }
+
+    nav.toc h2 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      color: #1e293b;
+    }
+
+    .toc-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .toc a {
+      text-decoration: none;
+      color: #1e40af;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    section {
+      background: var(--paper);
+      border: 1px solid var(--soft);
+      border-radius: 24px;
+      padding: 30px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+    }
+
+    section h2 {
+      font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+      margin-bottom: 16px;
+      letter-spacing: -0.025em;
+    }
+
+    section h3 {
+      font-size: 1.2rem;
+      margin: 26px 0 10px;
+      color: #1e3a8a;
+    }
+
+    p { margin: 0 0 14px; }
+
+    .lead {
+      font-size: 1.08rem;
+      color: var(--muted);
+    }
+
+    .callout {
+      border-left: 5px solid var(--blue);
+      background: #eff6ff;
+      padding: 16px 18px;
+      border-radius: 16px;
+      margin: 18px 0;
+    }
+
+    .callout strong { color: #1e3a8a; }
+
+    .warning {
+      border-left-color: #d97706;
+      background: #fffbeb;
+    }
+
+    .success {
+      border-left-color: #16a34a;
+      background: #f0fdf4;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--soft);
+      border-radius: 18px;
+      padding: 18px;
+      background: #f8fafc;
+    }
+
+    .card h4 {
+      font-size: 1.02rem;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+
+    .card p, .card li { color: var(--muted); }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 5px 8px;
+      margin-bottom: 10px;
+      color: #1e3a8a;
+      background: #dbeafe;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 8px;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      font-size: 0.94rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: 800;
+    }
+
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    .mono, pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 18px;
+      padding: 18px;
+      overflow-x: auto;
+      line-height: 1.5;
+      font-size: 0.9rem;
+      margin: 18px 0;
+    }
+
+    ul { margin-top: 8px; padding-left: 22px; }
+    li { margin-bottom: 6px; }
+
+    .phase-flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .phase {
+      border: 1px solid var(--soft);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 160px;
+      position: relative;
+    }
+
+    .phase:nth-child(1) { background: var(--cyan-soft); }
+    .phase:nth-child(2) { background: var(--violet-soft); }
+    .phase:nth-child(3) { background: var(--green-soft); }
+    .phase:nth-child(4) { background: var(--amber-soft); }
+
+    .phase .num {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      color: #475569;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .phase h4 { margin-bottom: 8px; }
+
+    .stack-table td:first-child { font-weight: 800; color: #1e3a8a; }
+
+    .footer-note {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-top: 28px;
+    }
+
+    @media print {
+      body { background: white; }
+      .page { width: 100%; padding: 0; }
+      nav.toc { display: none; }
+      header.hero, section { box-shadow: none; break-inside: avoid; }
+      section { page-break-inside: avoid; }
+    }
+
+    @media (max-width: 860px) {
+      .meta-grid, .grid-2, .grid-3, .phase-flow { grid-template-columns: 1fr; }
+      header.hero, section { padding: 24px; }
+      .page { width: min(100% - 24px, 1180px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <span class="eyebrow">Ecosistema Operacional Unificado · E&amp;G</span>
+      <h1>Desglose Tecnológico y Proyección Arquitectónica del Ecosistema</h1>
+      <p class="subtitle">
+        Documento de lectura técnica y ejecutiva para comprender las tecnologías actualmente empleadas, sus limitaciones,
+        el rol de NEXUS + CERBERUS en la Fase 1, y la proyección hacia JANUS + ATLAS como base de una arquitectura operacional
+        gobernada, auditable y escalable.
+      </p>
+      <div class="meta-grid">
+        <div class="meta-card"><strong>Fase actual</strong><span>Fase 1: NEXUS + CERBERUS</span></div>
+        <div class="meta-card"><strong>Horizonte</strong><span>1 mes de desarrollo</span></div>
+        <div class="meta-card"><strong>Fase posterior</strong><span>JANUS + ATLAS</span></div>
+        <div class="meta-card"><strong>Propósito</strong><span>Trazabilidad + calidad + escalabilidad</span></div>
+      </div>
+    </header>
+
+    <nav class="toc">
+      <h2>Índice rápido</h2>
+      <div class="toc-links">
+        <a href="#lectura-general">Lectura general</a>
+        <a href="#tecnologias">Tecnologías actuales</a>
+        <a href="#capas">Arquitectura por capas</a>
+        <a href="#problema">Problema central</a>
+        <a href="#fase1">Fase 1</a>
+        <a href="#fase2">Fase 2</a>
+        <a href="#madurez">Madurez</a>
+        <a href="#stack">Stack actual vs objetivo</a>
+        <a href="#arquitectura">Arquitectura objetivo</a>
+        <a href="#supremacia">Supremacía informática</a>
+      </div>
+    </nav>
+
+    <section id="lectura-general">
+      <h2>1. Lectura general del ecosistema actual</h2>
+      <p class="lead">
+        El ecosistema actual de E&amp;G no parte desde cero. Ya existe una base funcional construida sobre integraciones entre
+        sistemas operacionales, APIs, planillas intermedias, scripts de procesamiento y dashboards. Sin embargo, todavía opera
+        más como un ecosistema integrado artesanalmente que como una plataforma de datos empresarial gobernada.
+      </p>
+
+      <pre>FieldBeat + Zendesk + Dolibarr
+        ↓
+Scripts / APIs / procesos de extracción
+        ↓
+Google Sheets como capa intermedia
+        ↓
+Looker Studio como capa de visualización
+        ↓
+Dashboards operacionales y gerenciales iniciales</pre>
+
+      <div class="callout">
+        <strong>Lectura matriz:</strong> el problema no es que falten datos. El problema es que los datos existen, pero vienen con
+        baja estandarización, relaciones incompletas, estructuras variables y calidad desigual.
+      </div>
+
+      <p>
+        Por eso la evolución lógica no es simplemente “hacer más dashboards”, sino construir una arquitectura capaz de responder:
+        qué ocurrió, dónde ocurrió, con qué evidencia, qué sistemas lo respaldan, qué tan confiable es el dato y qué decisiones
+        puede tomar gerencia con eso.
+      </p>
+    </section>
+
+    <section id="tecnologias">
+      <h2>2. Tecnologías actualmente empleadas</h2>
+
+      <h3>2.1 FieldBeat</h3>
+      <p><strong>Rol actual:</strong> fuente operacional principal de reportes técnicos.</p>
+      <table>
+        <thead><tr><th>Aspecto</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo de tecnología</td><td>Plataforma operacional / field service</td></tr>
+          <tr><td>Uso actual</td><td>Registro de reportes técnicos, atenciones, actividades, fechas, horas, observaciones y posibles repuestos utilizados.</td></tr>
+          <tr><td>Valor</td><td>Fuente directa de evidencia operacional.</td></tr>
+          <tr><td>Problema</td><td>Reportes incompletos, campos variables, estructuras no siempre homogéneas.</td></tr>
+          <tr><td>Riesgo</td><td>Alimentar dashboards o métricas con datos sin validar.</td></tr>
+        </tbody>
+      </table>
+      <p>
+        FieldBeat es el corazón operativo del ecosistema, pero también es la fuente donde aparecen varias brechas críticas:
+        reportes sin hora de inicio o término, máquinas mal identificadas, repuestos en texto libre, bodegas ambiguas,
+        formularios inconsistentes y datos que no siempre permiten reconstruir la operación. En la Fase 1, CERBERUS debe actuar
+        como guardián de FieldBeat.
+      </p>
+
+      <h3>2.2 Zendesk</h3>
+      <p><strong>Rol actual:</strong> fuente de tickets, solicitudes, incidencias y trazabilidad de soporte.</p>
+      <table>
+        <thead><tr><th>Aspecto</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo de tecnología</td><td>Sistema de tickets / soporte</td></tr>
+          <tr><td>Uso actual</td><td>Registro de incidencias, solicitudes y casos de atención.</td></tr>
+          <tr><td>Valor</td><td>Punto de entrada de eventos operacionales.</td></tr>
+          <tr><td>Problema</td><td>No siempre está claramente vinculado con reportes FieldBeat.</td></tr>
+          <tr><td>Riesgo</td><td>Tickets cerrados sin evidencia técnica asociada.</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Zendesk responde qué solicitó el cliente o qué incidente fue levantado. Pero por sí solo no responde qué ocurrió en
+        terreno, qué reporte lo respalda, qué máquina fue intervenida o qué repuesto se utilizó. Ahí entra NEXUS.
+      </p>
+
+      <h3>2.3 Dolibarr</h3>
+      <p><strong>Rol actual:</strong> fuente de inventario, repuestos, productos y bodegas.</p>
+      <table>
+        <thead><tr><th>Aspecto</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo de tecnología</td><td>ERP / inventario</td></tr>
+          <tr><td>Uso actual</td><td>Gestión de productos, repuestos, bodegas y movimientos.</td></tr>
+          <tr><td>Valor</td><td>Permite conectar operación técnica con consumo de repuestos.</td></tr>
+          <tr><td>Problema</td><td>SKUs, bodegas y movimientos pueden tener inconsistencias.</td></tr>
+          <tr><td>Riesgo</td><td>No poder saber con certeza qué repuesto se usó, desde dónde y en qué atención.</td></tr>
+        </tbody>
+      </table>
+      <pre>Repuesto
+Bodega
+Movimiento de inventario
+Uso de repuesto en reporte
+Uso de repuesto en atención operacional</pre>
+
+      <h3>2.4 Google Sheets</h3>
+      <p><strong>Rol actual:</strong> capa intermedia de datos, tipo data lake liviano.</p>
+      <table>
+        <thead><tr><th>Aspecto</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo de tecnología</td><td>Planilla cloud / capa intermedia</td></tr>
+          <tr><td>Uso actual</td><td>Almacenamiento temporal, limpieza, consolidación y preparación para BI.</td></tr>
+          <tr><td>Valor</td><td>Rápido, flexible, accesible y fácil de auditar manualmente.</td></tr>
+          <tr><td>Problema</td><td>No escala bien como base de datos empresarial.</td></tr>
+          <tr><td>Riesgo</td><td>Fragilidad, límites de volumen, errores manuales y baja gobernanza.</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Google Sheets ha sido útil como solución pragmática, pero no debe entenderse como destino final. Su rol actual es válido
+        para Fase 1, pero para Fase 2 debería empezar a migrar hacia una base más robusta.
+      </p>
+
+      <h3>2.5 Looker Studio</h3>
+      <p><strong>Rol actual:</strong> capa de visualización y dashboarding.</p>
+      <table>
+        <thead><tr><th>Aspecto</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo de tecnología</td><td>Business Intelligence / visualización</td></tr>
+          <tr><td>Uso actual</td><td>Dashboards operacionales y gerenciales.</td></tr>
+          <tr><td>Valor</td><td>Permite visualizar indicadores de forma rápida.</td></tr>
+          <tr><td>Problema</td><td>Depende fuertemente de la calidad de la capa previa.</td></tr>
+          <tr><td>Riesgo</td><td>Mostrar indicadores aparentemente sólidos con datos débiles.</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Looker Studio es útil, pero no soluciona por sí solo los problemas estructurales. Un dashboard no es más confiable que
+        los datos que lo alimentan.
+      </p>
+
+      <h3>2.6 APIs</h3>
+      <p><strong>Rol actual:</strong> mecanismo de extracción e integración entre sistemas.</p>
+      <table>
+        <thead><tr><th>Aspecto</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo de tecnología</td><td>Interfaces de integración</td></tr>
+          <tr><td>Uso actual</td><td>Extracción y sincronización de datos.</td></tr>
+          <tr><td>Valor</td><td>Permiten automatizar flujos entre sistemas.</td></tr>
+          <tr><td>Problema</td><td>Pueden tener respuestas variables, errores, campos nulos o estructuras inesperadas.</td></tr>
+          <tr><td>Riesgo</td><td>Caídas, datos incompletos e integraciones frágiles.</td></tr>
+        </tbody>
+      </table>
+      <pre>API Connectors
+↓
+Validación
+↓
+Normalización
+↓
+Persistencia
+↓
+Auditoría
+↓
+BI / reportabilidad</pre>
+
+      <h3>2.7 Scripts de integración y procesamiento</h3>
+      <p><strong>Rol actual:</strong> automatización de extracción, transformación y carga.</p>
+      <table>
+        <thead><tr><th>Aspecto</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo de tecnología</td><td>Scripts ETL / automatización</td></tr>
+          <tr><td>Uso actual</td><td>Extracción, limpieza, transformación, carga y preparación de datos.</td></tr>
+          <tr><td>Valor</td><td>Permiten construir lógica a medida.</td></tr>
+          <tr><td>Problema</td><td>Pueden crecer de forma desordenada si no se documentan.</td></tr>
+          <tr><td>Riesgo</td><td>Dependencia de conocimiento individual, deuda técnica y mantenimiento difícil.</td></tr>
+        </tbody>
+      </table>
+      <pre>extract_fieldbeat_reports()
+extract_zendesk_tickets()
+extract_dolibarr_inventory()
+normalize_reports()
+evaluate_report_integrity()
+link_ticket_report()
+build_operational_attention()
+export_bi_dataset()</pre>
+    </section>
+
+    <section id="capas">
+      <h2>3. Arquitectura actual interpretada por capas</h2>
+      <div class="grid-3">
+        <div class="card"><span class="tag">Capa 1</span><h4>Sistemas fuente</h4><p>FieldBeat, Zendesk y Dolibarr. Son los sistemas donde nace la información operacional.</p></div>
+        <div class="card"><span class="tag">Capa 2</span><h4>Integración</h4><p>APIs, scripts, conectores y procesos de extracción.</p></div>
+        <div class="card"><span class="tag">Capa 3</span><h4>Capa intermedia</h4><p>Google Sheets, tablas auxiliares, matrices de relación y datasets preparados.</p></div>
+        <div class="card"><span class="tag">Capa 4</span><h4>Lógica operacional</h4><p>Reglas de relación, score de confianza, score de integridad, clasificación y brechas.</p></div>
+        <div class="card"><span class="tag">Capa 5</span><h4>Visualización</h4><p>Looker Studio, dashboards y reportes ejecutivos.</p></div>
+        <div class="card"><span class="tag">Capa futura</span><h4>Gobernanza</h4><p>Auditoría, diccionarios, modelos de datos, calidad, linaje y control de cambios.</p></div>
+      </div>
+    </section>
+
+    <section id="problema">
+      <h2>4. Problema arquitectónico central</h2>
+      <p class="lead">
+        El ecosistema actual tiene herramientas útiles, pero aún carece de una columna vertebral operacional unificada.
+        La arquitectura es funcional, aunque presenta fragilidades estructurales.
+      </p>
+      <table>
+        <thead><tr><th>Fragilidad</th><th>Impacto</th></tr></thead>
+        <tbody>
+          <tr><td>Datos dispersos</td><td>Dificulta saber qué ocurrió realmente.</td></tr>
+          <tr><td>Relaciones débiles</td><td>Tickets, reportes, máquinas y repuestos no siempre conectan.</td></tr>
+          <tr><td>Calidad variable</td><td>Indicadores pueden quedar contaminados.</td></tr>
+          <tr><td>Google Sheets como núcleo</td><td>Escalabilidad limitada.</td></tr>
+          <tr><td>Dashboards dependientes de limpieza manual</td><td>Riesgo de errores y baja gobernanza.</td></tr>
+          <tr><td>Sin modelo operacional maestro</td><td>Cada análisis puede reconstruir la realidad de forma distinta.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <strong>Advertencia estratégica:</strong> NEXUS + CERBERUS no son un lujo analítico. Son la base mínima para evitar que las
+        futuras métricas de disponibilidad, SLA o BI gerencial se construyan sobre evidencia débil.
+      </div>
+    </section>
+
+    <section id="fase1">
+      <h2>5. Fase 1 — Arquitectura NEXUS + CERBERUS</h2>
+      <p class="lead">
+        La Fase 1 debe crear una capa de inteligencia operacional sobre el ecosistema actual. Su propósito no es reemplazar aún
+        todos los sistemas ni implementar una base corporativa definitiva, sino dejar la operación trazable, auditable y evaluada en calidad.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <span class="tag">NEXUS</span>
+          <h4>Trazabilidad operacional</h4>
+          <p>NEXUS debe responder:</p>
+          <ul>
+            <li>¿Qué ticket originó una atención?</li>
+            <li>¿Qué reporte respalda esa atención?</li>
+            <li>¿Qué máquina fue intervenida?</li>
+            <li>¿Qué técnico participó?</li>
+            <li>¿Qué repuestos se usaron?</li>
+            <li>¿Qué bodega se afectó?</li>
+            <li>¿Qué tan confiable es la relación?</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="tag">CERBERUS</span>
+          <h4>Calidad de evidencia</h4>
+          <p>CERBERUS debe responder:</p>
+          <ul>
+            <li>¿Este reporte sirve?</li>
+            <li>¿Qué le falta?</li>
+            <li>¿Qué tan completo está?</li>
+            <li>¿Qué tan consistente es?</li>
+            <li>¿Puede alimentar indicadores?</li>
+            <li>¿Debe ir a revisión manual?</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Componentes tecnológicos mínimos de NEXUS</h3>
+      <table>
+        <thead><tr><th>Componente</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Tabla ticket-reporte</td><td>Relacionar Zendesk con FieldBeat.</td></tr>
+          <tr><td>Tabla atención operacional</td><td>Consolidar eventos reales.</td></tr>
+          <tr><td>Tabla reporte-máquina</td><td>Permitir múltiples máquinas por reporte.</td></tr>
+          <tr><td>Tabla reporte-repuesto</td><td>Conectar operación con inventario.</td></tr>
+          <tr><td>Score de confianza</td><td>Distinguir relación explícita, inferida o manual.</td></tr>
+          <tr><td>Matriz de huérfanos</td><td>Detectar tickets sin reporte y reportes sin ticket.</td></tr>
+          <tr><td>Dataset BI</td><td>Alimentar dashboard ejecutivo.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Componentes tecnológicos mínimos de CERBERUS</h3>
+      <table>
+        <thead><tr><th>Componente</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Matriz de campos críticos</td><td>Definir qué campos son obligatorios.</td></tr>
+          <tr><td>Diccionario de campos</td><td>Homologar estructuras FieldBeat.</td></tr>
+          <tr><td>Normalizador</td><td>Estandarizar fechas, horas, clientes, máquinas, repuestos y bodegas.</td></tr>
+          <tr><td>Evaluador de integridad</td><td>Calcular calidad del reporte.</td></tr>
+          <tr><td>Clasificador</td><td>Clasificar reportes como aptos, parciales, dudosos o no aptos.</td></tr>
+          <tr><td>Lista de revisión</td><td>Priorizar saneamiento.</td></tr>
+          <tr><td>Dashboard de calidad</td><td>Visibilizar brechas.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="fase2">
+      <h2>6. Proyección Fase 2 — JANUS + ATLAS</h2>
+      <div class="grid-2">
+        <div class="card">
+          <span class="tag">JANUS</span>
+          <h4>Uptime/Downtime con confianza métrica</h4>
+          <p>
+            JANUS debe encargarse de la medición confiable de disponibilidad. No debería construirse antes de tener NEXUS + CERBERUS,
+            porque uptime/downtime sin trazabilidad ni calidad de datos puede ser peligroso.
+          </p>
+          <pre>Cliente
+Máquina
+Contrato
+Horario de servicio
+Ventanas computables
+Eventos de downtime
+Reportes aptos
+Confianza métrica</pre>
+        </div>
+        <div class="card">
+          <span class="tag">ATLAS</span>
+          <h4>Gran Base Operacional Unificada</h4>
+          <p>
+            ATLAS debe encargarse de la infraestructura de datos definitiva, reduciendo gradualmente la dependencia estructural de
+            Google Sheets y consolidando una base robusta, auditable y preparada para BI gerencial.
+          </p>
+          <table>
+            <thead><tr><th>Tecnología</th><th>Rol posible</th></tr></thead>
+            <tbody>
+              <tr><td>PostgreSQL</td><td>Base operacional relacional robusta.</td></tr>
+              <tr><td>BigQuery</td><td>Data warehouse analítico escalable.</td></tr>
+              <tr><td>Docker</td><td>Despliegue reproducible de conectores.</td></tr>
+              <tr><td>GitHub</td><td>Control de versiones.</td></tr>
+              <tr><td>Airflow / Prefect</td><td>Orquestación ETL avanzada.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="callout success">
+        <strong>Lógica estratégica:</strong> Fase 1 ordena, relaciona y valida la operación. Fase 2 mide disponibilidad y escala la infraestructura.
+      </div>
+    </section>
+
+    <section id="madurez">
+      <h2>7. Arquitectura objetivo por madurez</h2>
+      <div class="phase-flow">
+        <div class="phase">
+          <div class="num">Nivel 0</div>
+          <h4>Estado inicial</h4>
+          <p>Sistemas separados, reportes manuales, dashboards parciales y datos poco gobernados.</p>
+        </div>
+        <div class="phase">
+          <div class="num">Nivel 1</div>
+          <h4>Ecosistema integrado inicial</h4>
+          <p>FieldBeat + Zendesk + Dolibarr, scripts, Google Sheets y Looker Studio.</p>
+        </div>
+        <div class="phase">
+          <div class="num">Nivel 2</div>
+          <h4>Fase 1</h4>
+          <p>NEXUS + CERBERUS: trazabilidad operacional y calidad de reportes.</p>
+        </div>
+        <div class="phase">
+          <div class="num">Nivel 3</div>
+          <h4>Fase 2</h4>
+          <p>ATLAS + JANUS: base operacional unificada y medición confiable de disponibilidad.</p>
+        </div>
+      </div>
+      <pre>Nivel 4 — Supremacía informática operacional
+
+Ecosistema operacional unificado
+↓
+Gobernanza de datos
+↓
+Métricas confiables
+↓
+Alertas automáticas
+↓
+Predicción de fallas
+↓
+Optimización de inventario
+↓
+Inteligencia gerencial</pre>
+    </section>
+
+    <section id="stack">
+      <h2>8. Stack actual vs stack objetivo</h2>
+      <table class="stack-table">
+        <thead><tr><th>Capa</th><th>Actual</th><th>Fase 1</th><th>Fase 2</th><th>Futuro avanzado</th></tr></thead>
+        <tbody>
+          <tr><td>Operación técnica</td><td>FieldBeat</td><td>FieldBeat + CERBERUS</td><td>FieldBeat validado</td><td>Captura gobernada</td></tr>
+          <tr><td>Tickets</td><td>Zendesk</td><td>Zendesk + NEXUS</td><td>Zendesk integrado a ATLAS</td><td>Gestión predictiva</td></tr>
+          <tr><td>Inventario</td><td>Dolibarr</td><td>Dolibarr vinculado a reportes</td><td>Dolibarr integrado a ATLAS</td><td>Optimización de stock</td></tr>
+          <tr><td>Integración</td><td>Scripts/API</td><td>Scripts modulares</td><td>Pipelines formales</td><td>Orquestación avanzada</td></tr>
+          <tr><td>Almacenamiento</td><td>Google Sheets</td><td>Sheets estructurado</td><td>PostgreSQL / BigQuery</td><td>Data warehouse / lakehouse</td></tr>
+          <tr><td>Calidad</td><td>Manual/parcial</td><td>CERBERUS</td><td>Gobernanza de calidad</td><td>Data quality automatizada</td></tr>
+          <tr><td>Trazabilidad</td><td>Parcial</td><td>NEXUS</td><td>ATLAS</td><td>Auditoría completa</td></tr>
+          <tr><td>Métricas</td><td>Dashboards iniciales</td><td>Indicadores confiables básicos</td><td>JANUS</td><td>Analítica predictiva</td></tr>
+          <tr><td>Visualización</td><td>Looker Studio</td><td>Dashboards NEXUS/CERBERUS</td><td>BI gerencial</td><td>Centro de comando</td></tr>
+          <tr><td>Gobernanza</td><td>Baja/media</td><td>Diccionarios y reglas</td><td>Modelo de datos formal</td><td>Gobierno de datos completo</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="arquitectura">
+      <h2>9. Diseño conceptual de arquitectura futura</h2>
+      <pre>┌──────────────────────────────────────────────┐
+│              SISTEMAS FUENTE                 │
+│  FieldBeat     Zendesk      Dolibarr          │
+└──────────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────────┐
+│          CAPA DE INGESTA / CONECTORES         │
+│  APIs, scripts, validaciones, logs, errores   │
+└──────────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────────┐
+│              CAPA RAW / LANDING              │
+│  Datos originales preservados para auditoría  │
+└──────────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────────┐
+│          CAPA DE NORMALIZACIÓN                │
+│  Fechas, clientes, máquinas, técnicos, SKUs   │
+└──────────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────────┐
+│             NEXUS + CERBERUS                  │
+│  Trazabilidad operacional + calidad de datos  │
+└──────────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────────┐
+│                  ATLAS                        │
+│       Base operacional unificada              │
+└──────────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────────┐
+│                  JANUS                        │
+│     Uptime / Downtime con confianza métrica   │
+└──────────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────────┐
+│              BI / REPORTABILIDAD              │
+│ Dashboards, gerencia, alertas, decisiones     │
+└──────────────────────────────────────────────┘</pre>
+    </section>
+
+    <section id="lectura-tecnologica">
+      <h2>10. Lectura estratégica por tecnología</h2>
+      <div class="grid-2">
+        <div class="card"><h4>FieldBeat</h4><p>Debe pasar de ser repositorio de reportes a fuente operacional evaluada.</p><pre>FieldBeat genera evidencia operacional clasificada por calidad.</pre></div>
+        <div class="card"><h4>Zendesk</h4><p>Debe pasar de ser sistema de tickets a origen trazable de eventos.</p><pre>Zendesk se relaciona con atenciones, reportes y resolución técnica.</pre></div>
+        <div class="card"><h4>Dolibarr</h4><p>Debe pasar de ser inventario aislado a dimensión logística de la operación.</p><pre>Dolibarr permite saber qué recurso material sostuvo cada atención.</pre></div>
+        <div class="card"><h4>Google Sheets</h4><p>Debe pasar de ser base intermedia principal a herramienta auxiliar.</p><pre>Sheets ayuda a validar, revisar o exponer datos, pero no es la base maestra.</pre></div>
+        <div class="card"><h4>Looker Studio</h4><p>Debe pasar de dashboard visual a capa ejecutiva confiable.</p><pre>Looker Studio visualiza datos trazables, clasificados y confiables.</pre></div>
+        <div class="card"><h4>Scripts / APIs</h4><p>Deben pasar de integración artesanal a pipelines trazables, modulares y observables.</p><pre>Extracción → Validación → Normalización → Persistencia → Auditoría</pre></div>
+      </div>
+    </section>
+
+    <section id="supremacia">
+      <h2>11. Ruta hacia supremacía informática</h2>
+      <p class="lead">
+        La supremacía informática no viene de usar muchas tecnologías, sino de lograr que el ecosistema tenga integración,
+        trazabilidad, calidad, gobernanza, escalabilidad, observabilidad, BI confiable, automatización y proyección.
+      </p>
+      <table>
+        <thead><tr><th>Pilar</th><th>Qué significa</th></tr></thead>
+        <tbody>
+          <tr><td>Integración</td><td>Los sistemas conversan entre sí.</td></tr>
+          <tr><td>Trazabilidad</td><td>Cada dato tiene origen y relación.</td></tr>
+          <tr><td>Calidad</td><td>Cada registro tiene nivel de confianza.</td></tr>
+          <tr><td>Gobernanza</td><td>Hay reglas, diccionarios y responsables.</td></tr>
+          <tr><td>Escalabilidad</td><td>La arquitectura soporta más volumen.</td></tr>
+          <tr><td>Observabilidad</td><td>Se sabe cuándo algo falla.</td></tr>
+          <tr><td>BI confiable</td><td>Gerencia decide con evidencia.</td></tr>
+          <tr><td>Automatización</td><td>Menos revisión manual repetitiva.</td></tr>
+          <tr><td>Proyección</td><td>El sistema habilita predicción y optimización.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout success">
+        <strong>Frase matriz:</strong> la supremacía informática del ecosistema E&amp;G no consiste en acumular herramientas, sino en convertir cada dato operacional en una pieza trazable, evaluada, conectada y accionable.
+      </div>
+    </section>
+
+    <section id="sintesis">
+      <h2>12. Síntesis ejecutiva</h2>
+      <p>
+        Actualmente E&amp;G cuenta con un ecosistema basado en FieldBeat, Zendesk, Dolibarr, Google Sheets, scripts de integración
+        y Looker Studio. Esta base permite operar y visualizar información, pero todavía presenta limitaciones de trazabilidad,
+        calidad, gobernanza y escalabilidad.
+      </p>
+      <p>
+        La Fase 1 NEXUS + CERBERUS debe consolidar el primer salto de madurez: pasar de datos conectados de forma parcial a datos
+        operacionalmente relacionados y evaluados en calidad.
+      </p>
+      <p>
+        La Fase 2 JANUS + ATLAS debe consolidar el segundo salto: pasar de trazabilidad y calidad a medición confiable de
+        disponibilidad y arquitectura de datos unificada.
+      </p>
+      <p>
+        La arquitectura objetivo debe evolucionar desde una lógica de integración artesanal hacia una plataforma operacional
+        gobernada, auditable, escalable y preparada para BI avanzado, alertas y analítica predictiva.
+      </p>
+    </section>
+
+    <p class="footer-note">Documento de apoyo para diseño, arquitectura y proyección del Ecosistema Operacional Unificado — E&amp;G.</p>
+  </main>
+</body>
+</html>

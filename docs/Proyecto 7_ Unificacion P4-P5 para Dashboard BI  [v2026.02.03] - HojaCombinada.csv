@@ -1,0 +1,1161 @@
+Timestamp,Estado,ID Tarea Fieldbeat,Cliente,Tipo de Tarea,SKU Repuesto,Cantidad Descontada,ID Bodega Usada,ID Movimiento Dolibarr,Mensaje de Error,Origen
+3/06/2026 12:30:00,Éxito (Con Repuestos),3731,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,45133904594,1,Pañol E&G,5461,,General
+3/06/2026 2:40:00,Éxito (Sin Repuestos),3730,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+2/06/2026 11:00:00,Éxito (Con Repuestos),3732,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,1534958,2,Pañol E&G,5460,,General
+2/06/2026 1:55:00,Éxito (Con Repuestos),3729,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,1565835,2,Pañol E&G,5459,,General
+1/06/2026 14:30:00,ERROR,3727,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,1541746,1,,,"Bodega ""undefined"" no mapeada.",General
+1/06/2026 14:30:00,Éxito (Sin Repuestos),3727,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+1/06/2026 13:10:00,Éxito (Sin Repuestos),3725,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+1/06/2026 12:48:00,Éxito (Con Repuestos),3726,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,1516727,1,Pañol E&G,5458,,General
+29/05/2026 20:30:00,ERROR,3723,UC CHRISTUS - SCA,CORRECTIVA NO PROGRAMADA,1017632,1,Pañol E&G,,API Error 404,General
+29/05/2026 20:30:00,Éxito (Sin Repuestos),3723,UC CHRISTUS - SCA,CORRECTIVA NO PROGRAMADA,,,,,,General
+29/05/2026 9:30:00,Éxito (Con Repuestos),3721,UC CHRISTUS - SCA,CORRECTIVA NO PROGRAMADA,1531145,1,Pañol E&G,5456,,General
+29/05/2026 9:00:00,ERROR,3733,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,1541718,1,Otros (Comente),,"Bodega ""Otros (Comente)"" no mapeada.",General
+29/05/2026 9:00:00,Éxito (Sin Repuestos),3733,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,,,,,,General
+29/05/2026 0:30:00,Éxito (Sin Repuestos),3724,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+28/05/2026 21:30:00,Éxito (Con Repuestos),3720,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,45133318990,1,Pañol E&G,5455,,General
+27/05/2026 13:13:00,Éxito (Sin Repuestos),3719,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+27/05/2026 11:15:00,Éxito (Sin Repuestos),3717,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+27/05/2026 10:45:00,Éxito (Con Repuestos),3716,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,1516727,1,Pañol E&G,5454,,General
+27/05/2026 1:53:00,Éxito (Sin Repuestos),3718,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+26/05/2026 13:20:00,Éxito (Sin Repuestos),3715,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+25/05/2026 20:30:00,Éxito (Sin Repuestos),3714,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+25/05/2026 12:45:00,Éxito (Sin Repuestos),3713,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+25/05/2026 11:45:00,Éxito (Sin Repuestos),3712,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+25/05/2026 11:26:00,Éxito (Sin Repuestos),3711,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+20/05/2026 12:50:00,Éxito (Sin Repuestos),3710,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+19/05/2026 22:30:00,ERROR,3709,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1567819,1,Pañol E&G,,API Error 404,General
+19/05/2026 22:30:00,Éxito (Sin Repuestos),3709,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+19/05/2026 22:00:00,Éxito (Sin Repuestos),3708,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+18/05/2026 20:30:00,Éxito (Sin Repuestos),3707,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+17/05/2026 13:30:00,Éxito (Sin Repuestos),3706,Instituto Nacional del Cáncer (INC),Sin Tipo,,,,,,General
+16/05/2026 15:41:00,Éxito (Con Repuestos),3705,CLINICA ALEMANA DE SANTIAGO,PREVENTIVA PROGRAMADA,1564361,1,Pañol E&G,5453,,General
+15/05/2026 19:30:00,Éxito (Sin Repuestos),3701,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+15/05/2026 18:00:00,Éxito (Con Repuestos),3704,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,NA,1,Otros (Comente),,"Bodega ""Otros (Comente)"" no mapeada.",General
+15/05/2026 18:00:00,Éxito (Sin Repuestos),3704,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+15/05/2026 17:30:00,Éxito (Sin Repuestos),3702,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+15/05/2026 17:00:00,Éxito (Sin Repuestos),3700,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+15/05/2026,Éxito (Sin Repuestos),3699,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+14/05/2026 8:24:00,Éxito (Sin Repuestos),3698,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+13/05/2026 21:00:00,Éxito (Sin Repuestos),3697,Instituto Nacional del Cáncer (INC),REQUERIMIENTO DEL CLIENTE,,,,,,General
+13/05/2026 20:30:00,ERROR,3695,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,1569146,1,,,"Bodega ""undefined"" no mapeada.",General
+13/05/2026 20:30:00,Éxito (Sin Repuestos),3695,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+13/05/2026 18:30:00,Éxito (Sin Repuestos),3696,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+12/05/2026 14:00:00,Éxito (Sin Repuestos),3694,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+11/05/2026 14:00:00,ERROR,3693,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,1010848-1564169,2,Otros (Comente),,"Bodega ""Otros (Comente)"" no mapeada.",General
+11/05/2026 14:00:00,Éxito (Sin Repuestos),3693,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+11/05/2026 9:01:00,Éxito (Sin Repuestos),3692,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+9/05/2026 12:00:00,Éxito (Sin Repuestos),3691,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+8/05/2026 22:00:00,ERROR,3690,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1018559,1,Pañol E&G,,Timeout: http://erm.eygsa.cl/api/index.php/products?sqlfilters=(t.ref:=:'1018559'),General
+8/05/2026 22:00:00,Éxito (Sin Repuestos),3690,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+7/05/2026 22:30:00,Éxito (Sin Repuestos),3688,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+7/05/2026 17:30:00,Éxito (Sin Repuestos),3687,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+7/05/2026 16:05:00,ERROR,3686,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,517657,2,Pañol E&G,,API Error 404,General
+7/05/2026 16:05:00,Éxito (Sin Repuestos),3686,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+6/05/2026 17:30:00,Éxito (Sin Repuestos),3685,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+5/05/2026 22:00:00,Éxito (Con Repuestos),3684,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,1564169,1,Pañol E&G,5444,,General
+5/05/2026 10:00:00,Éxito (Sin Repuestos),3683,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+4/05/2026 8:49:00,Éxito (Sin Repuestos),3682,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+30/04/2026 13:20:00,Éxito (Sin Repuestos),3681,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+29/04/2026 22:46:00,Éxito (Con Repuestos),3680,UC CHRISTUS - SCA,CORRECTIVA NO PROGRAMADA,1564298,1,Pañol E&G,5443,,General
+28/04/2026 22:00:00,Éxito (Sin Repuestos),3679,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+27/04/2026 20:30:00,Éxito (Sin Repuestos),3678,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+27/04/2026 10:00:00,Éxito (Sin Repuestos),3677,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+25/04/2026 17:45:00,Éxito (Sin Repuestos),3676,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+25/04/2026 17:00:00,Éxito (Sin Repuestos),3675,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+24/04/2026 20:00:00,Éxito (Sin Repuestos),3674,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+24/04/2026 8:30:00,Éxito (Sin Repuestos),3673,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+23/04/2026 16:00:00,Éxito (Con Repuestos),3665,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,1014204,1,Pañol E&G,5441,,General
+23/04/2026 9:30:00,Éxito (Sin Repuestos),3672,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+22/04/2026 22:00:00,Éxito (Sin Repuestos),3671,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+22/04/2026 22:00:00,Éxito (Sin Repuestos),3670,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+21/04/2026 23:36:00,Éxito (Sin Repuestos),3669,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+21/04/2026 8:30:00,Éxito (Sin Repuestos),3668,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+20/04/2026 23:30:00,Éxito (Sin Repuestos),3601,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+20/04/2026 21:30:00,Éxito (Sin Repuestos),3667,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+20/04/2026 21:28:00,Éxito (Sin Repuestos),3666,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+20/04/2026 11:45:00,Éxito (Sin Repuestos),3664,CLÍNICA LAS CONDES,CORRECTIVA NO PROGRAMADA,,,,,,General
+20/04/2026 8:30:00,Éxito (Sin Repuestos),3662,HOSPITAL CARLOS VAN BUREN (SSVSA),PRUEBAS DE ACEPTACION,,,,,,General
+17/04/2026 20:30:00,Éxito (Sin Repuestos),3663,CLÍNICA SANATORIO ALEMÁN (ONCORAD),PREVENTIVA PROGRAMADA,,,,,,General
+17/04/2026 20:00:00,Éxito (Sin Repuestos),3660,HOSPITAL CARLOS VAN BUREN (SSVSA),PREVENTIVA PROGRAMADA,,,,,,General
+17/04/2026 19:30:00,Éxito (Sin Repuestos),3659,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+17/04/2026 16:00:00,ERROR,3657,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,NA,0,Otros (Comente),,Cantidad invalida: 0,General
+17/04/2026 16:00:00,Éxito (Sin Repuestos),3657,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+16/04/2026 20:00:00,ERROR,3661,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,1502964,1,Otros (Comente),,"Bodega ""Otros (Comente)"" no mapeada.",General
+16/04/2026 20:00:00,Éxito (Sin Repuestos),3661,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+16/04/2026 14:50:00,Éxito (Sin Repuestos),3654,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+16/04/2026 13:30:00,Éxito (Con Repuestos),3653,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,1024545,1,Pañol E&G,5435,,General
+15/04/2026 20:30:00,ERROR,3652,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,1540356,1,Pañol E&G,,API Error 404,General
+15/04/2026 20:30:00,Éxito (Sin Repuestos),3652,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+14/04/2026 20:29:00,Éxito (Sin Repuestos),3651,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+14/04/2026 9:30:00,ERROR,3650,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,1016476,1,Bodega HCVB,,API Error 404,General
+14/04/2026 9:30:00,Éxito (Sin Repuestos),3650,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+10/04/2026 21:30:00,Éxito (Sin Repuestos),3648,HOSPITAL CARLOS VAN BUREN (SSVSA),REQUERIMIENTO DEL CLIENTE,,,,,,General
+10/04/2026 20:30:00,ERROR,3643,Instituto Nacional del Cáncer (INC),PREVENTIVA PROGRAMADA,1018559,2,,,"Bodega ""undefined"" no mapeada.",General
+10/04/2026 20:30:00,Éxito (Sin Repuestos),3643,Instituto Nacional del Cáncer (INC),PREVENTIVA PROGRAMADA,,,,,,General
+10/04/2026 16:00:00,ERROR,3656,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,no,0,,,Cantidad invalida: 0,General
+10/04/2026 16:00:00,Éxito (Sin Repuestos),3656,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+10/04/2026 12:30:00,ERROR,3647,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,1022378,1,Pañol E&G,,API Error 404,General
+10/04/2026 12:30:00,Éxito (Sin Repuestos),3647,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+8/04/2026 20:30:00,Éxito (Sin Repuestos),3646,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+8/04/2026 16:13:00,Éxito (Sin Repuestos),3645,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,,General
+6/04/2026 13:11:00,Éxito (Sin Repuestos),3641,HOSPITAL CARLOS VAN BUREN (SSVSA),REQUERIMIENTO DEL CLIENTE,,,,,,General
+6/04/2026 9:41:00,Éxito (Sin Repuestos),3639,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+6/04/2026 9:00:00,Éxito (Sin Repuestos),3640,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+2/04/2026 22:45:00,ERROR,3636,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,45133302334,1,Pañol E&G,,API Error 404,General
+2/04/2026 22:45:00,Éxito (Sin Repuestos),3636,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+2/04/2026 21:30:00,Éxito (Sin Repuestos),3638,UC CHRISTUS - CECA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+2/04/2026 19:06:00,Éxito (Sin Repuestos),3637,Instituto Nacional del Cáncer (INC),REQUERIMIENTO DEL CLIENTE,,,,,,General
+2/04/2026 16:00:00,ERROR,3658,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,NA,0,Otros (Comente),,Cantidad invalida: 0,General
+2/04/2026 16:00:00,Éxito (Sin Repuestos),3658,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+1/04/2026 11:30:00,Éxito (Sin Repuestos),3635,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+31/03/2026 20:30:00,Éxito (Sin Repuestos),3632,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+31/03/2026 16:27:00,Éxito (Sin Repuestos),3634,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+31/03/2026 10:00:00,Éxito (Sin Repuestos),3633,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+30/03/2026 17:45:00,Éxito (Sin Repuestos),3631,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+30/03/2026 9:52:00,Éxito (Sin Repuestos),3624,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+27/03/2026 20:00:00,Éxito (Con Repuestos),3621,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1509024,1,Pañol E&G,5432,,General
+27/03/2026 18:30:00,Éxito (Sin Repuestos),3616,CLINICA ALEMANA DE SANTIAGO,PREVENTIVA PROGRAMADA,,,,,,General
+27/03/2026 18:30:00,Éxito (Sin Repuestos),3615,CLINICA ALEMANA DE SANTIAGO,PREVENTIVA PROGRAMADA,,,,,,General
+27/03/2026 18:00:00,Éxito (Sin Repuestos),3622,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+27/03/2026 17:00:00,Éxito (Sin Repuestos),3628,SERVICIO DE SALUD DE MAGALLANES,PREVENTIVA PROGRAMADA,,,,,,General
+27/03/2026 13:30:00,ERROR,3620,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,TK204UK,1,Pañol E&G,,API Error 404,General
+27/03/2026 13:30:00,Éxito (Sin Repuestos),3620,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+27/03/2026 12:45:00,Éxito (Sin Repuestos),3626,INRAD,PREVENTIVA PROGRAMADA,,,,,,General
+26/03/2026 23:00:00,Éxito (Con Repuestos),3617,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1541718,1,Pañol E&G,5433,,General
+26/03/2026 14:03:00,Éxito (Sin Repuestos),3611,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+26/03/2026 12:30:00,Éxito (Sin Repuestos),3629,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+25/03/2026 13:00:00,Éxito (Sin Repuestos),3608,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+24/03/2026 8:30:00,Éxito (Sin Repuestos),3606,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+23/03/2026 22:00:00,Éxito (Sin Repuestos),3605,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+23/03/2026 12:00:00,Éxito (Sin Repuestos),3604,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+23/03/2026 9:00:00,Éxito (Sin Repuestos),3603,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+20/03/2026 23:54:00,Éxito (Sin Repuestos),3602,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+20/03/2026 18:30:00,Éxito (Sin Repuestos),3627,SERVICIO DE SALUD DE MAGALLANES,PREVENTIVA PROGRAMADA,,,,,,General
+20/03/2026 15:00:00,ERROR,3600,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,1547676,1,Pañol E&G,,API Error 404,General
+20/03/2026 15:00:00,Éxito (Sin Repuestos),3600,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+19/03/2026 21:30:00,Éxito (Sin Repuestos),3598,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+19/03/2026 14:50:00,Éxito (Sin Repuestos),3597,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+19/03/2026 8:30:00,Éxito (Sin Repuestos),3596,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+16/03/2026 8:30:00,Éxito (Sin Repuestos),3593,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+13/03/2026 15:30:00,ERROR,3591,SERVICIO DE SALUD DE MAGALLANES,REQUERIMIENTO DEL CLIENTE,0,0,Otros (Comente),,Cantidad invalida: 0,General
+13/03/2026 15:30:00,Éxito (Sin Repuestos),3591,SERVICIO DE SALUD DE MAGALLANES,REQUERIMIENTO DEL CLIENTE,,,,,,General
+12/03/2026 21:30:00,Éxito (Sin Repuestos),3589,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+12/03/2026 16:39:00,Éxito (Sin Repuestos),3588,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,General
+12/03/2026 11:51:00,Éxito (Sin Repuestos),3592,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+12/03/2026 1:30:00,ERROR,3587,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,45133411850,1,Pañol E&G,,API Error 404,General
+12/03/2026 1:30:00,Éxito (Sin Repuestos),3587,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+9/03/2026 17:00:00,Éxito (Sin Repuestos),3584,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+9/03/2026 15:15:00,Éxito (Sin Repuestos),3585,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+9/03/2026 12:30:00,ERROR,3583,SERVICIO DE SALUD DE MAGALLANES,REQUERIMIENTO DEL CLIENTE,NA,0,Otros (Comente),,Cantidad invalida: 0,General
+9/03/2026 12:30:00,Éxito (Sin Repuestos),3583,SERVICIO DE SALUD DE MAGALLANES,REQUERIMIENTO DEL CLIENTE,,,,,,General
+7/03/2026 15:37:00,Éxito (Con Repuestos),3575,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,1568178,1,Pañol E&G,5430,,General
+7/03/2026 11:00:00,ERROR,3581,SERVICIO DE SALUD DE MAGALLANES,REQUERIMIENTO DEL CLIENTE,NA,0,,,Cantidad invalida: 0,General
+7/03/2026 11:00:00,Éxito (Sin Repuestos),3581,SERVICIO DE SALUD DE MAGALLANES,REQUERIMIENTO DEL CLIENTE,,,,,,General
+6/03/2026 21:00:00,ERROR,3580,SERVICIO DE SALUD DE MAGALLANES,PREVENTIVA PROGRAMADA,NA,0,Otros (Comente),,Cantidad invalida: 0,General
+6/03/2026 21:00:00,Éxito (Sin Repuestos),3580,SERVICIO DE SALUD DE MAGALLANES,PREVENTIVA PROGRAMADA,,,,,,General
+6/03/2026 20:00:00,Éxito (Sin Repuestos),3574,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+6/03/2026 18:30:00,Éxito (Sin Repuestos),3582,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+6/03/2026 13:46:00,Éxito (Sin Repuestos),3573,UC CHRISTUS - CECA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+5/03/2026 23:30:00,Éxito (Con Repuestos),3570,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1513681,1,Pañol E&G,5429,,General
+5/03/2026 22:30:00,Éxito (Sin Repuestos),3571,CLÍNICA LAS CONDES,CORRECTIVA NO PROGRAMADA,,,,,,General
+5/03/2026 13:30:00,Éxito (Sin Repuestos),3569,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+4/03/2026 22:35:00,Éxito (Sin Repuestos),3572,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+4/03/2026 19:30:00,Éxito (Sin Repuestos),3568,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+4/03/2026 16:30:00,ERROR,3567,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,no,0,,,Cantidad invalida: 0,General
+4/03/2026 16:30:00,Éxito (Sin Repuestos),3567,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,,,,,,General
+4/03/2026 14:51:35,ERROR,3560,Error Inicial,Sin Tipo,,,,,"Request failed for https://api.fieldbeat.com returned code 404. Truncated server response: <!DOCTYPE html><HTML><HEAD>    <TITLE>Microsoft Azure App Service - Welcome</TITLE>    <SCRIPT type=""text/javascript"">        function loc() {     ... (use muteHttpExceptions option to examine full response)",General
+4/03/2026 14:51:34,ERROR,3566,Error Inicial,Sin Tipo,,,,,"Request failed for https://api.fieldbeat.com returned code 404. Truncated server response: <!DOCTYPE html><HTML><HEAD>    <TITLE>Microsoft Azure App Service - Welcome</TITLE>    <SCRIPT type=""text/javascript"">        function loc() {     ... (use muteHttpExceptions option to examine full response)",General
+4/03/2026 11:20:00,Éxito (Sin Repuestos),3564,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+3/03/2026 21:30:00,Éxito (Con Repuestos),3563,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1550513,1,Pañol E&G,5428,,General
+2/03/2026 11:00:00,Éxito (Sin Repuestos),3561,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+27/02/2026 22:30:00,Éxito (Sin Repuestos),3557,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+27/02/2026 18:00:00,Éxito (Con Repuestos),3579,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,1024939,1,Pañol E&G,5431,,General
+27/02/2026 14:10:00,Éxito (Sin Repuestos),3556,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+26/02/2026 19:00:00,Éxito (Con Repuestos),3555,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1534958,3,Pañol E&G,5427,,General
+26/02/2026 9:00:00,Éxito (Con Repuestos),3553,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,1024939,1,Pañol E&G,5423,,General
+25/02/2026 21:30:00,Éxito (Con Repuestos),3552,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,1564169,1,Pañol E&G,5424,,General
+23/02/2026 21:00:00,Éxito (Sin Repuestos),3550,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+23/02/2026 10:27:00,Éxito (Sin Repuestos),3549,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+23/02/2026 9:00:00,Éxito (Sin Repuestos),3548,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+20/02/2026 14:24:00,Éxito (Sin Repuestos),3546,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+19/02/2026 16:15:00,Éxito (Sin Repuestos),3545,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+19/02/2026 9:30:00,Éxito (Sin Repuestos),3542,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+19/02/2026 8:30:00,Éxito (Sin Repuestos),3543,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+18/02/2026 11:30:00,Éxito (Sin Repuestos),3541,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+18/02/2026,Éxito (Con Repuestos),3540,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1541718,2,Pañol E&G,5421,,General
+17/02/2026 19:30:00,Éxito (Sin Repuestos),3539,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,,,,,,General
+16/02/2026 9:30:00,Éxito (Sin Repuestos),3537,CLINICA ALEMANA DE SANTIAGO,Sin Tipo,,,,,,General
+13/02/2026 18:30:00,ERROR,3535,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,1571202,1,Pañol E&G,,API Error 404,General
+13/02/2026 18:30:00,Éxito (Sin Repuestos),3535,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+13/02/2026 12:20:00,Éxito (Sin Repuestos),3536,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+12/02/2026 19:30:00,Éxito (Sin Repuestos),3534,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+12/02/2026 13:00:00,Éxito (Sin Repuestos),3533,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+11/02/2026 19:57:00,Éxito (Sin Repuestos),3532,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA V2,,,,,,General
+11/02/2026 16:21:00,Éxito (Sin Repuestos),3531,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,,,,,,General
+11/02/2026 16:00:00,Éxito (Sin Repuestos),3530,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA V2,,,,,,General
+10/02/2026 19:30:00,Éxito (Sin Repuestos),3528,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+10/02/2026 19:00:00,Éxito (Sin Repuestos),3529,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+10/02/2026 17:12:00,Éxito (Sin Repuestos),3527,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA V2,,,,,,General
+9/02/2026 18:30:00,Éxito (Sin Repuestos),3526,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+9/02/2026 10:30:00,Éxito (Sin Repuestos),3524,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+9/02/2026 10:30:00,Éxito (Sin Repuestos),3521,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+9/02/2026 8:30:00,Éxito (Sin Repuestos),3522,HOSPITAL CARLOS VAN BUREN (SSVSA),PUESTA EN MARCHA,,,,,,General
+9/02/2026,Éxito (Sin Repuestos),3525,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+9/02/2026,Éxito (Con Repuestos),3523,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1564298,2,Pañol E&G,5403,,General
+7/02/2026 14:15:00,Éxito (Sin Repuestos),3520,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA V2,,,,,,General
+6/02/2026 19:02:00,Éxito (Sin Repuestos),3518,Instituto Nacional del Cáncer (INC),REQUERIMIENTO DEL CLIENTE,,,,,,General
+6/02/2026 18:30:00,Éxito (Sin Repuestos),3517,Instituto Nacional del Cáncer (INC),PREVENTIVA PROGRAMADA,,,,,,General
+6/02/2026 16:00:00,Éxito (Sin Repuestos),3519,UC CHRISTUS - CECA,PUESTA EN MARCHA,,,,,,General
+4/02/2026 14:33:00,Éxito (Con Repuestos),3516,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,1515098,1,Pañol E&G,5401,,General
+4/02/2026 8:30:00,Éxito (Con Repuestos),3515,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,1018559,1,Pañol E&G,5402,,General
+3/02/2026 16:55:00,Éxito (Sin Repuestos),3514,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+3/02/2026 10:30:00,Éxito (Sin Repuestos),3513,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+2/02/2026 8:16:00,Éxito (Sin Repuestos),3511,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+2/02/2026 0:48:00,Éxito (Sin Repuestos),3512,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+31/01/2026 15:00:00,Éxito (Sin Repuestos),3510,CLINICA ALEMANA DE SANTIAGO,PREVENTIVA PROGRAMADA,,,,,,General
+31/01/2026 15:00:00,Éxito (Sin Repuestos),3508,CLINICA ALEMANA DE SANTIAGO,PREVENTIVA PROGRAMADA,,,,,,General
+30/01/2026 21:00:00,Éxito (Con Repuestos),3551,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,1502613,1,Pañol E&G,5422,,General
+30/01/2026 21:00:00,Éxito (Sin Repuestos),3507,Instituto Nacional del Cáncer (INC),REQUERIMIENTO DEL CLIENTE,,,,,,General
+30/01/2026 12:06:00,Éxito (Sin Repuestos),3506,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+29/01/2026 18:44:26,Éxito (Sin Repuestos),3504,SERVICIO DE SALUD DE MAGALLANES,INSTALACION - INTEGRACION,,,,,,General
+29/01/2026 15:27:00,Éxito (Sin Repuestos),3505,INRAD,REQUERIMIENTO DEL CLIENTE,,,,,,General
+29/01/2026 14:00:00,Éxito (Sin Repuestos),3501,INSTITUTO DE SALUD PUBLICA (ISP),PREVENTIVA PROGRAMADA,,,,,,General
+29/01/2026 12:36:00,Éxito (Sin Repuestos),3503,INRAD,CORRECTIVA NO PROGRAMADA,,,,,,General
+29/01/2026 9:22:00,Éxito (Sin Repuestos),3502,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+28/01/2026 21:30:00,ERROR,3500,HOSPITAL CARLOS VAN BUREN (SSVSA),Sin Tipo,xxxxx,1,Bodega HCVB,,API Error 404,General
+28/01/2026 20:30:00,Éxito (Con Repuestos),3499,UC CHRISTUS - SCA,CORRECTIVA NO PROGRAMADA,1534958,1,Pañol E&G,5393,,General
+27/1/2026 21:00:00,Éxito (Con Repuestos),3497,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,4513341185001U,1,Pañol E&G,5339,,General
+27/1/2026 21:00:00,Éxito (Sin Repuestos),3492,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+27/1/2026 20:00:00,Éxito (Sin Repuestos),3498,UC CHRISTUS - SCA,ASISTENCIA REMOTA,,,,,,General
+27/1/2026 19:00:00,Éxito (Sin Repuestos),3494,CLÍNICA LAS CONDES,PREVENTIVA PROGRAMADA,,,,,,General
+27/1/2026 18:18:00,Éxito (Validación Manual),3495,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA V2,1507972,1,Pañol E&G,5380,":: ESTATUS ACTUALIZADO: SKU antiguo ingresado en el reporte, se realizó la actualización manual de 1500954 a 1507972        ",General
+27/1/2026 17:56:00,Éxito (Sin Repuestos),3493,CLÍNICA LAS CONDES,PREVENTIVA PROGRAMADA,,,,,,General
+27/1/2026 17:45:00,Éxito (Sin Repuestos),3496,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+26/1/2026 10:45:00,Éxito (Sin Repuestos),3491,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+26/1/2026 8:30:00,Éxito (Sin Repuestos),3490,HOSPITAL CARLOS VAN BUREN (SSVSA),PUESTA EN MARCHA,,,,,,General
+26/01/2026 8:05:00,Éxito (Sin Repuestos),3489,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+24/1/2026 14:30:00,Éxito (Sin Repuestos),3487,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+24/1/2026 13:22:00,Éxito (Sin Repuestos),3486,UC CHRISTUS - CECA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+24/1/2026 12:30:00,Éxito (Sin Repuestos),3488,HOSPITAL CARLOS VAN BUREN (SSVSA),PREVENTIVA PROGRAMADA,,,,,,General
+23/1/2026 20:30:00,Éxito (Sin Repuestos),3485,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+23/1/2026 16:10:00,Éxito (Sin Repuestos),3484,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+22/1/2026 12:10:00,Éxito (Sin Repuestos),3482,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+21/1/2026 21:38:00,Éxito (Sin Repuestos),3483,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+21/1/2026 15:55:00,Éxito (Sin Repuestos),3481,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+20/1/2026 19:30:00,Éxito (Sin Repuestos),3478,CLÍNICA LAS CONDES,PREVENTIVA PROGRAMADA,,,,,,General
+20/1/2026 13:57:00,Éxito (Con Repuestos),3479,INRAD,CORRECTIVA PROGRAMADA,1515997,1,Pañol E&G,5331,,General
+19/1/2026 11:00:00,Éxito (Sin Repuestos),3475,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+19/1/2026 9:10:00,Éxito (Sin Repuestos),3476,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+19/1/2026 8:30:00,Éxito (Sin Repuestos),3474,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+16/1/2026 23:00:00,Éxito (Validación Manual),3473,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1505856,1,Pañol E&G,FIX_PATCH_20260119, :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+16/1/2026 21:33:00,Éxito (Sin Repuestos),3472,HOSPITAL CARLOS VAN BUREN (SSVSA),REQUERIMIENTO DEL CLIENTE,,,,,,General
+16/1/2026 21:08:00,Éxito (Sin Repuestos),3467,HOSPITAL CARLOS VAN BUREN (SSVSA),PREVENTIVA PROGRAMADA,,,,,,General
+16/1/2026 20:30:00,Éxito (Sin Repuestos),3477,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+16/1/2026 20:30:00,Éxito (Sin Repuestos),3469,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+16/1/2026 19:30:00,Éxito (Sin Repuestos),3470,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+16/1/2026 16:45:00,Éxito (Con Repuestos),3471,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA V2,45133304800,1,Pañol E&G,,,General
+14/1/2026 18:15:00,Éxito (Validación Manual),3463,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,BJ4853.101.00,1,Otros (Comente),FIX_PATCH_20260119,"Bodega ""Otros (Comente)"" no está en el Diccionario. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+13/1/2026 22:55:00,Éxito (Validación Manual),3462,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,1534958,8,Pañol E&G,FIX_PATCH_20260119,Stock insuficiente para SKU 1534958 en bodegas E&G. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+12/1/2026 9:00:00,Éxito (Sin Repuestos),3460,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA V2,,,,,,General
+8/1/2026 20:00:00,Éxito (Sin Repuestos),3459,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+8/1/2026 17:00:00,Éxito (Sin Repuestos),3461,CLÍNICA SANATORIO ALEMÁN (ONCORAD),REQUERIMIENTO DEL CLIENTE,,,,,,General
+8/1/2026 17:00:00,Éxito (Sin Repuestos),3458,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+7/1/2026 11:00:00,Éxito (Sin Repuestos),3457,HOSPITAL CARLOS VAN BUREN (SSVSA),ASISTENCIA REMOTA,,,,,,General
+6/1/2026 20:00:00,Éxito (Validación Manual),3456,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,1509023,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API Error 404: {
+    ""error"": {
+        ""code"": 404,
+        ""message"": ""Not Found: No stock found""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:1884 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+5/1/2026 12:00:00,Éxito (Validación Manual),3453,INRAD,CORRECTIVA PROGRAMADA,CX1551G,1,Otros (Comente),FIX_PATCH_20260119,"Bodega ""Otros (Comente)"" no está en el Diccionario. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+5/1/2026 9:30:00,Éxito (Validación Manual),3452,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,LT05035,1,Otros (Comente),FIX_PATCH_20260119,"Bodega ""Otros (Comente)"" no está en el Diccionario. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+2/1/2026 21:00:00,Éxito (Validación Manual),3451,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1541718,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1541718') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1541718')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+31/12/2025 19:30:00,Éxito (Validación Manual),3449,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1541718,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1541718') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1541718')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+31/12/2025 11:15:00,Éxito (Sin Repuestos),3448,INRAD,CORRECTIVA NO PROGRAMADA,,,,,,General
+29/12/2025 17:02:00,Éxito (Validación Manual),3447,INRAD,ASISTENCIA REMOTA,No hay ,0,,FIX_PATCH_20260119,Cantidad de repuesto no especificada o es cero. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+29/12/2025 9:00:00,Éxito (Sin Repuestos),3446,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+26/12/2025 19:30:00,Éxito (Sin Repuestos),3444,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+26/12/2025 12:18:00,Éxito (Sin Repuestos),3443,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+26/12/2025 11:44:00,Éxito (Sin Repuestos),3442,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+24/12/2025 20:08:00,Éxito (Sin Repuestos),3441,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+22/12/2025 10:50:00,Éxito (Sin Repuestos),3439,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+19/12/2025 15:10:00,Éxito (Sin Repuestos),3438,CLÍNICA LAS CONDES,CORRECTIVA NO PROGRAMADA,,,,,,General
+17/12/2025 19:00:00,Éxito (Sin Repuestos),3437,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+17/12/2025 14:00:00,Éxito (Validación Manual),3436,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,1572991,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1572991') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1572991')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+15/12/2025 19:30:00,Éxito (Sin Repuestos),3434,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+15/12/2025 12:30:00,Éxito (Sin Repuestos),3433,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+15/12/2025 8:30:00,Éxito (Sin Repuestos),3435,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+15/12/2025 0:00:00,Éxito (Validación Manual),3425,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,1007288,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1007288') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1007288')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+12/12/2025 9:30:00,Éxito (Validación Manual),3427,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,1517657,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1517657') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1517657')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+12/12/2025 9:00:00,Éxito (Sin Repuestos),3431,HOSPITAL CARLOS VAN BUREN (SSVSA),ASISTENCIA REMOTA,,,,,,General
+11/12/2025 16:40:00,Éxito (Sin Repuestos),3429,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+11/12/2025 16:35:00,Éxito (Sin Repuestos),3428,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,,,,,,General
+10/12/2025 8:43:00,Éxito (Validación Manual),3423,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,1517657,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1517657') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1517657')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+9/12/2025 18:04:00,Éxito (Sin Repuestos),3422,UC CHRISTUS - SCA,CORRECTIVA NO PROGRAMADA,,,,,,General
+5/12/2025 23:55:00,Éxito (Sin Repuestos),3418,Instituto Nacional del Cáncer (INC),PREVENTIVA PROGRAMADA,,,,,,General
+5/12/2025 20:02:00,Éxito (Validación Manual),3420,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1541718,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1541718') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1541718')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+5/12/2025 18:00:00,Éxito (Sin Repuestos),3421,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,,,,,,General
+4/12/2025 17:00:00,Éxito (Sin Repuestos),3417,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,,General
+4/12/2025 10:30:00,Éxito (Sin Repuestos),3415,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+3/12/2025 20:00:00,Éxito (Sin Repuestos),3414,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+3/12/2025 18:20:00,Éxito (Sin Repuestos),3416,UC CHRISTUS - SCA,ASISTENCIA REMOTA,,,,,,General
+3/12/2025 16:06:00,Éxito (Sin Repuestos),3413,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+3/12/2025 14:15:00,Éxito (Sin Repuestos),3412,UC CHRISTUS - CECA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+1/12/2025 9:43:00,Éxito (Validación Manual),3411,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,FIX_PATCH_20260119,Falla al obtener datos de Fieldbeat: Cannot read properties of undefined (reading 'groups') :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+1/12/2025 9:15:00,Éxito (Sin Repuestos),3410,HOSPITAL CARLOS VAN BUREN (SSVSA),PUESTA EN MARCHA,,,,,,General
+29/11/2025 15:05:00,Éxito (Sin Repuestos),3409,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+29/11/2025 15:04:00,Éxito (Sin Repuestos),3408,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+27/11/2025 14:48:00,Éxito (Sin Repuestos),3406,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+27/11/2025 11:56:00,Éxito (Sin Repuestos),3405,INRAD,CORRECTIVA NO PROGRAMADA,,,,,,General
+25/11/2025 19:30:00,Éxito (Validación Manual),3419,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,1531848,1,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+25/11/2025 14:19:00,Éxito (Validación Manual),3403,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,1534958,9,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1534958') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1534958')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+25/11/2025 8:30:00,Éxito (Validación Manual),3400,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,1567798,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1567798') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1567798')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+24/11/2025 19:55:00,Éxito (Sin Repuestos),3399,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+24/11/2025 9:30:00,Éxito (Sin Repuestos),3402,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+24/11/2025 8:30:00,Éxito (Sin Repuestos),3401,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+24/11/2025 8:30:00,Éxito (Sin Repuestos),3398,HOSPITAL CARLOS VAN BUREN (SSVSA),PUESTA EN MARCHA,,,,,,General
+21/11/2025 15:46:00,Éxito (Validación Manual),3394,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,1517098,2,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1517098') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1517098')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+18/11/2025 18:30:00,Éxito (Sin Repuestos),3393,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+18/11/2025 16:56:00,Éxito (Validación Manual),3392,INRAD,CORRECTIVA PROGRAMADA,LMD. 45133909025. ME 1008587,2,Pañol del sitio,FIX_PATCH_20260119,"La bodega de origen ""Pañol del sitio"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+18/11/2025 15:07:00,Éxito (Sin Repuestos),3391,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+17/11/2025 23:30:00,Éxito (Sin Repuestos),3397,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+17/11/2025 10:33:00,Éxito (Sin Repuestos),3388,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+14/11/2025 23:00:00,Éxito (Validación Manual),3396,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,1565835,2,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1565835') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1565835')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+14/11/2025 20:57:00,Éxito (Sin Repuestos),3384,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+14/11/2025 20:34:00,Éxito (Validación Manual),3383,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,4513341185001U,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'4513341185001U') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'4513341185001U')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+14/11/2025 19:00:00,Éxito (Sin Repuestos),3389,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+14/11/2025 17:30:00,Éxito (Sin Repuestos),3380,CLÍNICA LAS CONDES,CORRECTIVA NO PROGRAMADA,,,,,,General
+14/11/2025 17:05:00,Éxito (Validación Manual),3390,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,1534958,16,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1534958') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1534958')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+14/11/2025 16:30:00,Éxito (Sin Repuestos),3382,CLÍNICA LAS CONDES,REQUERIMIENTO DEL CLIENTE,,,,,,General
+14/11/2025 14:34:00,Éxito (Validación Manual),3379,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,no,0,,FIX_PATCH_20260119,Cantidad de repuesto no especificada o es cero. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+13/11/2025 21:40:00,Éxito (Sin Repuestos),3385,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+12/11/2025 11:24:00,Éxito (Validación Manual),3377,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,1517657,2,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1517657') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1517657')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+11/11/2025 14:49:00,Éxito (Sin Repuestos),3376,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,,,,,,General
+11/11/2025 12:52:00,Éxito (Validación Manual),3375,INRAD,CORRECTIVA PROGRAMADA,MG5193,1,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+10/11/2025 11:30:00,Éxito (Sin Repuestos),3374,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,General
+10/11/2025 10:00:00,Éxito (Sin Repuestos),3386,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+10/11/2025 8:50:00,Éxito (Sin Repuestos),3372,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+8/11/2025 1:00:00,Éxito (Validación Manual),3371,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,1534958,10,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1534958') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1534958')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+7/11/2025 20:00:00,Éxito (Validación Manual),3373,RADIO ONCOLOGÍA DEL SUR,PREVENTIVA PROGRAMADA,1018265,1,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+7/11/2025 10:00:00,Éxito (Validación Manual),3370,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1549950,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1549950') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1549950')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+6/11/2025 22:00:00,Éxito (Sin Repuestos),3369,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+6/11/2025 16:00:00,Éxito (Sin Repuestos),3367,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,General
+6/11/2025 15:40:00,Éxito (Sin Repuestos),3368,FUNDACION ARTURO LOPEZ PEREZ,INSTALACION - INTEGRACION,,,,,,General
+5/11/2025 16:10:00,Éxito (Sin Repuestos),3366,HOSPITAL CARLOS VAN BUREN (SSVSA),REQUERIMIENTO DEL CLIENTE,,,,,,General
+4/11/2025 20:30:00,Éxito (Sin Repuestos),3365,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+3/11/2025 10:27:00,Éxito (Validación Manual),3364,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,FIX_PATCH_20260119,Falla al obtener datos de Fieldbeat: Cannot read properties of undefined (reading 'groups') :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+29/10/2025 13:16:00,Éxito (Sin Repuestos),3363,HOSPITAL CARLOS VAN BUREN (SSVSA),REQUERIMIENTO DEL CLIENTE,,,,,,General
+28/10/2025 21:00:00,Éxito (Validación Manual),3362,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,1564298,2,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1564298') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1564298')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+27/10/2025 20:05:00,Éxito (Validación Manual),3361,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,1534958,13,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1534958') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1534958')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+27/10/2025 9:46:00,Éxito (Sin Repuestos),3360,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+25/10/2025 21:34:00,Éxito (Validación Manual),3359,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,1565835,2,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1565835') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1565835')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+24/10/2025 20:30:00,Éxito (Validación Manual),3358,CLÍNICA SANATORIO ALEMÁN (ONCORAD),PREVENTIVA PROGRAMADA,45133326854,1,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+24/10/2025 17:35:00,Éxito (Validación Manual),3357,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,117482,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'117482') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'117482')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+23/10/2025 20:00:00,Éxito (Sin Repuestos),3356,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+23/10/2025 18:40:00,Éxito (Sin Repuestos),3355,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,General
+23/10/2025 9:16:00,Éxito (Sin Repuestos),3353,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+23/10/2025 3:00:00,Éxito (Validación Manual),3354,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,1531853,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1531853') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1531853')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+21/10/2025 20:32:00,Éxito (Sin Repuestos),3352,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+21/10/2025 15:50:00,Éxito (Sin Repuestos),3351,INSTITUTO DE SALUD PUBLICA (ISP),PREVENTIVA PROGRAMADA,,,,,,General
+20/10/2025 19:30:00,Éxito (Sin Repuestos),3350,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+20/10/2025 11:15:00,Éxito (Sin Repuestos),3348,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,General
+20/10/2025 10:30:00,Éxito (Sin Repuestos),3346,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+17/10/2025 22:30:00,Éxito (Validación Manual),3349,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,1529520-1527814,2,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+17/10/2025 17:09:00,Éxito (Validación Manual),3345,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1534958,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1534958') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1534958')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+16/10/2025 9:30:00,Éxito (Sin Repuestos),3344,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,,,,,,General
+16/10/2025 0:00:00,Éxito (Validación Manual),3347,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,no,0,Otros (Comente),FIX_PATCH_20260119,Cantidad de repuesto no especificada o es cero. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+15/10/2025 22:00:00,Éxito (Sin Repuestos),3343,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+15/10/2025 14:46:00,Éxito (Sin Repuestos),3342,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+14/10/2025 15:13:00,Éxito (Sin Repuestos),3339,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+14/10/2025 15:00:00,Éxito (Sin Repuestos),3340,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+14/10/2025 11:30:00,Éxito (Validación Manual),3341,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,0,0,Otros (Comente),FIX_PATCH_20260119,Cantidad de repuesto no especificada o es cero. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+13/10/2025 13:55:00,Éxito (Sin Repuestos),3338,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+13/10/2025 13:45:00,Éxito (Validación Manual),3337,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1534958,11,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1534958') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1534958')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+13/10/2025 13:35:00,Éxito (Sin Repuestos),3336,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+13/10/2025 13:25:00,Éxito (Sin Repuestos),3335,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+13/10/2025 13:20:00,Éxito (Sin Repuestos),3334,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+13/10/2025 13:15:00,Éxito (Sin Repuestos),3333,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+11/10/2025 18:26:00,Éxito (Sin Repuestos),3328,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+11/10/2025 18:10:00,Éxito (Sin Repuestos),3329,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+11/10/2025 11:00:00,Éxito (Validación Manual),3332,SERVICIO DE SALUD DE MAGALLANES,REQUERIMIENTO DEL CLIENTE,N/A,0,Otros (Comente),FIX_PATCH_20260119,Cantidad de repuesto no especificada o es cero. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente),General
+11/10/2025 6:07:00,Éxito (Sin Repuestos),3330,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,,,,,,General
+10/10/2025 22:30:00,Éxito (Sin Repuestos),3326,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+10/10/2025 22:30:00,Éxito (Sin Repuestos),3325,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+10/10/2025 22:00:00,Éxito (Validación Manual),3331,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,1531853,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1531853') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1531853')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+10/10/2025 19:48:00,Éxito (Sin Repuestos),3327,UC CHRISTUS - CECA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+9/10/2025 20:00:00,Éxito (Sin Repuestos),3323,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+9/10/2025 20:00:00,Éxito (Sin Repuestos),3322,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+9/10/2025 16:30:00,Éxito (Sin Repuestos),3320,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,,,,,,General
+9/10/2025 10:00:00,Éxito (Sin Repuestos),3324,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+3/10/2025 21:30:00,Éxito (Sin Repuestos),3317,Instituto Nacional del Cáncer (INC),PREVENTIVA PROGRAMADA,,,,,,General
+3/10/2025 21:30:00,Éxito (Sin Repuestos),3316,Instituto Nacional del Cáncer (INC),PREVENTIVA PROGRAMADA,,,,,,General
+2/10/2025 18:00:00,Éxito (Validación Manual),3318,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,1564298,1,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+2/10/2025 16:30:00,Éxito (Sin Repuestos),3315,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,General
+2/10/2025 0:00:00,Éxito (Validación Manual),3311,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,1572991,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1572991') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1572991')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+1/10/2025 21:25:00,Éxito (Sin Repuestos),3313,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+1/10/2025 14:37:00,Éxito (Sin Repuestos),3312,INRAD,REQUERIMIENTO DEL CLIENTE,,,,,,General
+30/9/2025 20:30:00,Éxito (Sin Repuestos),3314,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA PROGRAMADA,,,,,,General
+29/9/2025 10:30:00,Éxito (Sin Repuestos),3309,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+26/9/2025 19:33:00,Éxito (Sin Repuestos),3308,INRAD,PREVENTIVA PROGRAMADA,,,,,,General
+26/9/2025 17:00:00,Éxito (Sin Repuestos),3310,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA NO PROGRAMADA,,,,,,General
+26/9/2025 13:39:00,Éxito (Validación Manual),3307,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,1534958,2,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+25/9/2025 22:30:00,Éxito (Validación Manual),3306,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,1502613,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1502613') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1502613')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+24/9/2025 20:30:00,Éxito (Sin Repuestos),3305,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+23/9/2025 18:00:00,Éxito (Sin Repuestos),3304,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+23/9/2025 0:00:00,Éxito (Sin Repuestos),3303,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+22/9/2025 18:06:00,Éxito (Sin Repuestos),3302,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+22/9/2025 9:15:00,Éxito (Sin Repuestos),3301,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+16/9/2025 20:36:00,Éxito (Sin Repuestos),3300,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+15/9/2025 9:51:00,Éxito (Sin Repuestos),3299,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+12/9/2025 13:30:00,Éxito (Validación Manual),3298,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,1549816,1,Otros (Comente),FIX_PATCH_20260119,"La bodega de origen ""Otros (Comente)"" no se encontró en la hoja 'Diccionario'. :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+12/9/2025 11:45:00,Éxito (Sin Repuestos),3297,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,General
+10/9/2025 11:37:00,Éxito (Sin Repuestos),3296,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+9/9/2025 14:30:00,Éxito (Validación Manual),3293,CLÍNICA LAS CONDES,CORRECTIVA PROGRAMADA,1567203,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1567203') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1567203')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+9/9/2025 14:15:00,Éxito (Validación Manual),3295,UC CHRISTUS - SCA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+8/09/2025 10:14:00,Éxito (Sin Repuestos),3289,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+5/9/2025 20:30:00,Éxito (Validación Manual),3294,CLÍNICA LAS CONDES,CORRECTIVA NO PROGRAMADA,1564281,1,Pañol E&G,FIX_PATCH_20260119,"Dolibarr API error: 503 en products?sqlfilters=(t.ref:'1564281') - {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when retrieve product list : You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':'1564281')) ORDER BY t.ref ASC LIMIT 101' at line 1""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:260 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+} :: ESTATUS ACTUALIZADO: modificado post fix de errores de la versión 19/01/2026 (Validado Manualmente)",General
+27/08/2025 9:45:00,Éxito (Sin Repuestos),3272,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+25/08/2025 9:15:00,Éxito (Sin Repuestos),3269,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+22/08/2025 9:09:00,Éxito (Sin Repuestos),3264,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+11/08/2025 10:45:00,Éxito (Sin Repuestos),3240,CLINICA ALEMANA DE SANTIAGO,PUESTA EN MARCHA,,,,,,General
+24/7/2025 20:00:00,Éxito (Sin Repuestos),3202,FUNDACION ARTURO LOPEZ PEREZ,,,,,,,General
+24/7/2025 20:00:00,Éxito (Sin Repuestos),3201,FUNDACION ARTURO LOPEZ PEREZ,,,,,,,General
+22/7/2025 23:00:00,Éxito (Sin Repuestos),3203,SERVICIO DE SALUD DE MAGALLANES,,,,,,,General
+29/05/2026 19:30:00,Éxito (Sin Repuestos),3735,RADIO ONCOLOGÍA DEL SUR,PREVENTIVA PROGRAMADA,,,,,,General
+4/06/2026 8:30:00,Éxito (Sin Repuestos),3734,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+4/06/2026 10:41:00,Éxito (Sin Repuestos),3736,Instituto Nacional del Cáncer (INC),REQUERIMIENTO DEL CLIENTE,,,,,,General
+6/06/2026 15:10:00,Éxito (Sin Repuestos),3741,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+5/06/2026 12:22:00,Éxito (Sin Repuestos),3738,Instituto Nacional del Cáncer (INC),PREVENTIVA PROGRAMADA,,,,,,General
+5/06/2026 20:25:00,Éxito (Con Repuestos),3740,Instituto Nacional del Cáncer (INC),CORRECTIVA NO PROGRAMADA,1564298,1,Pañol E&G,5462,,General
+8/06/2026 9:41:00,Éxito (Sin Repuestos),3742,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA NO PROGRAMADA,,,,,,General
+8/06/2026 22:00:00,Éxito (Sin Repuestos),3746,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,,,,,,General
+8/06/2026 22:00:00,Éxito (Sin Repuestos),3745,Instituto Nacional del Cáncer (INC),CORRECTIVA PROGRAMADA,,,,,,General
+9/06/2026 1:30:00,Éxito (Sin Repuestos),3747,UC CHRISTUS - CECA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+11/06/2026 22:30:00,ERROR,3749,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,1534958,1,,,"Bodega ""undefined"" no mapeada.",General
+11/06/2026 22:30:00,Éxito (Sin Repuestos),3749,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA NO PROGRAMADA,,,,,,General
+11/06/2026 21:30:00,ERROR,3748,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,45133412329,1,Pañol E&G,,Stock insuficiente para SKU 45133412329.,General
+11/06/2026 21:30:00,Éxito (Sin Repuestos),3748,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+13/06/2026 14:51:31,Éxito (Sin Repuestos),3751,CLINICA ALEMANA DE SANTIAGO,ASISTENCIA REMOTA,,,,,,General
+13/06/2026 19:00:00,Éxito (Sin Repuestos),3752,UC CHRISTUS - SCA,PREVENTIVA PROGRAMADA,,,,,,General
+13/06/2026 19:00:00,Éxito (Sin Repuestos),3753,UC CHRISTUS - SCA,PREVENTIVA PROGRAMADA,,,,,,General
+15/06/2026 8:30:00,Éxito (Sin Repuestos),3754,CLINICA ALEMANA DE SANTIAGO,PREVENTIVA PROGRAMADA,,,,,,General
+15/06/2026 13:40:00,Éxito (Sin Repuestos),3755,CLÍNICA SANATORIO ALEMÁN (ONCORAD),CORRECTIVA NO PROGRAMADA,,,,,,General
+15/06/2026 15:20:00,Éxito (Sin Repuestos),3756,CLINICA ALEMANA DE SANTIAGO,CORRECTIVA PROGRAMADA,,,,,,General
+17/06/2026 10:00:00,Éxito (Con Repuestos),3759,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,1522567,1,Pañol E&G,5528,,General
+12/06/2026 16:15:00,Éxito (Con Repuestos),3758,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,1502613,1,Pañol E&G,5529,,General
+17/06/2026 11:55:00,Éxito (Con Repuestos),3760,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,1502613,1,Pañol E&G,5530,,General
+17/06/2026 14:48:00,Éxito (Sin Repuestos),3761,INRAD,REQUERIMIENTO DEL CLIENTE,,,,,,General
+18/06/2026 17:30:00,Éxito (Sin Repuestos),3762,SERVICIO DE SALUD DE MAGALLANES,CORRECTIVA PROGRAMADA,,,,,,General
+19/06/2026 17:00:00,Éxito (Sin Repuestos),3764,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA NO PROGRAMADA,,,,,,General
+19/06/2026 13:58:00,Éxito (Sin Repuestos),3763,UC CHRISTUS - CECA,REQUERIMIENTO DEL CLIENTE,,,,,,General
+19/06/2026 19:25:00,Éxito (Con Repuestos),3765,HOSPITAL CARLOS VAN BUREN (SSVSA),CORRECTIVA PROGRAMADA,1505978,1,Pañol E&G,5531,,General
+19/06/2026 19:30:00,Éxito (Sin Repuestos),3766,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+22/06/2026 10:51:31,Éxito (Sin Repuestos),3767,UC CHRISTUS - CECA,CORRECTIVA PROGRAMADA,,,,,,General
+22/06/2026 9:00:00,Éxito (Sin Repuestos),3768,CLINICA ALEMANA DE SANTIAGO,REQUERIMIENTO DEL CLIENTE,,,,,,General
+24/06/2026 8:45:00,Éxito (Sin Repuestos),3771,UC CHRISTUS - SCA,CORRECTIVA PROGRAMADA,,,,,,General
+23/06/2026 20:04:00,Éxito (Sin Repuestos),3770,UC CHRISTUS - SCA,PREVENTIVA PROGRAMADA,,,,,,General
+24/06/2026 21:00:00,Éxito (Sin Repuestos),3772,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+25/06/2026 13:50:00,Éxito (Sin Repuestos),3773,CLÍNICA LAS CONDES,CORRECTIVA NO PROGRAMADA,,,,,,General
+25/06/2026 23:00:00,Éxito (Sin Repuestos),3774,Instituto Nacional del Cáncer (INC),REQUERIMIENTO DEL CLIENTE,,,,,,General
+26/06/2026 18:30:00,Éxito (Sin Repuestos),3775,RADIO ONCOLOGÍA DEL SUR,CORRECTIVA PROGRAMADA,,,,,,General
+27/06/2026 17:11:00,Éxito (Sin Repuestos),3776,UC CHRISTUS - CECA,CORRECTIVA NO PROGRAMADA,,,,,,General
+27/06/2026 18:00:00,Éxito (Con Repuestos),3778,UC CHRISTUS - CECA,PREVENTIVA PROGRAMADA,1534958,4,Pañol E&G,5541,,General
+16/04/2026 17:00:00,Éxito (Sin Repuestos),3655,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+13/04/2026 11:50:00,Éxito (Sin Repuestos),3649,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+6/04/2026 15:30:00,ERROR,3642,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,Barcode Gun.,1,ID Bodega: 13,,"Dolibarr Error: {
+    ""error"": {
+        ""code"": 404,
+        ""message"": ""Not Found: No product found""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:263 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+}",Apoteca
+6/04/2026 15:30:00,Éxito (Sin Repuestos),3642,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+30/03/2026 17:30:00,ERROR,3630,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,2297542,1,ID Bodega: 13,,"Dolibarr Error: {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when create stock movement : No tiene suficiente existencias en el almacen de referencia y la actual configuracion no permite existencias negativas  : 2297542""
+    },
+    ""debug"": {
+        ""source"": ""api_stockmovements.class.php:197 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+}",Apoteca
+30/03/2026 17:30:00,Éxito (Sin Repuestos),3630,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,Apoteca
+27/03/2026 18:35:00,Éxito (Sin Repuestos),3623,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,Apoteca
+26/03/2026 19:30:00,Éxito (Sin Repuestos),3612,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,,,,,,Apoteca
+26/03/2026 12:00:00,Éxito (Sin Repuestos),3610,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,,,,,,Apoteca
+25/03/2026 10:30:00,Éxito (Sin Repuestos),3607,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+20/03/2026 16:00:00,Éxito (Sin Repuestos),3599,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,,,,,,Apoteca
+18/03/2026 11:30:00,Éxito (Sin Repuestos),3595,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+16/03/2026 9:30:00,Éxito (Sin Repuestos),3594,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+27/02/2026 21:30:00,Éxito (Sin Repuestos),3559,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,,Apoteca
+27/02/2026 20:30:00,Éxito (Sin Repuestos),3558,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,,Apoteca
+26/02/2026 12:00:00,Éxito (Sin Repuestos),3554,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+2/01/2026,Éxito (Validación Manual),3450,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,T00010988-01-NR-2,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB,Apoteca
+12/12/2025,Éxito (Validación Manual),3430,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío,Apoteca
+11/12/2025,Éxito (Validación Manual),3426,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío,Apoteca
+10/12/2025,Éxito (Validación Manual),3424,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío,Apoteca
+28/11/2025,Éxito (Validación Manual),3407,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,2467858,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB,Apoteca
+27/11/2025,Éxito (Validación Manual),3404,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío,Apoteca
+23/10/2025,Éxito (Validación Manual),3355,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,2179204,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB,Apoteca
+23/10/2025,Éxito (Validación Manual),3355,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,20870,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB,Apoteca
+29/05/2026 14:40:00,ERROR,3722,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,0,1,ID Bodega: 13,,"Dolibarr Error: {
+    ""error"": {
+        ""code"": 404,
+        ""message"": ""Not Found: No product found""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:263 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+}",Apoteca
+29/05/2026 14:40:00,Éxito (Sin Repuestos),3722,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+1/06/2026 17:30:00,Éxito (Sin Repuestos),3728,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+4/06/2026 18:10:00,Éxito (Sin Repuestos),3737,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,,Apoteca
+5/06/2026 14:30:00,Éxito (Sin Repuestos),3739,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+12/06/2026 16:30:00,Éxito (Sin Repuestos),3750,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca
+22/06/2026 10:33:00,Éxito (Sin Repuestos),3769,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,,Apoteca

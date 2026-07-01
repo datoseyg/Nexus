@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documento Maestro de Relevamiento — NEXUS + CERBERUS</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --paper: #ffffff;
+      --ink: #0f172a;
+      --muted: #475569;
+      --soft: #e2e8f0;
+      --line: #cbd5e1;
+      --blue: #1d4ed8;
+      --blue-soft: #dbeafe;
+      --purple-soft: #ede9fe;
+      --green-soft: #dcfce7;
+      --amber-soft: #fef3c7;
+      --red-soft: #fee2e2;
+      --slate-soft: #f1f5f9;
+      --code-bg: #0f172a;
+      --code-ink: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 36px 24px 80px;
+    }
+    .cover {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #312e81 100%);
+      color: #fff;
+      border-radius: 22px;
+      padding: 42px;
+      margin-bottom: 28px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .18);
+    }
+    .cover h1 {
+      margin: 0 0 10px;
+      font-size: 36px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    .cover h2 {
+      margin: 0 0 22px;
+      font-size: 19px;
+      font-weight: 500;
+      color: #dbeafe;
+    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.24);
+      font-size: 13px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--soft);
+      border-radius: 18px;
+      padding: 24px;
+      margin: 18px 0;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, .05);
+    }
+    h2.section {
+      font-size: 26px;
+      margin: 34px 0 12px;
+      letter-spacing: -0.02em;
+      border-bottom: 3px solid var(--blue-soft);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 19px;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      margin: 18px 0 8px;
+      color: #1e293b;
+    }
+    p { margin: 10px 0; }
+    .lead {
+      font-size: 18px;
+      color: #e0f2fe;
+      max-width: 960px;
+    }
+    .muted { color: var(--muted); }
+    .callout {
+      border-left: 5px solid var(--blue);
+      background: var(--blue-soft);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin: 16px 0;
+    }
+    .warning {
+      border-left: 5px solid #b91c1c;
+      background: var(--red-soft);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin: 16px 0;
+    }
+    .success {
+      border-left: 5px solid #15803d;
+      background: var(--green-soft);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin: 16px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-size: 14px;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+    }
+    th {
+      background: #f1f5f9;
+      text-align: left;
+      font-weight: 700;
+    }
+    tr:nth-child(even) td { background: #fbfdff; }
+    code.inline {
+      background: #e2e8f0;
+      padding: 2px 5px;
+      border-radius: 6px;
+      font-family: Consolas, Menlo, Monaco, monospace;
+      font-size: 0.92em;
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-ink);
+      border-radius: 16px;
+      padding: 18px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.45;
+      border: 1px solid #1e293b;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .mini-card {
+      background: var(--slate-soft);
+      border: 1px solid var(--soft);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 2px 4px 2px 0;
+      background: #e2e8f0;
+    }
+    .pill.blue { background: var(--blue-soft); color: #1e40af; }
+    .pill.purple { background: var(--purple-soft); color: #5b21b6; }
+    .pill.green { background: var(--green-soft); color: #166534; }
+    .pill.amber { background: var(--amber-soft); color: #92400e; }
+    .toc a {
+      color: #1d4ed8;
+      text-decoration: none;
+    }
+    .toc li { margin: 5px 0; }
+    .small { font-size: 13px; }
+    .footer {
+      margin-top: 44px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+    @media (max-width: 860px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .cover { padding: 28px; }
+      .cover h1 { font-size: 28px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .page { max-width: none; padding: 0; }
+      .card { box-shadow: none; break-inside: avoid; }
+      pre { white-space: pre-wrap; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="cover">
+      <h1>Documento Maestro de Relevamiento y Levantamiento</h1>
+      <h2>Fase 1 — NEXUS + CERBERUS · Ecosistema Operacional Unificado</h2>
+      <p class="lead">
+        Este documento concentra el contexto estratégico, técnico, funcional y operativo necesario para que Claude continúe el trabajo sin perder la narrativa del proyecto. Debe entenderse como el documento base desde el cual se desprenden las tareas, decisiones, entregables, límites de alcance y forma de proceder para ejecutar la Fase 1 completa: NEXUS + CERBERUS.
+      </p>
+      <div class="badge-row">
+        <span class="badge">Monto cerrado Fase 1: $3.000.000 CLP</span>
+        <span class="badge">Duración objetivo: 1 mes de desarrollo</span>
+        <span class="badge">Alcance: TODO NEXUS + TODO CERBERUS</span>
+        <span class="badge">Fase 2 proyectada: JANUS + ATLAS en ~6 meses</span>
+      </div>
+    </section>
+
+    <section class="card toc">
+      <h2 style="margin-top:0">Índice operativo</h2>
+      <ol>
+        <li><a href="#lectura-ejecutiva">Lectura ejecutiva del acuerdo</a></li>
+        <li><a href="#contexto">Contexto del ecosistema actual</a></li>
+        <li><a href="#problema">Problema operacional de fondo</a></li>
+        <li><a href="#roadmap">Roadmap actualizado en 2 fases</a></li>
+        <li><a href="#fase1">Fase 1: NEXUS + CERBERUS completo</a></li>
+        <li><a href="#nexus">NEXUS: trazabilidad operacional</a></li>
+        <li><a href="#cerberus">CERBERUS: calidad de reportes FieldBeat</a></li>
+        <li><a href="#modelo">Modelo conceptual integrado</a></li>
+        <li><a href="#datos">Arquitectura de datos sugerida</a></li>
+        <li><a href="#proceder">Cómo debe proceder Claude</a></li>
+        <li><a href="#cronograma">Cronograma de 1 mes</a></li>
+        <li><a href="#entregables">Entregables y criterios de aceptación</a></li>
+        <li><a href="#fase2">Fase 2 proyectada: JANUS + ATLAS</a></li>
+        <li><a href="#prompt">Prompt maestro operativo para Claude</a></li>
+      </ol>
+    </section>
+
+    <section id="lectura-ejecutiva" class="card">
+      <h2 class="section">1. Lectura ejecutiva del acuerdo</h2>
+      <p>
+        El proyecto ya no debe entenderse como una escalera rígida de proyectos separados del tipo <strong>NEXUS → CERBERUS → JANUS → ATLAS</strong>. La decisión final fue organizar la continuidad del ecosistema en <strong>dos grandes fases</strong>.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Fase</th>
+            <th>Componentes</th>
+            <th>Horizonte</th>
+            <th>Propósito central</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Fase 0</strong></td>
+            <td>Base construida durante la práctica</td>
+            <td>Ya realizado</td>
+            <td>Integración inicial FieldBeat + Zendesk + Dolibarr + Google Sheets + Looker Studio.</td>
+          </tr>
+          <tr>
+            <td><strong>Fase 1</strong></td>
+            <td><strong>NEXUS + CERBERUS</strong></td>
+            <td>Ahora · 1 mes</td>
+            <td>Construir trazabilidad operacional completa y control de calidad completo sobre reportes FieldBeat.</td>
+          </tr>
+          <tr>
+            <td><strong>Fase 2</strong></td>
+            <td><strong>JANUS + ATLAS</strong></td>
+            <td>Posterior a Fase 1 · aprox. 6 meses después</td>
+            <td>Medir uptime/downtime con confianza métrica y consolidar una base operacional unificada.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="success">
+        <strong>Idea fuerza:</strong> primero se ordena, relaciona y valida la operación; luego se mide disponibilidad y se escala la infraestructura.
+      </div>
+      <p>
+        La Fase 1 fue cerrada por <strong>$3.000.000 CLP</strong> e incluye <strong>todo NEXUS y todo CERBERUS</strong>. Esto exige una ejecución compacta, intensiva y muy disciplinada en alcance. El proyecto debe entregar valor gerencial tangible sin intentar resolver manualmente todo el histórico ni reemplazar aún la futura infraestructura ATLAS.
+      </p>
+    </section>
+
+    <section id="contexto" class="card">
+      <h2 class="section">2. Contexto del ecosistema actual</h2>
+      <p>
+        Durante la práctica profesional se construyeron bases funcionales del <strong>Ecosistema Operacional Unificado</strong>, integrando información de FieldBeat, Zendesk, Dolibarr, Google Sheets y Looker Studio. Esta base permitió avanzar desde datos dispersos hacia una primera visión operacional, pero todavía existen brechas críticas de calidad, trazabilidad y gobernanza.
+      </p>
+      <div class="grid-2">
+        <div class="mini-card">
+          <h3>Fuentes principales</h3>
+          <ul>
+            <li><strong>FieldBeat:</strong> reportes técnicos, órdenes de trabajo, evidencias de atención en terreno.</li>
+            <li><strong>Zendesk:</strong> tickets de soporte, incidentes, solicitudes y trazabilidad de cliente.</li>
+            <li><strong>Dolibarr:</strong> productos, repuestos, bodegas, inventario y movimientos logísticos.</li>
+            <li><strong>Google Sheets:</strong> capa intermedia, staging, data lake ligero y fuentes auxiliares.</li>
+            <li><strong>Looker Studio:</strong> dashboard operacional inicial y visualización ejecutiva.</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <h3>Base existente</h3>
+          <ul>
+            <li>Integraciones iniciales entre sistemas.</li>
+            <li>Scripts modulares con lógica ETL.</li>
+            <li>Dashboards operacionales iniciales.</li>
+            <li>Primeros puentes FieldBeat–Dolibarr y FieldBeat–Zendesk.</li>
+            <li>Necesidad de formalizar relaciones, calidad y confianza.</li>
+          </ul>
+        </div>
+      </div>
+      <p>
+        El ecosistema actual es útil, pero aún no es una fuente única de verdad. La Fase 1 debe transformar esa base en una capa operacional más confiable, trazable, auditable y preparada para decisiones gerenciales.
+      </p>
+    </section>
+
+    <section id="problema" class="card">
+      <h2 class="section">3. Problema operacional de fondo</h2>
+      <p>
+        El problema no es solamente construir dashboards. El problema real es que la información operacional existe, pero llega fragmentada, incompleta, con relaciones implícitas o débiles y con distintos niveles de confiabilidad.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Problema</th>
+            <th>Impacto</th>
+            <th>Respuesta en Fase 1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Reportes FieldBeat con campos incompletos o ambiguos.</td>
+            <td>Indicadores poco confiables; riesgo de decisiones basadas en evidencia débil.</td>
+            <td><strong>CERBERUS:</strong> evaluación de completitud, consistencia e integridad.</td>
+          </tr>
+          <tr>
+            <td>Tickets que no siempre tienen reportes asociados.</td>
+            <td>No se puede verificar si un incidente tuvo atención técnica respaldada.</td>
+            <td><strong>NEXUS:</strong> detección de tickets sin evidencia técnica.</td>
+          </tr>
+          <tr>
+            <td>Reportes que existen sin ticket claro.</td>
+            <td>Atenciones huérfanas, operación no trazada, dificultad para justificar trabajo.</td>
+            <td><strong>NEXUS:</strong> detección de reportes huérfanos y reconstrucción de atenciones.</td>
+          </tr>
+          <tr>
+            <td>Un ticket puede generar varios reportes y un reporte puede involucrar varias máquinas o repuestos.</td>
+            <td>Las relaciones 1 a 1 son falsas y generan distorsión.</td>
+            <td><strong>NEXUS:</strong> modelo 0..N / N..N con tablas puente.</td>
+          </tr>
+          <tr>
+            <td>Uso de texto libre, SKUs mal formados, bodegas no estandarizadas y cantidades inválidas.</td>
+            <td>Inventario y reportabilidad logística pierden confiabilidad.</td>
+            <td><strong>CERBERUS:</strong> matriz de brechas y lista de saneamiento futuro.</td>
+          </tr>
+          <tr>
+            <td>No existe un indicador explícito de confianza del dato o de la relación.</td>
+            <td>Gerencia ve números sin saber qué tan defendibles son.</td>
+            <td><strong>NEXUS + CERBERUS:</strong> score de confianza relacional e integridad de reportes.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="warning">
+        <strong>Principio rector:</strong> si la relación o el dato no son confiables, no se deben forzar. Es preferible clasificar como dudoso, parcial o pendiente de revisión antes que inventar trazabilidad falsa.
+      </div>
+    </section>
+
+    <section id="roadmap" class="card">
+      <h2 class="section">4. Roadmap actualizado en 2 fases</h2>
+      <p>
+        El roadmap maestro debe presentarse como una evolución en dos grandes bloques. La Fase 1 construye la base operacional confiable; la Fase 2 construye la medición avanzada y la infraestructura unificada.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Bloque</th>
+            <th>Nombre</th>
+            <th>Función</th>
+            <th>Resultado esperado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fase 0</td>
+            <td>Base práctica profesional</td>
+            <td>Integración inicial y dashboard operacional.</td>
+            <td>Primer ecosistema funcional.</td>
+          </tr>
+          <tr>
+            <td>Fase 1</td>
+            <td><strong>NEXUS + CERBERUS</strong></td>
+            <td>Trazabilidad + calidad.</td>
+            <td>Operación relacionada, auditable y clasificada por confiabilidad.</td>
+          </tr>
+          <tr>
+            <td>Fase 2</td>
+            <td><strong>JANUS + ATLAS</strong></td>
+            <td>Disponibilidad + infraestructura.</td>
+            <td>Uptime/downtime confiable y base operacional unificada.</td>
+          </tr>
+          <tr>
+            <td>Evolución posterior</td>
+            <td>BI Gerencial, alertas y analítica avanzada</td>
+            <td>Automatización, reportabilidad recurrente, predicción y gestión proactiva.</td>
+            <td>Operación orientada a decisiones estratégicas.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>PlantUML — Roadmap maestro actualizado</h3>
+      <pre>@startuml
+title Roadmap Maestro - Ecosistema Operacional Unificado\nDos fases estratégicas
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam rectangle {
+  RoundCorner 16
+  BorderColor #334155
+}
+
+rectangle "Fase 0\nBase construida en práctica\n\nFieldBeat + Zendesk + Dolibarr\nGoogle Sheets + Looker Studio" as F0 #E0F2FE
+rectangle "Fase 1\nNEXUS + CERBERUS\n\nTrazabilidad operacional completa\n+ control de calidad FieldBeat\n\nDuración objetivo: 1 mes\nMonto: $3.000.000 CLP" as F1 #EDE9FE
+rectangle "Fase 2\nJANUS + ATLAS\n\nUptime/Downtime con confianza\n+ Base Operacional Unificada\n\nHorizonte: ~6 meses después" as F2 #DCFCE7
+rectangle "Evolución posterior\n\nBI gerencial\nAlertas operacionales\nAnalítica avanzada\nForecast y predicción" as F3 #FEF3C7
+
+F0 -right-> F1 : ordenar, relacionar y validar
+F1 -right-> F2 : medir y consolidar
+F2 -right-> F3 : automatizar y anticipar
+
+note bottom of F1
+Fase actual.
+Incluye TODO NEXUS + TODO CERBERUS.
+No es un piloto parcial.
+end note
+
+note bottom of F2
+Fase futura.
+No implementar ahora,
+pero sí preparar compatibilidad técnica.
+end note
+@enduml</pre>
+    </section>
+
+    <section id="fase1" class="card">
+      <h2 class="section">5. Fase 1 — NEXUS + CERBERUS completo</h2>
+      <p>
+        La Fase 1 integra dos dimensiones complementarias: <strong>trazabilidad operacional</strong> y <strong>calidad de evidencia</strong>. En conjunto responde a una pregunta gerencial clave:
+      </p>
+      <div class="callout">
+        <strong>¿Qué ocurrió operacionalmente, con qué evidencia se respalda, cómo se relaciona con tickets, máquinas, repuestos y atenciones, y qué tan confiable es la información de origen?</strong>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Componente</th>
+            <th>Función</th>
+            <th>Resultado concreto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>NEXUS</strong></td>
+            <td>Relacionar tickets, reportes, atenciones, máquinas, repuestos, bodegas y evidencias.</td>
+            <td>Capa de trazabilidad operacional con confianza relacional.</td>
+          </tr>
+          <tr>
+            <td><strong>CERBERUS</strong></td>
+            <td>Evaluar reportes FieldBeat según completitud, consistencia, campos críticos e integridad.</td>
+            <td>Capa de control de calidad de reportes con clasificación de aptitud.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Alcance incluido</h3>
+      <div class="grid-2">
+        <div class="mini-card">
+          <h4>NEXUS completo</h4>
+          <ul>
+            <li>Modelo de trazabilidad operacional.</li>
+            <li>Relación ticket–reporte.</li>
+            <li>Reconstrucción de atenciones operacionales.</li>
+            <li>Relación reporte–máquina.</li>
+            <li>Relación reporte–repuesto/bodega.</li>
+            <li>Score de confianza relacional.</li>
+            <li>Detección de huérfanos, duplicados y brechas.</li>
+            <li>Dashboard ejecutivo NEXUS.</li>
+            <li>Exportación para BI y documentación.</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <h4>CERBERUS completo</h4>
+          <ul>
+            <li>Diagnóstico de reportes FieldBeat.</li>
+            <li>Matriz de campos críticos.</li>
+            <li>Normalización y diccionario.</li>
+            <li>Evaluador de integridad.</li>
+            <li>Clasificación apto/parcial/dudoso/no apto.</li>
+            <li>Lista de revisión manual.</li>
+            <li>Dashboard ejecutivo CERBERUS.</li>
+            <li>Matriz de brechas de captura.</li>
+            <li>Lista de saneamiento futuro y recomendaciones.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>Fuera de alcance de Fase 1</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Elemento fuera de Fase 1</th>
+            <th>Razón</th>
+            <th>Proyecto relacionado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cálculo formal de uptime/downtime contractual.</td>
+            <td>Requiere reglas contractuales, tiempo disponible y tratamiento formal de downtime.</td>
+            <td>JANUS</td>
+          </tr>
+          <tr>
+            <td>Base operacional unificada definitiva.</td>
+            <td>La Fase 1 puede preparar estructura, pero no reemplaza el diseño físico de base corporativa.</td>
+            <td>ATLAS</td>
+          </tr>
+          <tr>
+            <td>Saneamiento manual completo de todo el histórico.</td>
+            <td>CERBERUS identifica, clasifica y prioriza brechas; no corrige infinitamente todo registro antiguo.</td>
+            <td>Backlog / saneamiento futuro</td>
+          </tr>
+          <tr>
+            <td>Modificación interna de FieldBeat.</td>
+            <td>Depende del proveedor, permisos y decisiones externas.</td>
+            <td>Mejora de captura / proveedor</td>
+          </tr>
+          <tr>
+            <td>Analítica predictiva o mantenimiento predictivo.</td>
+            <td>Requiere datos consolidados y confiables posteriores.</td>
+            <td>Evolución futura</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="nexus" class="card">
+      <h2 class="section">6. NEXUS — Capa de Trazabilidad Operacional</h2>
+      <p>
+        NEXUS debe construir la capa que permite saber qué ocurrió, con qué evidencia se respalda y cómo se relaciona con tickets, reportes, atenciones, máquinas, repuestos y clientes. Su función no es solo unir datos, sino <strong>evitar relaciones falsas</strong> y hacer explícita la confianza de cada vínculo.
+      </p>
+      <h3>Objetivo funcional</h3>
+      <p>
+        Diseñar e implementar una capa de trazabilidad operacional que relacione información de Zendesk, FieldBeat, Dolibarr y el dashboard actual, considerando relaciones 0..N y N..N, relaciones explícitas, inferidas o manuales, y clasificación de confianza.
+      </p>
+      <h3>Reglas conceptuales de cardinalidad</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Relación</th>
+            <th>Cardinalidad esperada</th>
+            <th>Consideración</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ticket → Reporte FieldBeat</td>
+            <td>0..N</td>
+            <td>Un ticket puede no tener reporte, tener uno o varios reportes asociados.</td>
+          </tr>
+          <tr>
+            <td>Reporte FieldBeat → Ticket</td>
+            <td>0..N</td>
+            <td>Un reporte puede existir sin ticket, o relacionarse con uno o más tickets si la operación lo justifica.</td>
+          </tr>
+          <tr>
+            <td>Reporte → Máquina</td>
+            <td>0..N</td>
+            <td>Un reporte puede mencionar una o varias máquinas, o no tener máquina clara.</td>
+          </tr>
+          <tr>
+            <td>Reporte → Repuesto/Bodega</td>
+            <td>0..N</td>
+            <td>Un reporte puede declarar repuestos utilizados, con cantidad, SKU y bodega de origen.</td>
+          </tr>
+          <tr>
+            <td>Atención operacional → Evidencias</td>
+            <td>1..N</td>
+            <td>Una atención puede reconstruirse desde uno o varios reportes, tickets y registros asociados.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Tipos de asociación</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Descripción</th>
+            <th>Uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pill green">Explícita</span></td>
+            <td>Existe un ID, folio, referencia o campo directo que conecta entidades.</td>
+            <td>Máxima confianza.</td>
+          </tr>
+          <tr>
+            <td><span class="pill blue">Inferida</span></td>
+            <td>La relación se deduce por cliente, fechas, máquina, técnico, texto, SKU o proximidad temporal.</td>
+            <td>Confianza variable, requiere score.</td>
+          </tr>
+          <tr>
+            <td><span class="pill amber">Manual</span></td>
+            <td>Relación validada por revisión humana o criterio operativo.</td>
+            <td>Debe dejar trazabilidad de quién, cuándo y por qué.</td>
+          </tr>
+          <tr>
+            <td><span class="pill purple">No determinada</span></td>
+            <td>No hay evidencia suficiente para asociar entidades.</td>
+            <td>Debe quedar en cola de revisión o como brecha.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Score tentativo de confianza relacional</h3>
+      <p>Claude debe ajustar pesos según datos reales, pero puede comenzar con una fórmula interpretativa:</p>
+      <pre>confianza_relacion =
+  0.35 * coincidencia_explicita_id
++ 0.15 * coincidencia_cliente
++ 0.15 * proximidad_temporal
++ 0.15 * coincidencia_maquina
++ 0.10 * coincidencia_tecnico
++ 0.05 * similitud_texto
++ 0.05 * evidencia_repuesto_o_bodega</pre>
+      <table>
+        <thead>
+          <tr>
+            <th>Rango</th>
+            <th>Nivel</th>
+            <th>Acción recomendada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>≥ 0,85</td><td>Alta confianza</td><td>Usar en dashboard y reportabilidad ejecutiva.</td></tr>
+          <tr><td>0,70 – 0,84</td><td>Confianza media-alta</td><td>Usar con advertencia o indicador visual.</td></tr>
+          <tr><td>0,50 – 0,69</td><td>Confianza media/baja</td><td>Mostrar como relación dudosa o revisar.</td></tr>
+          <tr><td>&lt; 0,50</td><td>No confiable</td><td>No consolidar como relación definitiva.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="cerberus" class="card">
+      <h2 class="section">7. CERBERUS — Control de Calidad de Reportes FieldBeat</h2>
+      <p>
+        CERBERUS debe actuar como guardián de entrada: evalúa si los reportes FieldBeat sirven para alimentar trazabilidad, indicadores, inventario, dashboards y futuras métricas de disponibilidad. No solo detecta errores: clasifica el nivel de aptitud operacional de cada reporte.
+      </p>
+      <h3>Objetivo funcional</h3>
+      <p>
+        Diseñar e implementar una capa de control de calidad de reportes FieldBeat que evalúe completitud, consistencia, integridad, campos críticos y aptitud del reporte antes de que alimente indicadores o relaciones operacionales.
+      </p>
+      <h3>Campos críticos a evaluar</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Dimensión</th>
+            <th>Campos esperados</th>
+            <th>Riesgo si falta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Temporal</td>
+            <td>Fecha, hora de inicio, hora de término, duración reportada.</td>
+            <td>No se puede reconstruir atención ni proyectar JANUS correctamente.</td>
+          </tr>
+          <tr>
+            <td>Cliente</td>
+            <td>Cliente, sede, contrato o referencia operacional.</td>
+            <td>No se puede segmentar ni atribuir atención.</td>
+          </tr>
+          <tr>
+            <td>Máquina</td>
+            <td>Código, modelo, número de serie o identificación inequívoca.</td>
+            <td>No se puede analizar historial ni disponibilidad por máquina.</td>
+          </tr>
+          <tr>
+            <td>Técnico/responsable</td>
+            <td>Nombre técnico, responsable, equipo, rol.</td>
+            <td>No se puede auditar ejecución ni detectar brechas por responsable.</td>
+          </tr>
+          <tr>
+            <td>Actividad</td>
+            <td>Tipo de tarea, descripción, estado, cierre, observaciones.</td>
+            <td>No se puede clasificar el evento operacional.</td>
+          </tr>
+          <tr>
+            <td>Repuestos</td>
+            <td>SKU, nombre, cantidad, bodega, evidencia de uso.</td>
+            <td>Inventario pierde trazabilidad y se distorsiona consumo.</td>
+          </tr>
+          <tr>
+            <td>Evidencia</td>
+            <td>Fotos, comentarios, firmas, archivos o respaldos.</td>
+            <td>La atención queda débilmente respaldada.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Score tentativo de integridad de reportes</h3>
+      <pre>integridad_reporte =
+  0.25 * completitud_campos_obligatorios
++ 0.20 * consistencia_temporal
++ 0.20 * identificacion_cliente_maquina
++ 0.15 * consistencia_tecnico_tarea
++ 0.10 * calidad_repuestos_bodega
++ 0.10 * evidencia_y_trazabilidad</pre>
+      <table>
+        <thead>
+          <tr>
+            <th>Rango</th>
+            <th>Clasificación</th>
+            <th>Interpretación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>≥ 0,85</td><td><span class="pill green">Apto</span></td><td>Puede alimentar trazabilidad e indicadores sin advertencia mayor.</td></tr>
+          <tr><td>0,65 – 0,84</td><td><span class="pill blue">Parcialmente apto</span></td><td>Puede usarse, pero con advertencias o limitaciones.</td></tr>
+          <tr><td>0,40 – 0,64</td><td><span class="pill amber">Dudoso</span></td><td>Debe revisarse antes de alimentar indicadores sensibles.</td></tr>
+          <tr><td>&lt; 0,40</td><td><span class="pill purple">No apto</span></td><td>No debe alimentar indicadores sin corrección o revisión.</td></tr>
+        </tbody>
+      </table>
+      <h3>Salida esperada de CERBERUS</h3>
+      <ul>
+        <li>Porcentaje de reportes aptos, parciales, dudosos y no aptos.</li>
+        <li>Ranking de campos faltantes recurrentes.</li>
+        <li>Brechas por cliente, máquina, técnico, tipo de reporte o periodo.</li>
+        <li>Lista de revisión manual priorizada.</li>
+        <li>Matriz de recomendaciones de mejora de captura.</li>
+        <li>Dataset limpio para alimentar NEXUS, dashboards y futura Fase 2.</li>
+      </ul>
+    </section>
+
+    <section id="modelo" class="card">
+      <h2 class="section">8. Modelo conceptual integrado NEXUS + CERBERUS</h2>
+      <p>
+        El modelo debe separar datos crudos, entidades normalizadas, relaciones operacionales y métricas de calidad. NEXUS se apoya en relaciones; CERBERUS se apoya en evaluaciones de integridad. Ambas capas deben conversar.
+      </p>
+      <h3>Entidades principales</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Entidad</th>
+            <th>Función</th>
+            <th>Proyecto que la usa principalmente</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Cliente</td><td>Entidad comercial/operacional asociada a tickets, máquinas, contratos futuros y reportes.</td><td>NEXUS / futuro JANUS</td></tr>
+          <tr><td>Máquina</td><td>Activo operacional que recibe atención técnica y será base futura de uptime/downtime.</td><td>NEXUS / JANUS</td></tr>
+          <tr><td>Ticket</td><td>Incidente o solicitud desde Zendesk.</td><td>NEXUS</td></tr>
+          <tr><td>Reporte FieldBeat</td><td>Evidencia técnica de atención o trabajo en terreno.</td><td>NEXUS + CERBERUS</td></tr>
+          <tr><td>Atención Operacional</td><td>Evento reconstruido que representa lo ocurrido, consolidando una o más evidencias.</td><td>NEXUS</td></tr>
+          <tr><td>Repuesto</td><td>Ítem logístico o técnico utilizado en una atención.</td><td>NEXUS / Dolibarr</td></tr>
+          <tr><td>Bodega</td><td>Origen o destino logístico de repuestos.</td><td>NEXUS / Dolibarr</td></tr>
+          <tr><td>Score de Calidad</td><td>Resultado de CERBERUS sobre completitud e integridad.</td><td>CERBERUS</td></tr>
+          <tr><td>Score de Confianza Relacional</td><td>Resultado de NEXUS sobre la solidez de una relación.</td><td>NEXUS</td></tr>
+          <tr><td>Brecha Operacional</td><td>Problema detectado: dato faltante, relación dudosa, registro huérfano o inconsistencia.</td><td>NEXUS + CERBERUS</td></tr>
+        </tbody>
+      </table>
+      <h3>PlantUML — DER tentativo Fase 1</h3>
+      <pre>@startuml
+title DER Tentativo - Fase 1 NEXUS + CERBERUS\nTrazabilidad Operacional + Calidad de Reportes
+
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam entity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+}
+
+entity "CLIENTE" as CLIENTE {
+  * id_cliente : PK
+  --
+  nombre_cliente
+  rut_cliente
+  estado_cliente
+}
+
+entity "MAQUINA" as MAQUINA {
+  * id_maquina : PK
+  --
+  codigo_maquina
+  modelo
+  numero_serie
+  estado_maquina
+}
+
+entity "TECNICO" as TECNICO {
+  * id_tecnico : PK
+  --
+  nombre_tecnico
+  correo
+  rol
+  estado
+}
+
+entity "TICKET" as TICKET {
+  * id_ticket : PK
+  --
+  codigo_ticket_externo
+  id_cliente : FK
+  fecha_creacion
+  fecha_cierre
+  estado_ticket
+  prioridad
+  asunto
+}
+
+entity "REPORTE_FIELD_BEAT" as REPORTE {
+  * id_reporte : PK
+  --
+  codigo_reporte_externo
+  fecha_reporte
+  hora_inicio
+  hora_termino
+  duracion_reportada
+  id_tecnico : FK
+  estado_reporte
+  integridad_reporte
+  clasificacion_cerberus
+}
+
+entity "ATENCION_OPERACIONAL" as ATENCION {
+  * id_atencion : PK
+  --
+  fecha_inicio
+  fecha_fin
+  duracion_calculada
+  tipo_atencion
+  estado_atencion
+  confianza_atencion
+  origen_atencion
+}
+
+entity "TICKET_REPORTE" as TICKET_REPORTE {
+  * id_ticket_reporte : PK
+  --
+  id_ticket : FK
+  id_reporte : FK
+  tipo_relacion
+  metodo_asociacion
+  confianza_relacion
+  observacion
+}
+
+entity "ATENCION_REPORTE" as ATENCION_REPORTE {
+  * id_atencion_reporte : PK
+  --
+  id_atencion : FK
+  id_reporte : FK
+  rol_reporte
+  confianza_relacion
+}
+
+entity "ATENCION_MAQUINA" as ATENCION_MAQUINA {
+  * id_atencion_maquina : PK
+  --
+  id_atencion : FK
+  id_maquina : FK
+  impacto_operacional
+  confianza_relacion
+}
+
+entity "REPUESTO" as REPUESTO {
+  * id_repuesto : PK
+  --
+  sku
+  nombre_repuesto
+  categoria
+  estado_repuesto
+}
+
+entity "BODEGA" as BODEGA {
+  * id_bodega : PK
+  --
+  codigo_bodega
+  nombre_bodega
+  ubicacion
+  estado_bodega
+}
+
+entity "REPORTE_REPUESTO" as REPORTE_REPUESTO {
+  * id_reporte_repuesto : PK
+  --
+  id_reporte : FK
+  id_repuesto : FK
+  id_bodega : FK
+  cantidad_utilizada
+  confianza_dato
+}
+
+entity "SCORE_CALIDAD_REPORTE" as SCORE {
+  * id_score : PK
+  --
+  id_reporte : FK
+  completitud
+  consistencia_temporal
+  calidad_maquina_cliente
+  calidad_repuesto_bodega
+  evidencia
+  integridad_global
+  clasificacion
+  fecha_evaluacion
+}
+
+entity "BRECHA_OPERACIONAL" as BRECHA {
+  * id_brecha : PK
+  --
+  tipo_brecha
+  entidad_afectada
+  id_entidad_afectada
+  severidad
+  estado_brecha
+  descripcion
+}
+
+CLIENTE ||--o{ TICKET : genera
+CLIENTE ||--o{ MAQUINA : posee_o_utiliza
+TECNICO ||--o{ REPORTE : genera
+TICKET ||--o{ TICKET_REPORTE : relaciona
+REPORTE ||--o{ TICKET_REPORTE : relaciona
+ATENCION ||--o{ ATENCION_REPORTE : se_respalda_en
+REPORTE ||--o{ ATENCION_REPORTE : evidencia
+ATENCION ||--o{ ATENCION_MAQUINA : afecta
+MAQUINA ||--o{ ATENCION_MAQUINA : recibe
+REPORTE ||--o{ REPORTE_REPUESTO : declara_uso
+REPUESTO ||--o{ REPORTE_REPUESTO : utilizado
+BODEGA ||--o{ REPORTE_REPUESTO : origen
+REPORTE ||--|| SCORE : evaluado_por
+BRECHA }o--|| REPORTE : puede_afectar
+BRECHA }o--|| TICKET : puede_afectar
+BRECHA }o--|| MAQUINA : puede_afectar
+BRECHA }o--|| ATENCION : puede_afectar
+
+note right of TICKET_REPORTE
+NEXUS no asume relación 1 a 1.
+Toda relación debe indicar método y confianza.
+end note
+
+note right of SCORE
+CERBERUS clasifica reportes:
+apto, parcial, dudoso o no apto.
+end note
+@enduml</pre>
+    </section>
+
+    <section id="datos" class="card">
+      <h2 class="section">9. Arquitectura de datos sugerida</h2>
+      <p>
+        La Fase 1 debe ser compatible con la infraestructura actual, probablemente basada en scripts, Google Sheets y Looker Studio, pero debe quedar diseñada de forma que pueda migrar luego hacia ATLAS.
+      </p>
+      <h3>Capas recomendadas</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Capa</th>
+            <th>Función</th>
+            <th>Ejemplos de tablas/hojas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Raw / Staging</td>
+            <td>Guardar datos tal como vienen desde APIs o fuentes manuales.</td>
+            <td><code class="inline">raw_fieldbeat_reports</code>, <code class="inline">raw_zendesk_tickets</code>, <code class="inline">raw_dolibarr_products</code></td>
+          </tr>
+          <tr>
+            <td>Normalización</td>
+            <td>Homologar nombres, fechas, IDs, clientes, máquinas, bodegas y repuestos.</td>
+            <td><code class="inline">dim_cliente</code>, <code class="inline">dim_maquina</code>, <code class="inline">dim_tecnico</code>, <code class="inline">dim_repuesto</code>, <code class="inline">dim_bodega</code></td>
+          </tr>
+          <tr>
+            <td>NEXUS</td>
+            <td>Construir relaciones operacionales y atenciones consolidadas.</td>
+            <td><code class="inline">bridge_ticket_reporte</code>, <code class="inline">fact_atencion_operacional</code>, <code class="inline">bridge_atencion_maquina</code>, <code class="inline">bridge_reporte_repuesto</code></td>
+          </tr>
+          <tr>
+            <td>CERBERUS</td>
+            <td>Evaluar integridad, campos faltantes y aptitud de reportes.</td>
+            <td><code class="inline">quality_report_score</code>, <code class="inline">quality_missing_fields</code>, <code class="inline">review_queue</code></td>
+          </tr>
+          <tr>
+            <td>Gobernanza</td>
+            <td>Registrar decisiones, validaciones, reglas, supuestos y auditoría.</td>
+            <td><code class="inline">rule_catalog</code>, <code class="inline">manual_validation_log</code>, <code class="inline">brecha_operacional</code></td>
+          </tr>
+          <tr>
+            <td>BI / Consumo</td>
+            <td>Preparar tablas amigables para Looker Studio o reportes ejecutivos.</td>
+            <td><code class="inline">bi_nexus_traceability</code>, <code class="inline">bi_cerberus_quality</code>, <code class="inline">bi_operational_gap_matrix</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Convenciones sugeridas</h3>
+      <ul>
+        <li>Conservar siempre una copia raw antes de transformar.</li>
+        <li>No sobrescribir datos crudos; agregar columnas normalizadas o tablas derivadas.</li>
+        <li>Separar campos originales de campos corregidos o inferidos.</li>
+        <li>Todo valor inferido debe tener método, confianza y fecha de cálculo.</li>
+        <li>Todo ajuste manual debe quedar en una bitácora.</li>
+        <li>Los dashboards deben distinguir entre dato confiable, parcial, dudoso y no apto.</li>
+      </ul>
+    </section>
+
+    <section id="proceder" class="card">
+      <h2 class="section">10. Cómo debe proceder Claude</h2>
+      <p>
+        Claude debe trabajar como un asistente de ingeniería de datos, arquitectura operacional y documentación ejecutiva. No debe limitarse a redactar; debe ayudar a estructurar, auditar, relacionar, normalizar, crear artefactos y dejar criterios de decisión explícitos.
+      </p>
+      <h3>Orden de trabajo recomendado</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Etapa</th>
+            <th>Acción</th>
+            <th>Salida esperada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0</td>
+            <td>Leer este documento completo y fijar la interpretación de Fase 1.</td>
+            <td>Resumen de entendimiento y lista de supuestos.</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>Auditar fuentes disponibles: scripts, planillas, APIs, dashboards, documentación previa.</td>
+            <td>Mapa de fuentes, tablas existentes y brechas.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Diseñar el modelo integrado NEXUS + CERBERUS.</td>
+            <td>DER conceptual, diccionario preliminar y tabla de cardinalidades.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Construir la matriz CERBERUS de campos críticos.</td>
+            <td>Matriz de campos obligatorios/deseables por tipo de reporte.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Diseñar reglas de normalización y homologación.</td>
+            <td>Diccionario operacional y reglas de limpieza.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Implementar o especificar el evaluador de integridad CERBERUS.</td>
+            <td>Score de integridad, clasificación y lista de revisión.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Implementar o especificar el motor de relaciones NEXUS.</td>
+            <td>Tablas puente, atenciones operacionales, score de confianza.</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Diseñar dashboards y datasets BI.</td>
+            <td>Vista NEXUS, vista CERBERUS, matriz de brechas.</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Validar resultados con criterios de aceptación.</td>
+            <td>Casos de prueba, ajustes y bitácora de validación.</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>Documentar y preparar transferencia.</td>
+            <td>Manual técnico-funcional, guía de dashboard y backlog Fase 2.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Reglas de comportamiento para Claude</h3>
+      <ul>
+        <li>No asumir que una relación existe si no hay evidencia.</li>
+        <li>No transformar una inferencia en verdad definitiva.</li>
+        <li>No mezclar NEXUS con JANUS: Fase 1 prepara la medición, pero no calcula uptime/downtime formal.</li>
+        <li>No mezclar CERBERUS con saneamiento histórico infinito: CERBERUS clasifica y prioriza, no repara manualmente todo.</li>
+        <li>Siempre distinguir entre dato crudo, dato normalizado, dato inferido y dato validado manualmente.</li>
+        <li>Todo dashboard debe incluir lectura de confianza o calidad, no solo conteos.</li>
+        <li>Todo entregable debe poder explicarse a gerencia sin tecnicismos innecesarios.</li>
+      </ul>
+    </section>
+
+    <section id="cronograma" class="card">
+      <h2 class="section">11. Cronograma de 1 mes para Fase 1</h2>
+      <p>
+        Este cronograma es intensivo y supone alcance congelado, acceso oportuno a fuentes y validaciones rápidas. Las fechas exactas deben ajustarse al día real de inicio. Se recomienda trabajar en semanas funcionales, con entregas parciales desde la primera semana.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Semana</th>
+            <th>Foco</th>
+            <th>NEXUS</th>
+            <th>CERBERUS</th>
+            <th>Entrega de la semana</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Semana 1</strong></td>
+            <td>Relevamiento, diagnóstico y modelo integrado.</td>
+            <td>Mapa de tickets, reportes, máquinas, repuestos y relaciones posibles.</td>
+            <td>Diagnóstico de reportes FieldBeat y matriz inicial de campos críticos.</td>
+            <td>Informe de diagnóstico + modelo conceptual + matriz inicial de calidad.</td>
+          </tr>
+          <tr>
+            <td><strong>Semana 2</strong></td>
+            <td>Normalización, diccionario y reglas.</td>
+            <td>Tablas puente, cardinalidades, criterios de asociación y confianza.</td>
+            <td>Reglas de completitud, consistencia, integridad y clasificación.</td>
+            <td>Diccionario operacional + reglas NEXUS/CERBERUS + datasets base.</td>
+          </tr>
+          <tr>
+            <td><strong>Semana 3</strong></td>
+            <td>Implementación funcional.</td>
+            <td>Motor de relaciones, atenciones operacionales y detección de huérfanos.</td>
+            <td>Evaluador de integridad, clasificación y lista de revisión manual.</td>
+            <td>Primer resultado funcional + salidas BI + matriz de brechas.</td>
+          </tr>
+          <tr>
+            <td><strong>Semana 4</strong></td>
+            <td>Dashboard, validación, documentación y transferencia.</td>
+            <td>Dashboard de trazabilidad, cobertura y confianza relacional.</td>
+            <td>Dashboard de calidad, campos faltantes y clasificación de reportes.</td>
+            <td>Entrega final validada + manual + guía de interpretación + backlog Fase 2.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Plan detallado por bloques</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Bloque</th>
+            <th>Actividad</th>
+            <th>Duración sugerida</th>
+            <th>Dependencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Acta, alcance, supuestos, riesgos y criterios de aceptación.</td><td>1 día</td><td>Inicio</td></tr>
+          <tr><td>2</td><td>Levantamiento de fuentes FieldBeat, Zendesk, Dolibarr y dashboard actual.</td><td>2 días</td><td>Bloque 1</td></tr>
+          <tr><td>3</td><td>Diagnóstico de reportes FieldBeat y relaciones operacionales existentes.</td><td>2 días</td><td>Bloque 2</td></tr>
+          <tr><td>4</td><td>Modelo conceptual integrado NEXUS + CERBERUS.</td><td>2 días</td><td>Bloque 3</td></tr>
+          <tr><td>5</td><td>Matriz de campos críticos y reglas de calidad CERBERUS.</td><td>3 días</td><td>Bloque 3</td></tr>
+          <tr><td>6</td><td>Normalización, diccionario y catálogos operacionales.</td><td>3 días</td><td>Bloques 4 y 5</td></tr>
+          <tr><td>7</td><td>Evaluador CERBERUS: integridad, clasificación y revisión manual.</td><td>3 días</td><td>Bloques 5 y 6</td></tr>
+          <tr><td>8</td><td>Motor NEXUS: relaciones, atenciones, huérfanos y confianza.</td><td>4 días</td><td>Bloques 4 y 6</td></tr>
+          <tr><td>9</td><td>Dashboards ejecutivos y datasets exportables.</td><td>3 días</td><td>Bloques 7 y 8</td></tr>
+          <tr><td>10</td><td>Pruebas, validación, ajustes y documentación.</td><td>4 días</td><td>Bloque 9</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="entregables" class="card">
+      <h2 class="section">12. Entregables y criterios de aceptación</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Entregable</th>
+            <th>Descripción</th>
+            <th>Criterio de aceptación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Documento de alcance y diagnóstico</td>
+            <td>Relevamiento inicial, fuentes, problemas y supuestos.</td>
+            <td>Permite entender estado inicial y límites del proyecto.</td>
+          </tr>
+          <tr>
+            <td>Modelo conceptual NEXUS + CERBERUS</td>
+            <td>Entidades, relaciones, cardinalidades, tablas puente y scores.</td>
+            <td>Representa tickets, reportes, máquinas, repuestos, atenciones y calidad.</td>
+          </tr>
+          <tr>
+            <td>Diccionario operacional</td>
+            <td>Campos normalizados, equivalencias, catálogos y reglas de homologación.</td>
+            <td>Distingue dato crudo, normalizado, inferido y validado.</td>
+          </tr>
+          <tr>
+            <td>Matriz CERBERUS de campos críticos</td>
+            <td>Campos obligatorios/deseables y reglas por tipo de reporte.</td>
+            <td>Permite evaluar objetivamente la calidad de FieldBeat.</td>
+          </tr>
+          <tr>
+            <td>Evaluador CERBERUS</td>
+            <td>Score de integridad y clasificación apto/parcial/dudoso/no apto.</td>
+            <td>Cada reporte evaluado debe tener puntaje, categoría y causa.</td>
+          </tr>
+          <tr>
+            <td>Motor NEXUS</td>
+            <td>Relaciones ticket–reporte, atención–reporte, atención–máquina, reporte–repuesto.</td>
+            <td>Cada relación debe tener método, evidencia y confianza.</td>
+          </tr>
+          <tr>
+            <td>Cola de revisión manual</td>
+            <td>Casos dudosos, huérfanos, incompletos o no confiables.</td>
+            <td>Debe priorizar por severidad, impacto y tipo de brecha.</td>
+          </tr>
+          <tr>
+            <td>Dashboard NEXUS</td>
+            <td>Trazabilidad, cobertura, huérfanos, confianza y brechas.</td>
+            <td>Gerencia puede ver qué está trazado y qué no.</td>
+          </tr>
+          <tr>
+            <td>Dashboard CERBERUS</td>
+            <td>Calidad de reportes, integridad promedio, campos faltantes y clasificación.</td>
+            <td>Gerencia puede ver qué tan confiables son los reportes FieldBeat.</td>
+          </tr>
+          <tr>
+            <td>Set de datos exportable para BI</td>
+            <td>Tablas finales o vistas limpias para consumo en dashboards.</td>
+            <td>Debe poder conectarse a Looker Studio o equivalentes.</td>
+          </tr>
+          <tr>
+            <td>Manual técnico-funcional</td>
+            <td>Explica arquitectura, reglas, fórmulas, tablas, supuestos y uso.</td>
+            <td>Permite mantener y explicar el sistema.</td>
+          </tr>
+          <tr>
+            <td>Backlog Fase 2 JANUS + ATLAS</td>
+            <td>Lista ordenada de requisitos y brechas para la siguiente fase.</td>
+            <td>Debe dejar preparada la venta y ejecución futura.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>KPIs mínimos para dashboard NEXUS</h3>
+      <ul>
+        <li>Tickets analizados.</li>
+        <li>Reportes FieldBeat analizados.</li>
+        <li>Atenciones operacionales reconstruidas.</li>
+        <li>Porcentaje de tickets con evidencia técnica.</li>
+        <li>Porcentaje de reportes vinculados.</li>
+        <li>Reportes huérfanos.</li>
+        <li>Tickets sin evidencia.</li>
+        <li>Relaciones de alta, media y baja confianza.</li>
+        <li>Brechas por cliente, máquina, técnico o periodo.</li>
+      </ul>
+      <h3>KPIs mínimos para dashboard CERBERUS</h3>
+      <ul>
+        <li>Reportes evaluados.</li>
+        <li>Integridad promedio.</li>
+        <li>Reportes aptos, parcialmente aptos, dudosos y no aptos.</li>
+        <li>Campos críticos faltantes más frecuentes.</li>
+        <li>Brechas por cliente, máquina, técnico o tipo de reporte.</li>
+        <li>Reportes que requieren revisión manual.</li>
+        <li>Calidad de repuestos/bodegas declarados.</li>
+        <li>Semáforo gerencial de calidad.</li>
+      </ul>
+    </section>
+
+    <section id="fase2" class="card">
+      <h2 class="section">13. Fase 2 proyectada — JANUS + ATLAS</h2>
+      <p>
+        La Fase 2 no se implementa ahora, pero la Fase 1 debe preparar el camino. Aproximadamente seis meses después de NEXUS + CERBERUS, la evolución natural será JANUS + ATLAS.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Proyecto futuro</th>
+            <th>Función</th>
+            <th>Dependencia respecto a Fase 1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>JANUS</strong></td>
+            <td>Calcular uptime/downtime con confianza métrica.</td>
+            <td>Necesita reportes trazables, máquinas identificadas, calidad de datos e integridad temporal.</td>
+          </tr>
+          <tr>
+            <td><strong>ATLAS</strong></td>
+            <td>Consolidar una base operacional unificada, escalable y preparada para BI gerencial.</td>
+            <td>Necesita modelo conceptual, relaciones estabilizadas, diccionario y reglas de calidad.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <strong>Conexión estratégica:</strong> NEXUS + CERBERUS responde “qué ocurrió y qué tan confiable es la evidencia”. JANUS + ATLAS responderá “qué disponibilidad tuvimos y cómo se consolida esto en una infraestructura robusta”.
+      </div>
+      <h3>Qué debe dejar preparado Fase 1 para Fase 2</h3>
+      <ul>
+        <li>Identificación confiable de máquinas por cliente.</li>
+        <li>Reportes con integridad temporal evaluada.</li>
+        <li>Atenciones operacionales reconstruidas.</li>
+        <li>Relaciones auditables entre tickets, reportes y máquinas.</li>
+        <li>Lista de reportes no aptos para uptime/downtime.</li>
+        <li>Diccionario de datos y catálogos base.</li>
+        <li>Brechas contractuales u operacionales necesarias para JANUS.</li>
+        <li>Modelo conceptual preparado para migrar a base central ATLAS.</li>
+      </ul>
+    </section>
+
+    <section id="prompt" class="card">
+      <h2 class="section">14. Prompt maestro operativo para Claude</h2>
+      <p>
+        El siguiente bloque puede pegarse directamente en Claude junto con este HTML o con los archivos del proyecto. La idea es que Claude tome este documento como fuente rectora.
+      </p>
+      <pre>Actúa como arquitecto de datos, analista funcional, ingeniero de integración y documentador ejecutivo del proyecto Fase 1: NEXUS + CERBERUS del Ecosistema Operacional Unificado.
+
+CONTEXTO CENTRAL
+La empresa ya cerró la Fase 1 por $3.000.000 CLP, con duración objetivo de 1 mes de desarrollo. Esta Fase 1 incluye TODO NEXUS y TODO CERBERUS. No es un piloto parcial. Posteriormente, aproximadamente 6 meses después, se proyecta una Fase 2 compuesta por JANUS + ATLAS.
+
+LECTURA ESTRATÉGICA
+El roadmap ya no debe tratarse como una escalera rígida NEXUS → CERBERUS → JANUS → ATLAS, sino como dos bloques:
+1. Fase 1: NEXUS + CERBERUS = trazabilidad operacional + calidad de reportes FieldBeat.
+2. Fase 2: JANUS + ATLAS = uptime/downtime con confianza + base operacional unificada.
+
+OBJETIVO DE FASE 1
+Construir una capa que permita responder:
+¿Qué ocurrió operacionalmente, con qué evidencia se respalda, cómo se relaciona con tickets, reportes, atenciones, máquinas, repuestos y bodegas, y qué tan confiable es la información de origen?
+
+NEXUS DEBE ENTREGAR
+- Modelo de trazabilidad operacional.
+- Relación ticket–reporte considerando cardinalidades 0..N y N..N.
+- Atenciones operacionales reconstruidas.
+- Relación reporte–máquina.
+- Relación reporte–repuesto/bodega.
+- Score de confianza relacional.
+- Detección de reportes huérfanos, tickets sin evidencia, duplicados y relaciones dudosas.
+- Dashboard ejecutivo de trazabilidad.
+- Dataset exportable para BI.
+- Documentación técnico-funcional.
+
+CERBERUS DEBE ENTREGAR
+- Diagnóstico de reportes FieldBeat.
+- Matriz de campos críticos obligatorios y deseables.
+- Reglas por tipo de reporte.
+- Diccionario de campos y equivalencias.
+- Normalización de fechas, horas, máquinas, clientes, repuestos y bodegas.
+- Evaluador de integridad de reportes.
+- Clasificación de reportes aptos, parcialmente aptos, dudosos y no aptos.
+- Lista de revisión manual.
+- Dashboard ejecutivo de calidad.
+- Matriz de brechas de captura.
+- Lista de saneamiento futuro y recomendaciones.
+
+REGLAS DE EJECUCIÓN
+- No inventes relaciones si no hay evidencia.
+- Toda relación inferida debe tener método, score y motivo.
+- Todo reporte evaluado debe tener score, clasificación y causa de clasificación.
+- Diferencia siempre dato crudo, dato normalizado, dato inferido y dato validado manualmente.
+- No transformes una inferencia en verdad definitiva.
+- Si algo no es confiable, márcalo como dudoso, no apto o pendiente de revisión.
+- No mezcles la Fase 1 con JANUS: no implementar uptime/downtime formal ahora.
+- No mezcles la Fase 1 con ATLAS: no construir aún la base corporativa definitiva, pero deja todo preparado para migrar.
+- No prometas saneamiento manual completo del histórico; CERBERUS identifica, clasifica y prioriza brechas.
+- Todo resultado debe ser entendible para gerencia.
+
+ORDEN DE TRABAJO
+1. Lee y resume el contexto maestro.
+2. Audita las fuentes disponibles: FieldBeat, Zendesk, Dolibarr, Google Sheets, Looker Studio, scripts y documentación previa.
+3. Crea un mapa de fuentes, tablas, campos, brechas y relaciones existentes.
+4. Diseña el modelo conceptual integrado NEXUS + CERBERUS.
+5. Define el diccionario operacional y reglas de normalización.
+6. Define la matriz CERBERUS de campos críticos por tipo de reporte.
+7. Diseña o implementa el evaluador CERBERUS de integridad y clasificación.
+8. Diseña o implementa el motor NEXUS de relaciones, atenciones y confianza.
+9. Define datasets BI-ready para dashboards.
+10. Diseña dashboards ejecutivos para NEXUS y CERBERUS.
+11. Genera matriz de brechas, cola de revisión manual y recomendaciones.
+12. Documenta arquitectura, fórmulas, reglas, supuestos, limitaciones y backlog para JANUS + ATLAS.
+
+SALIDA ESPERADA
+Entrega artefactos claros, accionables y separados por carpetas o secciones:
+- 00_Contexto_y_Alcance
+- 01_Relevamiento_Fuentes
+- 02_Modelo_Conceptual
+- 03_Diccionario_y_Normalizacion
+- 04_NEXUS_Trazabilidad
+- 05_CERBERUS_Calidad
+- 06_Dashboards_y_BI
+- 07_Brechas_y_Saneamiento
+- 08_Documentacion_y_Transferencia
+- 09_Backlog_Fase_2_JANUS_ATLAS
+
+PRINCIPIO FINAL
+La Fase 1 debe dejar la operación trazable, auditable y clasificada por calidad. La Fase 2 podrá medir disponibilidad y escalar infraestructura solo si NEXUS + CERBERUS dejan una base confiable.</pre>
+    </section>
+
+    <section class="card">
+      <h2 class="section">15. Cierre interpretativo</h2>
+      <p>
+        Este documento debe ser tratado como la brújula del proyecto. Su función no es adornar la propuesta, sino evitar pérdida de contexto, desviaciones de alcance y decisiones técnicas desconectadas de la narrativa estratégica.
+      </p>
+      <p>
+        La Fase 1 no se justifica porque “hace dashboards”. Se justifica porque transforma registros operacionales dispersos en una base trazable, auditable y clasificada por calidad. Esa es la condición necesaria para cualquier medición seria de disponibilidad, cualquier infraestructura ATLAS y cualquier BI gerencial posterior.
+      </p>
+      <div class="success">
+        <strong>Frase de cierre:</strong> NEXUS permite saber cómo se relaciona la operación; CERBERUS permite saber qué tan confiable es la evidencia. Juntos convierten datos dispersos en conocimiento operacional defendible.
+      </div>
+    </section>
+
+    <div class="footer">
+      Documento maestro preparado para transferencia contextual a Claude · Fase 1 NEXUS + CERBERUS · Ecosistema Operacional Unificado
+    </div>
+  </main>
+</body>
+</html>

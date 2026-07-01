@@ -1,0 +1,16 @@
+{
+  "name": "eyg-nexus-local",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "get:zendesk": "node src/miners/zendesk.js",
+    "get:fieldbeat": "node src/miners/fieldbeat.js",
+    "get:fieldbeat:all": "node src/miners/fieldbeat-all.js",
+    "get:dolibarr": "node src/miners/dolibarr.js",
+    "get:all": "node src/run-all.js"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "^1.5.4-r.1",
+    "dotenv": "^16.4.7"
+  }
+}

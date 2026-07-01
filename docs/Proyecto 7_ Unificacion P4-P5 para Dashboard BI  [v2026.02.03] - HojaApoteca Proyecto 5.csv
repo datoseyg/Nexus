@@ -1,0 +1,95 @@
+Timestamp,Estado,ID Tarea Fieldbeat,Cliente,Tipo de Tarea,SKU Repuesto,Cantidad Descontada,ID Bodega Usada,ID Movimiento Dolibarr,Mensaje de Error
+16/04/2026 17:00:00,Éxito (Sin Repuestos),3655,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+13/04/2026 11:50:00,Éxito (Sin Repuestos),3649,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+6/04/2026 15:30:00,ERROR,3642,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,Barcode Gun.,1,ID Bodega: 13,,"Dolibarr Error: {
+    ""error"": {
+        ""code"": 404,
+        ""message"": ""Not Found: No product found""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:263 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+}"
+6/04/2026 15:30:00,Éxito (Sin Repuestos),3642,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+30/03/2026 17:30:00,ERROR,3630,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,2297542,1,ID Bodega: 13,,"Dolibarr Error: {
+    ""error"": {
+        ""code"": 503,
+        ""message"": ""Service Unavailable: Error when create stock movement : No tiene suficiente existencias en el almacen de referencia y la actual configuracion no permite existencias negativas  : 2297542""
+    },
+    ""debug"": {
+        ""source"": ""api_stockmovements.class.php:197 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+}"
+30/03/2026 17:30:00,Éxito (Sin Repuestos),3630,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,
+27/03/2026 18:35:00,Éxito (Sin Repuestos),3623,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,
+26/03/2026 19:30:00,Éxito (Sin Repuestos),3612,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,,,,,
+26/03/2026 12:00:00,Éxito (Sin Repuestos),3610,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,,,,,
+25/03/2026 10:30:00,Éxito (Sin Repuestos),3607,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+20/03/2026 16:00:00,Éxito (Sin Repuestos),3599,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,,,,,
+18/03/2026 11:30:00,Éxito (Sin Repuestos),3595,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+16/03/2026 9:30:00,Éxito (Sin Repuestos),3594,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+27/02/2026 21:30:00,Éxito (Sin Repuestos),3559,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,
+27/02/2026 20:30:00,Éxito (Sin Repuestos),3558,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,
+26/02/2026 12:00:00,Éxito (Sin Repuestos),3554,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+2/01/2026,Éxito (Validación Manual),3450,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,T00010988-01-NR-2,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB
+12/12/2025,Éxito (Validación Manual),3430,FUNDACION ARTURO LOPEZ PEREZ,PREVENTIVA PROGRAMADA,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío
+11/12/2025,Éxito (Validación Manual),3426,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío
+10/12/2025,Éxito (Validación Manual),3424,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío
+28/11/2025,Éxito (Validación Manual),3407,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA NO PROGRAMADA,2467858,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB
+27/11/2025,Éxito (Validación Manual),3404,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,:: ESTATUS ACTUALIZADO:Reporte vacío
+23/10/2025,Éxito (Validación Manual),3355,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,2179204,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB
+23/10/2025,Éxito (Validación Manual),3355,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,20870,1,13 (Apoteca),"FIX_PATCH_20260203_Revisar en la hoja ""Registros (OLD)""",:: ESTATUS ACTUALIZADO:Datos saneados desde FB
+29/05/2026 14:40:00,ERROR,3722,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,0,1,ID Bodega: 13,,"Dolibarr Error: {
+    ""error"": {
+        ""code"": 404,
+        ""message"": ""Not Found: No product found""
+    },
+    ""debug"": {
+        ""source"": ""api_products.class.php:263 at call stage"",
+        ""stages"": {
+            ""success"": [
+                ""get"",
+                ""route"",
+                ""negotiate"",
+                ""authenticate"",
+                ""validate""
+            ],
+            ""failure"": [
+                ""call"",
+                ""message""
+            ]
+        }
+    }
+}"
+29/05/2026 14:40:00,Éxito (Sin Repuestos),3722,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+1/06/2026 17:30:00,Éxito (Sin Repuestos),3728,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+4/06/2026 18:10:00,Éxito (Sin Repuestos),3737,FUNDACION ARTURO LOPEZ PEREZ,CORRECTIVA PROGRAMADA,,,,,
+5/06/2026 14:30:00,Éxito (Sin Repuestos),3739,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+12/06/2026 16:30:00,Éxito (Sin Repuestos),3750,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,
+22/06/2026 10:33:00,Éxito (Sin Repuestos),3769,FUNDACION ARTURO LOPEZ PEREZ,REQUERIMIENTO DEL CLIENTE,,,,,

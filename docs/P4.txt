@@ -1,0 +1,867 @@
+// Settings de APIS y G-Sheets
+
+const LOG_SPREADSHEET_ID = '1AJ4p5pWMVsnZruv8sAUxSi77FcWsjQ_BEKc8gedyJS8';
+
+const LOG_SHEET_NAME = 'Registros';
+
+const DICTIONARY_SHEET_NAME = 'Diccionario';
+
+
+
+const FIELDBEAT_API_URL = 'https://api.fieldbeat.com/fleets/eyg/tasks/';
+
+const DOLIBARR_API_URL_BASE = 'http://erm.eygsa.cl/api/index.php/';
+
+const NOTIFICATION_EMAIL = 'datos@eygsa.cl, rcammalleri@eygsa.cl, mabreu@eygsa.cl';
+
+//const NOTIFICATION_EMAIL = 'datos@eygsa.cl';
+
+
+
+const EG_FIELDbeat_WAREHOUSE_NAMES = [
+
+  'pañol e&g', 'bodega cas', 'bodega clc', 'bodega falp', 'bodega hcvb',
+
+  'bodega inc', 'bodega uc ceca', 'bodega uc sca', 'bodega hcm'
+
+];
+
+
+
+// Configuracion de Prioridad de Busqueda (Logica del Negocio)
+
+// Define el orden de barrido para encontrar stock en el cluster de bodegas internas.
+
+const EG_WAREHOUSE_IDS_PRIORITY = [
+
+  // PADRE: Bodega EyG 1
+
+  3,
+
+  // Hijos directos de EyG 1 (Ordenados por Series)
+
+  23, 24, 25, 26, // Serie 1A
+
+  52, 49, 50, 47, // Serie 1B
+
+  35, 36, 33, 34, // Serie 2A
+
+  43, 41, 37, 42, // Serie 2B
+
+  54, 55, 66, 38, // Serie 3A
+
+  27, 30, 31, 32, // Serie 3B
+
+  57, 59, 61, 62, // Serie 4A
+
+  48, 53, 60, 56, // Serie 4B (Usados)
+
+  51, 58, // Casilleros a denotar
+
+  15, // Estante 3
+
+  46 //Aux.
+
+];
+
+
+
+// Setting de API Keys
+
+const SEND_SUCCESS_EMAIL = false;
+
+const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
+
+const FIELDBEAT_API_USER = SCRIPT_PROPERTIES.getProperty('FIELDBEAT_API_USER');
+
+const FIELDBEAT_API_PASS = SCRIPT_PROPERTIES.getProperty('FIELDBEAT_API_PASS');
+
+const DOLIBARR_API_KEY = SCRIPT_PROPERTIES.getProperty('DOLIBARR_API_KEY');
+
+
+
+// Cache Global para el Diccionario (Optimizacion de lectura O(1))
+
+let DICTIONARY_CACHE = null;
+
+
+
+// ============== FUNCION PRINCIPAL ==============
+
+function mainProcess() {
+
+  if (!FIELDBEAT_API_USER || !FIELDBEAT_API_PASS || !DOLIBARR_API_KEY) {
+
+    throw new Error("Credenciales no configuradas en Propiedades del Script.");
+
+  }
+
+
+
+  const threads = GmailApp.search('is:unread from:noreply@fieldbeat.com subject:"Reporte de tarea Nº"');
+
+  if (threads.length === 0) return;
+
+
+
+  // Precarga del Diccionario en Memoria
+
+  DICTIONARY_CACHE = loadDictionaryMap();
+
+
+
+  threads.forEach(thread => {
+
+    const message = thread.getMessages()[0];
+
+    if (!message.isUnread()) return;
+
+
+
+    const subject = message.getSubject();
+
+    const taskIdMatch = subject.match(/Reporte de tarea N[º°o.]?\s*(\d+)/i);
+
+    const taskId = taskIdMatch ? taskIdMatch[1] : null;
+
+
+
+    if (taskId) {
+
+      try {
+
+        const taskData = getFieldbeatTaskData(taskId);
+
+        if (!taskData || !taskData.task) throw new Error("API Fieldbeat invalida.");
+
+
+
+        const t = taskData.task;
+
+
+
+        const taskType = t.type || "Sin Tipo";
+
+        const clientName = t.client?.name || "Cliente Desconocido";
+
+        const realDate = getTaskRealDate(t);
+
+
+
+        // --- FILTRO APOTECA ---
+
+        const isApoteca = (t.client.name || "").toLowerCase().includes('arturo lopez perez') &&
+
+          ((t.description || "").toLowerCase().includes('apoteca') ||
+
+            (t.report?.name || "").toLowerCase().includes('apoteca') ||
+
+            (t.equipments || []).some(eq => (eq.internal_id || "").toUpperCase().includes('APOTECA')));
+
+
+
+        if (isApoteca) {
+
+          console.log(`Tarea ${taskId} es APOTECA. Ignorada.`);
+
+          return;
+
+        } else {
+
+          console.log(`Procesando Tarea ${taskId}`)
+
+        }
+
+
+
+        // --- PROCESAMIENTO DE REPUESTOS PARA DISTINTOS CASOS---
+
+        // CASO 1: Sin atributo .report en Formulario FB)
+
+        if (!t.report) {
+
+          logToSheetSuccess(realDate, taskId, clientName, taskType, 'Éxito (Sin Repuestos)');
+
+          message.markRead();
+
+          console.log(`Tarea ${taskId} procesada en Caso 1`)
+
+          return;
+
+        }
+
+
+
+        // CASO 2: Con atributo .report y Posibles Repuestos
+
+        const repuestosGroups = (t.report.groups || []).filter(g => g.name === 'REPUESTOS');
+
+        let processedCount = 0;
+
+
+        if (repuestosGroups.length > 0) {
+
+          repuestosGroups.forEach(g => {
+
+            const result = processSingleRepuestoGroup(g, taskId, clientName, taskType, realDate);
+
+            if (result === 1) processedCount++;
+
+          });
+
+        }
+
+
+
+        // Si tenía r.report pero la sección de repuestos estaba vacía
+
+        if (repuestosGroups.length === 0 || processedCount === 0) {
+
+          logToSheetSuccess(realDate, taskId, clientName, taskType, 'Éxito (Sin Repuestos)');
+
+        }
+
+        message.markRead();
+
+        console.log(`Tarea ${taskId} procesada en Caso 2`)
+
+
+
+      } catch (e) {
+
+        console.error(`Error crítico tarea ${taskId}: ${e.message}`);
+
+        sendErrorEmail(`⚠️ Error Critico - Tarea ${taskId}`, `<p>Error: ${e.message}</p>`);
+
+
+
+        // Log de error
+
+        logToSheetError(new Date(), taskId, 'Error Inicial', 'Sin Tipo', '', '', '', e.message);
+
+        message.markRead();
+
+        console.log(`Tarea ${taskId} procesada en Caso 3 - exception`)
+
+      }
+
+    }
+
+  });
+
+}
+
+
+
+// ============== LOGICA DE PROCESADO BASADO EN CONTEXTO DEL NEGOCIO ==============
+
+
+
+function processSingleRepuestoGroup(group, taskId, clientName, taskType, realDate) {
+
+  const fields = group.fields;
+
+  const rawSKU = getValueFromFields(fields, "NÚMERO DE PARTE (Leer código de barra del repuesto)");
+
+  const sku = rawSKU ? rawSKU.toString().trim().replace(/[^a-zA-Z0-9\-\.]/g, '') : null;
+
+  const cantidad = parseFloat(getValueFromFields(fields, "CANTIDAD DE REPUESTOS UTILIZADOS"));
+
+  const bodegaFieldbeat = getValueFromFields(fields, "UBICACIÓN DE ORIGEN DE REPUESTO");
+
+
+
+  if (!sku) return 0; // Skip: Campo vacio
+
+
+
+  if (isNaN(cantidad) || cantidad <= 0) {
+
+
+
+    logToSheetError(realDate, taskId, clientName, taskType, sku, cantidad, bodegaFieldbeat, `Cantidad invalida: ${cantidad}`);
+
+    return -1; // Error
+
+  }
+
+
+
+  const esInterna = bodegaFieldbeat && EG_FIELDbeat_WAREHOUSE_NAMES.includes(bodegaFieldbeat.trim().toLowerCase());
+
+
+
+  // Seleccion de estrategia segun tipo de bodega (¿es de EyG o Externa?)
+
+  return (esInterna ? handleBodegaEG : handleBodegaCliente)(taskId, clientName, taskType, sku, cantidad, bodegaFieldbeat, realDate) ? 1 : -1;
+
+}
+
+
+
+// Menjar la lógica para cuando la bodega sea de EyG
+
+function handleBodegaEG(taskId, clientName, taskType, sku, cantidad, bodegaFB, realDate) {
+
+  try {
+
+    console.log(`[${taskId}] Buscando SKU: ${sku}`);
+
+    const productId = getDolibarrProductIdBySku(sku);
+
+    if (!productId) throw new Error(`SKU "${sku}" no encontrado.`);
+
+
+
+    let stockInfo = getProductStock(productId);
+
+    let stockArray = normalizeStockResponse(stockInfo);
+
+
+
+    let suitable = null;
+
+
+
+    // Algoritmo de seleccion Greedy basado en prioridad
+
+    for (const pid of EG_WAREHOUSE_IDS_PRIORITY) {
+
+      // Busqueda laxa (==) para permitir coincidencia string/int en IDs
+
+      const wData = stockArray.find(w => w.warehouse_id == pid);
+
+      if (wData && parseFloat(wData.real) >= cantidad) {
+
+        suitable = { ...wData, warehouse_id: pid };
+
+        break;
+
+      }
+
+    }
+
+
+
+    if (!suitable) throw new Error(`Stock insuficiente para SKU ${sku}.`);
+
+
+
+    // --- RESOLUCION DINAMICA DE NOMBRES POR PASOS---
+
+    const finalId = suitable.warehouse_id;
+
+
+
+    // 1. Consultar a la API el nombre real de esta bodega (Evita hardcoding)
+
+    const apiWarehouseName = getDolibarrWarehouseLabelById(finalId);
+
+
+
+    // 2. Consultar al Diccionario si este nombre especifico pertenece a un grupo logico (ej: Casillero -> Panol)
+
+    const groupName = DICTIONARY_CACHE[apiWarehouseName.toLowerCase()] || apiWarehouseName;
+
+
+
+    // Ejecucion del movimiento real
+
+
+
+    const movementLabel = `Sincronización Automática FieldBeat-Dolibarr: Reporte ID #${taskId}`;
+
+    const moveId = createStockMovement(productId, finalId, -Math.abs(cantidad), movementLabel);
+
+
+
+
+
+    console.log(`Descuento realizado en ${groupName} (Fisico: ${apiWarehouseName} [ID: ${finalId}]). Movimiento ID: ${moveId}`);
+
+    logToSheetSuccess(realDate, taskId, clientName, taskType, 'Éxito (Con Repuestos)', sku, cantidad, groupName, moveId);
+
+    return true;
+
+  } catch (e) {
+
+    logToSheetError(realDate, taskId, clientName, taskType, sku, cantidad, bodegaFB, e.message);
+
+    return false;
+
+  }
+
+}
+
+
+
+// Menjar la lógica para cuando la bodega sea de Externa
+
+function handleBodegaCliente(taskId, clientName, taskType, sku, cantidad, bodegaFB, realDate) {
+
+  try {
+
+    // Para clientes externos, el mapeo es directo desde el Diccionario
+
+    const mapName = getDolibarrNameFromCache(bodegaFB);
+
+    if (!mapName) throw new Error(`Bodega "${bodegaFB}" no mapeada.`);
+
+
+
+    const wId = getDolibarrWarehouseId(mapName);
+
+    if (!wId) throw new Error(`Bodega "${mapName}" sin ID.`);
+
+
+
+    const pId = getDolibarrProductIdBySku(sku);
+
+    if (!pId) throw new Error(`SKU "${sku}" no encontrado.`);
+
+
+
+
+
+    const movementLabel = `Sincronización Automática FieldBeat-Dolibarr: Reporte ID #${taskId}`;
+
+
+
+    const moveId = createStockMovement(pId, wId, -Math.abs(cantidad), movementLabel);
+
+
+
+    logToSheetSuccess(realDate, taskId, clientName, taskType, 'Éxito (Con Repuestos)', sku, cantidad, mapName, moveId);
+
+    return true;
+
+  } catch (e) {
+
+    logToSheetError(realDate, taskId, clientName, taskType, sku, cantidad, bodegaFB, e.message);
+
+    return false;
+
+  }
+
+}
+
+
+
+// ============== HELPERS DE MEJORA PARA LA ARQUITECTURA ==============
+
+
+
+/**
+
+ * Carga el Diccionario Sheet en un HashMap para busqueda O(1).
+
+ * Normaliza claves a minusculas para evitar errores de tipeo.
+
+ */
+
+function loadDictionaryMap() {
+
+  const sheet = SpreadsheetApp.openById(LOG_SPREADSHEET_ID).getSheetByName(DICTIONARY_SHEET_NAME);
+
+  const data = sheet.getDataRange().getValues();
+
+  const map = {};
+
+
+
+  data.forEach(row => {
+
+    const groupName = (row[0] || "").toString().trim();   // Col A: Nombre Grupo (Fieldbeat)
+
+    const specificName = (row[1] || "").toString().trim(); // Col B: Nombre Especifico (Dolibarr)
+
+
+
+    // Mapeo Inverso: Hijo -> Padre (Para Bodegas Internas)
+
+    if (specificName && groupName) {
+
+      map[specificName.toLowerCase()] = groupName;
+
+    }
+
+    // Mapeo Directo: Padre -> Hijo (Para Bodegas Externas)
+
+    if (groupName && specificName) {
+
+      map["DIRECT_" + groupName.toLowerCase()] = specificName;
+
+    }
+
+  });
+
+  return map;
+
+}
+
+
+
+function getDolibarrNameFromCache(fbName) {
+
+  if (!fbName) return null;
+
+  return DICTIONARY_CACHE["DIRECT_" + fbName.toLowerCase()];
+
+}
+
+
+
+/**
+
+ * Obtiene el nombre legible de una bodega por su ID consultando la API.
+
+ * Garantiza consistencia si los nombres cambian en el ERP.
+
+ */
+
+function getDolibarrWarehouseLabelById(id) {
+
+  try {
+
+    const res = fetchDolibarrAPI(`warehouses/${id}`);
+
+    return res ? res.label : `ID ${id}`;
+
+  } catch (e) {
+
+    console.warn(`No se pudo resolver nombre para ID ${id}`);
+
+    return `ID ${id}`;
+
+  }
+
+}
+
+
+
+/**
+
+ * Normaliza los valores obtenido de la API de Dolibarr, pues hay muchos casos polimórficos
+
+ */
+
+function normalizeStockResponse(stockInfo) {
+
+  let stockArray = [];
+
+  if (!stockInfo) return [];
+
+
+
+  // Preservacion de IDs que vienen como claves de objeto
+
+  if (stockInfo.stock_warehouses) {
+
+    stockArray = Object.entries(stockInfo.stock_warehouses).map(([k, v]) => ({ ...v, warehouse_id: v.warehouse_id || k }));
+
+  } else if (typeof stockInfo === 'object' && !Array.isArray(stockInfo)) {
+
+    stockArray = Object.entries(stockInfo).map(([k, v]) => (v && typeof v === 'object') ? { ...v, warehouse_id: v.warehouse_id || k } : null).filter(Boolean);
+
+  } else if (Array.isArray(stockInfo)) {
+
+    stockArray = stockInfo;
+
+  }
+
+  return stockArray;
+
+}
+
+
+
+/**
+
+ * Extracción de Fecha de Negocio con Prioridad Estricta
+
+ * Primero indexa todos los campos disponibles y luego selecciona
+
+ * basándose estrictamente en el orden del array TARGET_FIELDS, siendo las mayores prioridades:
+
+ * "HORA DE TERMINO DEL TRABAJO", // Prioridad 1: Cierre real técnico
+
+ * "FECHA Y HORA DE ENTREGA",     // Prioridad 2: Entrega del trabajo
+
+ */
+
+function getTaskRealDate(task) {
+
+  // Como la presencia de ciertos campos en los reportes de Dolibarr son inconsistentes
+
+  // Se preocedió con un algoritmo basado en estrategias.
+
+  try {
+
+    // ESTRATEGIA 1: Buscar la fechas y horas en el Reporte (Sólo si existe)
+
+    const reportGroups = task.report?.groups || [];
+
+
+
+    if (reportGroups.length > 0) {
+
+      const fieldsMap = new Map();
+
+      // Indexamos los campos del reporte para búsqueda rápida O(1)
+
+      reportGroups.forEach(group => {
+
+        (group.fields || []).forEach(field => {
+
+          if (field.name && field.value) {
+
+            fieldsMap.set(field.name.toUpperCase().trim(), field.value.toString());
+
+          }
+
+        });
+
+      });
+
+
+
+      const TARGET_FIELDS = [
+
+        "HORA DE TERMINO DEL TRABAJO", // Prioridad 1: Cierre real técnico
+
+        "FECHA Y HORA DE ENTREGA",     // Prioridad 2: Entrega del trabajo
+
+        "FECHA DE TÉRMINO",            // Prioridad 3
+
+        "FECHA FIN",                   // Prioridad 4
+
+        "Fecha y Hora Programada"      // Prioridad 5: Si no hay ninguna fecha más que la programada para la tarea FB
+
+      ];
+
+
+
+      for (const target of TARGET_FIELDS) {
+
+        if (fieldsMap.has(target)) {
+
+          const dateString = fieldsMap.get(target);
+
+          return parseCustomDate(dateString);
+
+        }
+
+      }
+
+    }
+
+
+
+    // ESTRATEGIA 2: Metadatos Numéricos
+
+    // Si por algún motivo falla la Estrategia 1, se acuden a los metadatos del reporte para la asignación de una fecha y hora aproximadas.
+
+    if (task.start_time && typeof task.start_time === 'number') {
+
+      console.log(`[DateStrategy] Usando start_time (Timestamp): ${task.start_time}`);
+
+      return new Date(task.start_time);
+
+    }
+
+
+
+    // ESTRATEGIA 3: Fallbacks de Sistema (Último recurso antes del error)
+
+    if (task.completed_at) return new Date(task.completed_at); // Fecha de cierre en App
+
+    if (task.created_at) return new Date(task.created_at);     // Fecha de creación
+
+
+
+    return new Date(); // Último recurso: Fecha y Hora actuales
+
+
+
+  } catch (e) {
+
+    // Si nada funciona, lanzamos error
+
+    console.warn("Error recuperando fecha: " + e.message);
+
+    return new Date();
+
+  }
+
+}
+
+
+
+/**
+
+ * Parser personalizado para distintos casos de presentación y extracción de fechas y hora.
+
+ */
+
+function parseCustomDate(dateStr) {
+
+  if (!dateStr) return new Date();
+
+
+
+  try {
+
+    const cleanDateStr = dateStr.toString().trim();
+
+
+
+    // --- CASO 1: Formato "Fecha y Hora Programada" ---
+
+    // Patrón: "29/01/26 - 09:00" (dd/MM/yy - HH:mm)
+
+    // Identificador único: El separador " - " (guión con espacios)
+
+    if (cleanDateStr.includes(" - ")) {
+
+      // Java SimpleDateFormat usa 'yy' para años de dos dígitos
+
+      return Utilities.parseDate(cleanDateStr, "America/Santiago", "dd/MM/yy - HH:mm") || new Date();
+
+    }
+
+
+
+    // --- CASO 2: Formato Completo (Estándar) ---
+
+    // Patrón: "29/01/2026 09:22" (dd/MM/yyyy HH:mm)
+
+    if (cleanDateStr.length > 10) {
+
+      return Utilities.parseDate(cleanDateStr, "America/Santiago", "dd/MM/yyyy HH:mm") || new Date();
+
+    }
+
+
+
+    // --- CASO 3: Formato Corto (Solo fecha) ---
+
+    // Patrón: "29/01/2026" (dd/MM/yyyy)
+
+    else {
+
+      return Utilities.parseDate(cleanDateStr, "America/Santiago", "dd/MM/yyyy") || new Date();
+
+    }
+
+
+
+  } catch (e) {
+
+    console.warn(`[DateParser] Fallo crítico con input: "${dateStr}". Fallback a NOW.`);
+
+    return new Date();
+
+  }
+
+}
+
+
+
+// ============== APIS ==============
+
+
+
+function getDolibarrProductIdBySku(sku) {
+
+  const enc = encodeURIComponent(sku);
+
+  // Estrategia de busqueda en cascada: Ref Exacta -> Ref Like -> Barcode
+
+  let res = fetchDolibarrAPI(`products?sqlfilters=(t.ref:=:'${enc}')`);
+
+  if (res?.length) return res[0].id;
+
+
+
+  res = fetchDolibarrAPI(`products?sqlfilters=(t.ref:like:'${enc}')`);
+
+  if (res?.length) return res[0].id;
+
+
+
+  res = fetchDolibarrAPI(`products?sqlfilters=(t.barcode:=:'${enc}')`);
+
+  return res?.length ? res[0].id : null;
+
+}
+
+
+
+function fetchDolibarrAPI(ep, m = 'get', pl = null) {
+
+  const opt = { method: m, headers: { 'DOLAPIKEY': DOLIBARR_API_KEY }, muteHttpExceptions: true };
+
+  if (pl) { opt.payload = JSON.stringify(pl); opt.contentType = 'application/json'; }
+
+  const r = UrlFetchApp.fetch(DOLIBARR_API_URL_BASE + ep, opt);
+
+  if (r.getResponseCode() >= 400) throw new Error(`API Error ${r.getResponseCode()}`);
+
+  return r.getContentText() ? JSON.parse(r.getContentText()) : null;
+
+}
+
+
+
+const getDolibarrWarehouseId = (n) => (fetchDolibarrAPI(`warehouses?sqlfilters=(t.label:=:'${encodeURIComponent(n)}')`) || [])[0]?.id;
+
+const getProductStock = (id) => fetchDolibarrAPI(`products/${id}/stock`);
+
+const createStockMovement = (p, w, q, l) => fetchDolibarrAPI('stockmovements', 'post', { product_id: p, warehouse_id: w, qty: q, label: l });
+
+
+
+const getFieldbeatTaskData = (id) => JSON.parse(UrlFetchApp.fetch(FIELDBEAT_API_URL + id, { headers: { Authorization: `Basic ${Utilities.base64Encode(`${FIELDBEAT_API_USER}:${FIELDBEAT_API_PASS}`)}` } }).getContentText());
+
+
+
+const getValueFromFields = (f, n) => f.find(x => x.name === n)?.value;
+
+
+
+// Funciones de logging
+
+const logToSheet = (dt, st, tid, cli, type, sku, qty, bod, mid, err) =>
+
+  SpreadsheetApp.openById(LOG_SPREADSHEET_ID)
+
+    .getSheetByName(LOG_SHEET_NAME)
+
+    .appendRow([dt, st, tid, cli, type, sku, qty, bod, mid, err]);
+
+
+
+// Wrapper de Éxito
+
+const logToSheetSuccess = (dt, t, c, type, s, sk = '', q = '', b = '', m = '') =>
+
+  logToSheet(dt, s, t, c, type, sk, q, b, m, '');
+
+
+
+// Wrapper de Error
+
+const logToSheetError = (dt, t, c, type, sk, q, b, e) => {
+
+  logToSheet(dt, 'ERROR', t, c, type, sk, q, b, '', e);
+
+  sendErrorEmail(
+
+    `❗❗⚠️ Error Operativo FieldBeat-Dolibarr -- Reporte FieldBeat Nº ${t} ⚠️❗❗`,
+
+    `<p>Error procesando el SKU ${sk}: ${e}</p> <p><b>⚠️ Se requiere revisión manual...</b></p>`
+
+  );
+
+};
+const sendErrorEmail = (s, b) => GmailApp.sendEmail(NOTIFICATION_EMAIL, s, '', { htmlBody: b });
