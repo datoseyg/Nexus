@@ -7,10 +7,17 @@
     "get:fieldbeat": "node src/miners/fieldbeat.js",
     "get:fieldbeat:all": "node src/miners/fieldbeat-all.js",
     "get:dolibarr": "node src/miners/dolibarr.js",
-    "get:all": "node src/run-all.js"
+    "get:all": "node src/run-all.js",
+    "normalize:fieldbeat": "node src/normalizers/fieldbeat-normalizer.js",
+    "qa:fieldbeat": "node src/qa/audit-fieldbeat.js",
+    "qa:ticket-fieldbeat": "node src/qa/audit-ticket-fieldbeat-multiplicity.js",
+    "normalize:zendesk": "node src/normalizers/zendesk-normalizer.js",
+    "qa:zendesk": "node src/qa/audit-zendesk.js",
+    "build:ticket-fieldbeat-view": "node src/marts/build-ticket-fieldbeat-view.js"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
+    "csv-parse": "^7.0.0",
     "dotenv": "^16.4.7"
   }
 }

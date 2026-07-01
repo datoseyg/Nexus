@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-07-01T17:04:45.125Z",
+  "total_zendesk_tickets": 628,
+  "tickets_with_fieldbeat_report": 228,
+  "tickets_without_fieldbeat_report": 400,
+  "tickets_with_multiple_fieldbeat_reports": 38,
+  "tickets_with_used_parts": 113,
+  "total_bridge_relations": 1210,
+  "fieldbeat_links_without_zendesk_ticket": 920,
+  "operational_join_status_breakdown": {
+    "NO_FIELDBEAT_REPORT": 400,
+    "SINGLE_FIELDBEAT_REPORT": 190,
+    "MULTIPLE_FIELDBEAT_REPORTS": 38
+  }
+}

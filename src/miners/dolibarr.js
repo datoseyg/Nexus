@@ -9,7 +9,7 @@ const {
 } = process.env;
 
 const LIMIT = 100;
-const MAX_PAGES = 10;
+const MAX_PAGES = 50;
 
 export async function mineDolibarrProducts() {
   if (!DOLIBARR_URL || !DOLIBARR_TOKEN) {

@@ -1,0 +1,242 @@
+{
+  "generated_at": "2026-07-01T16:44:13.750Z",
+  "row_counts": {
+    "DB_FieldBeat_Tasks": 3747,
+    "DB_FieldBeat_Task_Equipments": 3157,
+    "DB_FieldBeat_Report_Fields": 66107,
+    "DB_FieldBeat_Used_Parts": 2168,
+    "DIM_Clients": 43,
+    "DIM_Equipments": 83,
+    "BR_Ticket_FieldBeat_Task": 1210
+  },
+  "coverage": {
+    "tasks_with_zendesk_ticket": 1210,
+    "tasks_without_zendesk_ticket": 2537,
+    "ticket_coverage": "32.29%",
+    "bridge_rows": 1210,
+    "tasks_with_ticket_but_no_bridge": 0
+  },
+  "report_fields": {
+    "total_report_fields": 66107,
+    "ticket_like_fields": 1346
+  },
+  "used_parts": {
+    "total_used_parts": 2168,
+    "used_parts_with_part_number": 1886,
+    "used_parts_without_part_number": 282,
+    "part_number_coverage": "86.99%"
+  },
+  "duplicates": {
+    "duplicate_tasks": 0,
+    "duplicate_bridge_rows": 0,
+    "duplicate_report_fields": 0
+  },
+  "samples": {
+    "first_10_tasks_with_ticket": [
+      {
+        "fieldbeat_task_id": "1250",
+        "linked_zendesk_ticket_id": "150655",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|70377400-8|FUNDACION ARTURO LOPEZ PEREZ"
+      },
+      {
+        "fieldbeat_task_id": "1251",
+        "linked_zendesk_ticket_id": "949395",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|70377400-8|FUNDACION ARTURO LOPEZ PEREZ"
+      },
+      {
+        "fieldbeat_task_id": "1252",
+        "linked_zendesk_ticket_id": "719418",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|81.698.900-0|UC CHRISTUS - CECA"
+      },
+      {
+        "fieldbeat_task_id": "1255",
+        "linked_zendesk_ticket_id": "465221",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|96.757.430-9|INRAD"
+      },
+      {
+        "fieldbeat_task_id": "1256",
+        "linked_zendesk_ticket_id": "914336",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|81.698.900-0|UC CHRISTUS - CECA"
+      },
+      {
+        "fieldbeat_task_id": "1257",
+        "linked_zendesk_ticket_id": "843013",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|79.560.900-8|RADIO NUCLEAR"
+      },
+      {
+        "fieldbeat_task_id": "1258",
+        "linked_zendesk_ticket_id": "190572",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|61.605.000-1|INSTITUTO DE SALUD PUBLICA (ISP)"
+      },
+      {
+        "fieldbeat_task_id": "1259",
+        "linked_zendesk_ticket_id": "99999",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|79.560.900-8|RADIO NUCLEAR"
+      },
+      {
+        "fieldbeat_task_id": "1260",
+        "linked_zendesk_ticket_id": "99999",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|79.560.900-8|RADIO NUCLEAR"
+      },
+      {
+        "fieldbeat_task_id": "1261",
+        "linked_zendesk_ticket_id": "549574",
+        "state": "FINISHED",
+        "client_key": "FIELD_BEAT_CLIENT|61.608.404-6|Instituto Nacional del Cáncer (INC)"
+      }
+    ],
+    "first_10_bridge_rows": [
+      {
+        "bridge_id": "150655|1250",
+        "zendesk_ticket_id": "150655",
+        "fieldbeat_task_id": "1250",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "949395|1251",
+        "zendesk_ticket_id": "949395",
+        "fieldbeat_task_id": "1251",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "719418|1252",
+        "zendesk_ticket_id": "719418",
+        "fieldbeat_task_id": "1252",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "465221|1255",
+        "zendesk_ticket_id": "465221",
+        "fieldbeat_task_id": "1255",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "914336|1256",
+        "zendesk_ticket_id": "914336",
+        "fieldbeat_task_id": "1256",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "843013|1257",
+        "zendesk_ticket_id": "843013",
+        "fieldbeat_task_id": "1257",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "190572|1258",
+        "zendesk_ticket_id": "190572",
+        "fieldbeat_task_id": "1258",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "99999|1259",
+        "zendesk_ticket_id": "99999",
+        "fieldbeat_task_id": "1259",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "99999|1260",
+        "zendesk_ticket_id": "99999",
+        "fieldbeat_task_id": "1260",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      },
+      {
+        "bridge_id": "549574|1261",
+        "zendesk_ticket_id": "549574",
+        "fieldbeat_task_id": "1261",
+        "link_method": "fieldbeat_report_ticket_number",
+        "confidence": "1",
+        "created_at": "2026-07-01T16:34:59.299Z"
+      }
+    ],
+    "first_10_ticket_fields": [
+      {
+        "fieldbeat_task_id": "1250",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "150655"
+      },
+      {
+        "fieldbeat_task_id": "1251",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "949395"
+      },
+      {
+        "fieldbeat_task_id": "1252",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "719418"
+      },
+      {
+        "fieldbeat_task_id": "1255",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN (2)",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "465221"
+      },
+      {
+        "fieldbeat_task_id": "1255",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN (1)",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "465221"
+      },
+      {
+        "fieldbeat_task_id": "1255",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "465221"
+      },
+      {
+        "fieldbeat_task_id": "1255",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN (4)",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "465221"
+      },
+      {
+        "fieldbeat_task_id": "1255",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN (3)",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "465221"
+      },
+      {
+        "fieldbeat_task_id": "1256",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "914336"
+      },
+      {
+        "fieldbeat_task_id": "1257",
+        "group_name": "DESCRIPCIÓN DE LA INTERVENCIÓN",
+        "field_name": "NUMERO DE TICKET",
+        "field_value": "843013"
+      }
+    ]
+  }
+}

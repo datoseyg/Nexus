@@ -1,0 +1,141 @@
+{
+  "generated_at": "2026-07-01T16:48:31.193Z",
+  "total_zendesk_tickets_with_fieldbeat_report": 884,
+  "tickets_with_exactly_1_fieldbeat_report": 754,
+  "tickets_with_more_than_1_fieldbeat_report": 130,
+  "max_fieldbeat_reports_in_single_ticket": 52,
+  "distribution_by_report_count": {
+    "1": 754,
+    "2": 92,
+    "3": 24,
+    "4": 6,
+    "5": 3,
+    "11": 1,
+    "26": 1,
+    "33": 1,
+    "39": 1,
+    "52": 1
+  },
+  "top_20_tickets_with_more_reports": [
+    {
+      "zendesk_ticket_id": "9999",
+      "fieldbeat_report_count": 52,
+      "fieldbeat_task_ids": "1370|1392|1396|1397|1404|1446|1459|1461|1487|1516|1531|1549|1561|1596|1597|1605|1614|1617|1633|1642|1646|1678|1679|1705|1710|1717|1734|1735|1778|1818|1829|1841|1872|1873|1902|1920|1950|1969|1972|2051|2053|2055|2059|2061|2069|2079|2080|2160|2261|2283|2433|2982",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "777777",
+      "fieldbeat_report_count": 39,
+      "fieldbeat_task_ids": "1405|1406|1424|1428|1431|1528|1545|1547|1562|1585|1611|1613|1634|1638|1658|1715|1716|1724|1752|1795|1799|1807|1828|1853|1878|1879|1883|1900|1927|1928|1940|1941|1987|2004|2005|2028|2049|2050|2143",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "0000",
+      "fieldbeat_report_count": 33,
+      "fieldbeat_task_ids": "1346|1348|1362|1415|1556|1741|1742|1747|1748|1749|1754|1756|1757|1763|1768|1808|1822|1875|1894|1918|1919|1924|1930|1949|1964|1979|1999|2011|2023|2724|3410|3627|3628",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "0101",
+      "fieldbeat_report_count": 26,
+      "fieldbeat_task_ids": "1485|1491|1514|1526|1557|1598|1601|1604|1606|1608|1622|1659|1660|1728|1729|1806|1810|1885|1935|2071|2083|2089|2094|2133|2134|3061",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "8855",
+      "fieldbeat_report_count": 11,
+      "fieldbeat_task_ids": "2821|2824|2828|2829|2830|2833|2836|2839|2840|2841|2845",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "42",
+      "fieldbeat_report_count": 5,
+      "fieldbeat_task_ids": "2354|2439|2490|2633|2999",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "45",
+      "fieldbeat_report_count": 5,
+      "fieldbeat_task_ids": "1891|1893|2384|2390|2420",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "9918",
+      "fieldbeat_report_count": 5,
+      "fieldbeat_task_ids": "3571|3582|3584|3652|3654",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "0",
+      "fieldbeat_report_count": 4,
+      "fieldbeat_task_ids": "1443|1738|3192|3417",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "0001",
+      "fieldbeat_report_count": 4,
+      "fieldbeat_task_ids": "1448|1586|1789|1792",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "412",
+      "fieldbeat_report_count": 4,
+      "fieldbeat_task_ids": "2623|2634|2637|2675",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "8832",
+      "fieldbeat_report_count": 4,
+      "fieldbeat_task_ids": "2808|2822|2879|2988",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "9074",
+      "fieldbeat_report_count": 4,
+      "fieldbeat_task_ids": "2969|3098|3118|3120",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "10046",
+      "fieldbeat_report_count": 4,
+      "fieldbeat_task_ids": "3671|3679|3683|3695",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "00000",
+      "fieldbeat_report_count": 3,
+      "fieldbeat_task_ids": "1307|1959|3699",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "000",
+      "fieldbeat_report_count": 3,
+      "fieldbeat_task_ids": "1788|2851|3051",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "222",
+      "fieldbeat_report_count": 3,
+      "fieldbeat_task_ids": "3092|3093|3371",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "227",
+      "fieldbeat_report_count": 3,
+      "fieldbeat_task_ids": "2517|2518|2527",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "327",
+      "fieldbeat_report_count": 3,
+      "fieldbeat_task_ids": "2571|2572|2579",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    },
+    {
+      "zendesk_ticket_id": "555",
+      "fieldbeat_report_count": 3,
+      "fieldbeat_task_ids": "1568|1842|2313",
+      "sources": "BR_Ticket_FieldBeat_Task|DB_FieldBeat_Tasks.linked_zendesk_ticket_id"
+    }
+  ]
+}
