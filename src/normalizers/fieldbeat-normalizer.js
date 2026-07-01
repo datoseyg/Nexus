@@ -148,6 +148,84 @@ function extractTasks(payload) {
   return [];
 }
 
+function splitLines(value) {
+  return String(value ?? "")
+    .split(/\r\n|\r|\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+}
+
+// Detecta listas explícitamente numeradas ("1.- x", "2- y", ...) con índices
+// estrictamente crecientes. Si cualquier línea no calza el patrón, o los
+// índices no son crecientes, se considera que NO es una lista (se devuelve
+// null) y el valor se deja intacto en una sola fila. Esto evita explotar
+// valores como "107043-11" (guion dentro del propio código, no un marcador
+// de lista) o "motores: 123\ntornillo: 456" (líneas con etiqueta, no número).
+const NUMBERED_LINE_PATTERN = /^(\d{1,2})[.\-)]+\s*(.*)$/;
+
+function tryParseNumberedList(rawValue) {
+  const lines = splitLines(rawValue);
+  if (lines.length < 2) return null;
+
+  const parsed = [];
+  let previousIndex = 0;
+
+  for (const line of lines) {
+    const match = line.match(NUMBERED_LINE_PATTERN);
+    if (!match) return null;
+
+    const index = Number(match[1]);
+    const text = match[2].trim();
+
+    if (index <= previousIndex || !text) return null;
+
+    previousIndex = index;
+    parsed.push(text);
+  }
+
+  return parsed;
+}
+
+// Explota part_number en items atómicos cuando es una lista numerada.
+// part_name y quantity se alinean por posición SOLO si también son listas
+// numeradas del mismo largo; si no, se mantienen sin partir y la fila queda
+// marcada needsManualReview para revisión humana (ver reglas del Sprint 3).
+function explodeUsedPartItems({ rawPartNumber, rawPartName, rawQuantity }) {
+  const partNumberList = tryParseNumberedList(rawPartNumber);
+
+  if (!partNumberList) {
+    return [{
+      partNumber: rawPartNumber,
+      partName: rawPartName,
+      quantity: safeNumber(rawQuantity),
+      needsManualReview: false
+    }];
+  }
+
+  const partNameList = tryParseNumberedList(rawPartName);
+  const quantityList = tryParseNumberedList(rawQuantity);
+
+  const partNameAligned = Boolean(partNameList) && partNameList.length === partNumberList.length;
+  const quantityAligned = Boolean(quantityList) && quantityList.length === partNumberList.length;
+
+  const singleQuantity = safeNumber(rawQuantity);
+  const applySingleQuantityToAll = !quantityAligned && singleQuantity === 1;
+
+  return partNumberList.map((partNumber, position) => {
+    const partName = partNameAligned ? partNameList[position] : rawPartName;
+
+    const quantity = quantityAligned
+      ? safeNumber(quantityList[position])
+      : (applySingleQuantityToAll ? 1 : "");
+
+    const needsManualReview =
+      (!partNameAligned && Boolean(rawPartName)) ||
+      (!quantityAligned && !applySingleQuantityToAll && Boolean(rawQuantity));
+
+    return { partNumber, partName, quantity, needsManualReview };
+  });
+}
+
 function buildFieldBeatTables(tasks) {
   const taskRows = [];
   const equipmentRows = [];
@@ -257,16 +335,16 @@ function buildFieldBeatTables(tasks) {
     });
 
     for (const group of repuestoGroups) {
-      const partNumber =
+      const rawPartNumber =
         getFieldValueFromGroup(group, "NÚMERO DE PARTE (Leer código de barra del repuesto)") ||
         getFieldValueFromGroup(group, "NUMERO DE PARTE") ||
         getFieldValueFromGroup(group, "NÚMERO DE PARTE");
 
-      const partName =
+      const rawPartName =
         getFieldValueFromGroup(group, "NOMBRE DEL REPUESTO O INSUMO UTILIZADO") ||
         getFieldValueFromGroup(group, "NOMBRE DEL REPUESTO");
 
-      const quantity =
+      const rawQuantity =
         getFieldValueFromGroup(group, "CANTIDAD DE REPUESTOS UTILIZADOS") ||
         getFieldValueFromGroup(group, "CANTIDAD");
 
@@ -277,22 +355,29 @@ function buildFieldBeatTables(tasks) {
       const photoRef =
         getFieldValueFromGroup(group, "FOTO DEL REPUESTO UTILIZADO");
 
-      if (!partNumber && !partName) continue;
+      if (!rawPartNumber && !rawPartName) continue;
 
-      usedPartRows.push({
-        used_part_id: makeKey(taskId, group.name, partNumber, partName),
-        fieldbeat_task_id: taskId,
-        zendesk_ticket_id: linkedTicketId,
-        part_number: partNumber,
-        part_name: partName,
-        quantity: safeNumber(quantity),
-        origin_location: originLocation,
-        photo_ref: photoRef,
-        dolibarr_product_id: "",
-        dolibarr_ref: partNumber,
-        unit_cost: "",
-        estimated_total_cost: "",
-        extracted_at: extractedAt
+      const items = explodeUsedPartItems({ rawPartNumber, rawPartName, rawQuantity });
+
+      items.forEach((item, itemIndex) => {
+        usedPartRows.push({
+          used_part_id: makeKey(taskId, group.index ?? 0, itemIndex, item.partNumber),
+          fieldbeat_task_id: taskId,
+          zendesk_ticket_id: linkedTicketId,
+          part_number: item.partNumber,
+          part_name: item.partName,
+          quantity: item.quantity,
+          raw_original_part_number: rawPartNumber,
+          raw_original_part_name: rawPartName,
+          origin_location: originLocation,
+          photo_ref: photoRef,
+          dolibarr_product_id: "",
+          dolibarr_ref: item.partNumber,
+          unit_cost: "",
+          estimated_total_cost: "",
+          needs_manual_review: item.needsManualReview,
+          extracted_at: extractedAt
+        });
       });
     }
 

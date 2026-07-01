@@ -13,7 +13,13 @@
     "qa:ticket-fieldbeat": "node src/qa/audit-ticket-fieldbeat-multiplicity.js",
     "normalize:zendesk": "node src/normalizers/zendesk-normalizer.js",
     "qa:zendesk": "node src/qa/audit-zendesk.js",
-    "build:ticket-fieldbeat-view": "node src/marts/build-ticket-fieldbeat-view.js"
+    "build:ticket-fieldbeat-view": "node src/marts/build-ticket-fieldbeat-view.js",
+    "normalize:dolibarr": "node src/normalizers/dolibarr-normalizer.js",
+    "qa:dolibarr": "node src/qa/audit-dolibarr.js",
+    "build:used-parts-dolibarr-match": "node src/marts/build-used-parts-dolibarr-match.js",
+    "build:ticket-fieldbeat-dolibarr-view": "node src/marts/build-ticket-fieldbeat-dolibarr-view.js",
+    "qa:scope-reconciliation": "node src/qa/reconcile-ticket-fieldbeat-dolibarr-scope.js",
+    "get:zendesk:backfill-fieldbeat": "node src/miners/zendesk-backfill-missing-ticket-ids.js"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",

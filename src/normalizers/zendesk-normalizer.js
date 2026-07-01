@@ -17,15 +17,44 @@ function safeNumber(value) {
   return Number.isNaN(n) ? "" : n;
 }
 
+// Recorre subcarpetas también: el backfill por ticket_id
+// (src/miners/zendesk-backfill-missing-ticket-ids.js) guarda RAW en
+// data/raw/zendesk/backfill_by_fieldbeat_ticket_ids/, no en el nivel raíz.
+async function listJsonFilesRecursive(dir) {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...(await listJsonFilesRecursive(fullPath)));
+    } else if (entry.name.endsWith(".json")) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+// La búsqueda (search.json) devuelve { results: [...] }; el endpoint de
+// ticket individual (tickets/{id}.json), usado por el backfill, devuelve
+// { ticket: {...} } singular. Se soportan ambas formas.
+function extractTicketsFromPayload(payload) {
+  if (Array.isArray(payload.results)) return payload.results;
+  if (payload.ticket) return [payload.ticket];
+  return [];
+}
+
 async function loadAllTickets() {
-  const files = (await fs.readdir(RAW_DIR)).filter(f => f.endsWith(".json"));
+  const files = await listJsonFilesRecursive(RAW_DIR);
 
   const ticketsById = new Map();
 
   for (const file of files) {
-    const raw = await fs.readFile(path.join(RAW_DIR, file), "utf8");
+    const raw = await fs.readFile(file, "utf8");
     const payload = JSON.parse(raw);
-    const results = Array.isArray(payload.results) ? payload.results : [];
+    const results = extractTicketsFromPayload(payload);
 
     for (const ticket of results) {
       if (ticket?.id === undefined || ticket?.id === null) continue;

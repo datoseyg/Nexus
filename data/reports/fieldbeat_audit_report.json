@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-01T16:44:13.750Z",
+  "generated_at": "2026-07-01T18:07:13.056Z",
   "row_counts": {
     "DB_FieldBeat_Tasks": 3747,
     "DB_FieldBeat_Task_Equipments": 3157,
     "DB_FieldBeat_Report_Fields": 66107,
-    "DB_FieldBeat_Used_Parts": 2168,
+    "DB_FieldBeat_Used_Parts": 2193,
     "DIM_Clients": 43,
     "DIM_Equipments": 83,
     "BR_Ticket_FieldBeat_Task": 1210
@@ -21,10 +21,10 @@
     "ticket_like_fields": 1346
   },
   "used_parts": {
-    "total_used_parts": 2168,
-    "used_parts_with_part_number": 1886,
+    "total_used_parts": 2193,
+    "used_parts_with_part_number": 1911,
     "used_parts_without_part_number": 282,
-    "part_number_coverage": "86.99%"
+    "part_number_coverage": "87.14%"
   },
   "duplicates": {
     "duplicate_tasks": 0,
@@ -101,7 +101,7 @@
         "fieldbeat_task_id": "1250",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "949395|1251",
@@ -109,7 +109,7 @@
         "fieldbeat_task_id": "1251",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "719418|1252",
@@ -117,7 +117,7 @@
         "fieldbeat_task_id": "1252",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "465221|1255",
@@ -125,7 +125,7 @@
         "fieldbeat_task_id": "1255",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "914336|1256",
@@ -133,7 +133,7 @@
         "fieldbeat_task_id": "1256",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "843013|1257",
@@ -141,7 +141,7 @@
         "fieldbeat_task_id": "1257",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "190572|1258",
@@ -149,7 +149,7 @@
         "fieldbeat_task_id": "1258",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "99999|1259",
@@ -157,7 +157,7 @@
         "fieldbeat_task_id": "1259",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "99999|1260",
@@ -165,7 +165,7 @@
         "fieldbeat_task_id": "1260",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       },
       {
         "bridge_id": "549574|1261",
@@ -173,7 +173,7 @@
         "fieldbeat_task_id": "1261",
         "link_method": "fieldbeat_report_ticket_number",
         "confidence": "1",
-        "created_at": "2026-07-01T16:34:59.299Z"
+        "created_at": "2026-07-01T17:53:47.246Z"
       }
     ],
     "first_10_ticket_fields": [

@@ -1,0 +1,95 @@
+{
+  "generated_at": "2026-07-01T17:36:43.286Z",
+  "row_counts": {
+    "DB_Dolibarr_Products": 1609,
+    "DIM_Dolibarr_Product_Identity_Map": 3219
+  },
+  "coverage": {
+    "products_with_ref": 1609,
+    "products_without_ref": 0,
+    "ref_coverage": "100.00%",
+    "products_with_barcode": 1,
+    "barcode_coverage": "0.06%"
+  },
+  "identity_map": {
+    "identity_type_breakdown": {
+      "REF": 1609,
+      "ID": 1609,
+      "BARCODE": 1
+    },
+    "refs_shared_by_multiple_products": 0
+  },
+  "duplicates": {
+    "duplicate_products": 0,
+    "duplicate_identity_rows": 0
+  },
+  "status_breakdown": {
+    "0": 121,
+    "1": 1488
+  },
+  "samples": {
+    "first_10_products": [
+      {
+        "dolibarr_product_id": "11958",
+        "ref": "00031601_C",
+        "barcode": "",
+        "label": "Dose Calibrator SCINTIDOSE"
+      },
+      {
+        "dolibarr_product_id": "10779",
+        "ref": "0007536-0001",
+        "barcode": "",
+        "label": "CARINAiso"
+      },
+      {
+        "dolibarr_product_id": "10778",
+        "ref": "0007536-0002",
+        "barcode": "",
+        "label": "CARINAsim"
+      },
+      {
+        "dolibarr_product_id": "10780",
+        "ref": "0007536-0004",
+        "barcode": "",
+        "label": "CARINAnav"
+      },
+      {
+        "dolibarr_product_id": "10840",
+        "ref": "0007536-0004N",
+        "barcode": "",
+        "label": "CARINAnav DORADOnova"
+      },
+      {
+        "dolibarr_product_id": "10783",
+        "ref": "0007563-0003P",
+        "barcode": "",
+        "label": "DORADO 3 RED Post"
+      },
+      {
+        "dolibarr_product_id": "10782",
+        "ref": "0007563-0003W",
+        "barcode": "",
+        "label": "DORADO 3 RED Wall"
+      },
+      {
+        "dolibarr_product_id": "10838",
+        "ref": "0012206-0004W",
+        "barcode": "",
+        "label": "DORADOnova 3 red wall"
+      },
+      {
+        "dolibarr_product_id": "12",
+        "ref": "0012206-0005",
+        "barcode": "",
+        "label": "DORADOnova 3 GREEN Wall"
+      },
+      {
+        "dolibarr_product_id": "10777",
+        "ref": "0012206-0005P",
+        "barcode": "",
+        "label": "DORADOnova 3 GREEN Post"
+      }
+    ],
+    "refs_shared_by_multiple_products_sample": []
+  }
+}

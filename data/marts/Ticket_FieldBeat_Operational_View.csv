@@ -1,6 +1,7 @@
 zendesk_ticket_id,subject,status,priority,has_fieldbeat_report,fieldbeat_report_count,has_multiple_fieldbeat_reports,fieldbeat_task_ids,first_fieldbeat_start_time,last_fieldbeat_start_time,fieldbeat_states,fieldbeat_types,fieldbeat_assignees,client_names,equipment_internal_ids,has_used_parts,used_parts_count,used_part_numbers,operational_join_status
-7,Ticket de prueba: Correo electrónico de un cliente,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 1,Ticket de muestra: le presentamos el ticket,closed,normal,true,1,false,2526,2024-06-19T12:30:00.000Z,2024-06-19T12:30:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,acorbea,HOSPITAL EXEQUIEL GONZÁLEZ CORTÉS,Linac-01,true,1,completar solo por ingeniero de servicio.,SINGLE_FIELDBEAT_REPORT
+202,Interlock Gantry,closed,high,true,1,false,2488,2024-05-31T23:20:00.000Z,2024-05-31T23:20:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,mabreu,UC CHRISTUS - SCA,Linac-109256,false,0,,SINGLE_FIELDBEAT_REPORT
+7,Ticket de prueba: Correo electrónico de un cliente,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 48,LA PRUEBAS DEL MLC PARA EL AXESSE FALLA EN LOS CONTROLES,closed,normal,true,1,false,2348,2024-03-06T20:00:00.000Z,2024-03-06T20:00:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,acorbea,UC CHRISTUS - CECA,Linac-153935,true,1,,SINGLE_FIELDBEAT_REPORT
 51,"FCO (371-05-MSQ-073) - MOSAIQ® Partial Wedge Fields, CFS and Plan Re-Promotion",closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 27,Problema con las láminas o optimización de energías,closed,low,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
@@ -25,7 +26,6 @@ zendesk_ticket_id,subject,status,priority,has_fieldbeat_report,fieldbeat_report_
 156,falla rescate pacte cecilia troncoso,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 196,Revisión MOSAIQ,closed,,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 195,Revisión MOSAIQ,closed,,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-202,Interlock Gantry,closed,high,true,1,false,2488,2024-05-31T23:20:00.000Z,2024-05-31T23:20:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,mabreu,UC CHRISTUS - SCA,Linac-109256,false,0,,SINGLE_FIELDBEAT_REPORT
 240,No se puede ingresar a MONACO 1 y 2,closed,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 219,Perdida conexión servidor de cálculo,closed,,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 235,Revisión Conexión Tablet Láseres Gammex,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT

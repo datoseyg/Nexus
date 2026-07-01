@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-07-01T21:02:12.266Z",
+  "total_zendesk_tickets": 628,
+  "total_fieldbeat_tasks": 3747,
+  "total_fieldbeat_used_parts_global": 2193,
+  "used_parts_in_ticket_mart": 200,
+  "used_parts_outside_ticket_mart": 1993,
+  "fieldbeat_tasks_with_zendesk_ticket": 1210,
+  "fieldbeat_tasks_without_zendesk_ticket": 2537,
+  "fieldbeat_tasks_linked_to_existing_zendesk_ticket": 290,
+  "fieldbeat_tasks_linked_to_missing_zendesk_ticket": 920,
+  "ticket_mart_used_parts_total": 200,
+  "ticket_mart_totals_match": true,
+  "used_parts_in_ticket_mart_rate": "9.12%",
+  "fieldbeat_tasks_with_zendesk_ticket_rate": "32.29%",
+  "explanation_of_scope": "El mart Ticket_FieldBeat_Dolibarr_Operational_View.csv es ticket-centrico: 1 fila por cada uno de los 628 tickets Zendesk minados. Solo se incluyen repuestos de tasks FieldBeat cuya relacion puente (BR_Ticket_FieldBeat_Task) apunta a un zendesk_ticket_id que realmente existe en DB_Zendesk_Tickets.csv. De los 3747 tasks FieldBeat totales, 2537 nunca registraron un numero de ticket en su reporte (sin fila puente), y 920 registraron un numero de ticket que no corresponde a ningun ticket Zendesk minado (ticket fantasma / typo / ticket fuera del rango minado). Por eso el mart final solo contiene 200 de los 2193 repuestos globales: el resto pertenece a tasks fuera de alcance de los tickets Zendesk actualmente minados, no a un bug de matching."
+}

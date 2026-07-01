@@ -214,3 +214,17 @@ El endpoint de FieldBeat `/tasks` devuelve:
 La paginación correcta es por cursor `next_page`.
 
 Si el script `npm run get:fieldbeat:all` no imprime nada salvo el comando de Node, revisar que `mineAllFieldBeatTasks()` se esté llamando al final del archivo `src/miners/fieldbeat-all.js`.
+
+## Pendientes conocidos para Fase 2
+
+### Tickets Zendesk inaccesibles por permisos de token (291 IDs)
+
+Al reconciliar el alcance Ticket ↔ FieldBeat ↔ Dolibarr se detectaron 920 relaciones de `BR_Ticket_FieldBeat_Task` que apuntan a un `zendesk_ticket_id` que no existe en los 628 tickets minados. Se corrió un backfill (`npm run get:zendesk:backfill-fieldbeat`) contra los 656 IDs únicos faltantes:
+
+- 4 encontrados (duplicados de tickets ya existentes, no aportaron nada nuevo).
+- 361 con 404 genuino (números con forma de basura/typo de técnico, ej. IDs de 12+ dígitos).
+- **291 con error 403 Forbidden**, concentrados en dos rangos densos y consecutivos: **5–500** y **~8600–10227**. Este patrón sugiere que son tickets reales existentes en Zendesk, pero el token actual (`ZENDESK_USER`/`ZENDESK_TOKEN` en `.env`) no tiene permiso para verlos vía `/api/v2/tickets/{id}.json` (rol de agente restringido a asignados/seguidos, tickets privados, o de otra marca).
+
+**Estado:** con el token actual no hay nada más que hacer — se ignoran por ahora, no bloquean el mart GOLD.
+
+**Para retomar en Fase 2:** revisar si existe un token con permiso "ver todos los tickets" (rol admin o agente sin restricción) y volver a correr `npm run get:zendesk:backfill-fieldbeat` contra esos 291 IDs específicamente. La lista completa está guardada en `data/reports/zendesk_ticket_ids_not_accessible_403.json`.

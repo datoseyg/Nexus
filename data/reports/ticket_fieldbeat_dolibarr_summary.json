@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-07-01T21:02:11.122Z",
+  "total_tickets": 628,
+  "tickets_with_fieldbeat_report": 228,
+  "tickets_without_fieldbeat_report": 400,
+  "tickets_with_used_parts": 113,
+  "tickets_without_used_parts": 515,
+  "tickets_with_all_parts_matched": 59,
+  "tickets_with_placeholders": 29,
+  "tickets_with_unmatched_parts": 22,
+  "tickets_with_ambiguous_parts": 5,
+  "tickets_review_required": 59,
+  "total_used_parts": 200,
+  "matched_used_parts": 137,
+  "placeholder_used_parts": 31,
+  "unmatched_used_parts": 27,
+  "ambiguous_used_parts": 5,
+  "match_rate": "68.50%",
+  "review_required_rate": "36.00%"
+}

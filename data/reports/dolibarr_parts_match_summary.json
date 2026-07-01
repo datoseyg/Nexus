@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-07-01T18:25:38.060Z",
+  "total_used_parts": 2193,
+  "matched_count": 927,
+  "no_match_count": 489,
+  "ambiguous_count": 56,
+  "placeholder_values_count": 721,
+  "manual_alias_match_count": 0,
+  "review_required_count": 1412,
+  "match_rate": "42.27%",
+  "placeholder_rate": "32.88%",
+  "ambiguous_rate": "2.55%",
+  "match_status_breakdown": {
+    "MATCHED": 927,
+    "PLACEHOLDER_VALUE": 721,
+    "NO_MATCH": 489,
+    "AMBIGUOUS_MATCH": 56
+  },
+  "match_method_breakdown": {
+    "REF_LIKE": 200,
+    "PLACEHOLDER_REJECTED": 721,
+    "REF_EXACT": 751,
+    "NONE": 489,
+    "REF_NORMALIZED_EXACT": 32
+  }
+}

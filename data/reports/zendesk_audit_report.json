@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-01T16:58:25.692Z",
+  "generated_at": "2026-07-01T21:02:02.628Z",
   "row_counts": {
     "DB_Zendesk_Tickets": 628,
     "DB_Zendesk_Ticket_Tags": 8383,
@@ -35,16 +35,22 @@
   "samples": {
     "first_10_tickets": [
       {
-        "zendesk_ticket_id": "7",
-        "subject": "Ticket de prueba: Correo electrónico de un cliente",
-        "status": "closed",
-        "priority": "high"
-      },
-      {
         "zendesk_ticket_id": "1",
         "subject": "Ticket de muestra: le presentamos el ticket",
         "status": "closed",
         "priority": "normal"
+      },
+      {
+        "zendesk_ticket_id": "202",
+        "subject": "Interlock Gantry",
+        "status": "closed",
+        "priority": "high"
+      },
+      {
+        "zendesk_ticket_id": "7",
+        "subject": "Ticket de prueba: Correo electrónico de un cliente",
+        "status": "closed",
+        "priority": "high"
       },
       {
         "zendesk_ticket_id": "48",
@@ -87,12 +93,6 @@
         "subject": "FCO - 382-05-MON-055 - Agility MLC plans may be incorrectly calculated",
         "status": "closed",
         "priority": "normal"
-      },
-      {
-        "zendesk_ticket_id": "60",
-        "subject": "En el Monaco01 hay problemas con importa imágenes desde la carpeta de escritorio",
-        "status": "closed",
-        "priority": "high"
       }
     ],
     "first_10_tags": [
@@ -100,133 +100,133 @@
         "ticket_tag_id": "1|de",
         "zendesk_ticket_id": "1",
         "tag": "de",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_tag_id": "1|muestra",
         "zendesk_ticket_id": "1",
         "tag": "muestra",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_tag_id": "1|support",
         "zendesk_ticket_id": "1",
         "tag": "support",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_tag_id": "1|zendesk",
         "zendesk_ticket_id": "1",
         "tag": "zendesk",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
-        "ticket_tag_id": "48|agility",
-        "zendesk_ticket_id": "48",
-        "tag": "agility",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "ticket_tag_id": "202|angiografía__neuangio_43c",
+        "zendesk_ticket_id": "202",
+        "tag": "angiografía__neuangio_43c",
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
-        "ticket_tag_id": "48|axesse",
-        "zendesk_ticket_id": "48",
+        "ticket_tag_id": "202|axesse",
+        "zendesk_ticket_id": "202",
         "tag": "axesse",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
-        "ticket_tag_id": "48|cabezal_agility",
-        "zendesk_ticket_id": "48",
-        "tag": "cabezal_agility",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "ticket_tag_id": "202|barcoding",
+        "zendesk_ticket_id": "202",
+        "tag": "barcoding",
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
-        "ticket_tag_id": "48|elekta",
-        "zendesk_ticket_id": "48",
+        "ticket_tag_id": "202|closed_by_merge",
+        "zendesk_ticket_id": "202",
+        "tag": "closed_by_merge",
+        "extracted_at": "2026-07-01T21:00:58.996Z"
+      },
+      {
+        "ticket_tag_id": "202|dosisoft",
+        "zendesk_ticket_id": "202",
+        "tag": "dosisoft",
+        "extracted_at": "2026-07-01T21:00:58.996Z"
+      },
+      {
+        "ticket_tag_id": "202|elekta",
+        "zendesk_ticket_id": "202",
         "tag": "elekta",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
-      },
-      {
-        "ticket_tag_id": "48|físico",
-        "zendesk_ticket_id": "48",
-        "tag": "físico",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
-      },
-      {
-        "ticket_tag_id": "48|hardware_y_software",
-        "zendesk_ticket_id": "48",
-        "tag": "hardware_y_software",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       }
     ],
     "first_10_custom_fields_with_value": [
+      {
+        "ticket_custom_field_id": "202|22951106310811",
+        "zendesk_ticket_id": "202",
+        "field_id": "22951106310811",
+        "field_value": "dosisoft",
+        "extracted_at": "2026-07-01T21:00:58.996Z"
+      },
+      {
+        "ticket_custom_field_id": "202|22986688179995",
+        "zendesk_ticket_id": "202",
+        "field_id": "22986688179995",
+        "field_value": "si",
+        "extracted_at": "2026-07-01T21:00:58.996Z"
+      },
       {
         "ticket_custom_field_id": "48|22951106310811",
         "zendesk_ticket_id": "48",
         "field_id": "22951106310811",
         "field_value": "cabezal_agility",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_custom_field_id": "48|22986688179995",
         "zendesk_ticket_id": "48",
         "field_id": "22986688179995",
         "field_value": "no",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_custom_field_id": "51|22951106310811",
         "zendesk_ticket_id": "51",
         "field_id": "22951106310811",
         "field_value": "mosaiq_server",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_custom_field_id": "51|22986688179995",
         "zendesk_ticket_id": "51",
         "field_id": "22986688179995",
         "field_value": "no",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_custom_field_id": "51|23570126394907",
         "zendesk_ticket_id": "51",
         "field_id": "23570126394907",
         "field_value": "fco",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_custom_field_id": "27|22951106310811",
         "zendesk_ticket_id": "27",
         "field_id": "22951106310811",
         "field_value": "acelerador_lineal",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_custom_field_id": "27|22986688179995",
         "zendesk_ticket_id": "27",
         "field_id": "22986688179995",
         "field_value": "no",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       },
       {
         "ticket_custom_field_id": "46|22951106310811",
         "zendesk_ticket_id": "46",
         "field_id": "22951106310811",
         "field_value": "dosisoft",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
-      },
-      {
-        "ticket_custom_field_id": "46|22986688179995",
-        "zendesk_ticket_id": "46",
-        "field_id": "22986688179995",
-        "field_value": "no",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
-      },
-      {
-        "ticket_custom_field_id": "46|23570126394907",
-        "zendesk_ticket_id": "46",
-        "field_id": "23570126394907",
-        "field_value": "problema",
-        "extracted_at": "2026-07-01T16:58:16.192Z"
+        "extracted_at": "2026-07-01T21:00:58.996Z"
       }
     ]
   }

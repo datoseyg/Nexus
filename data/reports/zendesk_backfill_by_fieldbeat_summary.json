@@ -1,0 +1,9 @@
+{
+  "generated_at": "2026-07-01T20:59:24.641Z",
+  "missing_ticket_relations_input": 920,
+  "unique_missing_ticket_ids": 656,
+  "tickets_found_in_zendesk": 4,
+  "tickets_not_found": 361,
+  "tickets_failed_by_error": 291,
+  "found_rate": "0.61%"
+}

@@ -1,0 +1,536 @@
+normalized_part_identifier,raw_examples,occurrences,fieldbeat_task_ids,zendesk_ticket_ids,example_part_names,current_match_status,current_match_method,suggested_action,manual_dolibarr_product_id,manual_dolibarr_ref,review_notes
+NA,NA|N/A|n/a|n/A|na,289,960|85|61|38|79|73|60|42|40|168|157|181|172|158|147|138|134|127|118|114|107|288|296|329|324|355|347|348|349|361|391|392|394|403|408|413|428|452|468|478|483|508|521|517|518|527|528|529|535|536|538|542|546|525|557|558|565|572|578|593|626|646|647|670|709|731|775|778|786|790|829|832|891|940|945|947|969|970|976|982|985|1018|1038|1039|1040|1068|1105|1131|1142|1176|1197|1199|1202|1211|1227|1229|1230|1231|1235|1239|1242|1244|1250|1264|1274|1275|1284|1286|1295|1302|1311|1312|1331|1332|1333|1347|1361|1384|1395|1423|1434|1450|1452|1463|1464|1465|1480|1485|1491|1496|1501|1504|1514|1520|1538|1542|1543|1548|1549|1556|1557|1564|1572|1574|1577|1578|1590|1597|1598|1601|1604|1606|1607|1608|1622|1659|1718|1723|1729|1731|1742|1744|1747|1748|1749|1754|1756|1763|1769|1777|1783|1786|1788|1796|1802|1806|1808|1809|1821|1822|1846|1851|1874|1885|1894|1905|1918|1919|1922|1924|1937|1942|1944|1948|1949|1955|1965|1973|1979|1980|1984|1988|1993|1999|2000|2002|2003|2009|2010|2011|2014|2016|2023|2031|2040|2058|2060|2074|2093|2094|2109|2117|2129|2142|2148|2154|2156|2164|2167|2183|2194|2199|2202|2205|2237|2248|2272|2279|2281|2284|2287|2290|2291|2296|2351|2362|2363|2389|2390|2391|2408|2409|2411|2421|2422|2424|2426|2432|2438|2439|2441|2445|2455|2464|2482|2490|2492|2495|2503|2512|2516|2537|2543|2555|2569|2612|2745|2902|2917|3332|3580|3581|3583|3657|3658|3704,150655|475970|532379|507391|290214|326756|375731|686250|903908|0203|928747|436271|563550|0101|293312|867282|654641|591426|392327|9999|0000|330260|950403|677843|428746|000|391499|837833|916830|154919|568581|436837|305630|535606|452861|691983|529099|914690|127990|716324|561750|560333|979673|989244|582497|823784|90|45|70|721393|40|173501|42|38|128|148|181|211|236|258|172,NA|N/C|N/A|no hay|Disco duro de Sequencer Mosaiq,PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,Valor placeholder (sin numero/serie/N-A). Confirmar que no requiere match real.,,,
+(vacio),---|.......,284,81|76|41|82|220|217|195|164|216|208|200|194|161|241|304|307|346|362|352|359|382|383|422|451|488|507|509|511|534|539|556|567|577|583|590|610|624|673|676|685|769|756|804|825|833|863|872|880|903|887|931|942|946|1006|1032|1058|1075|1086|1100|1103|1113|1159|1173|1174|1186|1188|1203|1210|1246|1247|1249|1364|1376|1385|1392|1431|1432|1433|1441|1443|1468|1483|1486|1492|1511|1551|1586|1623|1631|1633|1642|1649|1667|1678|1680|1681|1688|1689|1691|1709|1734|1751|1757|1780|1784|1793|1835|1836|1848|1868|1872|1873|1927|1928|1931|1932|1941|1947|1951|1959|1962|1975|2004|2018|2020|2035|2051|2063|2072|2086|2107|2140|2145|2147|2149|2150|2155|2161|2185|2201|2208|2210|2214|2221|2249|2252|2280|2314|2320|2321|2330|2341|2348|2356|2358|2359|2361|2384|2481|2545|2591|2595|2611|2613|2614|2619|2620|2624|2626|2638|2658|2667|2670|2671|2677|2684|2686|2687|2690|2693|2699|2702|2704|2705|2707|2722|2757|2762|2769|2773|2774|2798|2799|2806|2869|2871|2878|2887|2888|2906|2908|2912|2913|2918|2926|2928|2932|2937|2961|2972|2992|2993|2994|2996|3036|3059|3060|3061|3080|3086|3133|3137|3141|3142|3147|3152|3160|3162|3171|3172|3188|3214|3218|3220|3221|3245|3246|3247|3249|3258|3262|3264|3312|3333|3334|3335|3336|3343|3351|3372|3391|3398|3416|3435|3470|3524|3570|3586|3598|3633|3664|3691|3707|3762|3773,20001502053|665447|704250|9999|777777|0|120359|583766|900438|588386|0001|312736|224161|292917|650403|475039|236942|523761|307865|0000|00001|136342|642619|123178|00000|601281|746842|107185|905198|593101|375568|362745|48|57|256105|45|265|393|463|8647|500|8652|446|8669|8667|8682|8702|8775|8825|8923|8904|8975|8993|8821|8995|44|9071|9111|9173|0101|9222|9153|9277|9282|9297|9291|9261|9344|9314|9364|9400|9403|9388|9441|9444|9556|9574|9578|9573|9591|9674|9722|9883|9947|9951|10002|10220,"DLG PCB  SN 1538489 / 1 Tornillo-Nuez-Motor Agility Banco Y2|Fusible de retardo de 10 amp.|Sesión Webex
+|4 Nueces-Tornillos-Motor|N/C",PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,Valor placeholder (sin numero/serie/N-A). Confirmar que no requiere match real.,,,
+NOHAY,No hay|No hay.|no hay|No hay.|No Hay,169,956|90|89|8|72|67|56|36|30|99|93|9|88|80|77|64|57|35|29|215|203|175|155|148|26|204|202|18|139|122|111|130|121|110|232|242|248|255|260|267|268|264|269|277|279|284|286|292|309|294|295|301|302|318|325|342|351|375|385|388|390|371|389|405|406|411|415|417|420|421|425|434|443|444|442|457|460|461|485|494|476|477|495|497|502|505|506|503|514|515|555|562|563|573|600|601|602|597|618|627|642|659|662|663|684|695|697|699|705|724|735|733|749|750|763|767|770|782|818|876|919|923|972|980|981|986|990|991|1048|1052|1122|1158|1178|1184|1206|1219|1234|1241|1267|1399|1414|1425|1440|1456|1507|1536|1755|1764|1775|1801|1803|1907|1986|1990|1997|2001|2180|2182|2416|2501|2508|2509|2547|2558|2598|2657|2725|2852|3447,937899|286087|883797|260481|323448|544858|214|223|132|279|297|399|9781,No hay|Brocha y aspiradora.|no hay|No hay.|Grasa. WD40. Paños de limpieza.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SN,SN|s/n|sn|S/N,65,952|96|48|166|162|142|163|141|131|128|132|125|112|229|228|335|340|402|404|410|414|467|530|543|560|571|579|585|586|589|580|581|608|620|706|852|854|862|866|870|889|906|911|929|967|1020|1193|1222|1224|1321|1645|1929|1954|2232|2234|2244|2254|2273|2319|2335|2349|2377|2423|2449|3004,536165|225444|720791|737478|823784|281588|177629,NA|no hay|N/C|NC|nc,PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,Valor placeholder (sin numero/serie/N-A). Confirmar que no requiere match real.,,,
+NC,NC|nc|N/C|n/c,63,226|190|189|223|233|240|239|246|256|247|273|274|271|275|289|290|308|337|328|454|459|466|612|665|701|703|707|711|718|728|746|800|811|815|822|837|845|867|910|935|936|1007|1008|1084|1095|1096|1118|1182|1253|1254|1391|1495|1540|1725|2047|2067|2068|2105|2106|2114|2198|2660|2661,493|496,"NC|sin repuesto|Sin repuesto|nc|Alcohol toallas de.limpieza espuma de.limpieza, buzos de limpieza.",PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,Valor placeholder (sin numero/serie/N-A). Confirmar que no requiere match real.,,,
+1538489,1538489,22,252|287|456|628|827|1104|1169|1238|1338|1363|1473|1562|1613|1669|1675|1683|1698|1910|1968|1989|2675|3107,508853|318046|524622|777777|596438|985059|412,"Diaphragms PCB|PCB diaphragm drive|PCB assy, DLG and Diaphragm drive|DLg PCB Drive|PCB ASSY, DLG AND DIAPHRAGM DRIVE",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1018265,1018265,20,644|974|1562|1592|1617|1671|1855|1928|2096|2123|2251|2374|2453|2477|2570|2588|2698|3021|3076|3373,777777|9999|386771|534360|184|299|9145,Fru Z MTR brush Set|FRU Z Motor Brush SET (electrocraft)|FRU Z motor brush set|Fru Z mtr brush set|Fru Z motor brush set ( electrocraft) cant=1,MATCHED,REF_LIKE,Revisar manualmente.,,,
+NO,no.|No|NO|no,17,129|380|894|1183|1998|2315|2324|2744|2768|2901|3130|3291|3347|3379|3506|3567|3656,8792|9542|9429|9948,no se utilizaron.|No|no|No.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1527044,1527044,15,796|1214|1281|1528|1613|1669|1968|1982|1991|2092|2162|2467|2518|2675|2963,564323|777777|596438|468508|168|227|412|9063,"programmed PCB assy, Router|programmed pcb assy, router|Programmed PCB assy, router|Programmed PCB Assy ROUTER|programmed pcb assy, router ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1006737,1006737,13,39|821|841|1127|1191|1215|1293|1336|1545|1824|1825|1972|2017,000000000|508853|777777|158251|9999|526627,PCB SIB|SIB PCB|PCB Assy Sib|pcb sib|PCB ASSY SIB,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1016474,1016474,11,87|198|266|599|902|1132|1141|1169|1170|1437|1472,758188|010101,1 Freno DLG|2 Unidades - DLG Brake|Frenos de DLG|Frenos DLG x2|2x DLG Brake Spare,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1556292,1556292,11,1506|1575|1602|1773|1910|1930|1968|2050|2162|2375|2872,844620|985059|0000|777777|8884,"kit spare, dlg brake      cantidad 2|(2) Kit DLG, Brakes |kit, spares, dlg brakes    cant =2|(2) Kit, Spares, DLG Brake|kit spares DLG brake cantidad =2",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SINNUMERO,sin numero|Sin numero|Sin número|Sin número.,10,92|74|146|144|150|102|305|357|396|534,,no hay|Conector Rs|lwd 40. grasa EP2|Grasa EP2. Lubricante WD40|wd40 . limpia contacto . paños de limpieza,PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,Valor placeholder (sin numero/serie/N-A). Confirmar que no requiere match real.,,,
+NOAPLICA,no aplica|No aplica|NO APLICA,9,75|213|914|1094|2414|2415|2442|2730|3395,144|8733|99999,no aplica|no hay|Limpia Contacto|Insumo|NO APLICA,PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,Valor placeholder (sin numero/serie/N-A). Confirmar que no requiere match real.,,,
+1017632,1017632,8,957|1223|1226|1233|1281|1528|2357|3723,564323|777777|10148,"pcb assy, camera CCU|CCU PCB|PCB assy, camera CCU|PCB Assy Camers CCU|PCB Assy, Camera CCU",MATCHED,REF_LIKE,Revisar manualmente.,,,
+1500954,1500954,7,108|384|490|1828|2152|2853|3495,777777|8901|9833,"Tarjeta Controladora de Voltaje|PCB controladora de Telemetro "" VOLTAGE REGULATOR PCB ASSY""|Z-Laser voltage regulator, PCB Assy|voltage regulador, pcb assy.|Voltage Regulator PCB Assy",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1547237,1547237,7,1322|1698|2110|2868|2872|2954|3257,368560|8912|8884|9037,"kit, luminus proj assy and pcb led control|Kit, Luminus Proj Assy an PCB |Kit, Luminus Proj Assy and PCB, Assy Led Control|kit, luminus proj assy and PCB assy, LED CONTROL |kit, luminus proj assy and PCB assy, LED control",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+4513341184601H,4513341184601H,6,1269|1976|2066|2483|2559|2910,434875|198,"cable assy, pl5 to S  (1)|Cable Assy PL5|Cable Assy, PL5 to SK5A|cable assy, PL5 to SK5A|cable assy, pl5 to sk5A",MATCHED,REF_LIKE,Revisar manualmente.,,,
+COMPLETARSOLOPORINGENIERODESERVICIO,completar solo por ingeniero de servicio.,6,2520|2522|2523|2524|2525|2526,1,completar solo por ingeniero de servicio.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133502026,45133502026|45133502026.,5,752|1774|1798|2113|2796,904418|568581|8820,"X RAY TUBE Assembly|X Ray tube.|Assembly, Xray Tube|assembly, xrays tube|Tubo de RX",MATCHED,REF_LIKE,Revisar manualmente.,,,
+SINNUMERODEPARTE,Sin número de parte|sin número de parte,5,802|857|882|890|920,,Soldadura de estaño y componente Wulf|Seguro Zagers de 10 mm|Sin repuesto|Cable alternativo de HT,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1564281,1564281,5,2460|2935|2951|3068|3294,711824|9006|8991,"pcb assy, wedge cont |PCB, assy, wedge control |PCB ASSY, WEDGE CONTROL|wedge board",MATCHED,REF_LIKE,Revisar manualmente.,,,
+NONE,None|none,4,6|34|23|16,,None|none,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133326854,45133326854|45133326854.,4,236|744|2675|3358,412,mylar|Mirror assembly (Mylar).|Mirror assembly (Mylar)|MOUNT MIRROR,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+1016472,1016472,4,287|902|1011|1498,339909,"diaphragm brake x 2 unidades|2x Diaphragms Brake Spare|kit, spares, diaphragm brake  cant(2)|2 Kit spares, Diaphragms brake ",MATCHED,REF_LIKE,Revisar manualmente.,,,
+45133164423,45133164423,4,440|900|1055|2071,0101,Filtre Element|2 unidades Water filter|filter element (x2)|Filter element Cant: 2,MATCHED,REF_LIKE,Revisar manualmente.,,,
+45133164421,45133164421.|4513 316 4421|45133164421,4,496|504|1760|2653,475,"Potentiometer,  20K, 10 turns.|Potentiomete, 20K, 10 Turns.|1 NR Potenciometro 20 K, 10 turns|POTENCIOMETER 20K",MATCHED,REF_LIKE,Revisar manualmente.,,,
+45133164412,45133164412,4,996|1143|2475|2653,181|475,"Potentiometer, 20k, 1 turn Fine(1)|Potenciómetro single turn 66575-ZUP-203|Fine potetiometer, 20k, si gle turno|POTENCIOMETER, 20K, SINGLE",MATCHED,REF_LIKE,Revisar manualmente.,,,
+NOHSY,no hsy|No hsy,3,21|1121|1383,,no hsy|No hay|no hay,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133411850,45133411850,3,742|2066|3587,9971,"cable PL9|Cable Assy, PL9 to SK9|cable assy PL9 to SK9A1/2",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+0000,0000,3,1661|1964|3722,0000,Copla Festo|PCB alimentacion filamento magnetron|Cable de red CAT6,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+1526644,1526644,3,1823|2162|2812,,"PCB Assy, Wedge Control |pcb assy, Wedge control |PCB Wedge Control",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1553878,1553878,3,2191|2784|3280,381608|9494,"Z motor abd Brake|Z motor and brake|FRU, Z DRIVE MOTOR/BRAKE ASSEMBLY",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+1556286,1556286,3,2601|2812|3068,404,diaphragm brakes spare kit|FRU Assembly wegde|Fru assembly Wedge,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+0,0,3,3212|3341|3591,9590|9970,no|no.|N/A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+653950001,653950-001,2,50|149,,Disco HP 146GB 15K 6G SFF DÍAS x1|Disco HP 146GB 15K 6G SSF SAS HDD,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1510260,1510260,2,152|1216,,KV Panel Detector|panel XVI,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+13289,13289,2,250|1610,346827,Ampolleta Halogena 13.8v 50W|Ampolleta halógeno,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133305658,4513 330 5658|45133305658,2,259|2217,566921,Multiplex Terminal Unit (MTU).  N/S 2115995|Multiplex Terminal Unit (MTU) - Cantidad 2,MATCHED,REF_LIKE,Revisar manualmente.,,,
+553290240040,55.32.9.024.0040.|55.32.9.024.0040,2,360|481,,Relay Finder 24 Vdc. (proporcionado por clinica)|3 Relayes Finder 24 Vdc.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1532432,1532432.|1532432,2,516|1017,,Gun filament PSU. N/S 153243219020.|GUN FILAMENT PSU,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1018121,1018121,2,604|1912,,Motor de movimiento vertical de camilla|FRU Z Drive,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+BJ5590002,BJ5590.002.|BJ5590.002,2,721|2826,8696,Ion Chamber. Numero de serie CHA0544.|ION CHAMBER,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SPN,S/P.N.|S/PN,2,885|1413,,Cable PL5|Graphite Nut,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+NOUTILIZADO,No utilizado,2,937|938,,No utilizado,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133416574,45133416574,2,975|1400,964324,Microswitch Plunger Assembly|tarjeta micro swich,AMBIGUOUS_MATCH,REF_NORMALIZED_EXACT,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+4513332644381130242521,"45133326443
+81130242521",2,1065|1827,,"motor assembly
+leadscrew assy|MotorAssenbly
+Leadscrew Assy",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1023830,1023830,2,1133|3224,9404,"Assembly, 160MLC PSU, UR SOLUTION|160 MLC PSU",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133411940,45133411940,2,1269|2103,434875,Long (upper) roller-blind assembly (1)|Roller Superior,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133903544,4513 390 3544,2,1457|1458,116702,SIB PCB,MATCHED,REF_LIKE,Revisar manualmente.,,,
+CF25HA1,CF25HA-1,2,1517|1521,520423,Obturador de Camara de Video (FUJIFILM)|Obturador de cámara de video (Fujifilm),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+P1094996,P1094996,2,1730|1936,,Módulo de Corte de etiquetas|Modulo de corte Zebra Printer,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+BJ3324003,BJ3324.003,2,5290|3094,709670|9100,Guía de Onda|G/O TB-6U,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1070431110777111,"107043-11
+107771-11",1,951,,"Computador TCS HP 5810 RP5
+DVD instalación y Servicio Oncentra TCS",MATCHED,REF_LIKE,Revisar manualmente.,,,
+451333326854,451333326854,1,953,,"Mout, mirror (mylar)",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+155579,155579,1,953,,Lens Ricoh FL-Bc1218A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+MOTORES451333264430TORNILLO8113024252101,"motores: 451333264430
+tornillo: 8113024 2521_01",1,954,,03 motores y 01 tornillo.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1347987,1347987,1,955,,pcb motor drive,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1018268,1018268,1,94,,"FRU MOTOR BRUSH SET (ELECTROCRAFT).
+",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45143326854451333276624513332766245133164412,"4514 332 6854
+4513 332 7662
+4513 332 7662
+4513 316 4412",1,45,,"Mirror Assembly
+Beam Spitter Mirror Assy
+Beam Spitter Mirror
+Fine Pot 20K ",MATCHED,REF_LIKE,Revisar manualmente.,,,
+CAFE2335689,cafe 2335689,1,4,,Escobas huaipe,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+647907B21,647907-B21,1,32,,HP 4GB 2RX8 PC3L-10600E MEMORY MODULE (1X4GB),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+C7975A,C7975A,1,32,,HPE Ultrium LTO-5 3TB RW Data Tape,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+100000001,100000001,1,7,,barros luco,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+T21321900352,T21321900352,1,68,,fusible de retardo 10 amp.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1526647,1526647,1,66,,DLG PCB,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+RELAYSINNUMEROMAGNETRONMG5193,"Relay sin numero.
+
+Magnetron MG5193",1,222,,"Relay de 24 Vdc.
+
+Magnetron e2V Teledyne  Número serie 18351056C",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133502668102493901,45133502668 / 1024939 01,1,197,,resorte y ventilador,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+451533048000,4515 330 48000,1,184,,GUN ASSY,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+451333117858,4513 331 17858,1,182,,FRU ISO ROTATION,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SN91951712,S/N 91951712,1,177,,Thales TH 7195 B,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+10000956417,1000095641/7,1,17,,Service Slitless Flight,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+451333041000Y,451333041000Y,1,17,,Drift Tube,MATCHED,REF_LIKE,Revisar manualmente.,,,
+2456,2456,1,15,,hhhh,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1501062,1501062,1,218,,Pcb logical control unit,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133904974,45133904974,1,212,,PCB2 Thumbwheel Table User Interface Side A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+160406,160406,1,192,,Tarjeta Electrónica Generadora de Pulsos PPG,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+01OFELK28113024252101J,01 OF ELK2 / 8113 024 252101j,1,185,,motor 01of  ELK2 / Tornillo,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1509981NUMEROSERIE150998117084,"1509981
+
+Numero Serie 150998117084.",1,169,,Gun Filament Power Supply.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+CX1154L,CX1154L,1,167,,Válvula Electrónica Tiratrón marca Elekta Nro de Serie 38884 (nueva),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1509981ISS02SN150998117091,1509981. ISS 02.   S/N 150998117091,1,145,,Gun Filament Power Supply,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+MODELO5295001R001,modelo 5295001R001,1,120,,Fuente de Bonbas de Vacio,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+TRANSISTORESC3907,Transistores C3907,1,119,,"Fusible 2Amp. 250V.
+
+4 transistores de potencia. ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+HNM101MBBZ4,HN-M101MBB/Z4,1,12,,HDD Samsung 1TB,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+VARTA36VDC150MAH,Varta 3.6 vdc 150mAh,1,101,,Bateria LCD Dose,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+12P754WZ058,12P754WZ058,1,254,,Valvula motora circuito interno de agua,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+IONCHAMBER101420408SIB1006737,"Ion Chamber. 1014204-08
+
+SIB. 1006737",1,282,,"Ion Chamber. Serie 07181000106B40-8
+
+Signal Input Board PCB. Serie 2488895. 
+",MATCHED,REF_LIKE,Revisar manualmente.,,,
+5295001R001,5295001R001,1,293,,Ipcu 2 ch  positive,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1020850SERIALNRO2109688,1020850 serial nro.2109688,1,308,,Programmed PCB (PPG),MATCHED,REF_LIKE,Revisar manualmente.,,,
+1516940,1516940,1,313,,2 x Leaf Motor Drive Module PCB,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133308710,45133308710,1,320,,Fuente de Poder,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+101674,101674,1,311,,"2 Nr. Kit spares, DLG Brake. ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1015459,1015459,1,332,,Tarjeta electrónica Linac Interface Board (LIB),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+ATA3004,at-a3004,1,333,,Filament Driver,MATCHED,REF_LIKE,Revisar manualmente.,,,
+153848,153848,1,339,,"PCB ASSY, DLG AND DIAPHRAGM DRIVE",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+LEAD8113024252101JMOTOR4513332644304F,"Lead 8113024252101J. 
+Motor 4513332644304F.",1,356,,"Motor Assy.
+Lead Screw Assemly. ",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+THKAFBLF70,THK AFB-LF+70,1,381,,Grasa de propósito general.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+RG8U,RG8U,1,393,,Cable coaxial,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+ZN11E9RZ,ZN11E9RZ,1,407,,Disco Duro Seagates 1TB Barracuda,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SS,S/S,1,418,,Halogen Optic Lamp 12V-75W,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+A300410NSS1522PRP,A3004-10.   N/S S1522 PRP,1,419,,PCB Filament Drive.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+T821321900352,T 821321900352,1,423,,Fuse 32 x 6.  10A,MATCHED,REF_LIKE,Revisar manualmente.,,,
+T821321900352Y821321900350,"T 821321900352
+Y 821321900350",1,429,,"Fuse 32V/10A
+Fuse 250V/500mA",MATCHED,REF_LIKE,Revisar manualmente.,,,
+32V10A,32V10A,1,433,,Fusible retardo 10A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+465111028,465111028,1,435,,OSRAM Lamp 48870 WFL ES,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+WD10EZEX,WD10EZEX,1,437,,Disco Duro Western digital 1TB,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+CX1154L45133165177,CX 1154L 45133165177,1,440,,Thyratron.,MATCHED,REF_LIKE,Revisar manualmente.,,,
+4513332764704C,4513332764704c,1,440,,Fan Sub Assy,MATCHED,REF_LIKE,Revisar manualmente.,,,
+45133326275,45133326275,1,440,,Screen Assembly,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+10LITROS,10 Litros,1,440,,Agua Bidestilada,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+5333541,533-3541,1,431,,LM2594HVN,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+F8915,F8915,1,449,,"4 Transistores de potencia BU508V F8915, SELLO DE CAÑERÍAS, teflón ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+2622855188381015076,"-262285518838
+-1015076",1,462,,"-DRIVE BELT
+-CABLE RETRACTIL SK2",MATCHED,REF_LIKE,Revisar manualmente.,,,
+55329024004RELEAUXSERIE552P10ABOB24VDC,"55.32.9.024. 004 Rele Aux. serie ""55"" 2P. 10 A.  Bob 24 Vdc.",1,480,,Relay Finder,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+UUY,uuy,1,500,,jj,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1532434ISS01,"1532434  Iss. 01
+",1,513,,"Vacuum pump PSU.
+
+S/N 153243417003.
+",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133902234,4513 390 2234.,1,541,,PCB Driver 33B.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+KBC500850AMP,KBC 5008 (50 Amp.),1,541,,Puente rectificador.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1015229,1015229,1,547,,nueces cortas de laminas,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SN040104285,SN: 040104285,1,524,,Laser Sagital,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SN002148002,SN: 002148-002,1,524,,Laser Fijo lado B,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SN002148001,SN: 002148-001,1,524,,Laser Fijo lado A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SN029488019,SN: 029488-019,1,524,,Control de Mando de Laser,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+677,677,1,576,,bbb,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+150044502,1500445 02,1,599,,DLG PCB,MATCHED,REF_LIKE,Revisar manualmente.,,,
+NOTIENE,No tiene,1,605,,"Acido EDTA, tetrasodico.",PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,Valor placeholder (sin numero/serie/N-A). Confirmar que no requiere match real.,,,
+45133904984,45133904984,1,608,,PCB SIDE B mesa precise,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+4B1915P25633,4B1915P25633,1,633,,UPS APC 959VA,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+153360401151183302151160601,"1533604-01
+1511833-02
+1511606-01",1,635,,"Transformador de pulso
+cable de Alta tension de modulador
+resistencia Transformador de pulso.",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+300GB,300gb,1,637,,Disco Duro HP,MATCHED,REF_LIKE,Revisar manualmente.,,,
+LASERODIKIT,Laser ODI KIt,1,643,,1502613,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133304800SERIE2676,4513 330 4800 serie 2676,1,645,,Gun Assy,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1502964REPUESTODECLIENTE,1502964 (repuesto de cliente),1,651,,repuesto de CLIENTE,MATCHED,REF_LIKE,Revisar manualmente.,,,
+130144,130144,1,671,,Canister filter bag,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1021026,1021026,1,677,,"Assy, Ruby. ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+BJ59481681026469,BJ5948.168. (1026469),1,654,,Dose board.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1534598,1534598,1,655,,Kit de leaf motor,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+4513390489402,4513390489402,1,657,,"PCB1, SIDE A, ASSEMBLY",MATCHED,REF_LIKE,Revisar manualmente.,,,
+1007288SERIE2308926,1007288 serie: 2308926,1,658,,Detector Control Board,MATCHED,REF_LIKE,Revisar manualmente.,,,
+BJ6219002,BJ6219.002,1,667,,Arm Cable-B,MATCHED,REF_LIKE,Revisar manualmente.,,,
+B625655182,B625655182,1,686,,Balanza Metler Toledo WM6002,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133411848,45133411848,1,742,,cable Sk7A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+CABLESUSTITUTO,Cable sustituto.,1,743,,_ Cable de HT.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133327663,45133327663.,1,744,,Projector mirror.,MATCHED,REF_LIKE,Revisar manualmente.,,,
+244120001143,244120001143,1,754,,Gabinete Iview MK-6,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1519103REV02,1519103_Rev02,1,768,,Dosimetry Board A Programmed,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1501074REV02,1501074 Rev. 02,1,785,,"PCB ASSEMBLY, DOSIMETRY B",MATCHED,REF_LIKE,Revisar manualmente.,,,
+1016850,1016850,1,798,,MLC Camera Cable,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133302156,45133302156,1,803,,gearbox,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1517618,1517618,1,813,,control FKP,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+ZQEXBEH8TE46GHJK2EXZX8CVBNMQQ2,"zQeXBE,H8):Te'46ghjk2(Exzx8cvbnmqq2]",1,820,,"No Corresponde, sólo caracterización de Nva. Licencia y configuraciones del especialista.",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+PN45133308530,PN  4513 330 8530,1,824,,Magnetron e2V MG6370E.  Número de serie  18388765.,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1516728VS02,1516728 vs 02,1,828,,BMDM - DVD Update de FCO IGUIDE,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1010461,1010461,1,855,,Cab Assy,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+P01366B21,P01366-B21,1,864,,HPE 96W Smart storege battery,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+749796,749796,1,864,,"HPE SMART ARRAY, adtive raid on",MATCHED,REF_LIKE,Revisar manualmente.,,,
+45133318950,4513 331 8950,1,865,,Freno X Longitudinal de camilla,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+BJ598905143924011013627401103,"BJ5989.051
+4392401101
+3627401103",1,868,,"95 mm Flexible RF
+R.F. Seal 6268
+O-ring 101x75 FPM",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+45133412203ISSUE01,45133412203 issue 01,1,871,,"Sk19 - sk13A - sk3(A,B,C,D)",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+232266153211,2322 661 53211,1,875,,Thermistor PTC TH1,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1538489REV02,1538489 REv 02,1,897,,PCB Video XVI y PCB DLG's,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+PN1015075PN1015076PN8113024252101J,"P/N 1015075
+P/N 1015076
+P/N 8113024252101J",1,904,,"01 cinta SK25AA
+01 cints SK25BB
+01 leadscrew assembly",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+451339090254513332644304F,"45133909025
+4513332644304F",1,883,,"02 Motor Driver Board
+06 Motor Assembly",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+45133412203,45133412203,1,886,,Cable SK19 Touchguard para Panel KV,MATCHED,REF_LIKE,Revisar manualmente.,,,
+4513390460,4513390460,1,924,,Tarjeta de control de IviewGt,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+4513390560,4513390560,1,925,,Tarjeta dd mando Iviewgt,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1516657,1516657,1,926,,Lesf Motor Drive PCB,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1010460,1010460,1,927,,cable assy,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+NU,N/U,1,928,,N/U,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+NUTILIZADO,N/ utilizado,1,939,,N/ utilizado,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+WATERVALVE1022595FRUXYDRIVEUNIT45133318440,"water Valve 1022595
+Fru XY drive Unit 45133318440",1,989,,"water Valve - 1
+Fru XY drive Unit - 1
+
+",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+101647415384891527044,"1016474
+1538489
+1527044",1,1005,,"kit, spares, dlg bra (2)
+pcb assy, dlg and diaphram drive (1)
+programmed pcb assy, router (1)
+",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133317815,45133317815,1,1009,,csk scr m4 (tornillo)  cant 1,MATCHED,REF_LIKE,Revisar manualmente.,,,
+REEMPLAZOPORUNOSIMILARCARACTERISTICASPERNERIA,Reemplazo por uno similar características perneria.,1,1021,,Perno Hex. 5/8 Grado 8,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+MG6070ESERIE21051168,MG6070E SERIE: 21051168,1,1054,,Magnetron,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+8113024252145133326443,"81130242521
+45133326443",1,1064,,"leadscrew Assy
+motor assembly",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+XD12038A2HS,XD12038A2HS,1,1067,,4 Ventiladores de 220V/50Hz,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1021309,1021309,1,1073,,Wedge PCB,MATCHED,REF_LIKE,Revisar manualmente.,,,
+31800000643,31800000643,1,1077,,Filtro superior DUG B SP 519 H14,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+22222,22222,1,1090,,Repuesto 1,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SINPARTNUMBER,Sin part number,1,1093,,Insumo,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1533330,1533330,1,1099,,"Fru, Z motor brush Set",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1500443,1500443,1,1099,,LED PCB Rev. 2,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1006860153836145133400146,"1006860
+1538361
+45133400146",1,1126,,"Dos Bombas Ionicas
+Un Drift Tube 
+un Fly Tube
+sellos de Drift Tube",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+4513335408510084614513390804410154591013485,"45133354085
+1008461
+45133908044
+1015459
+1013485",1,1130,,"Mother board
+Control Processor PCB
+Serial link Isolation PCB
+Linac Interface PCB
+Cable Sata",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+10150751015076,1015075 / 1015076,1,1133,,(2) CABLE RETRACTILE SK25A Y SK25B,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+CR2032,CR2032,1,1133,,(2) Pilas,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+EL469506,EL469506,1,1141,,Framegrabber for Iview,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+NUMERODEPARTEDELREPUESTO,numero de parte del repuesto,1,1146,,nombre del repuesto usado,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+DIODE1018874,Diode 1018874.,1,1161,,2 diodos de Rf. Thyratron usada.   PCB SIB usada.,MATCHED,REF_LIKE,Revisar manualmente.,,,
+MG6363,MG6363.,1,1163,,Magnetron usado.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1020890,1020890,1,1170,,Motor Drive PSU Assy,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SNPARTE,S/N Parte.,1,1177,,CARBONES PARA MOTOR,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1540453,1540453,1,1179,,BMDM Upgrade KIT,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+4513332647545133326443041015075101507681130242521451333178814513331886445133316442301,"4513 332 6475
+4513 332 644304
+1015075
+1015076
+81130242521
+4513 331 7881
+4513 331 8864
+4513 331 6442301",1,1181,,"nut: 04
+motor assembly: 04
+cable retráctil sk26A: 01
+cable retráctil sk26B: 01
+tornillo leadscrew: 04
+pot fine: 02
+pot checo and coarse: 08
+filtro de Agua: 02
+grasa EP2
+wd-40
+Aire comprimido.
+",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+13101900,13101900,1,1207,,"PCB ASSY, WEDGE CONTROL ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1010925,1010925,1,1252,719418,"screen assy, head   (crosswire)",MATCHED,REF_LIKE,Revisar manualmente.,,,
+151169302,1511693 02,1,1255,465221,FRU CHARGING HIGH VOLTAGE CAB,MATCHED,REF_LIKE,Revisar manualmente.,,,
+151971001,1519710 01,1,1255,465221,FRU FIR HT CABLE,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1011035,1011035,1,1262,,Motor Z Precise Table,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+451362610002,451362610002,1,1269,434875,Longitudinal drive belt  (2),MATCHED,REF_LIKE,Revisar manualmente.,,,
+64607EFM,64607 EFM,1,1307,00000,NR 2 LAMPARAS HALOGENO 8V 50 W OSRAM,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+103868401,1038684 01,1,1358,481510,"PCB ASSY, BACKPLANE",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+451333265901010495845133327663451333276624513332644381130242521,"4513 332 6590
+10104958
+4513 332 7663
+4513 332 7662
+4513 332 6443
+81130242521",1,1360,,"01 cámara lens
+01 cámara mirror
+01 proyector mirror
+01 bean Spitzer mirror
+01 motor assembly (lámina 17) 
+01 tornillo leadscrew (lámina 17)
+kit de limpieza para optica
+grasa Ep2
+
+",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+4513317881,4513317881,1,1369,779906,Potenciometros camilla Lado A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1534959,1534959,1,1371,148260,"Kit, spares, Leaf motor ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+MIRRORASSEMBLY,Mirror Assembly,1,1372,517136,1010848,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+THYRATRONDECLINICA,thyratron de clínica,1,1397,9999,N/A tipo (CX1154L) Serial number: 42100,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1531851,1531851,1,1398,704250,1u Fru XY drive (motor lateral de camilla),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+451333164424513331644245133317881,"4513 331 6442
+4513 331 6442
+4513 331 7881",1,1421,,"01 Potenciómetro Coarse
+01 Potenciometro Check
+01 Potenciometro Fine
+Grasa EP2
+limpia contactos 
+aire comprimido 
+amarras plásticas ",MATCHED,REF_LIKE,Revisar manualmente.,,,
+45133904654ISS02,4513 390 4654 Iss. 02,1,1422,706651,"PCB Leaf motor drive, reparada por cliente. ",MATCHED,REF_LIKE,Revisar manualmente.,,,
+RECTIFIERMODULEPCB,rectifier module PCB,1,1428,777777,45133904214,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+AS2106193185AS2106193161,AS2106193185 / AS2106193161,1,1436,100002,2 NR UPS 1Kva 230v,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1537080,1537080,1,1499,417278,"FRU, EIM Logic Control",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+PNBJ7099001PN1006059,"P/N BJ7099.001
+P/N 1006059",1,1522,,"02 Ion Chamber
+02 BMEI Dose Board",MATCHED,REF_LIKE,Revisar manualmente.,,,
+1538,1538,1,1526,0101,PCB DLG motor drive,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+1584,1584,1,1552,152475,"Kit, motor lámina",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1549509,1549509,1,1579,727739,mod kit integrity R4.0.0,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1539233,1539233,1,1579,727739,"software medi kit, NSS 4.0",MATCHED,REF_LIKE,Revisar manualmente.,,,
+45133326443081130242521,"451333264430
+8113024_2521",1,1580,,"01- motor assembly
+01- leadscrew Assy",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133412013,45133412013,1,1581,,Detector Sync,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+101672,101672,1,1588,906153,"Kit, spares Diaphragms Brakes (r)",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1018599,1018599,1,1611,777777,lmd fan and bracket (cantidad =2),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1535958,1535958,1,1626,,Motor de Kit Leaf Spare,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+BJ5948071,BJ5948.071,1,1632,,TARJETA DCMD-3,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+4513331845003,4513331845003,1,1640,620100,fru stop motor switch.    cantidad=2,MATCHED,REF_LIKE,Revisar manualmente.,,,
+6064008SERIENEB077,"6064.008 
+Serie N: EB 077",1,1647,,Magnetron Tuning Drive Assembly,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+2178574,2178574,1,1661,,Termo Radiador,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1511326SNEB247,"1511326
+s/n EB247",1,1719,,Magnetron Tuning Drive Assy,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1020469SERIES51220205217363,"1020469
+series 5122020 - 5217363",1,1720,,Dose Board,MATCHED,REF_LIKE,Revisar manualmente.,,,
+BJ5590002SERIESCHA0731CHA0750,"BJ 5590.002
+series:
+CHA0731
+CHA0750",1,1721,,Ion Chamber,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45136261003J,45136261003J,1,1728,0101,Belt timing s/sided Cant: 02,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+4513341184645133412203,45133411846/45133412203,1,1741,0000,"cable touchguard , cable lateral pots",MATCHED,REF_LIKE,Revisar manualmente.,,,
+451333165177,451333165177,1,1767,444689,Thyratron,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+SAT53418049,SAT-53418049.,1,1774,904418,Power Supply.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1541653151509845133304800PSU10238301525429,"1541653
+1515098
+45133304800
+
+psu (1023830 - 1525429)",1,1804,893689,"drift tube assembly cant 1
+ion pump                    cant 1
+electro gun assy.      cant 1
+sellos de cobre.        cant 4
+assembly,160 mlc psu.  cant 1",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+100880440,100880440,1,1820,,"voltage regulador, PCB assy",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1542467,1542467,1,1828,777777,"PCB ASSY, LED Control",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133317849451333178501016984451333179024513331784045133318462451333184854513331848645133318488,"45133317849
+45133317850
+1016984
+45133317902
+45133317840
+45133318462
+45133318485
+45133318486
+45133318488",1,1858,,"PCB Interconnect PCB 811
+PCB Interconnect PCB 812
+ISO Rotation Brake
+Fine potentiometer
+Check and coarse potentiometer 2 NR
+Power supply EIM
+Base to EIM cable SKT810A-PL801A
+Base to EIM cable SKT810B-PL801B
+Base to EIM cable SKT810E-PL801E",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+ASSY40X40X10MMFAN,"assy, 40x40x10mm fan",1,1895,693481,1024939,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+AMBOSREPUESTOSDECLINICA,ambos repuestos de clínica,1,1902,9999,"pcb leaf motor drive
+motor ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133326443,45133326443,1,1903,455697,Motor Assembly,MATCHED,REF_LIKE,Revisar manualmente.,,,
+00000,00000,1,1906,603295,Freno lateral de camilla,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+151186215336571535807,"1511862
+1533657
+1535807",1,1911,,"06 tarjetas AI-12
+01 mod kit integrity R4.0.0 con patch 4.0.4
+01 mod kit Transformador T2 thyratron y thermistor",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+1511862100503210050334513330757703L,"1511862
+1005032
+1005033
+4513330757703L",1,1913,910599,"pcb assy, ai12 bit cant =2
+signal condition RHCA-A cant=1
+signal condition RHCA-B cant=1
+cable assembly cant=2",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+153458,153458,1,1968,,"Kit, Spares, Leaf Motor  cant 4",MATCHED,REF_LIKE,Revisar manualmente.,,,
+ZD6A14332EL02EZ,ZD6A143-32EL02EZ,1,1978,,Impresora Zebra ZD621,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+355370,355370,1,1995,,Gun Filament,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1015403,1015403,1,2007,450927,vessel,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+15341911534195,"1534191
+1534195",1,2046,761642,"Fru pcb, side A cant=1
+Fru pcb, side B cant =2",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+451333268543501HBYL203L,"45133326854
+3501H-BYL-203L",1,2075,,"Mout Mirror 
+potenciometro check 10 turns",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1543958,1543958,1,2083,0101,Leaf Mo.  Cant: 2,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133502026150261315058911538094,"45133502026
+1502613
+1505891
+1538094",1,2088,743842,"x-rays tube
+laser ODI spares kit
+spec, sfhr400, kv gen
+control board, kv gen",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+451333178494513331785010169844513331848545133318486451333184884513331848745133318489,"45133317849
+45133317850
+1016984
+45133318485
+45133318486
+45133318488
+45133318487
+45133318489",1,2170,,"PCB 811 INTERCONNECT LADO B
+PCB 812 INTERCONNECT LADO A
+ISO ROTATION BRAKE
+CABLE SKT 810A-PL801A
+CABLE SKT 810B-PL801B
+CABLE SKT 810E-PL801E
+CABLE SKT 810C-PL802C
+CABLE SKT 810F-PL802F",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+4513341185001U4513341184601U,"4513341185001U
+4513341184601U",1,2173,303706,cable PL9 y PL5,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+26786,26786,1,2203,,jfkgkgkf,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+3678,3678,1,2203,,bfjkfkf,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+256774,256774,1,2203,,jfifkfof,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+T0001098601L1,T00010986-01-L1,1,2219,,Soporte Jeringa 5ml,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1234567890,1234567890,1,2229,,Sensor viales,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+123456,123456,1,2230,125896,Repuesto,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+153185815318551531854,"1531858
+1531855
+1531854",1,2271,151048,"fru Z mov. coarse pot
+fru Z mov. check pot
+fru Z mov. fine pot",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+HANDHELDCONTROLLER,Hand Held Controller,1,2277,813919,1009089,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+2222,2222,1,2293,,sib pcb,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1521192,1521192,1,2367,,"KIT, TOUCHGUARD MECHANISM ASSEMBLY, M4",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+106053,106053,1,2380,,tarjeta SMC,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+L13896001,L13896-001,1,2395,823383,HP Z2 Ventilador GPU,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+C06534100608,C065341-00608,1,2418,668704,PCB CONTROL DE ODI,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+420,420,1,2419,764386,UPS Smart APC,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+750,750,1,2430,,UPS APC,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+C135670,C135670,1,2431,,HANDHELD CONTROL HEXAPOD,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1111,1111,1,2435,,clamps,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+5555,5555,1,2444,,,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1023531,1023531,1,2519,,programed KV ACB,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133308259,45133308259,1,2535,,GEARBOX Y BREAKE,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+RTB889KYCF2,RT-B889KYCF2,1,2553,,,MATCHED,REF_LIKE,Revisar manualmente.,,,
+137533,137533,1,2578,249,X-RAY TUBE ASSEMBLY,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+15349581517657,1534958 _1517657,1,2597,,Kit motor y Pcb leaf motoe Drive,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+43133304800,43133304800,1,2602,,ELECTRON GUN ASSY,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+351372100645,351372100645,1,2629,,Resistor 340 ohm,MATCHED,REF_LIKE,Revisar manualmente.,,,
+02870NR1,02870-NR 1,1,2630,,Manilla area de desechos,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1536279,1536279,1,2634,412,Agility MLC Leafbank PSU,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1518682,1518682,1,2637,412,REV 04 LMDB PCBS AND FAN,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+MXL2272ZJ0,MXL2272ZJ0,1,2647,224,Nuevo Hardware de Monaco,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133318459,45133318459,1,2658,463,"PCB, Z MOTOR DRIVE CONFIGURED (Z-MD)",MATCHED,REF_LIKE,Revisar manualmente.,,,
+351372700256,351372700256,1,2668,497,"THYRISTOR STACK MODULE (SKKT 132/08D, IN 3 POSITIONS)",MATCHED,REF_LIKE,Revisar manualmente.,,,
+351372406262,351372406262,1,2668,497,"FUSE LINK, 25A 250V AC LET (FS13G)",MATCHED,REF_LIKE,Revisar manualmente.,,,
+451333327662,451333327662,1,2742,,Beam Splitter Mirror Assy,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+451462949000,451462949000,1,2795,8681,flow switch 10M-MS,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1022378351372101453,1022378 / 351372101453,1,2825,8865,"Diode Semikron
+Resistor 180 ohm ",MATCHED,REF_LIKE,Revisar manualmente.,,,
+1010256,1010256,1,2839,8855,12 bit analogía output pcb,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+821321900373,821321900373,1,2840,8855,"FUSE LINK, 240V, 80A, U",MATCHED,REF_LIKE,Revisar manualmente.,,,
+821321900359,821321900359,1,2842,8866,FUSE 32X6 8AMP,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+157657,157657,1,2865,8916,"PCB ASSY, LEAF MOTOR DRIVE",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+152664615009981024939,1526646-1500998-1024939,1,2885,8943,"PCB LED CONTROL
+LED PROJECTOR
+LED PROJECTOR FAN",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+C428393094,C428393094,1,2911,,Balanza Mettler Toledo WM6002,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133307849,45133307849,1,2952,,FRU PWB 811,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+107577442,1075774-42,1,3004,,Kit base viales,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+4513315442345133301412,45133154423-45133301412,1,3019,9131,"Filter Element
+potentiometer 20K",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1539679,1539679,1,3024,9151,"MRT 14791, GENERAL FKP",MATCHED,REF_LIKE,Revisar manualmente.,,,
+1528403,1528403,1,3031,9167,BEAM MU DOSE MODULE,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+AEA006,AEA006,1,3054,,Cable de comunicación R485.,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1528220,1528220,1,3068,,Camera CCU PCB,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1552668,1552668,1,3091,9176,Z Motor - ElektroCraft,MATCHED,REF_LIKE,Revisar manualmente.,,,
+4513316442301,4513316442301,1,3144,,5 Micron Filter CoS,MATCHED,REF_LIKE,Revisar manualmente.,,,
+451331644230M,451331644230M,1,3159,,FILTER ELEMENT 5 MICRON,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+242208610594,2422 086 10594,1,3191,9363,Fuse 32V 20A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+15349581024201,1534958-1024201,1,3215,,"Kit Spare leaf MO
+Reflector ",MATCHED,REF_LIKE,Revisar manualmente.,,,
+SHA12369,SHA12-369,1,3228,9410,Magnetic Contactor,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1564279,1564279,1,3238,9418,PCB ASSY LED CONTROL,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1572432,1572432,1,3250,9407,"FRU, PROGRAMMED, LCU",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+45133326702,45133326702,1,3271,9464,PCB RTU,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1565345,1565345,1,3290,,DLG Slide Brake,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1565344,1565344,1,3290,,Diaphragm Brake,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+15295201527814,1529520-1527814,1,3349,8824,"Slitless Fligth Tube 
+PSU Ion Pump",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+2179204020870,2179204 // 020870,1,3355,,MANILLA ROBOT / SENSOR IR CARRUSEL,AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+117482,117482,1,3357,9623,"PROG ASSY, KV DCB",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+MG5193,MG5193,1,3375,9577,Magnetròn,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+LMD45133909025ME1008587,LMD. 45133909025. ME 1008587,1,3392,,"Leaf motor drive.
+
+Módulo electrónico MLC",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+1517098,1517098,1,3394,9680,ION PUMP - SPARE,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1567798,1567798,1,3400,,DOS A,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+LT05035,LT05035,1,3452,9790,"Ampolleta Range Finder 13,5 v/50 w",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+CX1551G,CX1551G,1,3453,9781,Thyratron,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+BJ485310100,BJ4853.101.00,1,3463,9810,HT Cable,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+XXXXX,xxxxx,1,3500,9851,kit de ruby,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1571202,1571202,1,3535,9901,MRT 14791 GENERAL FKP,MATCHED,REF_LIKE,Revisar manualmente.,,,
+1530025,1530025,1,3565,,Switch Linksys LGS318,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+41133411787,41133411787,1,3575,9916,CLUTCH ASSEMBLY,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1547676,1547676,1,3600,9970,"screen assy, head",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+TK204UK,TK204UK,1,3620,9945,KVM DVI,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+BARCODEGUN,Barcode Gun.,1,3642,,2483004,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1540352,1540352,1,3652,9918,CABLE KIT (+VE ANODE),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1540356,1540356,1,3652,9918,CABLE KIT (-VE CATHODE),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+517657,517657,1,3686,10081,"kit, spares, leaf motor ",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+10108481564169,1010848-1564169,1,3693,10088,"Mirror Assembly optics
+kit, luminus Proj. Assy and PCB LED Control",AMBIGUOUS_MATCH,REF_LIKE,Multiples candidatos Dolibarr. Revisar y agregar alias manual si corresponde.,,,
+1567819,1567819,1,3709,10115,"PROG, PCB ASSY, DOSE B",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1541746,1541746,1,3727,10151,Handheld  conteoller,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
