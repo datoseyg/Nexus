@@ -19,7 +19,8 @@
     "build:used-parts-dolibarr-match": "node src/marts/build-used-parts-dolibarr-match.js",
     "build:ticket-fieldbeat-dolibarr-view": "node src/marts/build-ticket-fieldbeat-dolibarr-view.js",
     "qa:scope-reconciliation": "node src/qa/reconcile-ticket-fieldbeat-dolibarr-scope.js",
-    "get:zendesk:backfill-fieldbeat": "node src/miners/zendesk-backfill-missing-ticket-ids.js"
+    "get:zendesk:backfill-fieldbeat": "node src/miners/zendesk-backfill-missing-ticket-ids.js",
+    "build:gold": "node src/gold/build-gold.js"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",

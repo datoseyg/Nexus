@@ -1,0 +1,7 @@
+data_quality_status,ticket_count,percent_of_total_tickets,used_parts_count,matched_used_parts_count,placeholder_used_parts_count,unmatched_used_parts_count,ambiguous_used_parts_count
+OK,169,26.91%,96,96,0,0,0
+NO_FIELDBEAT_REPORT,400,63.69%,0,0,0,0,0
+HAS_PLACEHOLDERS,29,4.62%,35,4,31,0,0
+HAS_UNMATCHED_PARTS,20,3.18%,28,5,0,23,0
+HAS_AMBIGUOUS_PARTS,5,0.80%,28,19,0,4,5
+REVIEW_REQUIRED,5,0.80%,13,13,0,0,0

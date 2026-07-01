@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-07-01T21:49:21.356Z",
+  "inputs_used": [
+    "data/marts/Ticket_FieldBeat_Dolibarr_Operational_View.csv",
+    "data/marts/Ticket_FieldBeat_Report_Detail.csv",
+    "data/marts/Used_Parts_Dolibarr_Match.csv",
+    "data/reports/scope_reconciliation_summary.json",
+    "data/reports/zendesk_backfill_by_fieldbeat_summary.json",
+    "data/reports/dolibarr_parts_match_summary.json"
+  ],
+  "outputs": [
+    {
+      "file": "data/gold/GOLD_Operational_Dashboard.csv",
+      "row_count": 1
+    },
+    {
+      "file": "data/gold/GOLD_Data_Quality_Report.csv",
+      "row_count": 6
+    },
+    {
+      "file": "data/gold/GOLD_Client_Service_Profile.csv",
+      "row_count": 14
+    },
+    {
+      "file": "data/gold/GOLD_Equipment_Service_Profile.csv",
+      "row_count": 23
+    },
+    {
+      "file": "data/gold/GOLD_Used_Parts_Analysis.csv",
+      "row_count": 576
+    },
+    {
+      "file": "data/gold/GOLD_Scope_Metadata.csv",
+      "row_count": 1
+    }
+  ],
+  "report_detail_cross_check": {
+    "report_detail_rows": 290,
+    "fieldbeat_report_count_from_ticket_mart": 290,
+    "totals_match": true
+  },
+  "source_summaries": {
+    "scope_reconciliation": {
+      "total_zendesk_tickets": 628,
+      "total_fieldbeat_tasks": 3747,
+      "used_parts_in_ticket_mart": 200,
+      "used_parts_outside_ticket_mart": 1993
+    },
+    "zendesk_backfill": {
+      "unique_missing_ticket_ids": 656,
+      "tickets_found_in_zendesk": 4,
+      "tickets_not_found": 361,
+      "tickets_failed_by_error": 291
+    },
+    "dolibarr_parts_match": {
+      "total_used_parts": 2193,
+      "matched_count": 927,
+      "placeholder_values_count": 721,
+      "ambiguous_count": 56,
+      "match_rate": "42.27%"
+    }
+  },
+  "scope_warning": "GOLD v1 representa únicamente el universo Zendesk accesible con las credenciales actuales. Existen FieldBeat tasks vinculadas a tickets Zendesk no accesibles o no existentes que quedan fuera del mart ticket-céntrico.",
+  "phase_2_pending_action": "Revisar los 291 ticket IDs con 403 Forbidden usando un token Zendesk con permisos ampliados. Lista en data/reports/zendesk_ticket_ids_not_accessible_403.json."
+}
