@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-01T23:08:32.760Z",
+  "generated_at": "2026-07-02T04:08:27.491Z",
   "all_match": true,
   "tables": [
     {
@@ -31,6 +31,48 @@
       "status": "MATCH"
     },
     {
+      "table": "processed.fieldbeat_clients",
+      "csv": "data/processed/fieldbeat/DIM_Clients.csv",
+      "csv_row_count": 43,
+      "sql_row_count": 43,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.fieldbeat_equipments",
+      "csv": "data/processed/fieldbeat/DIM_Equipments.csv",
+      "csv_row_count": 83,
+      "sql_row_count": 83,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.fieldbeat_task_equipments",
+      "csv": "data/processed/fieldbeat/DB_FieldBeat_Task_Equipments.csv",
+      "csv_row_count": 3157,
+      "sql_row_count": 3157,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.zendesk_ticket_tags",
+      "csv": "data/processed/zendesk/DB_Zendesk_Ticket_Tags.csv",
+      "csv_row_count": 8383,
+      "sql_row_count": 8383,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.zendesk_custom_fields",
+      "csv": "data/processed/zendesk/DB_Zendesk_Custom_Fields.csv",
+      "csv_row_count": 10048,
+      "sql_row_count": 10048,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.dolibarr_product_identity_map",
+      "csv": "data/processed/dolibarr/DIM_Dolibarr_Product_Identity_Map.csv",
+      "csv_row_count": 3219,
+      "sql_row_count": 3219,
+      "status": "MATCH"
+    },
+    {
       "table": "marts.ticket_fieldbeat_operational_view",
       "csv": "data/marts/Ticket_FieldBeat_Operational_View.csv",
       "csv_row_count": 628,
@@ -49,6 +91,20 @@
       "csv": "data/marts/Used_Parts_Dolibarr_Match.csv",
       "csv_row_count": 2193,
       "sql_row_count": 2193,
+      "status": "MATCH"
+    },
+    {
+      "table": "marts.ticket_fieldbeat_report_detail",
+      "csv": "data/marts/Ticket_FieldBeat_Report_Detail.csv",
+      "csv_row_count": 290,
+      "sql_row_count": 290,
+      "status": "MATCH"
+    },
+    {
+      "table": "marts.fieldbeat_report_dolibarr_operational_view",
+      "csv": "data/marts/FieldBeat_Report_Dolibarr_Operational_View.csv",
+      "csv_row_count": 3747,
+      "sql_row_count": 3747,
       "status": "MATCH"
     },
     {
@@ -91,6 +147,41 @@
       "csv": "data/gold/GOLD_Scope_Metadata.csv",
       "csv_row_count": 1,
       "sql_row_count": 1,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.fieldbeat_report_analysis",
+      "csv": "data/gold/GOLD_FieldBeat_Report_Analysis.csv",
+      "csv_row_count": 1,
+      "sql_row_count": 1,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.client_parts_consumption",
+      "csv": "data/gold/GOLD_Client_Parts_Consumption.csv",
+      "csv_row_count": 913,
+      "sql_row_count": 913,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.client_report_volume_by_period",
+      "csv": "data/gold/GOLD_Client_Report_Volume_By_Period.csv",
+      "csv_row_count": 913,
+      "sql_row_count": 913,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.equipment_parts_consumption",
+      "csv": "data/gold/GOLD_Equipment_Parts_Consumption.csv",
+      "csv_row_count": 57,
+      "sql_row_count": 57,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.fieldbeat_data_quality",
+      "csv": "data/gold/GOLD_FieldBeat_Data_Quality.csv",
+      "csv_row_count": 6,
+      "sql_row_count": 6,
       "status": "MATCH"
     }
   ]
