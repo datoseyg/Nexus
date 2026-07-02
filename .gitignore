@@ -1,3 +1,4 @@
 .env
 data/raw/
+data/warehouse/
 node_modules/

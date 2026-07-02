@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-07-02T02:35:36.220Z",
+  "total_fieldbeat_reports": 3747,
+  "zendesk_join_status_breakdown": {
+    "NO_TICKET_REPORTED": 2537,
+    "LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK": 920,
+    "LINKED_TO_ACCESSIBLE_ZENDESK": 290
+  },
+  "report_quality_status_breakdown": {
+    "NO_USED_PARTS": 1938,
+    "REVIEW_REQUIRED": 117,
+    "HAS_PLACEHOLDERS": 696,
+    "HAS_UNMATCHED_PARTS": 460,
+    "OK": 480,
+    "HAS_AMBIGUOUS_PARTS": 56
+  },
+  "total_used_parts": 2193,
+  "used_parts_global_source_count": 2193,
+  "used_parts_totals_match_global": true,
+  "matched_used_parts": 927,
+  "placeholder_used_parts": 721,
+  "unmatched_used_parts": 489,
+  "ambiguous_used_parts": 56,
+  "match_rate": "42.27%",
+  "review_required_rate": "64.39%"
+}

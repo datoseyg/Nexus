@@ -20,7 +20,13 @@
     "build:ticket-fieldbeat-dolibarr-view": "node src/marts/build-ticket-fieldbeat-dolibarr-view.js",
     "qa:scope-reconciliation": "node src/qa/reconcile-ticket-fieldbeat-dolibarr-scope.js",
     "get:zendesk:backfill-fieldbeat": "node src/miners/zendesk-backfill-missing-ticket-ids.js",
-    "build:gold": "node src/gold/build-gold.js"
+    "build:gold": "node src/gold/build-gold.js",
+    "db:init": "node src/db/init-duckdb.js",
+    "db:load": "node src/db/load-duckdb.js",
+    "db:validate": "node src/db/validate-duckdb.js",
+    "db:build": "npm run db:init && npm run db:load && npm run db:validate",
+    "build:fieldbeat-report-dolibarr-view": "node src/marts/build-fieldbeat-report-dolibarr-view.js",
+    "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",

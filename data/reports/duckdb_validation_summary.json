@@ -1,0 +1,97 @@
+{
+  "generated_at": "2026-07-01T23:08:32.760Z",
+  "all_match": true,
+  "tables": [
+    {
+      "table": "processed.zendesk_tickets",
+      "csv": "data/processed/zendesk/DB_Zendesk_Tickets.csv",
+      "csv_row_count": 628,
+      "sql_row_count": 628,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.fieldbeat_tasks",
+      "csv": "data/processed/fieldbeat/DB_FieldBeat_Tasks.csv",
+      "csv_row_count": 3747,
+      "sql_row_count": 3747,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.fieldbeat_used_parts",
+      "csv": "data/processed/fieldbeat/DB_FieldBeat_Used_Parts.csv",
+      "csv_row_count": 2193,
+      "sql_row_count": 2193,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.dolibarr_products",
+      "csv": "data/processed/dolibarr/DB_Dolibarr_Products.csv",
+      "csv_row_count": 1609,
+      "sql_row_count": 1609,
+      "status": "MATCH"
+    },
+    {
+      "table": "marts.ticket_fieldbeat_operational_view",
+      "csv": "data/marts/Ticket_FieldBeat_Operational_View.csv",
+      "csv_row_count": 628,
+      "sql_row_count": 628,
+      "status": "MATCH"
+    },
+    {
+      "table": "marts.ticket_fieldbeat_dolibarr_operational_view",
+      "csv": "data/marts/Ticket_FieldBeat_Dolibarr_Operational_View.csv",
+      "csv_row_count": 628,
+      "sql_row_count": 628,
+      "status": "MATCH"
+    },
+    {
+      "table": "marts.used_parts_dolibarr_match",
+      "csv": "data/marts/Used_Parts_Dolibarr_Match.csv",
+      "csv_row_count": 2193,
+      "sql_row_count": 2193,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.operational_dashboard",
+      "csv": "data/gold/GOLD_Operational_Dashboard.csv",
+      "csv_row_count": 1,
+      "sql_row_count": 1,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.data_quality_report",
+      "csv": "data/gold/GOLD_Data_Quality_Report.csv",
+      "csv_row_count": 6,
+      "sql_row_count": 6,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.client_service_profile",
+      "csv": "data/gold/GOLD_Client_Service_Profile.csv",
+      "csv_row_count": 14,
+      "sql_row_count": 14,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.equipment_service_profile",
+      "csv": "data/gold/GOLD_Equipment_Service_Profile.csv",
+      "csv_row_count": 23,
+      "sql_row_count": 23,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.used_parts_analysis",
+      "csv": "data/gold/GOLD_Used_Parts_Analysis.csv",
+      "csv_row_count": 576,
+      "sql_row_count": 576,
+      "status": "MATCH"
+    },
+    {
+      "table": "gold.scope_metadata",
+      "csv": "data/gold/GOLD_Scope_Metadata.csv",
+      "csv_row_count": 1,
+      "sql_row_count": 1,
+      "status": "MATCH"
+    }
+  ]
+}
