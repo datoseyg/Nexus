@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* Identidad visual E&G Medical Systems — ver docs/VISUAL_REDESIGN_EYG.md.
+   Tokens de marca (--eyg-*) más los tokens genéricos que ya consumía el
+   resto de la app, remapeados a la paleta E&G en vez de duplicar un
+   sistema de estilos paralelo. */
+:root {
+  --eyg-green: #6bbe45;
+  --eyg-green-dark: #3c8c2e;
+  --eyg-lime: #a7d943;
+  --eyg-teal: #1f8a8a;
+  --eyg-ink: #243033;
+  --eyg-muted: #5e6b70;
+  --eyg-bg: #f4f7f6;
+  --eyg-card: #ffffff;
+  --eyg-border: #dde6e3;
+  --eyg-warning: #f4b740;
+  --eyg-danger: #d9534f;
+  --eyg-info: #2d9cdb;
+
+  --surface-1: var(--eyg-card);
+  --page-plane: var(--eyg-bg);
+  --text-primary: var(--eyg-ink);
+  --text-secondary: var(--eyg-muted);
+  --text-muted: #8a9a95;
+  --gridline: var(--eyg-border);
+  --axis: #b7c9c3;
+  --border: var(--eyg-border);
+  --series-1: var(--eyg-green-dark);
+  --status-good: var(--eyg-green-dark);
+  --status-warning: var(--eyg-warning);
+  --status-serious: #e08e3e;
+  --status-critical: var(--eyg-danger);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --eyg-bg: #131a17;
+    --eyg-card: #1b2422;
+    --eyg-border: #2c3833;
+    --eyg-ink: #eef3f1;
+    --eyg-muted: #a9b8b3;
+    --eyg-green: #7fce57;
+    --eyg-green-dark: #5fb043;
+    --eyg-teal: #3bb0b0;
+
+    --surface-1: var(--eyg-card);
+    --page-plane: var(--eyg-bg);
+    --text-primary: var(--eyg-ink);
+    --text-secondary: var(--eyg-muted);
+    --text-muted: #7f9089;
+    --gridline: var(--eyg-border);
+    --axis: #3a4844;
+    --border: var(--eyg-border);
+    --series-1: var(--eyg-green);
+    --status-good: var(--eyg-green);
+    --status-warning: var(--eyg-warning);
+    --status-serious: #e08e3e;
+    --status-critical: var(--eyg-danger);
+  }
+}
+
+body {
+  background: var(--page-plane);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.truncate-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+}

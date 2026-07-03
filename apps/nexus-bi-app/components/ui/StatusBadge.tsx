@@ -1,0 +1,79 @@
+export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
+
+const TONE_STYLE: Record<StatusTone, { bg: string; fg: string }> = {
+  success: { bg: "#eaf5ea", fg: "#2f5c2a" },
+  warning: { bg: "#fdf1da", fg: "#8a5a06" },
+  danger: { bg: "#fbeae9", fg: "#a03330" },
+  info: { bg: "#e6f3f3", fg: "#175f5f" },
+  neutral: { bg: "#eef1f0", fg: "#5e6b70" }
+};
+
+interface StatusBadgeProps {
+  label: string;
+  tone?: StatusTone;
+}
+
+// Pill de estado — usado en la vista de Auditoría / Validación Manual
+// para match_status, report_quality_status y zendesk_join_status (ver
+// helpers de mapeo abajo). Nunca color-solo: siempre lleva texto.
+export function StatusBadge({ label, tone = "neutral" }: StatusBadgeProps) {
+  const style = TONE_STYLE[tone];
+  return (
+    <span
+      className="inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold"
+      style={{ background: style.bg, color: style.fg }}
+    >
+      {label}
+    </span>
+  );
+}
+
+// Mapeos de vocabularios reales del pipeline -> {label, tone}. Documentado
+// también en docs/MANUAL_REVIEW_VIEW.md — no inventan categorías nuevas,
+// solo traducen los valores crudos ya definidos en DATA_DICTIONARY.md.
+export function matchStatusBadge(status: string | null | undefined): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "MATCHED":
+      return { label: "Match confirmado", tone: "success" };
+    case "AMBIGUOUS_MATCH":
+      return { label: "Match ambiguo", tone: "warning" };
+    case "PLACEHOLDER_VALUE":
+      return { label: "Placeholder", tone: "neutral" };
+    case "NO_MATCH":
+      return { label: "Sin match", tone: "danger" };
+    default:
+      return { label: status ?? "—", tone: "neutral" };
+  }
+}
+
+export function reportQualityBadge(status: string | null | undefined): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "OK":
+      return { label: "OK", tone: "success" };
+    case "NO_USED_PARTS":
+      return { label: "Sin repuestos", tone: "neutral" };
+    case "HAS_PLACEHOLDERS":
+      return { label: "Con placeholders", tone: "warning" };
+    case "HAS_UNMATCHED_PARTS":
+      return { label: "Repuestos sin match", tone: "danger" };
+    case "HAS_AMBIGUOUS_PARTS":
+      return { label: "Matches ambiguos", tone: "warning" };
+    case "REVIEW_REQUIRED":
+      return { label: "Revisión requerida", tone: "warning" };
+    default:
+      return { label: status ?? "—", tone: "neutral" };
+  }
+}
+
+export function zendeskJoinBadge(status: string | null | undefined): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "LINKED_TO_ACCESSIBLE_ZENDESK":
+      return { label: "Ticket accesible", tone: "success" };
+    case "LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK":
+      return { label: "Ticket faltante/restringido", tone: "danger" };
+    case "NO_TICKET_REPORTED":
+      return { label: "Sin ticket reportado", tone: "neutral" };
+    default:
+      return { label: status ?? "—", tone: "neutral" };
+  }
+}

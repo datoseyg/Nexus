@@ -1,0 +1,588 @@
+/* Portado de index(2).html (Proyecto 7 - Dashboard Operacional EyG),
+   reskin con la identidad E&G Medical Systems — ver
+   docs/VISUAL_REDESIGN_EYG.md y docs/DASHBOARD_VISUAL_STYLE.md.
+   Variables propias (no las de globals.css) para no interferir con el
+   resto de la app, pero con los mismos valores de marca. */
+.root {
+  --db-bg: #f4f7f6;
+  --db-card: #ffffff;
+  --db-border: #dde6e3;
+  --db-text: #243033;
+  --db-text-muted: #5e6b70;
+  --db-primary: #3c8c2e;
+  --db-secondary: #1f8a8a;
+  --db-success: #6bbe45;
+  --db-danger: #d9534f;
+  --db-warning: #f4b740;
+  --db-header-bg: #eaf5ea;
+  --db-header-text: #2f5c2a;
+  --db-radius: 10px;
+  --db-shadow: 0 1px 3px rgba(36, 48, 51, 0.07), 0 1px 2px rgba(36, 48, 51, 0.05);
+
+  background: var(--db-bg);
+  color: var(--db-text);
+  font-size: 14px;
+  border-radius: var(--db-radius);
+  overflow: hidden;
+}
+
+.appbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--db-card);
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--db-border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.appbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoBadge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--db-primary), var(--db-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.appbarTitle h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.appbarTitle span {
+  font-size: 11px;
+  color: var(--db-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 24px 0;
+  background: var(--db-card);
+  border-bottom: 1px solid var(--db-border);
+  overflow-x: auto;
+}
+
+.tabBtn {
+  border: none;
+  background: none;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--db-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.tabBtnActive {
+  color: var(--db-primary);
+  border-bottom-color: var(--db-primary);
+}
+
+.tabPanel {
+  padding: 20px 24px 40px;
+}
+
+@media (max-width: 900px) {
+  .appbar {
+    padding: 12px 16px;
+  }
+  .tabs {
+    padding: 8px 16px 0;
+  }
+  .tabPanel {
+    padding: 16px 12px 32px;
+  }
+}
+
+.filterPanel {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--db-bg);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.filterPanelCollapseBtn {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .filterPanelCollapseBtn {
+    display: inline-flex;
+  }
+  .filterPanelBody[data-collapsed="true"] {
+    display: none;
+  }
+}
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius);
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--db-shadow);
+}
+
+.filterLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--db-text-muted);
+  font-size: 12px;
+}
+
+.filterSelect,
+.filterInput {
+  padding: 8px 10px;
+  border: 1px solid var(--db-border);
+  border-radius: 6px;
+  background: #fbfdfc;
+  font-size: 13px;
+  color: var(--db-text);
+  min-width: 130px;
+  max-width: 100%;
+}
+
+.filterSelectDisabled {
+  background: #eef1f0;
+  color: var(--db-text-muted);
+  cursor: not-allowed;
+}
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnPrimary {
+  background: var(--db-primary);
+  color: #fff;
+}
+
+.btnWarning {
+  background: var(--db-warning);
+  color: #3a2b00;
+}
+
+.btnGhost {
+  background: #eef3f1;
+  color: var(--db-text);
+}
+
+.btn:hover {
+  filter: brightness(0.95);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .kpiRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpiCard {
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius);
+  padding: 16px;
+  box-shadow: var(--db-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  min-width: 0;
+}
+
+.kpiLabel {
+  font-size: 11px;
+  color: var(--db-text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpiValue {
+  font-size: 26px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpiCardAction {
+  align-items: center;
+  justify-content: center;
+  background: var(--db-primary);
+  cursor: pointer;
+  border: none;
+}
+
+.kpiCardAction span {
+  font-weight: 700;
+  color: #fff;
+}
+
+.kpiCardClient .kpiValue {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+.grid2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.grid3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.grid4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.grid21 {
+  grid-template-columns: 1fr 1.6fr;
+}
+
+.rowFull {
+  grid-template-columns: 1fr;
+}
+
+/* Laptop mediano: 3-4 columnas -> 2 antes de colapsar del todo */
+@media (max-width: 1400px) {
+  .grid3,
+  .grid4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 1100px) {
+  .grid2,
+  .grid3,
+  .grid4,
+  .grid21 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius);
+  box-shadow: var(--db-shadow);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--db-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--db-primary);
+  padding-left: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chartWrap {
+  position: relative;
+  min-height: 220px;
+  height: clamp(220px, 28vw, 260px);
+}
+
+.chartWrapTall {
+  height: clamp(240px, 32vw, 300px);
+}
+
+@media (max-width: 640px) {
+  .chartWrap,
+  .chartWrapTall {
+    height: 220px;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.table thead th {
+  text-align: left;
+  background: var(--db-header-bg);
+  color: var(--db-header-text);
+  font-weight: 700;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--db-border);
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--db-border);
+  color: var(--db-text);
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table tbody tr:hover {
+  background: #f4f9f4;
+}
+
+.tableScroll {
+  max-height: 340px;
+  overflow: auto;
+}
+
+.tableTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.tableCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--db-text-muted);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  font-size: 12px;
+  color: var(--db-text-muted);
+  flex-wrap: wrap;
+}
+
+.pagination button {
+  border: 1px solid var(--db-border);
+  background: #fff;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.barMini {
+  background: #eef3f1;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 16px;
+  width: 100px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.barMiniFill {
+  background: var(--db-secondary);
+  height: 100%;
+}
+
+.notAvailable {
+  color: var(--db-text-muted);
+  font-style: italic;
+  font-size: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.pendingBanner {
+  background: #fff7e6;
+  border: 1px solid #f2d98a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #6b4e00;
+  margin-bottom: 14px;
+}
+
+.kpiMiniGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.kpiMini {
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius);
+  padding: 14px;
+  text-align: center;
+  box-shadow: var(--db-shadow);
+  min-width: 0;
+}
+
+.kpiMini .label {
+  font-size: 11px;
+  color: var(--db-text-muted);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.kpiMini .value {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--db-primary);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btnRefresh {
+  background: var(--db-secondary);
+  color: #fff;
+}
+
+.dateRangeBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.datePreset {
+  border: 1px solid var(--db-border);
+  background: #fbfdfc;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--db-text-muted);
+  cursor: pointer;
+}
+
+.datePresetActive {
+  background: var(--db-primary);
+  border-color: var(--db-primary);
+  color: #fff;
+}
+
+.dateInput {
+  padding: 6px 8px;
+  border: 1px solid var(--db-border);
+  border-radius: 6px;
+  background: #fbfdfc;
+  font-size: 12.5px;
+  color: var(--db-text);
+}
+
+.chipBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--db-header-bg);
+  color: var(--db-header-text);
+  border-radius: 999px;
+  padding: 5px 6px 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 100%;
+}
+
+.chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+.chipRemove {
+  border: none;
+  background: var(--db-header-text);
+  color: #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+  font-size: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
