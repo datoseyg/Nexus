@@ -20,7 +20,7 @@ function toQuery(params: Record<string, string | undefined>): string {
   return search.toString();
 }
 
-// Pestaña "Reportes con revisión requerida" — ver
+// Pestaña "Reportes con revisión requerida" - ver
 // docs/MANUAL_REVIEW_VIEW.md § D. Fuente:
 // marts.fieldbeat_report_dolibarr_operational_view.
 export function ReportsReviewSection({ clientes, maquinas }: ReportsReviewSectionProps) {
@@ -130,17 +130,17 @@ export function ReportsReviewSection({ clientes, maquinas }: ReportsReviewSectio
               return (
                 <tr key={row.fieldbeat_task_id}>
                   <td>{row.fieldbeat_task_id}</td>
-                  <td>{row.fieldbeat_task_date?.slice(0, 10) ?? "—"}</td>
-                  <td title={row.client_name ?? ""}>{row.client_name ?? "—"}</td>
-                  <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "—"}</td>
-                  <td>{row.task_type ?? "—"}</td>
-                  <td title={row.technician_names ?? ""}>{row.technician_names ?? "—"}</td>
+                  <td>{row.fieldbeat_task_date?.slice(0, 10) ?? "-"}</td>
+                  <td title={row.client_name ?? ""}>{row.client_name ?? "-"}</td>
+                  <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "-"}</td>
+                  <td>{row.task_type ?? "-"}</td>
+                  <td title={row.technician_names ?? ""}>{row.technician_names ?? "-"}</td>
                   <td>{row.used_parts_count}</td>
                   <td>{row.review_required_used_parts_count}</td>
                   <td>
                     <StatusBadge label={quality.label} tone={quality.tone} />
                   </td>
-                  <td>{row.linked_zendesk_ticket_id ?? "—"}</td>
+                  <td>{row.linked_zendesk_ticket_id ?? "-"}</td>
                   <td>
                     <StatusBadge label={join.label} tone={join.tone} />
                   </td>

@@ -11,16 +11,21 @@ const TONE_STYLE: Record<StatusTone, { bg: string; fg: string }> = {
 interface StatusBadgeProps {
   label: string;
   tone?: StatusTone;
+  size?: "sm" | "md";
 }
 
-// Pill de estado — usado en la vista de Auditoría / Validación Manual
+// Pill de estado - usado en la vista de Auditoría / Validación Manual
 // para match_status, report_quality_status y zendesk_join_status (ver
-// helpers de mapeo abajo). Nunca color-solo: siempre lleva texto.
-export function StatusBadge({ label, tone = "neutral" }: StatusBadgeProps) {
+// helpers de mapeo abajo), y en ConfidenceBadge.tsx para el score de
+// confiabilidad de Trabajo Fuera de Horario. Nunca color-solo: siempre
+// lleva texto.
+export function StatusBadge({ label, tone = "neutral", size = "md" }: StatusBadgeProps) {
   const style = TONE_STYLE[tone];
+  const sizeClass = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-xs";
+
   return (
     <span
-      className="inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold"
+      className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${sizeClass}`}
       style={{ background: style.bg, color: style.fg }}
     >
       {label}
@@ -29,7 +34,7 @@ export function StatusBadge({ label, tone = "neutral" }: StatusBadgeProps) {
 }
 
 // Mapeos de vocabularios reales del pipeline -> {label, tone}. Documentado
-// también en docs/MANUAL_REVIEW_VIEW.md — no inventan categorías nuevas,
+// también en docs/MANUAL_REVIEW_VIEW.md - no inventan categorías nuevas,
 // solo traducen los valores crudos ya definidos en DATA_DICTIONARY.md.
 export function matchStatusBadge(status: string | null | undefined): { label: string; tone: StatusTone } {
   switch (status) {
@@ -42,7 +47,7 @@ export function matchStatusBadge(status: string | null | undefined): { label: st
     case "NO_MATCH":
       return { label: "Sin match", tone: "danger" };
     default:
-      return { label: status ?? "—", tone: "neutral" };
+      return { label: status ?? "-", tone: "neutral" };
   }
 }
 
@@ -61,7 +66,7 @@ export function reportQualityBadge(status: string | null | undefined): { label: 
     case "REVIEW_REQUIRED":
       return { label: "Revisión requerida", tone: "warning" };
     default:
-      return { label: status ?? "—", tone: "neutral" };
+      return { label: status ?? "-", tone: "neutral" };
   }
 }
 
@@ -74,6 +79,21 @@ export function zendeskJoinBadge(status: string | null | undefined): { label: st
     case "NO_TICKET_REPORTED":
       return { label: "Sin ticket reportado", tone: "neutral" };
     default:
-      return { label: status ?? "—", tone: "neutral" };
+      return { label: status ?? "-", tone: "neutral" };
+  }
+}
+
+// calculation_status de marts.fieldbeat_working_hours_analysis - ver
+// docs/CALCULATION_CONFIDENCE_MODEL.md.
+export function calculationStatusBadge(status: string | null | undefined): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "CALCULATED":
+      return { label: "Calculado", tone: "success" };
+    case "CALCULATED_WITH_WARNINGS":
+      return { label: "Calculado con advertencias", tone: "warning" };
+    case "NOT_CALCULABLE":
+      return { label: "No calculable", tone: "danger" };
+    default:
+      return { label: status ?? "-", tone: "neutral" };
   }
 }

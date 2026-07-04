@@ -7,7 +7,7 @@ import type { AmbiguousPartRow } from "@/types/audit";
 
 // Alimenta: pestaña "Matches ambiguos" de /audit/manual-review. Fuente:
 // marts.used_parts_dolibarr_match WHERE match_status = 'AMBIGUOUS_MATCH',
-// agrupado por raw_part_identifier — ver docs/MANUAL_REVIEW_VIEW.md.
+// agrupado por raw_part_identifier - ver docs/MANUAL_REVIEW_VIEW.md.
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

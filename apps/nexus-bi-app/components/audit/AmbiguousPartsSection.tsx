@@ -17,7 +17,7 @@ function toQuery(params: Record<string, string | undefined>): string {
   return search.toString();
 }
 
-// Pestaña "Matches ambiguos" — ver docs/MANUAL_REVIEW_VIEW.md § B.
+// Pestaña "Matches ambiguos" - ver docs/MANUAL_REVIEW_VIEW.md § B.
 // Fuente: marts.used_parts_dolibarr_match WHERE match_status =
 // 'AMBIGUOUS_MATCH', agrupado por identificador crudo.
 export function AmbiguousPartsSection({ clientes, maquinas }: AmbiguousPartsSectionProps) {
@@ -104,8 +104,8 @@ export function AmbiguousPartsSection({ clientes, maquinas }: AmbiguousPartsSect
             {data?.rows.map(row => (
               <tr key={row.raw_part_identifier}>
                 <td title={row.raw_part_identifier}>{row.raw_part_identifier}</td>
-                <td title={row.part_name ?? ""}>{row.part_name ?? "—"}</td>
-                <td title={row.candidate_dolibarr_product_ids ?? ""}>{row.candidate_dolibarr_product_ids ?? "—"}</td>
+                <td title={row.part_name ?? ""}>{row.part_name ?? "-"}</td>
+                <td title={row.candidate_dolibarr_product_ids ?? ""}>{row.candidate_dolibarr_product_ids ?? "-"}</td>
                 <td>{row.occurrences.toLocaleString("es-CL")}</td>
                 <td>{row.clientes_afectados.toLocaleString("es-CL")}</td>
                 <td>{row.equipos_afectados.toLocaleString("es-CL")}</td>

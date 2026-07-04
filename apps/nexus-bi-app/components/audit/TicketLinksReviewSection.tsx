@@ -18,11 +18,11 @@ function toQuery(params: Record<string, string | undefined>): string {
   return search.toString();
 }
 
-// Pestaña "Tickets faltantes o restringidos" — ver
+// Pestaña "Tickets faltantes o restringidos" - ver
 // docs/MANUAL_REVIEW_VIEW.md § E. Fuente:
 // marts.fieldbeat_report_dolibarr_operational_view WHERE
 // zendesk_join_status = 'LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK' (920
-// reportes reales). No confundir con los 291 tickets 403 — esos son
+// reportes reales). No confundir con los 291 tickets 403 - esos son
 // tickets Zendesk sin acceso por token; estos son reportes FieldBeat cuyo
 // ticket vinculado no está entre los 628 tickets minados.
 export function TicketLinksReviewSection({ clientes, maquinas }: TicketLinksReviewSectionProps) {
@@ -114,12 +114,12 @@ export function TicketLinksReviewSection({ clientes, maquinas }: TicketLinksRevi
               return (
                 <tr key={row.fieldbeat_task_id}>
                   <td>{row.fieldbeat_task_id}</td>
-                  <td>{row.fieldbeat_task_date?.slice(0, 10) ?? "—"}</td>
-                  <td title={row.client_name ?? ""}>{row.client_name ?? "—"}</td>
-                  <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "—"}</td>
-                  <td>{row.linked_zendesk_ticket_id ?? "—"}</td>
-                  <td>{row.task_type ?? "—"}</td>
-                  <td title={row.technician_names ?? ""}>{row.technician_names ?? "—"}</td>
+                  <td>{row.fieldbeat_task_date?.slice(0, 10) ?? "-"}</td>
+                  <td title={row.client_name ?? ""}>{row.client_name ?? "-"}</td>
+                  <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "-"}</td>
+                  <td>{row.linked_zendesk_ticket_id ?? "-"}</td>
+                  <td>{row.task_type ?? "-"}</td>
+                  <td title={row.technician_names ?? ""}>{row.technician_names ?? "-"}</td>
                   <td>{row.used_parts_count}</td>
                   <td>
                     <StatusBadge label={quality.label} tone={quality.tone} />

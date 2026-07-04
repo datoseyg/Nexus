@@ -13,7 +13,7 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 ];
 
 // Réplica visual de index(2).html (Proyecto 7 - Dashboard Operacional
-// EyG) — ver docs/DASHBOARD_VISUAL_STYLE.md. Todos los datos vienen de
+// EyG) - ver docs/DASHBOARD_VISUAL_STYLE.md. Todos los datos vienen de
 // DuckDB vía los API routes de app/api/dashboard/{operacional,uptime}/*;
 // nada acá es PLACEHOLDER.
 export function DashboardShell() {

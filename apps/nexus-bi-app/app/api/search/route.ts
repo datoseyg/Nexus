@@ -31,7 +31,7 @@ function tokenize(query: string): string[] {
 // "sin IA todavía" -> clasificación por keywords, sin LLM. Cada keyword
 // debe matchear en AL MENOS una de las columnas de texto buscadas
 // (client_name / task_type / description, o field_value en la segunda
-// query) — AND entre keywords, OR entre columnas por keyword.
+// query) - AND entre keywords, OR entre columnas por keyword.
 function buildDescriptionQuery(keywords: string[]) {
   const conditions: string[] = [];
   const params: DuckDBValue[] = [];
@@ -89,7 +89,7 @@ function buildReportFieldsQuery(keywords: string[]) {
 }
 
 // Reemplaza $1, $2... por el valor literal, SOLO para mostrar en el
-// panel "ver query" de la UI — nunca se re-ejecuta este string, la
+// panel "ver query" de la UI - nunca se re-ejecuta este string, la
 // query real corre con parámetros bindeados (runQuery(sql, params)).
 function toReadableSql(sql: string, params: unknown[]): string {
   let readable = sql.trim().replace(/\s+/g, " ");

@@ -6,7 +6,7 @@ interface SectionCardProps {
   padded?: boolean;
 }
 
-// Card blanca genérica (borde suave + sombra mínima) — la unidad visual
+// Card blanca genérica (borde suave + sombra mínima) - la unidad visual
 // base del sistema E&G, usada para envolver cualquier bloque de
 // contenido que no sea ya una tabla (ver ResponsiveTableShell) o un
 // MetricCard. Ver docs/VISUAL_REDESIGN_EYG.md.

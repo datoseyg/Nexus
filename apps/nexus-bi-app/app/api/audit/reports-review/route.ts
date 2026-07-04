@@ -7,7 +7,7 @@ import type { ReportReviewRow } from "@/types/audit";
 
 // Alimenta: pestaña "Reportes con revisión requerida" de
 // /audit/manual-review. Fuente:
-// marts.fieldbeat_report_dolibarr_operational_view — ver
+// marts.fieldbeat_report_dolibarr_operational_view - ver
 // docs/MANUAL_REVIEW_VIEW.md.
 export async function GET(request: NextRequest) {
   try {

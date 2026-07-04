@@ -76,7 +76,7 @@ export default function FieldBeatDashboardPage() {
           title="Dashboard Operacional FieldBeat"
           description={
             <>
-              Universo report-céntrico completo: {data.kpis?.total_fieldbeat_reports?.toLocaleString("es-CL") ?? "—"}{" "}
+              Universo report-céntrico completo: {data.kpis?.total_fieldbeat_reports?.toLocaleString("es-CL") ?? "-"}{" "}
               reportes FieldBeat, con o sin ticket Zendesk. Ver{" "}
               <a href="../../../../docs/SCOPE_AND_LIMITATIONS.md" style={{ color: "var(--eyg-green-dark)" }}>
                 alcance y limitaciones

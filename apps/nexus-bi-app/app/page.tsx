@@ -11,7 +11,7 @@ const SCREENS = [
   {
     href: "/dashboard/operacional",
     title: "Dashboard Operacional (estilo Proyecto 7)",
-    description: "Filtros, KPIs, gráficos y tablas de detalle — incluye la pestaña Uptime/Downtime."
+    description: "Filtros, KPIs, gráficos y tablas de detalle - incluye la pestaña Uptime/Downtime."
   },
   {
     href: "/explorer",
@@ -27,6 +27,11 @@ const SCREENS = [
     href: "/audit/manual-review",
     title: "Auditoría y Validación Manual",
     description: "Repuestos ambiguos, placeholders, reportes y tickets pendientes de revisión."
+  },
+  {
+    href: "/dashboard/after-hours",
+    title: "Trabajo Fuera de Horario",
+    description: "Análisis de horas fuera de la ventana hábil configurada, con confiabilidad explícita por KPI. Vista independiente del Dashboard Operacional."
   }
 ];
 
@@ -48,7 +53,7 @@ export default function HomePage() {
           description={
             <>
               App local, solo lectura, conectada a <code>data/warehouse/eyg_nexus.duckdb</code>. No modifica RAW,
-              PROCESSED, MARTS, GOLD ni la base — ver{" "}
+              PROCESSED, MARTS, GOLD ni la base - ver{" "}
               <a href="../../docs/PRODUCT_APP_ARCHITECTURE.md" style={{ color: "var(--eyg-green-dark)" }}>
                 PRODUCT_APP_ARCHITECTURE.md
               </a>

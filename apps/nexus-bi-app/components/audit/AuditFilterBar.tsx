@@ -25,7 +25,7 @@ const inputStyle = {
 // Barra de filtros compartida por las 5 pestañas tabulares de
 // /audit/manual-review (cliente, máquina, rango de fechas, búsqueda
 // textual) + un slot `extra` para el filtro específico de cada pestaña
-// (match_status o report_quality_status) — ver docs/MANUAL_REVIEW_VIEW.md.
+// (match_status o report_quality_status) - ver docs/MANUAL_REVIEW_VIEW.md.
 export function AuditFilterBar({ clientes, maquinas, values, onChange, onClear, extra, searchPlaceholder }: AuditFilterBarProps) {
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border p-3" style={{ borderColor: "var(--eyg-border)", background: "var(--eyg-card)" }}>

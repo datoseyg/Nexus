@@ -21,7 +21,7 @@ interface ResponsiveTableShellProps {
 
 // Chrome compartido para toda tabla de la app: header (título + conteo +
 // acciones), contenedor con scroll (overflow-x/y auto, header sticky vía
-// selectores :global() — no le importa qué implementación de <table>
+// selectores :global() - no le importa qué implementación de <table>
 // reciba como children, TanStack o markup plano), densidad
 // cómoda/compacta, y estados de carga/error/vacío. Ver
 // docs/VISUAL_REDESIGN_EYG.md § ResponsiveTableShell. Aplicado a: Tabla

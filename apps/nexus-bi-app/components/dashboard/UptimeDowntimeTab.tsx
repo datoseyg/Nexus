@@ -152,8 +152,8 @@ export function UptimeDowntimeTab() {
 
   const taskColumns: DataTableColumn<TaskRow>[] = [
     { key: "id", label: "Task_id", render: row => row.fieldbeat_task_id },
-    { key: "cliente", label: "Cliente", render: row => row.client_name ?? "—" },
-    { key: "tipo", label: "Tipo", render: row => row.task_type ?? "—" },
+    { key: "cliente", label: "Cliente", render: row => row.client_name ?? "-" },
+    { key: "tipo", label: "Tipo", render: row => row.task_type ?? "-" },
     { key: "inicio", label: "Hora de Inicio del Trabajo", render: row => formatDateTimeEsCl(row.start_time) },
     { key: "termino", label: "Hora de Término (aprox.)", render: row => formatDateTimeEsCl(row.last_transition_at) },
     { key: "duracion", label: "Duración Registrada", render: row => formatMinutesAsHhMm(row.duration_minutes) }
@@ -209,7 +209,7 @@ export function UptimeDowntimeTab() {
       </div>
 
       <div className={styles.pendingBanner}>
-        <strong>Uptime/Downtime — pendiente de parametrización.</strong> Las métricas de este tab usan{" "}
+        <strong>Uptime/Downtime - pendiente de parametrización.</strong> Las métricas de este tab usan{" "}
         <code>duration_minutes</code> de FieldBeat como <strong>&quot;horas registradas&quot;</strong>, no como downtime real
         de equipo. El cálculo de uptime final requiere horas base por día/semana, feriados y una fórmula aprobada por
         negocio que todavía no existen en este warehouse.

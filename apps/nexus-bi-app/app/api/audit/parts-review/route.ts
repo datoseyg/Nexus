@@ -8,7 +8,7 @@ import type { PartsReviewRow } from "@/types/audit";
 // Alimenta: pestaña "Repuestos por revisar" de /audit/manual-review.
 // Fuente: marts.used_parts_dolibarr_match + processed.fieldbeat_used_parts
 // (cantidad) + marts.fieldbeat_report_dolibarr_operational_view (cliente,
-// máquina, fecha) — ver docs/MANUAL_REVIEW_VIEW.md.
+// máquina, fecha) - ver docs/MANUAL_REVIEW_VIEW.md.
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

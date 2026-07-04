@@ -10,7 +10,7 @@ import { parseDashboardFilters } from "@/lib/dashboard-filters";
 // cliente resuelto directo, solo client_key).
 //
 // "Hora de término" usa last_transition_at (100% de cobertura) en vez de
-// finished_data_synced_at (solo 8% de cobertura) — es una aproximación
+// finished_data_synced_at (solo 8% de cobertura) - es una aproximación
 // documentada, no la hora de término real garantizada.
 export async function GET(request: NextRequest) {
   try {

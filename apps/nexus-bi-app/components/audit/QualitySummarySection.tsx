@@ -6,7 +6,7 @@ import { SectionCard } from "@/components/ui/SectionCard";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import type { AuditSummary } from "@/types/audit";
 
-// Alimenta la pestaña "Resumen de calidad" — ver
+// Alimenta la pestaña "Resumen de calidad" - ver
 // docs/MANUAL_REVIEW_VIEW.md § F. Todos los números vienen de
 // gold.fieldbeat_data_quality / gold.scope_metadata vía
 // /api/audit/summary; nada se calcula de nuevo acá.
@@ -49,7 +49,7 @@ export function QualitySummarySection() {
 
       <SectionCard
         title="Tickets Zendesk pendientes por permisos de token"
-        description="Ver CLAUDE.md § Pendientes conocidos para Fase 2 — no hay nada más que hacer con el token actual."
+        description="Ver CLAUDE.md § Pendientes conocidos para Fase 2 - no hay nada más que hacer con el token actual."
       >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <MetricCard label="Tickets 403 Forbidden pendientes" value={data.ticketsForbiddenPending} tone="warning" />

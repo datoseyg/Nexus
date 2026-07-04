@@ -11,7 +11,7 @@ interface FilterChipsProps {
   onRemove: (key: string) => void;
 }
 
-// Chips de filtros activos ("Cliente: Clínica Alemana  x") — feedback
+// Chips de filtros activos ("Cliente: Clínica Alemana  x") - feedback
 // visual del cross-filter: cada click en un gráfico agrega un chip acá,
 // removible individualmente sin borrar el resto de los filtros. Ver
 // docs/DASHBOARD_VISUAL_STYLE.md § Cross-filter.

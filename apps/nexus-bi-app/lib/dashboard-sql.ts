@@ -1,5 +1,5 @@
 // origin_location puede venir con más de una bodega separadas por coma
-// (ej. "Pañol E&G,Otros (Comente)") — ver docs/DASHBOARD_VISUAL_STYLE.md.
+// (ej. "Pañol E&G,Otros (Comente)") - ver docs/DASHBOARD_VISUAL_STYLE.md.
 export function splitOriginLocations(value: string | null | undefined): string[] {
   if (!value) return [];
   return value
@@ -10,7 +10,7 @@ export function splitOriginLocations(value: string | null | undefined): string[]
 
 // Estado del "report_quality_status" -> etiqueta visual del dashboard de
 // referencia. Mapeo documentado explícitamente en
-// docs/DASHBOARD_VISUAL_STYLE.md — no inventa estados nuevos, reutiliza
+// docs/DASHBOARD_VISUAL_STYLE.md - no inventa estados nuevos, reutiliza
 // los 6 ya definidos en el pipeline (ver DATA_DICTIONARY.md).
 export const ESTADO_GENERAL_LABELS: Record<string, string> = {
   NO_USED_PARTS: "Éxito (Sin Repuestos)",
@@ -39,7 +39,7 @@ export const ESTADO_GENERAL_REVERSE: Record<string, string[]> = Object.entries(E
 // Distribución de estados de TICKETS Zendesk (no confundir con
 // task_state de FieldBeat). Los 5 valores reales observados en
 // processed.zendesk_tickets.status son: closed, solved, open, new, pending
-// (verificado por query directa contra el warehouse) — se agrupan en 3
+// (verificado por query directa contra el warehouse) - se agrupan en 3
 // categorías de negocio para el gráfico "Distribución de Estados". Ver
 // docs/DASHBOARD_VISUAL_STYLE.md.
 export const TICKET_ESTADO_ORDER = ["Cerrado", "Abierto", "Pendiente"];

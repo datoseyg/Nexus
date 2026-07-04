@@ -14,7 +14,7 @@ import {
 // Fuente: marts.used_parts_dolibarr_match (solo match_status='MATCHED')
 // unida a processed.fieldbeat_used_parts (cantidad, bodega) y a la mart
 // report-céntrica (cliente, fecha, filtros). Responde "¿qué repuestos
-// Dolibarr reales se usaron y cuánto?" — excluye explícitamente valores
+// Dolibarr reales se usaron y cuánto?" - excluye explícitamente valores
 // basura (N/A, S/N, NO HAY, etc.) y cualquier fila sin match real, ver
 // docs/DASHBOARD_VISUAL_STYLE.md.
 // "Pag. PDF" del dashboard de referencia no tiene equivalente -> se omite

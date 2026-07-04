@@ -9,7 +9,7 @@ import type { PlaceholderGroupRow } from "@/types/audit";
 // /audit/manual-review. Fuente: marts.used_parts_dolibarr_match WHERE
 // match_status = 'PLACEHOLDER_VALUE', agrupado por
 // UPPER(TRIM(raw_part_identifier)) para consolidar variantes de
-// mayúsculas/espacios del mismo valor basura (ej. "N/A" vs "n/a") — ver
+// mayúsculas/espacios del mismo valor basura (ej. "N/A" vs "n/a") - ver
 // docs/MANUAL_REVIEW_VIEW.md. Objetivo: detectar los valores basura más
 // frecuentes (N/A, NO HAY, S/N, --, etc.), no inventar una lista fija.
 export async function GET(request: NextRequest) {

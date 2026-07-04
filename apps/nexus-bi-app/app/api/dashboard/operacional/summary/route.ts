@@ -39,10 +39,10 @@ function whereFrom(conditions: string[]): string {
 // Cada gráfico de identidad (cliente/bodega/estado/reportQuality) excluye
 // su propio filtro al construirse ("self-exclusion") para no colapsar su
 // propia distribución cuando el usuario ya hizo click sobre una de sus
-// categorías — ver docs/DASHBOARD_VISUAL_STYLE.md § Cross-filter.
+// categorías - ver docs/DASHBOARD_VISUAL_STYLE.md § Cross-filter.
 //
 // Las tablas paginadas (Uso de Repuestos, Detalle Operativo) NO viven acá
-// — ver /api/dashboard/operacional/parts y /detail.
+// - ver /api/dashboard/operacional/parts y /detail.
 export async function GET(request: NextRequest) {
   try {
     const filters = parseDashboardFilters(request.nextUrl.searchParams);
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Total Tickets Zendesk: universo ticket-céntrico completo (628),
-    // independiente del universo report-céntrico de arriba — ver
+    // independiente del universo report-céntrico de arriba - ver
     // gold.operational_dashboard.total_zendesk_tickets.
     const totalTicketsPusher = createParamPusher();
     const totalTicketsConditions = buildZendeskConditions(filters, "z", totalTicketsPusher);
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
     };
 
     // --- Distribución de Estados (TICKETS Zendesk, no task_state de
-    // FieldBeat) — self-exclusion sobre "estadoTicket". ---
+    // FieldBeat) - self-exclusion sobre "estadoTicket". ---
     const estadosPusher = createParamPusher();
     const estadosConditions = buildZendeskConditions(filters, "z", estadosPusher, ["estadoTicket"]);
     const estadosRaw = await runQuery<{ estado: string; cantidad: bigint }>(
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
     for (const row of estadosRaw) estadosMap.set(row.estado, Number(row.cantidad));
     const estados = TICKET_ESTADO_ORDER.map(estado => ({ estado, cantidad: estadosMap.get(estado) ?? 0 }));
 
-    // --- Evolución Operativa (solo serie "General" — ver nota), grain
+    // --- Evolución Operativa (solo serie "General" - ver nota), grain
     // configurable (day/week/month) ---
     const evolucionPusher = createParamPusher();
     const evolucionConditions = [

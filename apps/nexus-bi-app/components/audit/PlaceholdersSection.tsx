@@ -18,10 +18,10 @@ function toQuery(params: Record<string, string | undefined>): string {
   return search.toString();
 }
 
-// Pestaña "Placeholders / valores no informativos" — ver
+// Pestaña "Placeholders / valores no informativos" - ver
 // docs/MANUAL_REVIEW_VIEW.md § C. Fuente: marts.used_parts_dolibarr_match
 // WHERE match_status = 'PLACEHOLDER_VALUE', agrupado por identificador
-// crudo normalizado — el objetivo es ver cuáles son los valores basura
+// crudo normalizado - el objetivo es ver cuáles son los valores basura
 // más frecuentes (N/A, NO HAY, S/N, --, etc.) reales del pipeline.
 export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionProps) {
   const [filters, setFilters] = useState<AuditFilterValues>({});
@@ -107,7 +107,7 @@ export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionP
             {data?.rows.map(row => (
               <tr key={row.raw_part_identifier}>
                 <td title={row.raw_part_identifier}>{row.raw_part_identifier}</td>
-                <td title={row.part_name_sample ?? ""}>{row.part_name_sample ?? "—"}</td>
+                <td title={row.part_name_sample ?? ""}>{row.part_name_sample ?? "-"}</td>
                 <td>
                   <MiniBarTableCell value={row.occurrences} max={maxOccurrences} />
                 </td>

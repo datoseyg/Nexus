@@ -1,4 +1,4 @@
-// Formas compartidas de request/response de /api/audit/* — ver
+// Formas compartidas de request/response de /api/audit/* - ver
 // docs/MANUAL_REVIEW_VIEW.md. Todo lo que aparece acá viene de una
 // columna real del warehouse; nada es inventado ni un placeholder de UI.
 

@@ -10,7 +10,7 @@ function escapeCsvCell(value: unknown): string {
   return str;
 }
 
-// Exporta solo la página actual ya cargada en el cliente — no pide más
+// Exporta solo la página actual ya cargada en el cliente - no pide más
 // datos al servidor. Coherente con "explorador de solo lectura, sin
 // escritura de ningún tipo".
 export function downloadRowsAsCsv(fileName: string, columnNames: string[], rows: Array<Record<string, unknown>>) {

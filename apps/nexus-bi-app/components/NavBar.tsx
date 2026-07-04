@@ -9,11 +9,12 @@ const LINKS = [
   { href: "/dashboard/operacional", label: "Dashboard Operacional" },
   { href: "/explorer", label: "Explorador" },
   { href: "/search", label: "Búsqueda" },
-  { href: "/audit/manual-review", label: "Auditoría" }
+  { href: "/audit/manual-review", label: "Auditoría" },
+  { href: "/dashboard/after-hours", label: "Trabajo Fuera de Horario" }
 ];
 
 // Barra de navegación con identidad E&G Medical Systems (ver
-// docs/VISUAL_REDESIGN_EYG.md) — logo verde/teal + link de Auditoría
+// docs/VISUAL_REDESIGN_EYG.md) - logo verde/teal + link de Auditoría
 // destacado con el conteo de pendientes (gold.fieldbeat_report_analysis
 // .reports_review_required vía /api/audit/summary).
 export function NavBar() {
@@ -73,7 +74,7 @@ export function NavBar() {
         </nav>
 
         <span className="ml-auto text-xs" style={{ color: "var(--text-muted)" }}>
-          Fase 1 MVP — solo lectura
+          Fase 1 MVP - solo lectura
         </span>
       </div>
     </header>

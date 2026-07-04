@@ -1,10 +1,10 @@
 // Chart.js dibuja en <canvas>, no soporta var(--css-custom-property) como
-// las series SVG de Recharts (ver components/HorizontalBarChart.tsx) —
+// las series SVG de Recharts (ver components/HorizontalBarChart.tsx) -
 // necesita valores literales. Paleta alineada a la identidad E&G Medical
 // Systems (ver docs/VISUAL_REDESIGN_EYG.md): verde E&G como color
 // principal (nunca azul genérico), teal como secundario; el resto son
 // tonos de apoyo para distinguir categorías sin saturar el gráfico.
-// Amarillo/rojo quedan al final de la secuencia — se reservan
+// Amarillo/rojo quedan al final de la secuencia - se reservan
 // semánticamente para advertencia/error en el resto de la UI.
 export const DASHBOARD_PALETTE = {
   green: "#3c8c2e",
@@ -32,7 +32,7 @@ export const DASHBOARD_PALETTE_SEQUENCE = [
   DASHBOARD_PALETTE.danger
 ];
 
-// Convierte un hex "#3b6fd6" a "rgba(59,111,214,alpha)" — usado para
+// Convierte un hex "#3b6fd6" a "rgba(59,111,214,alpha)" - usado para
 // atenuar las categorías no seleccionadas de un gráfico cuando el
 // cross-filter tiene un valor activo en su propio eje de identidad (ver
 // docs/DASHBOARD_VISUAL_STYLE.md § Cross-filter). La categoría
@@ -55,19 +55,19 @@ export function highlightColors(labels: string[], colors: string[], selected: st
 }
 
 export function formatNumberEsCl(value: number | null | undefined, decimals = 0): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
   return value.toLocaleString("es-CL", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
 export function formatPercent(value: number | null | undefined, decimals = 2): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
   return `${value.toFixed(decimals).replace(".", ",")} %`;
 }
 
 // duration_minutes -> "hh:mm" (formato del dashboard de referencia,
 // columna "Downtime (Formato hora)" / "Duración registrada").
 export function formatMinutesAsHhMm(minutes: number | null | undefined): string {
-  if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return "—";
+  if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return "-";
 
   const totalMinutes = Math.round(minutes);
   const hh = Math.floor(totalMinutes / 60);
@@ -77,7 +77,7 @@ export function formatMinutesAsHhMm(minutes: number | null | undefined): string 
 }
 
 export function formatDateTimeEsCl(value: string | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return "-";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);

@@ -2,7 +2,7 @@ interface FutureActionButtonProps {
   label: string;
 }
 
-// Botón de acción de curación NO implementada todavía en este corte —
+// Botón de acción de curación NO implementada todavía en este corte -
 // visible y claramente marcado como futuro, nunca oculto en silencio. Ver
 // docs/MANUAL_REVIEW_VIEW.md § Acciones futuras.
 export function FutureActionButton({ label }: FutureActionButtonProps) {

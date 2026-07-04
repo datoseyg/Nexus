@@ -21,7 +21,7 @@ interface DataTableCardProps<Row> {
 }
 
 // Chrome de tabla delegado a ResponsiveTableShell (scroll + header sticky
-// + estado vacío) — ver docs/VISUAL_REDESIGN_EYG.md. Esta capa solo arma
+// + estado vacío) - ver docs/VISUAL_REDESIGN_EYG.md. Esta capa solo arma
 // las filas/columnas específicas del dashboard (celdas custom, click de
 // fila para cross-filter).
 export function DataTableCard<Row extends object>({

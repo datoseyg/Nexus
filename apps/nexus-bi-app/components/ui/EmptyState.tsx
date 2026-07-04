@@ -3,7 +3,7 @@ interface EmptyStateProps {
   hint?: string;
 }
 
-// Mensaje vacío estándar — nunca una tabla en blanco sin explicación. Ver
+// Mensaje vacío estándar - nunca una tabla en blanco sin explicación. Ver
 // docs/VISUAL_REDESIGN_EYG.md.
 export function EmptyState({ message, hint }: EmptyStateProps) {
   return (

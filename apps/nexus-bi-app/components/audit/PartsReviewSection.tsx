@@ -20,7 +20,7 @@ function toQuery(params: Record<string, string | undefined>): string {
   return search.toString();
 }
 
-// Pestaña "Repuestos por revisar" — ver docs/MANUAL_REVIEW_VIEW.md § A.
+// Pestaña "Repuestos por revisar" - ver docs/MANUAL_REVIEW_VIEW.md § A.
 // Criterio: needs_manual_review = true OR match_status IN (NO_MATCH,
 // AMBIGUOUS_MATCH, PLACEHOLDER_VALUE). Solo lectura + acción sugerida por
 // fila; los botones de acción están deshabilitados (ver
@@ -134,19 +134,19 @@ export function PartsReviewSection({ clientes, maquinas }: PartsReviewSectionPro
               return (
                 <tr key={row.used_part_id}>
                   <td>{row.fieldbeat_task_id}</td>
-                  <td>{row.fieldbeat_task_date?.slice(0, 10) ?? "—"}</td>
-                  <td title={row.client_name ?? ""}>{row.client_name ?? "—"}</td>
-                  <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "—"}</td>
-                  <td title={row.raw_part_identifier ?? ""}>{row.raw_part_identifier ?? "—"}</td>
-                  <td title={row.part_name ?? ""}>{row.part_name ?? "—"}</td>
-                  <td>{row.quantity ?? "—"}</td>
+                  <td>{row.fieldbeat_task_date?.slice(0, 10) ?? "-"}</td>
+                  <td title={row.client_name ?? ""}>{row.client_name ?? "-"}</td>
+                  <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "-"}</td>
+                  <td title={row.raw_part_identifier ?? ""}>{row.raw_part_identifier ?? "-"}</td>
+                  <td title={row.part_name ?? ""}>{row.part_name ?? "-"}</td>
+                  <td>{row.quantity ?? "-"}</td>
                   <td>
                     <StatusBadge label={badge.label} tone={badge.tone} />
                   </td>
-                  <td>{row.match_method ?? "—"}</td>
-                  <td>{row.match_confidence ?? "—"}</td>
-                  <td title={row.candidate_dolibarr_product_ids ?? ""}>{row.candidate_dolibarr_product_ids ?? "—"}</td>
-                  <td>{row.dolibarr_ref ?? "—"}</td>
+                  <td>{row.match_method ?? "-"}</td>
+                  <td>{row.match_confidence ?? "-"}</td>
+                  <td title={row.candidate_dolibarr_product_ids ?? ""}>{row.candidate_dolibarr_product_ids ?? "-"}</td>
+                  <td>{row.dolibarr_ref ?? "-"}</td>
                   <td>
                     <div className="flex items-center gap-2">
                       <span style={{ color: "var(--text-secondary)" }}>{row.suggested_action}</span>

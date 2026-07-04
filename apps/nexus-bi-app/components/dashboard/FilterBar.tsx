@@ -27,7 +27,7 @@ interface FilterBarProps {
 
 // Barra de filtros superior, reutilizada por ambos tabs. Un filtro
 // deshabilitado (disabled=true) muestra su disabledReason como title
-// (tooltip) — nunca se oculta en silencio, ver
+// (tooltip) - nunca se oculta en silencio, ver
 // docs/DASHBOARD_VISUAL_STYLE.md.
 export function FilterBar({ filters, values, onChange, onClear, extra }: FilterBarProps) {
   return (

@@ -13,7 +13,7 @@ import {
 // Alimenta: "Detalle Operativo" del Tab "Dashboard Operacional".
 // Fuente: marts.fieldbeat_report_dolibarr_operational_view.
 // "Origen" (General/Apoteca) usa la misma heurística documentada del
-// filtro origenRegistro (equipment_internal_ids contiene "APOTECA") — ver
+// filtro origenRegistro (equipment_internal_ids contiene "APOTECA") - ver
 // docs/DASHBOARD_VISUAL_STYLE.md. No es un campo real del pipeline, se
 // deriva y se etiqueta como tal.
 export async function GET(request: NextRequest) {

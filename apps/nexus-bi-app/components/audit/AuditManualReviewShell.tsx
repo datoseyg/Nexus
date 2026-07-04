@@ -21,7 +21,7 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 ];
 
 // Vista de solo lectura para revisar todo lo que el sistema marca como
-// poco confiable, ambiguo o pendiente de validación manual — ver
+// poco confiable, ambiguo o pendiente de validación manual - ver
 // docs/MANUAL_REVIEW_VIEW.md. NO escribe en ninguna tabla; las acciones
 // de curación están preparadas pero deshabilitadas (FutureActionButton)
 // hasta que exista el Centro de Correcciones.
@@ -42,9 +42,9 @@ export function AuditManualReviewShell() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        eyebrow="Solo lectura — preparado para curación"
+        eyebrow="Solo lectura - preparado para curación"
         title="Auditoría y Validación Manual"
-        description="Repuestos ambiguos, no matcheados, placeholders, reportes con revisión requerida y tickets faltantes o restringidos. Ninguna acción de esta pantalla escribe todavía en el pipeline — ver docs/MANUAL_REVIEW_VIEW.md."
+        description="Repuestos ambiguos, no matcheados, placeholders, reportes con revisión requerida y tickets faltantes o restringidos. Ninguna acción de esta pantalla escribe todavía en el pipeline - ver docs/MANUAL_REVIEW_VIEW.md."
       />
 
       <div className="flex flex-wrap gap-1 border-b" style={{ borderColor: "var(--eyg-border)" }}>

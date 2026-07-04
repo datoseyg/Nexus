@@ -8,7 +8,7 @@ const REVIEW_REQUIRED_STATUSES = new Set(["HAS_PLACEHOLDERS", "HAS_UNMATCHED_PAR
 // Alimenta: pestaña "Resumen de calidad" de /audit/manual-review, y el
 // contador "Auditoría · N pendientes" del NavBar. Fuentes:
 // gold.fieldbeat_data_quality (desglose por report_quality_status) +
-// gold.scope_metadata (fila única con métricas de alcance) — ver
+// gold.scope_metadata (fila única con métricas de alcance) - ver
 // docs/MANUAL_REVIEW_VIEW.md.
 export async function GET() {
   try {

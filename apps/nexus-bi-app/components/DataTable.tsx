@@ -17,7 +17,7 @@ function formatCellValue(value: unknown): string {
 }
 
 // Solo lectura: no hay celdas editables ni handlers de escritura acá a
-// propósito — cualquier corrección va por el Centro de Correcciones
+// propósito - cualquier corrección va por el Centro de Correcciones
 // (no implementado en este corte).
 export function DataTable({ columnNames, rows, sortColumn, sortDir, onSortChange }: DataTableProps) {
   const columns: ColumnDef<Record<string, unknown>>[] = columnNames.map(name => ({

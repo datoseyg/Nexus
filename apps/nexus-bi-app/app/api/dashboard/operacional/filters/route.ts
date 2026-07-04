@@ -7,7 +7,7 @@ import { splitOriginLocations, TICKET_ESTADO_ORDER } from "@/lib/dashboard-sql";
 // estado de ticket, origen de registro) + límites del calendario del Tab
 // "Dashboard Operacional". "bodega" devuelve { available, values, note }
 // con la cobertura real; "origenRegistro" es una heurística documentada
-// (ver docs/DASHBOARD_VISUAL_STYLE.md) — no un campo directo del pipeline.
+// (ver docs/DASHBOARD_VISUAL_STYLE.md) - no un campo directo del pipeline.
 export async function GET() {
   try {
     const clientesRows = await runQuery<{ client_name: string }>(`
@@ -31,7 +31,7 @@ export async function GET() {
       ORDER BY equipo
     `);
 
-    // Límites reales de fecha para el calendario/rango — un extremo por
+    // Límites reales de fecha para el calendario/rango - un extremo por
     // universo (report-céntrico usa fieldbeat_task_date, ticket-céntrico
     // usa created_at); el picker usa la unión de ambos.
     const martDateRangeRows = await runQuery<{ mn: string; mx: string }>(`
@@ -46,7 +46,7 @@ export async function GET() {
     `);
 
     // origin_location existe y tiene datos reales (561 de 2193 repuestos,
-    // ~25.6%) — se expone como filtro de "Bodega", con la cobertura real
+    // ~25.6%) - se expone como filtro de "Bodega", con la cobertura real
     // informada, no oculto ni inventado.
     const bodegaRows = await runQuery<{ origin_location: string }>(`
       SELECT origin_location
@@ -65,7 +65,7 @@ export async function GET() {
 
     // "Origen Registro" (General/Apoteca): no existe un campo explícito en
     // este warehouse. Se probó la heurística contra client_name,
-    // origin_location y equipment_internal_ids — solo equipment_internal_ids
+    // origin_location y equipment_internal_ids - solo equipment_internal_ids
     // tiene coincidencias reales de "APOTECA" (269 de 3747 reportes,
     // ~7.18%). El filtro se expone con esa base real y su cobertura
     // documentada, nunca oculto ni inventado.
@@ -90,7 +90,7 @@ export async function GET() {
       bodegas: {
         available: bodegaSet.size > 0,
         values: Array.from(bodegaSet).sort(),
-        note: `Disponible solo para ${bodegaCoverage[0]?.con_valor ?? 0} de ${bodegaCoverage[0]?.total ?? 0} repuestos registrados — el resto no tiene bodega de origen documentada en FieldBeat.`
+        note: `Disponible solo para ${bodegaCoverage[0]?.con_valor ?? 0} de ${bodegaCoverage[0]?.total ?? 0} repuestos registrados - el resto no tiene bodega de origen documentada en FieldBeat.`
       },
       origenRegistro: {
         available: true,

@@ -16,7 +16,7 @@ interface RouteParams {
   params: Promise<{ schema: string; table: string }>;
 }
 
-// Explorador de tablas: solo lectura, paginado server-side (obligatorio —
+// Explorador de tablas: solo lectura, paginado server-side (obligatorio -
 // processed.fieldbeat_report_fields tiene 66107 filas). schema/table
 // vienen de la URL, así que se validan contra information_schema antes
 // de interpolarlos en cualquier SQL (no se pueden parametrizar
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const offset = (safePage - 1) * pageSize;
 
     // LIMIT/OFFSET interpolados directo (no vienen de texto libre del
-    // usuario — ya pasaron por clampPage/clampPageSize, son enteros
+    // usuario - ya pasaron por clampPage/clampPageSize, son enteros
     // acotados), consistente con cómo DuckDB no soporta parametrizar
     // LIMIT en todas las variantes de driver de forma confiable.
     const dataRows = await runQuery(

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Identidad visual E&G Medical Systems — ver docs/VISUAL_REDESIGN_EYG.md.
+/* Identidad visual E&G Medical Systems - ver docs/VISUAL_REDESIGN_EYG.md.
    Tokens de marca (--eyg-*) más los tokens genéricos que ya consumía el
    resto de la app, remapeados a la paleta E&G en vez de duplicar un
    sistema de estilos paralelo. */

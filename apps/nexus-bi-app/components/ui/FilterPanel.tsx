@@ -10,7 +10,7 @@ interface FilterPanelProps {
 
 // Panel de filtros genérico: sticky en desktop, colapsable en pantallas
 // angostas (el usuario decide si lo necesita abierto) para que los
-// filtros no empujen el contenido fuera de la vista en tablet/móvil — ver
+// filtros no empujen el contenido fuera de la vista en tablet/móvil - ver
 // docs/VISUAL_REDESIGN_EYG.md § Responsive.
 export function FilterPanel({ children, sticky = true, title = "Filtros" }: FilterPanelProps) {
   const [collapsed, setCollapsed] = useState(false);

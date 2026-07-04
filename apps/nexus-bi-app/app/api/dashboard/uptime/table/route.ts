@@ -9,7 +9,7 @@ import { parseDashboardFilters } from "@/lib/dashboard-filters";
 // Uptime / Downtime".
 //
 // Las columnas HC_calc / %Uptime / THA / HC teórica del dashboard de
-// referencia NO se calculan acá — no existe en este warehouse una
+// referencia NO se calculan acá - no existe en este warehouse una
 // fórmula de uptime aprobada por negocio (horas base por día/semana,
 // feriados, etc.). Se devuelven como `null` y la UI las muestra como
 // "Pendiente de parametrización".
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     const pageRows = allRows.slice(offset, offset + pageSize);
 
     // Duración registrada por Año-Mes (reemplaza "Downtime por Año-Mes"
-    // del dashboard de referencia — ver advertencia arriba).
+    // del dashboard de referencia - ver advertencia arriba).
     const periodRows = await runQuery<{ anio: number; mes: number; horas: number }>(`
       SELECT
         CAST(STRFTIME(start_time, '%Y') AS INTEGER) AS anio,

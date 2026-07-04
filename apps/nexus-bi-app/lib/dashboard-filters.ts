@@ -2,7 +2,7 @@ import type { DuckDBValue } from "@duckdb/node-api";
 import { ESTADO_GENERAL_REVERSE, TICKET_ESTADO_GROUPS } from "./dashboard-sql";
 
 // Filtros globales del Dashboard Operacional (ambos tabs). Viajan en la URL
-// (?from=&to=&grain=&cliente=&...) para que el estado sea compartible — ver
+// (?from=&to=&grain=&cliente=&...) para que el estado sea compartible - ver
 // docs/DASHBOARD_VISUAL_STYLE.md § "Filtros globales y cross-filter".
 export type Grain = "day" | "week" | "month";
 
@@ -73,7 +73,7 @@ function col(alias: string, name: string): string {
 }
 
 // Rango de fechas sobre marts.fieldbeat_report_dolibarr_operational_view.fieldbeat_task_date
-// (universo report-céntrico) — ver docs/DASHBOARD_VISUAL_STYLE.md.
+// (universo report-céntrico) - ver docs/DASHBOARD_VISUAL_STYLE.md.
 export function buildMartDateConditions(filters: DashboardFilters, alias: string, pusher: ParamPusher): string[] {
   const conditions: string[] = [];
   if (filters.from) conditions.push(`CAST(${col(alias, "fieldbeat_task_date")} AS DATE) >= ${pusher.push(filters.from)}::DATE`);
@@ -82,7 +82,7 @@ export function buildMartDateConditions(filters: DashboardFilters, alias: string
 }
 
 // Rango de fechas sobre processed.zendesk_tickets.created_at (universo
-// ticket-céntrico) — se usa por defecto created_at, no updated_at, y queda
+// ticket-céntrico) - se usa por defecto created_at, no updated_at, y queda
 // documentado en docs/DASHBOARD_VISUAL_STYLE.md.
 export function buildZendeskDateConditions(filters: DashboardFilters, alias: string, pusher: ParamPusher): string[] {
   const conditions: string[] = [];
@@ -92,7 +92,7 @@ export function buildZendeskDateConditions(filters: DashboardFilters, alias: str
 }
 
 // Condiciones "de identidad" sobre columnas nativas de
-// marts.fieldbeat_report_dolibarr_operational_view — cliente, tipo de
+// marts.fieldbeat_report_dolibarr_operational_view - cliente, tipo de
 // tarea, máquina, origen de registro (heurística Apoteca/General) y
 // estado general (report_quality_status remapeado). `exclude` implementa
 // el self-exclusion del cross-filter: el gráfico que originó un filtro no
@@ -132,7 +132,7 @@ export function buildMartIdentityConditions(
 }
 
 // sku/bodega viven en processed.fieldbeat_used_parts, tabla distinta de la
-// mart — se aplican como subquery `fieldbeat_task_id IN (...)` cuando la
+// mart - se aplican como subquery `fieldbeat_task_id IN (...)` cuando la
 // query base no está ya unida a esa tabla.
 export function buildUsedPartsFilterSubquery(
   filters: DashboardFilters,
@@ -174,7 +174,7 @@ export function buildMartFilterSubquery(
 }
 
 // Distribución de estados de TICKETS Zendesk (closed/solved -> Cerrado,
-// open/new -> Abierto, resto -> Pendiente) — ver docs/DASHBOARD_VISUAL_STYLE.md.
+// open/new -> Abierto, resto -> Pendiente) - ver docs/DASHBOARD_VISUAL_STYLE.md.
 // Nunca usar processed.fieldbeat_tasks.state / mart.task_state para esto.
 export function ticketEstadoCaseExpr(column: string): string {
   const cerrado = TICKET_ESTADO_GROUPS.Cerrado.map(s => `'${s}'`).join(", ");
@@ -186,7 +186,7 @@ export function ticketEstadoCaseExpr(column: string): string {
 // + estado de ticket directo, más un puente opcional hacia
 // marts.fieldbeat_report_dolibarr_operational_view cuando hay filtros de
 // cliente/tipoTarea/maquina/origenRegistro/reportQuality activos (solo
-// afecta a los tickets que sí están vinculados a un reporte FieldBeat —
+// afecta a los tickets que sí están vinculados a un reporte FieldBeat -
 // ver limitación documentada en DASHBOARD_VISUAL_STYLE.md).
 export function buildZendeskConditions(
   filters: DashboardFilters,
@@ -215,7 +215,7 @@ export function buildZendeskConditions(
 }
 
 // Refs de repuesto que no aportan valor de negocio (texto libre tipo
-// "sin número", "no hay", etc.) — defensa adicional; en la práctica
+// "sin número", "no hay", etc.) - defensa adicional; en la práctica
 // marts.used_parts_dolibarr_match.match_status = 'MATCHED' ya excluye estos
 // valores (los rechaza el resolver como PLACEHOLDER_VALUE antes de llegar
 // acá), pero se valida explícitamente para no depender solo de eso.

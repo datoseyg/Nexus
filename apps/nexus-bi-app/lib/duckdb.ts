@@ -1,7 +1,7 @@
 import path from "node:path";
 import { DuckDBInstance, type DuckDBConnection, type DuckDBValue } from "@duckdb/node-api";
 
-// apps/nexus-bi-app/ vive dos niveles bajo la raíz del proyecto — el
+// apps/nexus-bi-app/ vive dos niveles bajo la raíz del proyecto - el
 // warehouse ya existe, generado por `npm run db:build` en la raíz. Esta
 // app NUNCA lo crea ni lo escribe, solo lo abre en modo READ_ONLY.
 const DB_PATH = path.join(process.cwd(), "..", "..", "data", "warehouse", "eyg_nexus.duckdb");
@@ -38,7 +38,7 @@ async function createConnection(): Promise<DuckDBConnection> {
     if (message.includes("being used by another process")) {
       throw new DuckDbLockedError(
         `No se pudo abrir la base de datos (${DB_PATH}): el archivo está siendo usado por ` +
-        "otro proceso — probablemente DBeaver u otra herramienta con una conexión abierta. " +
+        "otro proceso - probablemente DBeaver u otra herramienta con una conexión abierta. " +
         "Cerrá esa conexión e intentá de nuevo."
       );
     }
@@ -69,13 +69,13 @@ export async function getConnection(): Promise<DuckDBConnection> {
 }
 
 // DuckDB devuelve BIGINT como `bigint` nativo de JS (no JSON-serializable
-// — JSON.stringify tira TypeError). Ninguno de los conteos de este
+// - JSON.stringify tira TypeError). Ninguno de los conteos de este
 // warehouse se acerca a Number.MAX_SAFE_INTEGER, así que convertir a
 // Number() acá es seguro.
 //
 // Además, tipos como TIMESTAMP/TIMESTAMPTZ vuelven como instancias de
 // clase propias de @duckdb/node-api (ej. DuckDBTimestampTZValue), NO
-// como bigint de primer nivel — pero esas instancias guardan su valor
+// como bigint de primer nivel - pero esas instancias guardan su valor
 // interno en un campo propio que SÍ es bigint (ej. `.micros`), y
 // JSON.stringify falla igual al recorrer ese objeto anidado. Se detectan
 // por no ser un object literal plano (constructor !== Object) y se

@@ -26,7 +26,7 @@ function daysAgo(n: number): string {
 
 // Reemplaza el select estático "Selecciona un período" del dashboard de
 // referencia por un calendario/rango real (desde-hasta + presets +
-// agrupación), sin depender de ninguna librería de pago — ver
+// agrupación), sin depender de ninguna librería de pago - ver
 // docs/DASHBOARD_VISUAL_STYLE.md.
 const PRESETS: Array<{ label: string; range: () => { from?: string; to?: string } }> = [
   { label: "Hoy", range: () => ({ from: toIsoDate(new Date()), to: toIsoDate(new Date()) }) },

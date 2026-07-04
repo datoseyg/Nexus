@@ -15,10 +15,10 @@ const TONE_COLOR: Record<NonNullable<MetricCardProps["tone"]>, string> = {
 };
 
 // Stat tile de la identidad E&G: label + valor grande + hint opcional.
-// Reemplaza components/KpiCard.tsx (ver docs/VISUAL_REDESIGN_EYG.md) —
+// Reemplaza components/KpiCard.tsx (ver docs/VISUAL_REDESIGN_EYG.md) -
 // mismo rol, nombre alineado al resto de components/ui/.
 export function MetricCard({ label, value, hint, tone = "default" }: MetricCardProps) {
-  const display = typeof value === "number" ? formatCompactNumber(value) : value ?? "—";
+  const display = typeof value === "number" ? formatCompactNumber(value) : value ?? "-";
 
   return (
     <div

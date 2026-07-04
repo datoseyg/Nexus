@@ -62,7 +62,7 @@ export default function SearchPage() {
       <div className="flex flex-col gap-4">
         <PageHeader
           title="Búsqueda / Lupa"
-          description="Búsqueda por palabras clave, sin IA en este corte — cada palabra debe aparecer en cliente, tipo de trabajo, descripción del reporte, o en algún campo de texto libre del formulario técnico."
+          description="Búsqueda por palabras clave, sin IA en este corte - cada palabra debe aparecer en cliente, tipo de trabajo, descripción del reporte, o en algún campo de texto libre del formulario técnico."
         />
 
         <div className="flex gap-2">

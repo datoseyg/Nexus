@@ -1,7 +1,7 @@
 import { runQuery } from "./duckdb";
 
 // Identificadores (nombre de tabla/columna) no se pueden parametrizar en
-// DuckDB — solo valores. Cada función acá valida el nombre contra
+// DuckDB - solo valores. Cada función acá valida el nombre contra
 // information_schema ANTES de interpolarlo en SQL, y quoteIdentifier()
 // escapa comillas dobles como defensa en profundidad adicional.
 const ALLOWED_SCHEMAS = ["processed", "marts", "gold"] as const;

@@ -4,7 +4,7 @@ interface ErrorBannerProps {
 }
 
 // DB_LOCKED / DB_NOT_FOUND llegan con mensajes ya redactados en
-// lib/duckdb.ts — acá solo se muestran, sin reinterpretarlos.
+// lib/duckdb.ts - acá solo se muestran, sin reinterpretarlos.
 export function ErrorBanner({ message, code }: ErrorBannerProps) {
   return (
     <div

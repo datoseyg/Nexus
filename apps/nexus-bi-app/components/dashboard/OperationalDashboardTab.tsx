@@ -170,7 +170,7 @@ export function OperationalDashboardTab() {
   }, []);
 
   // Sincroniza el estado de filtros con la URL (?from=&to=&cliente=&...)
-  // para que sea compartible — ver docs/DASHBOARD_VISUAL_STYLE.md.
+  // para que sea compartible - ver docs/DASHBOARD_VISUAL_STYLE.md.
   useEffect(() => {
     const query = toQueryString(filters as unknown as Record<string, string | undefined>);
     const url = `${window.location.pathname}${query ? `?${query}` : ""}`;
@@ -226,7 +226,7 @@ export function OperationalDashboardTab() {
 
   // Cross-filter: click en un gráfico agrega/actualiza el filtro global
   // correspondiente (toggle: click de nuevo sobre la misma categoría lo
-  // quita) — ver docs/DASHBOARD_VISUAL_STYLE.md § Cross-filter.
+  // quita) - ver docs/DASHBOARD_VISUAL_STYLE.md § Cross-filter.
   const toggleFilter = useCallback(
     (key: keyof FiltersState, value: string | null) => {
       if (!value) return;
@@ -320,7 +320,7 @@ export function OperationalDashboardTab() {
   const partsColumns: DataTableColumn<PartsRow>[] = [
     { key: "info", label: "Info.", render: (_row, i) => `${((parts?.page ?? 1) - 1) * 10 + i + 1}.` },
     { key: "sku", label: "SKU Dolibarr", render: row => row.sku_dolibarr },
-    { key: "nombre", label: "Nombre Repuesto", render: row => row.nombre_repuesto || "—" },
+    { key: "nombre", label: "Nombre Repuesto", render: row => row.nombre_repuesto || "-" },
     { key: "reportes", label: "Reportes", render: row => formatNumberEsCl(row.reportes_asociados) },
     { key: "clientes", label: "Clientes", render: row => formatNumberEsCl(row.clientes_asociados) },
     {
@@ -335,9 +335,9 @@ export function OperationalDashboardTab() {
     { key: "origen", label: "Origen", render: row => row.origen },
     { key: "idTarea", label: "ID Tarea Fieldbeat", render: row => row.fieldbeat_task_id },
     { key: "cliente", label: "Cliente", render: row => row.client_name },
-    { key: "idTicket", label: "ID Ticket", render: row => row.linked_zendesk_ticket_id || "—" },
-    { key: "maquina", label: "Máquina", render: row => row.equipment_internal_ids || "—" },
-    { key: "skuLink", label: "SKU link", render: row => row.used_part_numbers || "—" },
+    { key: "idTicket", label: "ID Ticket", render: row => row.linked_zendesk_ticket_id || "-" },
+    { key: "maquina", label: "Máquina", render: row => row.equipment_internal_ids || "-" },
+    { key: "skuLink", label: "SKU link", render: row => row.used_part_numbers || "-" },
     { key: "tipo", label: "Tipo de Tarea", render: row => row.task_type },
     { key: "cantidad", label: "Cantidad Descontada", render: row => row.used_parts_count }
   ];
@@ -407,7 +407,7 @@ export function OperationalDashboardTab() {
         <KpiCard label="% con Ticket Reportado" value={formatPercent(summary.kpis.pctConTicketReportado)} />
         <KpiCard label="% con Ticket Zendesk Accesible" value={formatPercent(summary.kpis.pctConTicketAccesible)} />
         <KpiCard label="Descargar Informe" value="⬇ Descargar Informe (JSON)" variant="action" onClick={handleDownloadReport} />
-        <KpiCard label="Último Cliente" value={summary.kpis.ultimoCliente ?? "—"} variant="client" />
+        <KpiCard label="Último Cliente" value={summary.kpis.ultimoCliente ?? "-"} variant="client" />
       </div>
 
       <div className={`${styles.grid} ${styles.grid2}`}>
@@ -430,7 +430,7 @@ export function OperationalDashboardTab() {
           una barra filtra el resto del dashboard por ese estado.
         </p>
 
-        <ChartCard title={`Evolución Operativa (Tiempo, agrupado por ${filters.grain === "day" ? "día" : filters.grain === "week" ? "semana" : "mes"}) — solo serie General`}>
+        <ChartCard title={`Evolución Operativa (Tiempo, agrupado por ${filters.grain === "day" ? "día" : filters.grain === "week" ? "semana" : "mes"}) - solo serie General`}>
           <Line
             data={{
               labels: summary.evolucion.map(e => formatPeriodLabel(e.periodo)),
@@ -451,7 +451,7 @@ export function OperationalDashboardTab() {
       </div>
       <p style={{ fontSize: 11, color: "#6b7280", marginTop: -8, marginBottom: 14 }}>
         La serie &quot;Apoteca&quot; del dashboard de referencia se puede aproximar con el filtro &quot;Origen Registro&quot; (heurística
-        basada en equipment_internal_ids) — no existe un campo de origen dedicado en este warehouse.
+        basada en equipment_internal_ids) - no existe un campo de origen dedicado en este warehouse.
       </p>
 
       <div className={`${styles.grid} ${styles.grid4}`}>
@@ -472,7 +472,7 @@ export function OperationalDashboardTab() {
                   callbacks: {
                     label: ctx => {
                       const v = summary.bodegasClientes.values[ctx.dataIndex];
-                      return ` ${v.cliente} — ${formatNumberEsCl(v.cantidad)} usos (${formatPercent(v.pct, 1)})`;
+                      return ` ${v.cliente} - ${formatNumberEsCl(v.cantidad)} usos (${formatPercent(v.pct, 1)})`;
                     }
                   }
                 }
@@ -500,7 +500,7 @@ export function OperationalDashboardTab() {
                   callbacks: {
                     label: ctx => {
                       const v = summary.rankingBodegas.values[ctx.dataIndex];
-                      return ` ${v.bodega} — ${formatNumberEsCl(v.cantidad)} usos (${formatPercent(v.pct, 1)})`;
+                      return ` ${v.bodega} - ${formatNumberEsCl(v.cantidad)} usos (${formatPercent(v.pct, 1)})`;
                     }
                   }
                 }
@@ -524,7 +524,7 @@ export function OperationalDashboardTab() {
                   callbacks: {
                     label: ctx => {
                       const v = summary.ticketsCliente[ctx.dataIndex];
-                      return ` ${v.cliente} — ${v.accesibles}/${v.total} accesibles (${formatPercent(v.pct, 1)})`;
+                      return ` ${v.cliente} - ${v.accesibles}/${v.total} accesibles (${formatPercent(v.pct, 1)})`;
                     }
                   }
                 }

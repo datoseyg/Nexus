@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { runQuery, serializeRows } from "@/lib/duckdb";
 import { handleApiError } from "@/lib/api-error";
 
-// Todas las queries acá son fijas (sin input de usuario) — el único
+// Todas las queries acá son fijas (sin input de usuario) - el único
 // propósito de este route es alimentar el Dashboard Operacional
 // FieldBeat con las 5 tablas GOLD report-céntricas.
 export async function GET() {

@@ -7,7 +7,7 @@ interface PageHeaderProps {
 
 // Encabezado estándar de pantalla: eyebrow (contexto corto, opcional) +
 // título + descripción + acciones a la derecha. Reemplaza los bloques
-// <h1>/<p> ad-hoc que cada pantalla armaba por separado — ver
+// <h1>/<p> ad-hoc que cada pantalla armaba por separado - ver
 // docs/VISUAL_REDESIGN_EYG.md.
 export function PageHeader({ title, description, actions, eyebrow }: PageHeaderProps) {
   return (

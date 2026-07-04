@@ -1,7 +1,7 @@
 import type { DuckDBValue } from "@duckdb/node-api";
 import { createParamPusher, type ParamPusher } from "./dashboard-filters";
 
-// Filtros comunes a los 6 endpoints de auditoría — ver
+// Filtros comunes a los 6 endpoints de auditoría - ver
 // docs/MANUAL_REVIEW_VIEW.md. Reutiliza createParamPusher de
 // dashboard-filters.ts para no duplicar el manejo de placeholders $N.
 export interface AuditFilters {
@@ -50,7 +50,7 @@ const ACTION_SUGGESTIONS: Record<string, string> = {
   AMBIGUOUS_MATCH: "Elegir producto candidato correcto"
 };
 
-// Acción sugerida por fila — ver PARTE 4.A del pedido original y
+// Acción sugerida por fila - ver PARTE 4.A del pedido original y
 // docs/MANUAL_REVIEW_VIEW.md. Ninguna de estas acciones se ejecuta
 // todavía (ver StatusBadge / botones deshabilitados en la UI).
 export function suggestAction(matchStatus: string, needsManualReview: boolean): string {

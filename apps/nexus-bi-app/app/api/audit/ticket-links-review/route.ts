@@ -9,7 +9,7 @@ import type { TicketLinkReviewRow } from "@/types/audit";
 // /audit/manual-review. Fuente:
 // marts.fieldbeat_report_dolibarr_operational_view WHERE
 // zendesk_join_status = 'LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK' (920
-// reportes reales — ver el 403 Forbidden documentado en CLAUDE.md §
+// reportes reales - ver el 403 Forbidden documentado en CLAUDE.md §
 // Pendientes conocidos para Fase 2). Ver docs/MANUAL_REVIEW_VIEW.md.
 export async function GET(request: NextRequest) {
   try {
