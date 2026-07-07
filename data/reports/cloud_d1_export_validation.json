@@ -1,0 +1,151 @@
+{
+  "generated_at": "2026-07-07T06:24:05.741Z",
+  "status": "READY_WITH_WARNINGS",
+  "total_tables_in_schema": 17,
+  "total_rows_exported": 11702,
+  "blockers": [],
+  "warnings": [
+    "Tabla \"curation_placeholder_rules\" quedó vacía: Solo existe data/curation/placeholder_rules.example.csv (plantilla) - el negocio no completó el archivo real todavía.",
+    "Tabla \"curation_part_identity_aliases\" quedó vacía: Solo existe data/curation/part_identity_aliases.example.csv (plantilla) - el negocio no completó el archivo real todavía.",
+    "Tabla \"rules_client_contracts\" quedó vacía: Solo existe business-rules/entities/client_contracts.example.csv - la tabla rules.client_contracts no se crea en DuckDB hasta que exista el archivo real.",
+    "Tabla \"rules_part_manufacturer_life\" quedó vacía: Solo existe business-rules/entities/part_manufacturer_life.example.csv - la tabla rules.part_manufacturer_life no se crea en DuckDB hasta que exista el archivo real."
+  ],
+  "tables": [
+    {
+      "d1Table": "gold_operational_dashboard",
+      "seedFile": "001_gold_operational_dashboard.sql",
+      "rows": 1,
+      "sizeBytes": 661,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_fieldbeat_report_analysis",
+      "seedFile": "002_gold_fieldbeat_report_analysis.sql",
+      "rows": 1,
+      "sizeBytes": 641,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_fieldbeat_data_quality",
+      "seedFile": "003_gold_fieldbeat_data_quality.sql",
+      "rows": 6,
+      "sizeBytes": 681,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_client_report_volume_by_period",
+      "seedFile": "004_gold_client_report_volume_by_period.sql",
+      "rows": 913,
+      "sizeBytes": 47176,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_client_parts_consumption",
+      "seedFile": "005_gold_client_parts_consumption.sql",
+      "rows": 913,
+      "sizeBytes": 68891,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_equipment_parts_consumption",
+      "seedFile": "006_gold_equipment_parts_consumption.sql",
+      "rows": 57,
+      "sizeBytes": 2411,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_after_hours_work_analysis",
+      "seedFile": "007_gold_after_hours_work_analysis.sql",
+      "rows": 1,
+      "sizeBytes": 1013,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_after_hours_by_client",
+      "seedFile": "008_gold_after_hours_by_client.sql",
+      "rows": 26,
+      "sizeBytes": 6228,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_after_hours_by_period",
+      "seedFile": "009_gold_after_hours_by_period.sql",
+      "rows": 96,
+      "sizeBytes": 19216,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "gold_scope_metadata",
+      "seedFile": "010_gold_scope_metadata.sql",
+      "rows": 1,
+      "sizeBytes": 1083,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "marts_used_parts_dolibarr_match",
+      "seedFile": "011_marts_used_parts_dolibarr_match.sql",
+      "rows": 2193,
+      "sizeBytes": 354449,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "marts_fieldbeat_report_dolibarr_operational_view",
+      "seedFile": "012_marts_fieldbeat_report_dolibarr_operational_view.sql",
+      "rows": 3747,
+      "sizeBytes": 1259455,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "marts_fieldbeat_working_hours_analysis",
+      "seedFile": "013_marts_fieldbeat_working_hours_analysis.sql",
+      "rows": 3747,
+      "sizeBytes": 2949475,
+      "skipped": false,
+      "status": "OK"
+    },
+    {
+      "d1Table": "curation_placeholder_rules",
+      "seedFile": "014_curation_placeholder_rules.sql",
+      "rows": 0,
+      "sizeBytes": 277,
+      "skipped": true,
+      "status": "OK"
+    },
+    {
+      "d1Table": "curation_part_identity_aliases",
+      "seedFile": "015_curation_part_identity_aliases.sql",
+      "rows": 0,
+      "sizeBytes": 285,
+      "skipped": true,
+      "status": "OK"
+    },
+    {
+      "d1Table": "rules_client_contracts",
+      "seedFile": "016_rules_client_contracts.sql",
+      "rows": 0,
+      "sizeBytes": 307,
+      "skipped": true,
+      "status": "OK"
+    },
+    {
+      "d1Table": "rules_part_manufacturer_life",
+      "seedFile": "017_rules_part_manufacturer_life.sql",
+      "rows": 0,
+      "sizeBytes": 325,
+      "skipped": true,
+      "status": "OK"
+    }
+  ]
+}

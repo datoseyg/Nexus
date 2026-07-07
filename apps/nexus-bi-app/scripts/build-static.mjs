@@ -2,11 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-// Wrapper de `next build` para el modo cloud-demo estático (ver
-// docs/CLOUD_SMOKE_TEST.md). `output: "export"` (activado en next.config.ts
-// cuando NEXT_PUBLIC_DATA_MODE=static) es incompatible con los ~30 Route
-// Handlers dinámicos de app/api/** (leen request.nextUrl.searchParams para
-// filtrar contra DuckDB) - Next.js aborta el build entero si los detecta.
+// Wrapper de `next build` para los modos Cloudflare Pages - "static" (ver
+// docs/CLOUD_SMOKE_TEST.md) y "d1" (ver docs/CLOUDFLARE_D1_MIGRATION.md).
+// `output: "export"` (activado en next.config.ts para cualquiera de los dos
+// modos) es incompatible con los ~30 Route Handlers dinámicos de
+// app/api/** (leen request.nextUrl.searchParams para filtrar contra
+// DuckDB) - Next.js aborta el build entero si los detecta.
 //
 // En vez de tocar cada route.ts para forzarlo "static" (30 archivos, y de
 // todos modos esos endpoints no tienen sentido sin el warehouse DuckDB en
@@ -30,8 +31,10 @@ async function pathExists(target) {
 }
 
 async function main() {
-  if (process.env.NEXT_PUBLIC_DATA_MODE !== "static") {
-    throw new Error("build-static.mjs requiere NEXT_PUBLIC_DATA_MODE=static (seteado por el script build:static vía cross-env).");
+  if (!["static", "d1"].includes(process.env.NEXT_PUBLIC_DATA_MODE)) {
+    throw new Error(
+      'build-static.mjs requiere NEXT_PUBLIC_DATA_MODE=static o "d1" (seteado por build:static / build:d1 vía cross-env).'
+    );
   }
 
   if (await pathExists(API_STASH_DIR)) {

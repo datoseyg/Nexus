@@ -1,0 +1,20 @@
+# Config de Cloudflare Pages para Nexus BI - Fase 2 Cloud (D1 read-only).
+# Ver docs/CLOUDFLARE_D1_MIGRATION.md para el paso a paso completo.
+#
+# `database_id` es un placeholder - reemplazalo por el id real que devuelve
+# `wrangler d1 create eyg-nexus-bi` (ver docs/CLOUDFLARE_D1_MIGRATION.md
+# § Crear la base D1). Sin eso, `wrangler d1 execute` / el binding en Pages
+# no van a encontrar la base.
+
+name = "nexus-bi-app"
+compatibility_date = "2026-07-07"
+
+# Salida del build estático de Next.js (`npm run app:build:static` /
+# `npm run app:build:d1`, ver next.config.ts) - Cloudflare Pages sirve esto
+# como estático y monta functions/ encima como Pages Functions.
+pages_build_output_dir = "out"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "eyg-nexus-bi"
+database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"

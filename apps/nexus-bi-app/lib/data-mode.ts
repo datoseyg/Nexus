@@ -18,3 +18,7 @@ export function isStaticMode(): boolean {
 export function isLocalDuckDbMode(): boolean {
   return getDataMode() === "local-duckdb";
 }
+
+export function isD1Mode(): boolean {
+  return getDataMode() === "d1";
+}

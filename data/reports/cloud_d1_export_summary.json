@@ -1,0 +1,130 @@
+{
+  "generated_at": "2026-07-07T06:23:34.777Z",
+  "seeds_dir": "cloud/d1/seeds",
+  "batch_size": 200,
+  "tables": [
+    {
+      "d1Table": "gold_operational_dashboard",
+      "source": "gold.operational_dashboard",
+      "fileName": "001_gold_operational_dashboard.sql",
+      "rows": 1,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_fieldbeat_report_analysis",
+      "source": "gold.fieldbeat_report_analysis",
+      "fileName": "002_gold_fieldbeat_report_analysis.sql",
+      "rows": 1,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_fieldbeat_data_quality",
+      "source": "gold.fieldbeat_data_quality",
+      "fileName": "003_gold_fieldbeat_data_quality.sql",
+      "rows": 6,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_client_report_volume_by_period",
+      "source": "gold.client_report_volume_by_period",
+      "fileName": "004_gold_client_report_volume_by_period.sql",
+      "rows": 913,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_client_parts_consumption",
+      "source": "gold.client_parts_consumption",
+      "fileName": "005_gold_client_parts_consumption.sql",
+      "rows": 913,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_equipment_parts_consumption",
+      "source": "gold.equipment_parts_consumption",
+      "fileName": "006_gold_equipment_parts_consumption.sql",
+      "rows": 57,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_after_hours_work_analysis",
+      "source": "gold.after_hours_work_analysis",
+      "fileName": "007_gold_after_hours_work_analysis.sql",
+      "rows": 1,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_after_hours_by_client",
+      "source": "gold.after_hours_by_client",
+      "fileName": "008_gold_after_hours_by_client.sql",
+      "rows": 26,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_after_hours_by_period",
+      "source": "gold.after_hours_by_period",
+      "fileName": "009_gold_after_hours_by_period.sql",
+      "rows": 96,
+      "skipped": false
+    },
+    {
+      "d1Table": "gold_scope_metadata",
+      "source": "gold.scope_metadata",
+      "fileName": "010_gold_scope_metadata.sql",
+      "rows": 1,
+      "skipped": false
+    },
+    {
+      "d1Table": "marts_used_parts_dolibarr_match",
+      "source": "marts.used_parts_dolibarr_match",
+      "fileName": "011_marts_used_parts_dolibarr_match.sql",
+      "rows": 2193,
+      "skipped": false
+    },
+    {
+      "d1Table": "marts_fieldbeat_report_dolibarr_operational_view",
+      "source": "marts.fieldbeat_report_dolibarr_operational_view",
+      "fileName": "012_marts_fieldbeat_report_dolibarr_operational_view.sql",
+      "rows": 3747,
+      "skipped": false
+    },
+    {
+      "d1Table": "marts_fieldbeat_working_hours_analysis",
+      "source": "marts.fieldbeat_working_hours_analysis",
+      "fileName": "013_marts_fieldbeat_working_hours_analysis.sql",
+      "rows": 3747,
+      "skipped": false
+    },
+    {
+      "d1Table": "curation_placeholder_rules",
+      "source": "data/curation/placeholder_rules.csv",
+      "fileName": "014_curation_placeholder_rules.sql",
+      "rows": 0,
+      "skipped": true,
+      "skippedReason": "Solo existe data/curation/placeholder_rules.example.csv (plantilla) - el negocio no completó el archivo real todavía."
+    },
+    {
+      "d1Table": "curation_part_identity_aliases",
+      "source": "data/curation/part_identity_aliases.csv",
+      "fileName": "015_curation_part_identity_aliases.sql",
+      "rows": 0,
+      "skipped": true,
+      "skippedReason": "Solo existe data/curation/part_identity_aliases.example.csv (plantilla) - el negocio no completó el archivo real todavía."
+    },
+    {
+      "d1Table": "rules_client_contracts",
+      "source": "rules.client_contracts",
+      "fileName": "016_rules_client_contracts.sql",
+      "rows": 0,
+      "skipped": true,
+      "skippedReason": "Solo existe business-rules/entities/client_contracts.example.csv - la tabla rules.client_contracts no se crea en DuckDB hasta que exista el archivo real."
+    },
+    {
+      "d1Table": "rules_part_manufacturer_life",
+      "source": "rules.part_manufacturer_life",
+      "fileName": "017_rules_part_manufacturer_life.sql",
+      "rows": 0,
+      "skipped": true,
+      "skippedReason": "Solo existe business-rules/entities/part_manufacturer_life.example.csv - la tabla rules.part_manufacturer_life no se crea en DuckDB hasta que exista el archivo real."
+    }
+  ]
+}

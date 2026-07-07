@@ -6,3 +6,7 @@ node_modules/
 *.tsbuildinfo
 apps/nexus-bi-app/.cloud-static-build-tmp/
 apps/nexus-bi-app/out/
+# Regenerable con `npm run cloud:d1:export` - mismo dato que ya está en
+# data/marts/ y data/gold/, solo reformateado como INSERT SQL. No tiene
+# sentido duplicarlo en git.
+cloud/d1/seeds/

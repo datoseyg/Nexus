@@ -40,7 +40,10 @@
     "app:build": "cd apps/nexus-bi-app && npm run build",
     "cloud:export-snapshot": "node src/cloud/export-cloud-snapshot.js",
     "cloud:preflight": "node src/cloud/preflight-cloud-demo.js",
-    "app:build:static": "cd apps/nexus-bi-app && npm run build:static"
+    "app:build:static": "cd apps/nexus-bi-app && npm run build:static",
+    "cloud:d1:export": "node src/cloud/export-d1-seed.js",
+    "cloud:d1:validate": "node src/cloud/validate-d1-export.js",
+    "app:build:d1": "cd apps/nexus-bi-app && npm run build:d1"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
