@@ -38,16 +38,16 @@ export function getOperationalSummary(): Promise<Record<string, unknown>> {
 
 // Sin equivalente en el snapshot estático de Fase 1 (no se exportó
 // fieldbeat-summary.json) - solo local-duckdb y d1 lo sirven hoy.
-export function getFieldbeatSummary(): Promise<Record<string, unknown>> {
-  const mode = getDataMode();
-  switch (mode) {
-    case "static":
-      throw new DataModeUnsupportedError("getFieldbeatSummary", mode);
-    case "d1":
-      return fetchJson("/api/d1/fieldbeat-summary");
-    default:
-      return fetchJson("/api/dashboard/fieldbeat");
+export async function fetchFieldbeatSummary() {
+  if (process.env.NEXT_PUBLIC_DATA_MODE === "d1") {
+    return fetch("/api/d1/fieldbeat-summary").then((r) => r.json());
   }
+
+  if (process.env.NEXT_PUBLIC_DATA_MODE === "static") {
+    return fetch("/data/cloud/fieldbeat-summary.json").then((r) => r.json());
+  }
+
+  return fetch("/api/dashboard/fieldbeat").then((r) => r.json());
 }
 
 export function getAuditSummary(): Promise<Record<string, unknown>> {
