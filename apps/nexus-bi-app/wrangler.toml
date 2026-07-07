@@ -16,5 +16,5 @@ pages_build_output_dir = "out"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "eyg-nexus-bi"
+database_name = "eyg-nexus"
 database_id = "3810e363-aa2f-496c-9ab9-67f8db58fe8b"
