@@ -2,23 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { HorizontalBarChart } from "@/components/HorizontalBarChart";
+import { ErrorBanner } from "@/components/ErrorBanner";
 import { AfterHoursFilterBar, type AfterHoursFilterValues } from "./AfterHoursFilterBar";
 import { AfterHoursKpiGrid } from "./AfterHoursKpiGrid";
 import { AfterHoursDetailTable } from "./AfterHoursDetailTable";
 import { AfterHoursByPeriodChart } from "./AfterHoursByPeriodChart";
 import { ConfidenceDistributionChart } from "./ConfidenceDistributionChart";
+import {
+  getAfterHoursSummary,
+  getAfterHoursByClient,
+  getAfterHoursByTaskType,
+  getAfterHoursByTechnician,
+  getAfterHoursByPeriod,
+  getAfterHoursConfidenceDistribution
+} from "@/lib/data-client";
 import type { AfterHoursByDimensionRow, AfterHoursSummary, ConfidenceDistributionRow } from "@/types/after-hours";
-
-function toQuery(params: Record<string, string | undefined>): string {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) if (value) search.set(key, value);
-  return search.toString();
-}
 
 // Orquestador de /dashboard/after-hours: filtros compartidos -> KPIs ->
 // gráficos -> tabla de detalle, todo en una sola página (sin tabs, a
 // diferencia de Auditoría/Dashboard Operacional) - ver
-// docs/AFTER_HOURS_METRICS.md.
+// docs/AFTER_HOURS_METRICS.md. Pega contra /api/dashboard/after-hours/*
+// (local-duckdb) o /api/d1/after-hours/* (d1) vía lib/data-client.ts, según
+// NEXT_PUBLIC_DATA_MODE - ver docs/CLOUDFLARE_D1_MIGRATION.md.
 export function AfterHoursShell() {
   const [filters, setFilters] = useState<AfterHoursFilterValues>({});
   const [summary, setSummary] = useState<AfterHoursSummary | null>(null);
@@ -28,38 +33,40 @@ export function AfterHoursShell() {
   const [byPeriod, setByPeriod] = useState<AfterHoursByDimensionRow[]>([]);
   const [confidenceDistribution, setConfidenceDistribution] = useState<ConfidenceDistributionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const query = toQuery({
-      client: filters.client,
-      technician: filters.technician,
-      taskType: filters.taskType,
-      from: filters.from,
-      to: filters.to,
-      confidenceLevel: filters.confidenceLevel,
-      onlyAfterHours: filters.onlyAfterHours,
-      onlyLowConfidence: filters.onlyLowConfidence
-    });
-
+    let cancelled = false;
     setLoading(true);
+    setError(null);
 
     Promise.all([
-      fetch(`/api/dashboard/after-hours/summary?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-client?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-task-type?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-technician?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-period?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/confidence-distribution?${query}`).then(res => res.json())
+      getAfterHoursSummary(filters),
+      getAfterHoursByClient(filters),
+      getAfterHoursByTaskType(filters),
+      getAfterHoursByTechnician(filters),
+      getAfterHoursByPeriod(filters),
+      getAfterHoursConfidenceDistribution(filters)
     ])
       .then(([summaryBody, clientBody, taskTypeBody, technicianBody, periodBody, confidenceBody]) => {
-        setSummary(summaryBody);
-        setByClient(clientBody.rows ?? []);
-        setByTaskType(taskTypeBody.rows ?? []);
-        setByTechnician(technicianBody.rows ?? []);
-        setByPeriod(periodBody.rows ?? []);
-        setConfidenceDistribution(confidenceBody.rows ?? []);
+        if (cancelled) return;
+        setSummary(summaryBody as unknown as AfterHoursSummary);
+        setByClient((clientBody.rows as AfterHoursByDimensionRow[]) ?? []);
+        setByTaskType((taskTypeBody.rows as AfterHoursByDimensionRow[]) ?? []);
+        setByTechnician((technicianBody.rows as AfterHoursByDimensionRow[]) ?? []);
+        setByPeriod((periodBody.rows as AfterHoursByDimensionRow[]) ?? []);
+        setConfidenceDistribution((confidenceBody.rows as ConfidenceDistributionRow[]) ?? []);
       })
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Error desconocido");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [filters]);
 
   function handleChange(key: keyof AfterHoursFilterValues, value: string) {
@@ -76,6 +83,8 @@ export function AfterHoursShell() {
         onChange={handleChange}
         onClear={() => setFilters({})}
       />
+
+      {error && <ErrorBanner message={error} />}
 
       <AfterHoursKpiGrid summary={summary} loading={loading} />
 

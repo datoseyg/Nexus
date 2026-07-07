@@ -111,15 +111,98 @@ export function getPartsReview(params?: { q?: string; limit?: number; offset?: n
   return fetchJson(`/api/audit/parts-review${query}`);
 }
 
-export function getAfterHoursSummary(): Promise<Record<string, unknown>> {
-  switch (getDataMode()) {
-    case "static":
-      return staticClient.getAfterHoursSummary();
-    case "d1":
-      return fetchJson("/api/d1/after-hours-summary");
-    default:
-      return fetchJson("/api/dashboard/after-hours/summary");
-  }
+// onlyAfterHours/onlyLowConfidence aceptan boolean o "true"/"" (string) -
+// AfterHoursFilterBar.tsx guarda estos dos como string en su estado (mismo
+// contrato que parseAfterHoursFilters() en el backend, que lee
+// searchParams.get(...) === "true"), pero cualquier otro consumidor de este
+// dispatcher puede pasar un boolean nativo sin conversiones.
+export interface AfterHoursFilters {
+  client?: string;
+  technician?: string;
+  taskType?: string;
+  from?: string;
+  to?: string;
+  confidenceLevel?: string;
+  onlyAfterHours?: boolean | string;
+  onlyLowConfidence?: boolean | string;
+}
+
+function isTruthyFlag(value: boolean | string | undefined): boolean {
+  return value === true || value === "true";
+}
+
+function afterHoursQuery(filters?: AfterHoursFilters): string {
+  const qs = new URLSearchParams();
+  if (filters?.client) qs.set("client", filters.client);
+  if (filters?.technician) qs.set("technician", filters.technician);
+  if (filters?.taskType) qs.set("taskType", filters.taskType);
+  if (filters?.from) qs.set("from", filters.from);
+  if (filters?.to) qs.set("to", filters.to);
+  if (filters?.confidenceLevel) qs.set("confidenceLevel", filters.confidenceLevel);
+  if (isTruthyFlag(filters?.onlyAfterHours)) qs.set("onlyAfterHours", "true");
+  if (isTruthyFlag(filters?.onlyLowConfidence)) qs.set("onlyLowConfidence", "true");
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
+// static: snapshot fijo sin filtros (ver after-hours-summary.json de Fase 1)
+// - los filtros se ignoran en ese modo. d1/local-duckdb: en vivo, mismos
+// filtros - ver functions/api/d1/after-hours/summary.ts y
+// app/api/dashboard/after-hours/summary/route.ts.
+export function getAfterHoursSummary(filters?: AfterHoursFilters): Promise<Record<string, unknown>> {
+  const mode = getDataMode();
+  if (mode === "static") return staticClient.getAfterHoursSummary();
+  if (mode === "d1") return fetchJson(`/api/d1/after-hours/summary${afterHoursQuery(filters)}`);
+  return fetchJson(`/api/dashboard/after-hours/summary${afterHoursQuery(filters)}`);
+}
+
+// Sin equivalente en el snapshot estático de Fase 1 (solo se exportó el
+// summary agregado, no los desgloses por dimensión ni el detalle paginado).
+function requireLiveAfterHours(feature: string): "d1" | "local-duckdb" {
+  const mode = getDataMode();
+  if (mode === "static") throw new DataModeUnsupportedError(feature, mode);
+  return mode;
+}
+
+export function getAfterHoursByClient(filters?: AfterHoursFilters): Promise<Record<string, unknown>> {
+  const mode = requireLiveAfterHours("getAfterHoursByClient");
+  const query = afterHoursQuery(filters);
+  return mode === "d1" ? fetchJson(`/api/d1/after-hours/by-client${query}`) : fetchJson(`/api/dashboard/after-hours/by-client${query}`);
+}
+
+export function getAfterHoursByTaskType(filters?: AfterHoursFilters): Promise<Record<string, unknown>> {
+  const mode = requireLiveAfterHours("getAfterHoursByTaskType");
+  const query = afterHoursQuery(filters);
+  return mode === "d1" ? fetchJson(`/api/d1/after-hours/by-task-type${query}`) : fetchJson(`/api/dashboard/after-hours/by-task-type${query}`);
+}
+
+export function getAfterHoursByTechnician(filters?: AfterHoursFilters): Promise<Record<string, unknown>> {
+  const mode = requireLiveAfterHours("getAfterHoursByTechnician");
+  const query = afterHoursQuery(filters);
+  return mode === "d1" ? fetchJson(`/api/d1/after-hours/by-technician${query}`) : fetchJson(`/api/dashboard/after-hours/by-technician${query}`);
+}
+
+export function getAfterHoursByPeriod(filters?: AfterHoursFilters): Promise<Record<string, unknown>> {
+  const mode = requireLiveAfterHours("getAfterHoursByPeriod");
+  const query = afterHoursQuery(filters);
+  return mode === "d1" ? fetchJson(`/api/d1/after-hours/by-period${query}`) : fetchJson(`/api/dashboard/after-hours/by-period${query}`);
+}
+
+export function getAfterHoursConfidenceDistribution(filters?: AfterHoursFilters): Promise<Record<string, unknown>> {
+  const mode = requireLiveAfterHours("getAfterHoursConfidenceDistribution");
+  const query = afterHoursQuery(filters);
+  return mode === "d1"
+    ? fetchJson(`/api/d1/after-hours/confidence-distribution${query}`)
+    : fetchJson(`/api/dashboard/after-hours/confidence-distribution${query}`);
+}
+
+export function getAfterHoursDetail(filters?: AfterHoursFilters & { page?: number; pageSize?: number }): Promise<Record<string, unknown>> {
+  const mode = requireLiveAfterHours("getAfterHoursDetail");
+  const qs = new URLSearchParams(afterHoursQuery(filters).replace(/^\?/, ""));
+  if (filters?.page) qs.set("page", String(filters.page));
+  if (filters?.pageSize) qs.set("pageSize", String(filters.pageSize));
+  const query = qs.toString() ? `?${qs.toString()}` : "";
+  return mode === "d1" ? fetchJson(`/api/d1/after-hours/detail${query}`) : fetchJson(`/api/dashboard/after-hours/detail${query}`);
 }
 
 // Solo d1 - diagnóstico post-deploy (filas por tabla D1), ver

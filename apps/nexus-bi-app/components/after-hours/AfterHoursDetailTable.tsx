@@ -4,18 +4,13 @@ import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { StatusBadge, calculationStatusBadge } from "@/components/ui/StatusBadge";
 import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
+import { getAfterHoursDetail } from "@/lib/data-client";
 import type { AfterHoursDetailRow } from "@/types/after-hours";
 import type { PaginatedResponse } from "@/types/audit";
 import type { AfterHoursFilterValues } from "./AfterHoursFilterBar";
 
 interface AfterHoursDetailTableProps {
   filters: AfterHoursFilterValues;
-}
-
-function toQuery(params: Record<string, string | undefined>): string {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) if (value) search.set(key, value);
-  return search.toString();
 }
 
 function round1(value: number | null): string {
@@ -25,7 +20,9 @@ function round1(value: number | null): string {
 
 // Tabla de detalle de tareas fuera de horario - clon estructural de
 // PartsReviewSection.tsx (mismo patrón de fetch/paginación/estado). Fuente:
-// marts.fieldbeat_working_hours_analysis vía /api/dashboard/after-hours/detail.
+// marts.fieldbeat_working_hours_analysis, vía lib/data-client.ts::getAfterHoursDetail()
+// (elige /api/dashboard/after-hours/detail o /api/d1/after-hours/detail
+// según NEXT_PUBLIC_DATA_MODE - ver docs/CLOUDFLARE_D1_MIGRATION.md).
 export function AfterHoursDetailTable({ filters }: AfterHoursDetailTableProps) {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<AfterHoursDetailRow> | null>(null);
@@ -33,29 +30,24 @@ export function AfterHoursDetailTable({ filters }: AfterHoursDetailTableProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError(null);
-    const query = toQuery({
-      page: String(page),
-      pageSize: "20",
-      client: filters.client,
-      technician: filters.technician,
-      taskType: filters.taskType,
-      from: filters.from,
-      to: filters.to,
-      confidenceLevel: filters.confidenceLevel,
-      onlyAfterHours: filters.onlyAfterHours,
-      onlyLowConfidence: filters.onlyLowConfidence
-    });
 
-    fetch(`/api/dashboard/after-hours/detail?${query}`)
-      .then(async res => {
-        const body = await res.json();
-        if (!res.ok) throw body;
-        setData(body);
+    getAfterHoursDetail({ ...filters, page, pageSize: 20 })
+      .then(body => {
+        if (!cancelled) setData(body as unknown as PaginatedResponse<AfterHoursDetailRow>);
       })
-      .catch(body => setError(body?.error ?? "Error desconocido"))
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Error desconocido");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [filters, page]);
 
   useEffect(() => {
