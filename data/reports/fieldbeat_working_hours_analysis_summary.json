@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-07-04T19:29:23.602Z",
+  "total_tasks": 3747,
+  "business_hours_config_status": "DEFAULT_UNVALIDATED",
+  "holidays_config_status": "EXAMPLE_INCOMPLETE",
+  "holidays_dates_loaded": 81,
+  "calculation_method_breakdown": {
+    "ESTIMATED_FROM_START_DURATION": 2241,
+    "EXACT_REPORTED_START_END": 1480,
+    "INVALID_DURATION": 6,
+    "PARTIAL_ESTIMATE": 14,
+    "INVALID_START_TIME": 6
+  },
+  "calculation_status_breakdown": {
+    "CALCULATED": 3721,
+    "NOT_CALCULABLE": 12,
+    "CALCULATED_WITH_WARNINGS": 14
+  },
+  "confidence_label_breakdown": {
+    "Media": 2268,
+    "Alta": 1453,
+    "Baja": 26
+  },
+  "global_after_hours_rate": "30.28%",
+  "self_check": {
+    "after_hours_rate_always_between_0_and_1": true,
+    "after_hours_rate_violations": 0,
+    "confidence_score_always_between_0_and_100": true,
+    "confidence_score_violations": 0
+  }
+}

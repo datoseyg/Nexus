@@ -1,6 +1,6 @@
-# Backlog — Fase 2
+# Backlog - Fase 2
 
-Pendientes identificados durante la construcción de GOLD v1. Ninguno bloquea el uso de GOLD v1 tal como está — son mejoras de alcance, infraestructura y proceso para una siguiente iteración.
+Pendientes identificados durante la construcción de GOLD v1. Ninguno bloquea el uso de GOLD v1 tal como está - son mejoras de alcance, infraestructura y proceso para una siguiente iteración.
 
 ## 1. Revisar los 291 tickets Zendesk con 403 Forbidden
 
@@ -14,7 +14,7 @@ Pendientes identificados durante la construcción de GOLD v1. Ninguno bloquea el
 
 ## 2. Migración serverless
 
-**Qué:** el pipeline hoy corre 100% local (VS Code + Node.js). La arquitectura ya está diseñada para migrar sin rediseño (cada etapa es RAW → PROCESSED → MARTS → GOLD vía archivos, sin estado compartido en memoria) — ver [ARCHITECTURE.md](ARCHITECTURE.md).
+**Qué:** el pipeline hoy corre 100% local (VS Code + Node.js). La arquitectura ya está diseñada para migrar sin rediseño (cada etapa es RAW → PROCESSED → MARTS → GOLD vía archivos, sin estado compartido en memoria) - ver [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Acción:** evaluar destino (Google Apps Script, GitHub Actions con cron, Cloud Run, Cloudflare Workers) y reemplazar lectura/escritura de archivo local por lectura/escritura de storage (bucket, Sheets, etc.) sin tocar la lógica de negocio de normalizers/resolvers/marts.
 
@@ -26,11 +26,11 @@ Pendientes identificados durante la construcción de GOLD v1. Ninguno bloquea el
 
 ## 4. Automatización de movimientos de stock (pendiente de decisión)
 
-**Qué:** el pipeline actual **no crea movimientos de stock en Dolibarr** — `Used_Parts_Dolibarr_Match.csv` solo identifica qué producto corresponde a cada repuesto usado, no descuenta inventario. Esto fue una restricción explícita en todas las fases de construcción de GOLD v1.
+**Qué:** el pipeline actual **no crea movimientos de stock en Dolibarr** - `Used_Parts_Dolibarr_Match.csv` solo identifica qué producto corresponde a cada repuesto usado, no descuenta inventario. Esto fue una restricción explícita en todas las fases de construcción de GOLD v1.
 
-**Acción (si se decide seguir adelante):** evaluar si automatizar la salida de stock en Dolibarr a partir de `Used_Parts_Dolibarr_Match.csv` (filtrando por `match_status = MATCHED` y confianza alta) es deseable, y diseñarlo como una etapa nueva y explícita — no una extensión silenciosa del resolver de identidad. Requiere definir reglas de bodega (ver `docs/Documentación Proyecto 4.md`, que documenta cómo P4 resolvía esto en Google Apps Script) y protocolo de reversa ante errores.
+**Acción (si se decide seguir adelante):** evaluar si automatizar la salida de stock en Dolibarr a partir de `Used_Parts_Dolibarr_Match.csv` (filtrando por `match_status = MATCHED` y confianza alta) es deseable, y diseñarlo como una etapa nueva y explícita - no una extensión silenciosa del resolver de identidad. Requiere definir reglas de bodega (ver `docs/Documentación Proyecto 4.md`, que documenta cómo P4 resolvía esto en Google Apps Script) y protocolo de reversa ante errores.
 
 ## Notas de proceso
 
-- Todo el histórico de decisiones y números reales de esta fase (Sprint 1 a GOLD v1) quedó en la conversación que originó esta documentación — este backlog resume solo lo accionable, no repite el detalle completo.
+- Todo el histórico de decisiones y números reales de esta fase (Sprint 1 a GOLD v1) quedó en la conversación que originó esta documentación - este backlog resume solo lo accionable, no repite el detalle completo.
 - Antes de tomar cualquier ítem de este backlog, releer [SCOPE_AND_LIMITATIONS.md](SCOPE_AND_LIMITATIONS.md) para no perder de vista qué universo cubre GOLD v1 hoy.

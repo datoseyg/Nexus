@@ -1,0 +1,14 @@
+{
+  "status": "DEFAULT_UNVALIDATED",
+  "timezone": "America/Santiago",
+  "note": "Copia de referencia desde data/config/business-hours.json (ver business-rules/README.md § migracion). El loader real (src/lib/business-hours.js) sigue leyendo data/config/business-hours.json en v1 - este archivo es solo documentacion/fuente preferida a futuro. Horario por defecto NO validado con negocio (Lun-Vie 08:30-18:30, sin sabado/domingo). Ver docs/AFTER_HOURS_METRICS.md antes de usar estos numeros para decisiones operativas o contractuales.",
+  "weekly_schedule": {
+    "monday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
+    "tuesday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
+    "wednesday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
+    "thursday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
+    "friday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
+    "saturday": { "is_business_day": false },
+    "sunday": { "is_business_day": false }
+  }
+}

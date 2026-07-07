@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-07-04T19:29:33.067Z",
+  "inputs_used": [
+    "data/marts/FieldBeat_Working_Hours_Analysis.csv"
+  ],
+  "outputs": [
+    {
+      "file": "data/gold/GOLD_After_Hours_Work_Analysis.csv",
+      "row_count": 1
+    },
+    {
+      "file": "data/gold/GOLD_After_Hours_By_Client.csv",
+      "row_count": 26
+    },
+    {
+      "file": "data/gold/GOLD_After_Hours_By_Task_Type.csv",
+      "row_count": 11
+    },
+    {
+      "file": "data/gold/GOLD_After_Hours_By_Technician.csv",
+      "row_count": 19
+    },
+    {
+      "file": "data/gold/GOLD_After_Hours_By_Period.csv",
+      "row_count": 96
+    }
+  ],
+  "global_after_hours_rate": "30.28%"
+}

@@ -1,0 +1,3 @@
+alias_value,alias_type,dolibarr_product_id,dolibarr_ref,reason,created_by,created_at
+1017632,RAW,11958,1017632_usado,"Ejemplo ilustrativo (probado en Sprint 3): ref historica sin sufijo _usado, confirmado con bodega",ignacio,2026-07-02T00:00:00.000Z
+CABEZAL AGILITY,NORMALIZED,12345,00031601_C,"Ejemplo ilustrativo: tecnico escribia el nombre del equipo en vez del ref exacto",ignacio,2026-07-02T00:00:00.000Z

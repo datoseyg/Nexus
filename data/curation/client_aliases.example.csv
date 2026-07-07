@@ -1,0 +1,2 @@
+alias_value,alias_type,canonical_client_key,canonical_client_name,reason,created_by,created_at
+CLINICA ALEMANA,NORMALIZED,FIELD_BEAT_CLIENT|RUT-EJEMPLO|CLINICA ALEMANA DE SANTIAGO,CLINICA ALEMANA DE SANTIAGO,"Ejemplo ilustrativo: variante corta del nombre usada por algunos tecnicos en reportes antiguos. Reemplazar canonical_client_key por el client_key real de processed.fieldbeat_clients",ignacio,2026-07-02T00:00:00.000Z

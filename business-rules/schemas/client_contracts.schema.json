@@ -1,0 +1,10 @@
+{
+  "$id": "client_contracts",
+  "type": "csv",
+  "required_columns": [
+    "client_contract_id", "client_key", "client_name", "contract_name", "contract_type",
+    "effective_from", "effective_to", "working_days", "service_start_time", "service_end_time",
+    "includes_weekends", "includes_holidays", "sla_level", "response_time_hours",
+    "preventive_visits_per_year", "notes"
+  ]
+}

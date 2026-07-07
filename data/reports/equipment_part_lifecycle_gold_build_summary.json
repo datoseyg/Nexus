@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-07-05T08:35:36.814Z",
+  "inputs_used": [
+    "data/marts/Equipment_Part_Lifecycle_Events.csv",
+    "data/marts/Equipment_Part_Lifecycle_Intervals.csv",
+    "data/config/manufacturer_life_specs.csv",
+    "business-rules/entities/part_manufacturer_life.csv (si existe)",
+    "business-rules/policies/lifecycle-model-policy.json"
+  ],
+  "outputs": [
+    {
+      "file": "data/gold/GOLD_Equipment_Part_Lifecycle_Summary.csv",
+      "row_count": 1
+    },
+    {
+      "file": "data/gold/GOLD_Equipment_Part_Lifecycle_By_Machine.csv",
+      "row_count": 558
+    },
+    {
+      "file": "data/gold/GOLD_Equipment_Part_Lifecycle_By_Client.csv",
+      "row_count": 510
+    },
+    {
+      "file": "data/gold/GOLD_Equipment_Part_Lifecycle_By_Part.csv",
+      "row_count": 254
+    },
+    {
+      "file": "data/gold/GOLD_Equipment_Part_Lifecycle_Insights.csv",
+      "row_count": 1529
+    }
+  ],
+  "prediction_status_breakdown": {
+    "DIRECT_HISTORY_ENOUGH": 28,
+    "LOW_N_SHRINKAGE": 117,
+    "INSUFFICIENT_DATA": 261,
+    "BORROWED_COHORT_ESTIMATE": 152
+  },
+  "confidence_label_breakdown": {
+    "Alta": 2,
+    "Media": 24,
+    "Baja": 20,
+    "Insuficiente": 512
+  }
+}

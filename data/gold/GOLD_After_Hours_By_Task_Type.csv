@@ -1,0 +1,12 @@
+task_type,total_hours,business_hours,after_hours_total_hours,after_hours_rate,tasks_total,tasks_with_after_hours,confidence_score,confidence_label,confidence_factors_summary,valid_rows,invalid_rows,estimated_rows,exact_rows,insufficient_rows
+CORRECTIVA PROGRAMADA,2724,1706.12,957.27,0.3514,1351,631,79,Media,"Basado en 1351 tareas: 495 cálculo exacto, 855 estimado, 1 no calculable. Confianza ponderada por horas: 79 (Media).",1350,1,855,495,0
+PREVENTIVA PROGRAMADA,2122,1385.7,719.47,0.3391,523,274,79,Media,"Basado en 523 tareas: 200 cálculo exacto, 321 estimado, 2 no calculable. Confianza ponderada por horas: 79 (Media).",521,2,321,200,0
+CORRECTIVA NO PROGRAMADA,2353,1700.72,536.43,0.2280,1174,430,79,Media,"Basado en 1174 tareas: 443 cálculo exacto, 729 estimado, 2 no calculable. Confianza ponderada por horas: 79 (Media).",1172,2,729,443,0
+REQUERIMIENTO DEL CLIENTE,333,281,83.17,0.2497,333,83,81,Media,"Basado en 333 tareas: 172 cálculo exacto, 159 estimado, 2 no calculable. Confianza ponderada por horas: 81 (Media).",331,2,159,172,0
+PUESTA EN MARCHA,228,139.48,63.12,0.2768,57,43,80,Media,"Basado en 57 tareas: 24 cálculo exacto, 33 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).",57,0,33,24,0
+INSTALACION - INTEGRACION,242,192.58,52.67,0.2176,60,26,79,Media,"Basado en 60 tareas: 19 cálculo exacto, 41 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).",60,0,41,19,0
+ASISTENCIA REMOTA,117.28,84.53,41.72,0.3557,153,54,84,Media,"Basado en 153 tareas: 102 cálculo exacto, 47 estimado, 4 no calculable. Confianza ponderada por horas: 84 (Media).",149,4,47,102,0
+PRUEBAS DE ACEPTACION,28,21.3,10.62,0.3792,12,4,81,Media,"Basado en 12 tareas: 6 cálculo exacto, 6 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",12,0,6,6,0
+CORRECTIVA PROGRAMADA V2,12.75,11.92,2.45,0.1922,9,2,81,Media,"Basado en 9 tareas: 3 cálculo exacto, 6 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",9,0,6,3,0
+PREVENTIVA NO PROGRAMADA,4,4,0,0.0000,1,0,76,Media,"Basado en 1 tareas: 0 cálculo exacto, 1 estimado, 0 no calculable. Confianza ponderada por horas: 76 (Media).",1,0,1,0,0
+Guia de Despacho - Entrega de items o insumos a terceros,2.5,2.5,0,0.0000,5,0,75,Media,"Basado en 5 tareas: 0 cálculo exacto, 5 estimado, 0 no calculable. Confianza ponderada por horas: 75 (Media).",5,0,5,0,0

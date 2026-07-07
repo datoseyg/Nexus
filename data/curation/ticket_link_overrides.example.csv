@@ -1,0 +1,3 @@
+fieldbeat_task_id,raw_linked_zendesk_ticket_id,corrected_zendesk_ticket_id,override_type,reason,created_by,created_at
+1250,150655,,CONFIRMED_NO_TICKET,"Ejemplo ilustrativo: el numero 150655 no corresponde a ningun ticket real, se confirma con el cliente que esa visita nunca genero ticket Zendesk",ignacio,2026-07-02T00:00:00.000Z
+2110,919999,631900,CORRECTED,"Ejemplo ilustrativo: el tecnico transpuso digitos del numero de ticket real (631900)",ignacio,2026-07-02T00:00:00.000Z

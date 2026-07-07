@@ -1,0 +1,9 @@
+{
+  "$id": "equipment_contracts",
+  "type": "csv",
+  "required_columns": [
+    "equipment_contract_id", "equipment_internal_id", "client_key", "equipment_model",
+    "effective_from", "effective_to", "expected_usage_profile", "maintenance_plan",
+    "warranty_status", "notes"
+  ]
+}

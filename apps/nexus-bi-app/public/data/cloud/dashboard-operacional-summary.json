@@ -1,0 +1,527 @@
+{
+  "kpis": {
+    "totalRegistros": 3747,
+    "totalTickets": 628,
+    "repuestosUsados": 2193,
+    "pctConTicketReportado": 32.29250066720042,
+    "pctConTicketAccesible": 7.7395249532959705
+  },
+  "estados": [
+    {
+      "estado": "Abierto",
+      "cantidad": 16
+    },
+    {
+      "estado": "Cerrado",
+      "cantidad": 597
+    },
+    {
+      "estado": "Pendiente",
+      "cantidad": 9
+    },
+    {
+      "estado": "Resuelto",
+      "cantidad": 6
+    }
+  ],
+  "evolucion": [
+    {
+      "periodo": "2018-08",
+      "cantidad": 29
+    },
+    {
+      "periodo": "2018-09",
+      "cantidad": 27
+    },
+    {
+      "periodo": "2018-10",
+      "cantidad": 31
+    },
+    {
+      "periodo": "2018-11",
+      "cantidad": 36
+    },
+    {
+      "periodo": "2018-12",
+      "cantidad": 35
+    },
+    {
+      "periodo": "2019-01",
+      "cantidad": 34
+    },
+    {
+      "periodo": "2019-02",
+      "cantidad": 20
+    },
+    {
+      "periodo": "2019-03",
+      "cantidad": 38
+    },
+    {
+      "periodo": "2019-04",
+      "cantidad": 23
+    },
+    {
+      "periodo": "2019-05",
+      "cantidad": 22
+    },
+    {
+      "periodo": "2019-06",
+      "cantidad": 23
+    },
+    {
+      "periodo": "2019-07",
+      "cantidad": 35
+    },
+    {
+      "periodo": "2019-08",
+      "cantidad": 35
+    },
+    {
+      "periodo": "2019-09",
+      "cantidad": 25
+    },
+    {
+      "periodo": "2019-10",
+      "cantidad": 29
+    },
+    {
+      "periodo": "2019-11",
+      "cantidad": 35
+    },
+    {
+      "periodo": "2019-12",
+      "cantidad": 54
+    },
+    {
+      "periodo": "2020-01",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2020-02",
+      "cantidad": 31
+    },
+    {
+      "periodo": "2020-03",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2020-04",
+      "cantidad": 16
+    },
+    {
+      "periodo": "2020-05",
+      "cantidad": 16
+    },
+    {
+      "periodo": "2020-06",
+      "cantidad": 33
+    },
+    {
+      "periodo": "2020-07",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2020-08",
+      "cantidad": 36
+    },
+    {
+      "periodo": "2020-09",
+      "cantidad": 34
+    },
+    {
+      "periodo": "2020-10",
+      "cantidad": 30
+    },
+    {
+      "periodo": "2020-11",
+      "cantidad": 43
+    },
+    {
+      "periodo": "2020-12",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2021-01",
+      "cantidad": 37
+    },
+    {
+      "periodo": "2021-02",
+      "cantidad": 21
+    },
+    {
+      "periodo": "2021-03",
+      "cantidad": 43
+    },
+    {
+      "periodo": "2021-04",
+      "cantidad": 25
+    },
+    {
+      "periodo": "2021-05",
+      "cantidad": 39
+    },
+    {
+      "periodo": "2021-06",
+      "cantidad": 30
+    },
+    {
+      "periodo": "2021-07",
+      "cantidad": 31
+    },
+    {
+      "periodo": "2021-08",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2021-09",
+      "cantidad": 39
+    },
+    {
+      "periodo": "2021-10",
+      "cantidad": 33
+    },
+    {
+      "periodo": "2021-11",
+      "cantidad": 40
+    },
+    {
+      "periodo": "2021-12",
+      "cantidad": 42
+    },
+    {
+      "periodo": "2022-01",
+      "cantidad": 35
+    },
+    {
+      "periodo": "2022-02",
+      "cantidad": 29
+    },
+    {
+      "periodo": "2022-03",
+      "cantidad": 30
+    },
+    {
+      "periodo": "2022-04",
+      "cantidad": 45
+    },
+    {
+      "periodo": "2022-05",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2022-06",
+      "cantidad": 29
+    },
+    {
+      "periodo": "2022-07",
+      "cantidad": 28
+    },
+    {
+      "periodo": "2022-08",
+      "cantidad": 49
+    },
+    {
+      "periodo": "2022-09",
+      "cantidad": 46
+    },
+    {
+      "periodo": "2022-10",
+      "cantidad": 46
+    },
+    {
+      "periodo": "2022-11",
+      "cantidad": 52
+    },
+    {
+      "periodo": "2022-12",
+      "cantidad": 34
+    },
+    {
+      "periodo": "2023-01",
+      "cantidad": 37
+    },
+    {
+      "periodo": "2023-02",
+      "cantidad": 37
+    },
+    {
+      "periodo": "2023-03",
+      "cantidad": 48
+    },
+    {
+      "periodo": "2023-04",
+      "cantidad": 48
+    },
+    {
+      "periodo": "2023-05",
+      "cantidad": 46
+    },
+    {
+      "periodo": "2023-06",
+      "cantidad": 37
+    },
+    {
+      "periodo": "2023-07",
+      "cantidad": 33
+    },
+    {
+      "periodo": "2023-08",
+      "cantidad": 46
+    },
+    {
+      "periodo": "2023-09",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2023-10",
+      "cantidad": 31
+    },
+    {
+      "periodo": "2023-11",
+      "cantidad": 30
+    },
+    {
+      "periodo": "2023-12",
+      "cantidad": 23
+    },
+    {
+      "periodo": "2024-01",
+      "cantidad": 42
+    },
+    {
+      "periodo": "2024-02",
+      "cantidad": 58
+    },
+    {
+      "periodo": "2024-03",
+      "cantidad": 46
+    },
+    {
+      "periodo": "2024-04",
+      "cantidad": 52
+    },
+    {
+      "periodo": "2024-05",
+      "cantidad": 50
+    },
+    {
+      "periodo": "2024-06",
+      "cantidad": 47
+    },
+    {
+      "periodo": "2024-07",
+      "cantidad": 44
+    },
+    {
+      "periodo": "2024-08",
+      "cantidad": 57
+    },
+    {
+      "periodo": "2024-09",
+      "cantidad": 32
+    },
+    {
+      "periodo": "2024-10",
+      "cantidad": 39
+    },
+    {
+      "periodo": "2024-11",
+      "cantidad": 50
+    },
+    {
+      "periodo": "2024-12",
+      "cantidad": 47
+    },
+    {
+      "periodo": "2025-01",
+      "cantidad": 56
+    },
+    {
+      "periodo": "2025-02",
+      "cantidad": 48
+    },
+    {
+      "periodo": "2025-03",
+      "cantidad": 56
+    },
+    {
+      "periodo": "2025-04",
+      "cantidad": 64
+    },
+    {
+      "periodo": "2025-05",
+      "cantidad": 60
+    },
+    {
+      "periodo": "2025-06",
+      "cantidad": 55
+    },
+    {
+      "periodo": "2025-07",
+      "cantidad": 73
+    },
+    {
+      "periodo": "2025-08",
+      "cantidad": 54
+    },
+    {
+      "periodo": "2025-09",
+      "cantidad": 35
+    },
+    {
+      "periodo": "2025-10",
+      "cantidad": 52
+    },
+    {
+      "periodo": "2025-11",
+      "cantidad": 47
+    },
+    {
+      "periodo": "2025-12",
+      "cantidad": 39
+    },
+    {
+      "periodo": "2026-01",
+      "cantidad": 59
+    },
+    {
+      "periodo": "2026-02",
+      "cantidad": 51
+    },
+    {
+      "periodo": "2026-03",
+      "cantidad": 75
+    },
+    {
+      "periodo": "2026-04",
+      "cantidad": 46
+    },
+    {
+      "periodo": "2026-05",
+      "cantidad": 44
+    },
+    {
+      "periodo": "2026-06",
+      "cantidad": 56
+    }
+  ],
+  "ticketsCliente": [
+    {
+      "cliente": "FUNDACION ARTURO LOPEZ PEREZ",
+      "total": 869,
+      "accesibles": 36,
+      "pct": 4.1
+    },
+    {
+      "cliente": "CLINICA ALEMANA DE SANTIAGO",
+      "total": 529,
+      "accesibles": 25,
+      "pct": 4.7
+    },
+    {
+      "cliente": "UC CHRISTUS - CECA",
+      "total": 475,
+      "accesibles": 51,
+      "pct": 10.7
+    },
+    {
+      "cliente": "HOSPITAL CARLOS VAN BUREN (SSVSA)",
+      "total": 364,
+      "accesibles": 15,
+      "pct": 4.1
+    },
+    {
+      "cliente": "Instituto Nacional del Cáncer (INC)",
+      "total": 269,
+      "accesibles": 62,
+      "pct": 23
+    },
+    {
+      "cliente": "CLÍNICA SANATORIO ALEMÁN (ONCORAD)",
+      "total": 231,
+      "accesibles": 1,
+      "pct": 0.4
+    },
+    {
+      "cliente": "UC CHRISTUS - SCA",
+      "total": 217,
+      "accesibles": 38,
+      "pct": 17.5
+    },
+    {
+      "cliente": "SERVICIO DE SALUD DE MAGALLANES",
+      "total": 153,
+      "accesibles": 24,
+      "pct": 15.7
+    },
+    {
+      "cliente": "INRAD",
+      "total": 137,
+      "accesibles": 12,
+      "pct": 8.8
+    },
+    {
+      "cliente": "CLÍNICA LAS CONDES",
+      "total": 131,
+      "accesibles": 20,
+      "pct": 15.3
+    },
+    {
+      "cliente": "RADIO ONCOLOGÍA DEL SUR",
+      "total": 75,
+      "accesibles": 3,
+      "pct": 4
+    },
+    {
+      "cliente": "ACME",
+      "total": 67,
+      "accesibles": 1,
+      "pct": 1.5
+    },
+    {
+      "cliente": "RADIO NUCLEAR",
+      "total": 64,
+      "accesibles": 0,
+      "pct": 0
+    },
+    {
+      "cliente": "TORRE MÉDICA - RANCAGUA",
+      "total": 59,
+      "accesibles": 0,
+      "pct": 0
+    },
+    {
+      "cliente": "CLÍNICA ALEMANA DE TEMUCO",
+      "total": 33,
+      "accesibles": 0,
+      "pct": 0
+    }
+  ],
+  "estadoGeneral": [
+    {
+      "estado": "Error",
+      "cantidad": 117
+    },
+    {
+      "estado": "Repuestos sin match",
+      "cantidad": 460
+    },
+    {
+      "estado": "Matches ambiguos",
+      "cantidad": 56
+    },
+    {
+      "estado": "Con placeholders",
+      "cantidad": 696
+    },
+    {
+      "estado": "OK",
+      "cantidad": 480
+    },
+    {
+      "estado": "Error",
+      "cantidad": 1938
+    }
+  ]
+}

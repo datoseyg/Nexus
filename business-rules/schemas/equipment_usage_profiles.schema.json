@@ -1,0 +1,9 @@
+{
+  "$id": "equipment_usage_profiles",
+  "type": "csv",
+  "required_columns": [
+    "usage_profile_id", "client_key", "equipment_internal_id", "expected_daily_start_time",
+    "expected_daily_end_time", "expected_days_per_week", "expected_hours_per_week",
+    "source", "confidence_score", "notes"
+  ]
+}

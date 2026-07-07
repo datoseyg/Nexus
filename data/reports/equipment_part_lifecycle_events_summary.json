@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-07-05T08:35:23.422Z",
+  "total_events": 2214,
+  "usable_for_intervals": 846,
+  "calculation_status_breakdown": {
+    "MISSING_EQUIPMENT": 369,
+    "OK": 1845
+  },
+  "event_type_breakdown": {
+    "CORRECTIVE_REPLACEMENT_LIKELY": 1682,
+    "PREVENTIVE_REPLACEMENT_LIKELY": 332,
+    "UNKNOWN": 195,
+    "CONSUMABLE_USAGE": 2,
+    "PART_USAGE_CONFIRMED": 3
+  },
+  "match_status_breakdown": {
+    "MATCHED": 936,
+    "PLACEHOLDER_VALUE": 726,
+    "NO_MATCH": 496,
+    "AMBIGUOUS_MATCH": 56
+  },
+  "association_confidence_label_breakdown": {
+    "Insuficiente": 1322,
+    "Alta": 828,
+    "Baja": 64
+  }
+}

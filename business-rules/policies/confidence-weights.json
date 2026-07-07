@@ -1,0 +1,21 @@
+{
+  "description": "Pesos (0-100, deben sumar 100) de los 9 factores de src/models/lifecycle/lifecycle-prediction-confidence.js. Documentado acá para que un cambio de ponderación no requiera tocar código - hoy el módulo trae estos mismos valores hardcodeados como default si este archivo no existe.",
+  "factors": {
+    "n_intervals": 20,
+    "match_quality": 12,
+    "equipment_association": 12,
+    "temporal_coverage": 12,
+    "interval_consistency": 10,
+    "cohort_availability": 12,
+    "usage_or_contract_data": 8,
+    "weibull_stability": 8,
+    "estimate_directness": 6
+  },
+  "penalties": {
+    "n_less_than_10": -10,
+    "n_less_than_3": -20,
+    "borrowed_estimate": -8,
+    "no_contract_or_usage_data": -5,
+    "multi_equipment_association": -8
+  }
+}

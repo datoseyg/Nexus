@@ -1,0 +1,2 @@
+alias_value,alias_type,canonical_equipment_internal_id,reason,created_by,created_at
+LINAC 153038,NORMALIZED,LINAC-153038,"Ejemplo ilustrativo: un tecnico tipeo el equipment_internal_id sin el guion, generando una variante que no matchea con processed.fieldbeat_equipments",ignacio,2026-07-02T00:00:00.000Z

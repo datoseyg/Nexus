@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "build:static": "cross-env NEXT_PUBLIC_DATA_MODE=static node scripts/build-static.mjs"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
@@ -23,6 +24,7 @@
     "@types/node": "^26.1.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "cross-env": "^10.1.0",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3"
   }

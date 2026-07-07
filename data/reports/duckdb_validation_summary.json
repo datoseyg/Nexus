@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-02T04:08:27.491Z",
+  "generated_at": "2026-07-07T05:12:20.153Z",
   "all_match": true,
   "tables": [
     {
@@ -7,182 +7,368 @@
       "csv": "data/processed/zendesk/DB_Zendesk_Tickets.csv",
       "csv_row_count": 628,
       "sql_row_count": 628,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.fieldbeat_tasks",
       "csv": "data/processed/fieldbeat/DB_FieldBeat_Tasks.csv",
       "csv_row_count": 3747,
       "sql_row_count": 3747,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.fieldbeat_used_parts",
       "csv": "data/processed/fieldbeat/DB_FieldBeat_Used_Parts.csv",
       "csv_row_count": 2193,
       "sql_row_count": 2193,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.dolibarr_products",
       "csv": "data/processed/dolibarr/DB_Dolibarr_Products.csv",
       "csv_row_count": 1609,
       "sql_row_count": 1609,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.fieldbeat_clients",
       "csv": "data/processed/fieldbeat/DIM_Clients.csv",
       "csv_row_count": 43,
       "sql_row_count": 43,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.fieldbeat_equipments",
       "csv": "data/processed/fieldbeat/DIM_Equipments.csv",
       "csv_row_count": 83,
       "sql_row_count": 83,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.fieldbeat_task_equipments",
       "csv": "data/processed/fieldbeat/DB_FieldBeat_Task_Equipments.csv",
       "csv_row_count": 3157,
       "sql_row_count": 3157,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.zendesk_ticket_tags",
       "csv": "data/processed/zendesk/DB_Zendesk_Ticket_Tags.csv",
       "csv_row_count": 8383,
       "sql_row_count": 8383,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.zendesk_custom_fields",
       "csv": "data/processed/zendesk/DB_Zendesk_Custom_Fields.csv",
       "csv_row_count": 10048,
       "sql_row_count": 10048,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "processed.dolibarr_product_identity_map",
       "csv": "data/processed/dolibarr/DIM_Dolibarr_Product_Identity_Map.csv",
       "csv_row_count": 3219,
       "sql_row_count": 3219,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "processed.fieldbeat_report_fields",
+      "csv": "data/processed/fieldbeat/DB_FieldBeat_Report_Fields.csv",
+      "csv_row_count": 66107,
+      "sql_row_count": 66107,
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "marts.ticket_fieldbeat_operational_view",
       "csv": "data/marts/Ticket_FieldBeat_Operational_View.csv",
       "csv_row_count": 628,
       "sql_row_count": 628,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "marts.ticket_fieldbeat_dolibarr_operational_view",
       "csv": "data/marts/Ticket_FieldBeat_Dolibarr_Operational_View.csv",
       "csv_row_count": 628,
       "sql_row_count": 628,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "marts.used_parts_dolibarr_match",
       "csv": "data/marts/Used_Parts_Dolibarr_Match.csv",
       "csv_row_count": 2193,
       "sql_row_count": 2193,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "marts.ticket_fieldbeat_report_detail",
       "csv": "data/marts/Ticket_FieldBeat_Report_Detail.csv",
       "csv_row_count": 290,
       "sql_row_count": 290,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "marts.fieldbeat_report_dolibarr_operational_view",
       "csv": "data/marts/FieldBeat_Report_Dolibarr_Operational_View.csv",
       "csv_row_count": 3747,
       "sql_row_count": 3747,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "marts.fieldbeat_working_hours_analysis",
+      "csv": "data/marts/FieldBeat_Working_Hours_Analysis.csv",
+      "csv_row_count": 3747,
+      "sql_row_count": 3747,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "marts.equipment_part_lifecycle_events",
+      "csv": "data/marts/Equipment_Part_Lifecycle_Events.csv",
+      "csv_row_count": 2214,
+      "sql_row_count": 2214,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "marts.equipment_part_lifecycle_intervals",
+      "csv": "data/marts/Equipment_Part_Lifecycle_Intervals.csv",
+      "csv_row_count": 697,
+      "sql_row_count": 697,
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.operational_dashboard",
       "csv": "data/gold/GOLD_Operational_Dashboard.csv",
       "csv_row_count": 1,
       "sql_row_count": 1,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.data_quality_report",
       "csv": "data/gold/GOLD_Data_Quality_Report.csv",
       "csv_row_count": 6,
       "sql_row_count": 6,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.client_service_profile",
       "csv": "data/gold/GOLD_Client_Service_Profile.csv",
       "csv_row_count": 14,
       "sql_row_count": 14,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.equipment_service_profile",
       "csv": "data/gold/GOLD_Equipment_Service_Profile.csv",
       "csv_row_count": 23,
       "sql_row_count": 23,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.used_parts_analysis",
       "csv": "data/gold/GOLD_Used_Parts_Analysis.csv",
       "csv_row_count": 576,
       "sql_row_count": 576,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.scope_metadata",
       "csv": "data/gold/GOLD_Scope_Metadata.csv",
       "csv_row_count": 1,
       "sql_row_count": 1,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.fieldbeat_report_analysis",
       "csv": "data/gold/GOLD_FieldBeat_Report_Analysis.csv",
       "csv_row_count": 1,
       "sql_row_count": 1,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.client_parts_consumption",
       "csv": "data/gold/GOLD_Client_Parts_Consumption.csv",
       "csv_row_count": 913,
       "sql_row_count": 913,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.client_report_volume_by_period",
       "csv": "data/gold/GOLD_Client_Report_Volume_By_Period.csv",
       "csv_row_count": 913,
       "sql_row_count": 913,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.equipment_parts_consumption",
       "csv": "data/gold/GOLD_Equipment_Parts_Consumption.csv",
       "csv_row_count": 57,
       "sql_row_count": 57,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
     },
     {
       "table": "gold.fieldbeat_data_quality",
       "csv": "data/gold/GOLD_FieldBeat_Data_Quality.csv",
       "csv_row_count": 6,
       "sql_row_count": 6,
-      "status": "MATCH"
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.after_hours_work_analysis",
+      "csv": "data/gold/GOLD_After_Hours_Work_Analysis.csv",
+      "csv_row_count": 1,
+      "sql_row_count": 1,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.after_hours_by_client",
+      "csv": "data/gold/GOLD_After_Hours_By_Client.csv",
+      "csv_row_count": 26,
+      "sql_row_count": 26,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.after_hours_by_task_type",
+      "csv": "data/gold/GOLD_After_Hours_By_Task_Type.csv",
+      "csv_row_count": 11,
+      "sql_row_count": 11,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.after_hours_by_technician",
+      "csv": "data/gold/GOLD_After_Hours_By_Technician.csv",
+      "csv_row_count": 19,
+      "sql_row_count": 19,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.after_hours_by_period",
+      "csv": "data/gold/GOLD_After_Hours_By_Period.csv",
+      "csv_row_count": 96,
+      "sql_row_count": 96,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_summary",
+      "csv": "data/gold/GOLD_Equipment_Part_Lifecycle_Summary.csv",
+      "csv_row_count": 1,
+      "sql_row_count": 1,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_by_machine",
+      "csv": "data/gold/GOLD_Equipment_Part_Lifecycle_By_Machine.csv",
+      "csv_row_count": 558,
+      "sql_row_count": 558,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_by_client",
+      "csv": "data/gold/GOLD_Equipment_Part_Lifecycle_By_Client.csv",
+      "csv_row_count": 510,
+      "sql_row_count": 510,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_by_part",
+      "csv": "data/gold/GOLD_Equipment_Part_Lifecycle_By_Part.csv",
+      "csv_row_count": 254,
+      "sql_row_count": 254,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_insights",
+      "csv": "data/gold/GOLD_Equipment_Part_Lifecycle_Insights.csv",
+      "csv_row_count": 1529,
+      "sql_row_count": 1529,
+      "status": "MATCH",
+      "optional": false
+    },
+    {
+      "table": "rules.client_contracts",
+      "csv": "business-rules/entities/client_contracts.csv",
+      "csv_row_count": 0,
+      "sql_row_count": null,
+      "status": "SKIPPED_OPTIONAL",
+      "optional": true
+    },
+    {
+      "table": "rules.worker_contracts",
+      "csv": "business-rules/entities/worker_contracts.csv",
+      "csv_row_count": 0,
+      "sql_row_count": null,
+      "status": "SKIPPED_OPTIONAL",
+      "optional": true
+    },
+    {
+      "table": "rules.equipment_contracts",
+      "csv": "business-rules/entities/equipment_contracts.csv",
+      "csv_row_count": 0,
+      "sql_row_count": null,
+      "status": "SKIPPED_OPTIONAL",
+      "optional": true
+    },
+    {
+      "table": "rules.part_manufacturer_life",
+      "csv": "business-rules/entities/part_manufacturer_life.csv",
+      "csv_row_count": 0,
+      "sql_row_count": null,
+      "status": "SKIPPED_OPTIONAL",
+      "optional": true
+    },
+    {
+      "table": "rules.equipment_usage_profiles",
+      "csv": "business-rules/entities/equipment_usage_profiles.csv",
+      "csv_row_count": 0,
+      "sql_row_count": null,
+      "status": "SKIPPED_OPTIONAL",
+      "optional": true
+    },
+    {
+      "table": "rules.part_families",
+      "csv": "business-rules/entities/part_families.csv",
+      "csv_row_count": 0,
+      "sql_row_count": null,
+      "status": "SKIPPED_OPTIONAL",
+      "optional": true
     }
   ]
 }

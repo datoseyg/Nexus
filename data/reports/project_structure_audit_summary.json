@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-07-04T21:07:24.553Z",
+  "total_files_scanned": 270,
+  "total_dirs_scanned": 73,
+  "excluded_dirs": [
+    "node_modules",
+    ".git",
+    ".next",
+    "out",
+    "dist",
+    "build",
+    "coverage",
+    "data/raw/",
+    ".duckdb",
+    ".wal"
+  ],
+  "files_by_category": {
+    "configuración": 18,
+    "app API": 39,
+    "auditoría": 17,
+    "dashboard": 20,
+    "app UI": 22,
+    "documentación": 45,
+    "curación": 8,
+    "dato generado": 65,
+    "legacy/sospechoso": 13,
+    "duckdb warehouse": 4,
+    "gold builder": 3,
+    "mart builder": 5,
+    "miner": 6,
+    "normalizer": 3,
+    "resolver": 1,
+    "sincronización": 1
+  },
+  "source_files_count": 202,
+  "generated_files_count": 67,
+  "docs_count": 44,
+  "app_files_count": 98,
+  "pipeline_files_count": 37,
+  "possible_orphans_count": 2,
+  "possible_orphans": [
+    "apps/nexus-bi-app/components/ui/EmptyState.tsx",
+    "apps/nexus-bi-app/components/ui/FilterPanel.tsx"
+  ],
+  "large_files_count": 5,
+  "possible_secret_hits_count": 5,
+  "possible_secret_hits": [
+    {
+      "file": "docs/P4.gs.txt",
+      "pattern": "ASSIGNED_TOKEN_OR_KEY"
+    },
+    {
+      "file": "docs/P5.txt",
+      "pattern": "ASSIGNED_TOKEN_OR_KEY"
+    },
+    {
+      "file": "docs/PROJECT_CLEANUP_CANDIDATES.md",
+      "pattern": "ASSIGNED_TOKEN_OR_KEY"
+    },
+    {
+      "file": "src/miners/dolibarr.js",
+      "pattern": "ASSIGNED_TOKEN_OR_KEY"
+    },
+    {
+      "file": "src/miners/fieldbeat-all.js",
+      "pattern": "ASSIGNED_TOKEN_OR_KEY"
+    }
+  ],
+  "status": "OK_WITH_WARNINGS"
+}

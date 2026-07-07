@@ -1,0 +1,8 @@
+{
+  "$id": "part_manufacturer_life",
+  "type": "csv",
+  "required_columns": [
+    "dolibarr_ref", "dolibarr_label", "manufacturer_life_months", "manufacturer_life_hours",
+    "manufacturer_source", "manufacturer_notes", "confidence_of_source", "effective_from", "effective_to"
+  ]
+}

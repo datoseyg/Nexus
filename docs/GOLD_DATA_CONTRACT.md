@@ -1,12 +1,12 @@
-# Contrato de datos — GOLD v1
+# Contrato de datos - GOLD v1
 
-Generado por `npm run build:gold` (`src/gold/build-gold.js`). Todas las tablas están en `data/gold/`. Antes de conectar cualquiera de estas tablas a una herramienta BI, leer [SCOPE_AND_LIMITATIONS.md](SCOPE_AND_LIMITATIONS.md) — GOLD v1 no representa el 100% del universo FieldBeat, solo la porción vinculada a tickets Zendesk accesibles con las credenciales actuales.
+Generado por `npm run build:gold` (`src/gold/build-gold.js`). Todas las tablas están en `data/gold/`. Antes de conectar cualquiera de estas tablas a una herramienta BI, leer [SCOPE_AND_LIMITATIONS.md](SCOPE_AND_LIMITATIONS.md) - GOLD v1 no representa el 100% del universo FieldBeat, solo la porción vinculada a tickets Zendesk accesibles con las credenciales actuales.
 
 ---
 
 ## GOLD_Operational_Dashboard.csv
 
-**Objetivo:** una sola fila con los KPIs globales del negocio — el número que se muestra arriba de cualquier dashboard.
+**Objetivo:** una sola fila con los KPIs globales del negocio - el número que se muestra arriba de cualquier dashboard.
 
 **Granularidad:** 1 fila (todo el universo Zendesk accesible).
 
@@ -16,13 +16,13 @@ Generado por `npm run build:gold` (`src/gold/build-gold.js`). Todas las tablas e
 - `total_used_parts_in_ticket_scope`, `matched_used_parts`, `placeholder_used_parts`, `unmatched_used_parts`, `ambiguous_used_parts`
 - `ticket_fieldbeat_coverage_rate`, `used_parts_match_rate`, `review_required_rate`
 
-**Uso BI recomendado:** tarjetas de KPI (scorecards) en la primera fila del dashboard. No se filtra ni se cruza con otras tablas — es un snapshot fijo.
+**Uso BI recomendado:** tarjetas de KPI (scorecards) en la primera fila del dashboard. No se filtra ni se cruza con otras tablas - es un snapshot fijo.
 
 ---
 
 ## GOLD_Data_Quality_Report.csv
 
-**Objetivo:** explicar *por qué* el dashboard no muestra 100% de calidad — desglose de los 628 tickets por estado de calidad de dato.
+**Objetivo:** explicar *por qué* el dashboard no muestra 100% de calidad - desglose de los 628 tickets por estado de calidad de dato.
 
 **Granularidad:** 1 fila por `data_quality_status` (6 filas fijas, siempre las mismas 6 categorías aunque alguna tenga 0 tickets).
 
@@ -44,7 +44,7 @@ Generado por `npm run build:gold` (`src/gold/build-gold.js`). Todas las tablas e
 
 ## GOLD_Client_Service_Profile.csv
 
-**Objetivo:** perfil de servicio por cliente — cuánto se le atendió, con qué calidad de repuestos.
+**Objetivo:** perfil de servicio por cliente - cuánto se le atendió, con qué calidad de repuestos.
 
 **Granularidad:** 1 fila por `client_name`. Un ticket puede aportar a más de un cliente si tuvo reportes FieldBeat de clientes distintos (fan-out sobre la lista pipe-separada `client_names` del mart).
 
@@ -56,25 +56,25 @@ Generado por `npm run build:gold` (`src/gold/build-gold.js`). Todas las tablas e
 
 ## GOLD_Equipment_Service_Profile.csv
 
-**Objetivo:** perfil de servicio por equipo — qué tan seguido se interviene cada equipo y con qué calidad de repuestos.
+**Objetivo:** perfil de servicio por equipo - qué tan seguido se interviene cada equipo y con qué calidad de repuestos.
 
 **Granularidad:** 1 fila por `equipment_internal_id` (fan-out igual que el perfil de cliente).
 
 **Columnas principales:** `total_tickets`, `fieldbeat_report_count`, `tickets_with_used_parts`, `used_parts_count`, `unmatched_used_parts_count`, `ambiguous_used_parts_count`, `review_required_tickets`.
 
-**Uso BI recomendado:** ranking de equipos por frecuencia de intervención o por repuestos sin matchear — insumo para mantenimiento predictivo o para detectar equipos con documentación de repuestos crónicamente mala.
+**Uso BI recomendado:** ranking de equipos por frecuencia de intervención o por repuestos sin matchear - insumo para mantenimiento predictivo o para detectar equipos con documentación de repuestos crónicamente mala.
 
 ---
 
 ## GOLD_Used_Parts_Analysis.csv
 
-**Objetivo:** catálogo de calidad de matching de repuestos — a diferencia de las demás tablas GOLD, **no está acotado a tickets Zendesk accesibles**: cubre las 2193 filas globales de `Used_Parts_Dolibarr_Match.csv` (todas las tasks FieldBeat).
+**Objetivo:** catálogo de calidad de matching de repuestos - a diferencia de las demás tablas GOLD, **no está acotado a tickets Zendesk accesibles**: cubre las 2193 filas globales de `Used_Parts_Dolibarr_Match.csv` (todas las tasks FieldBeat).
 
 **Granularidad:** 1 fila por `normalized_part_identifier` único (576 grupos).
 
 **Columnas principales:** `raw_part_identifier` (variantes pipe-joined), `part_name` (variantes pipe-joined), `occurrences`, `matched_count`, `placeholder_count`, `no_match_count`, `ambiguous_count`, `dolibarr_refs`, `dolibarr_product_ids`, `match_statuses`, `match_methods`, `needs_manual_review`.
 
-**Uso BI recomendado:** priorizar aliases manuales (`data/config/part_identity_aliases.csv`) — ordenar por `occurrences` descendente para atacar primero los repuestos sin match que más se repiten. **No cruzar directamente con las tablas ticket-céntricas de arriba** sin tener en cuenta que esta cubre un universo más amplio.
+**Uso BI recomendado:** priorizar aliases manuales (`data/config/part_identity_aliases.csv`) - ordenar por `occurrences` descendente para atacar primero los repuestos sin match que más se repiten. **No cruzar directamente con las tablas ticket-céntricas de arriba** sin tener en cuenta que esta cubre un universo más amplio.
 
 ---
 
@@ -86,4 +86,66 @@ Generado por `npm run build:gold` (`src/gold/build-gold.js`). Todas las tablas e
 
 **Columnas principales:** `total_fieldbeat_tasks`, `total_fieldbeat_used_parts_global`, `used_parts_in_ticket_mart`, `used_parts_outside_ticket_mart`, `fieldbeat_tasks_with_zendesk_ticket`, `fieldbeat_tasks_without_zendesk_ticket`, `fieldbeat_tasks_linked_to_existing_zendesk_ticket`, `fieldbeat_tasks_linked_to_missing_zendesk_ticket`, `zendesk_backfill_unique_missing_ticket_ids`, `zendesk_backfill_tickets_found`, `zendesk_backfill_tickets_not_found`, `zendesk_backfill_tickets_forbidden`, `scope_warning`, `phase_2_pending_action`.
 
-**Uso BI recomendado:** no graficar — mostrar como texto/nota al pie de cualquier dashboard que use GOLD v1, o como tooltip de advertencia. Ver el detalle completo en [SCOPE_AND_LIMITATIONS.md](SCOPE_AND_LIMITATIONS.md).
+**Uso BI recomendado:** no graficar - mostrar como texto/nota al pie de cualquier dashboard que use GOLD v1, o como tooltip de advertencia. Ver el detalle completo en [SCOPE_AND_LIMITATIONS.md](SCOPE_AND_LIMITATIONS.md).
+
+---
+
+## GOLD_After_Hours_Work_Analysis.csv, GOLD_After_Hours_By_Client.csv, GOLD_After_Hours_By_Task_Type.csv, GOLD_After_Hours_By_Technician.csv, GOLD_After_Hours_By_Period.csv
+
+Generadas por `npm run build:gold:after-hours` (`src/gold/build-after-hours-gold.js`), a partir de `marts.fieldbeat_working_hours_analysis` (universo completo de 3747 tareas FieldBeat, no acotado a tickets Zendesk). Ver [AFTER_HOURS_METRICS.md](AFTER_HOURS_METRICS.md) y [CALCULATION_CONFIDENCE_MODEL.md](CALCULATION_CONFIDENCE_MODEL.md) para la metodología completa - **estos números son un cálculo preliminar y metodológico, no una certeza absoluta.**
+
+**Objetivo:** cuantificar cuánto trabajo técnico cae fuera del horario hábil configurado, con confiabilidad explícita por fila.
+
+**Granularidad:** `GOLD_After_Hours_Work_Analysis.csv` es 1 fila global (los 6 KPIs de la vista `/dashboard/after-hours`); las otras 4 son 1 fila por cliente / tipo de tarea / técnico / período mensual respectivamente.
+
+**Columnas principales (todas las tablas):** horas totales/hábiles/fuera de horario, `after_hours_rate`, conteos de tareas, más `confidence_score`/`confidence_label`/`confidence_factors_summary` y el desglose `valid_rows`/`invalid_rows`/`estimated_rows`/`exact_rows`/`insufficient_rows`. Ver columna por columna en [DATA_DICTIONARY.md](DATA_DICTIONARY.md).
+
+**Uso BI recomendado:** tarjetas de KPI + rankings por cliente/tipo/técnico + tendencia mensual. **Siempre mostrar `confidence_score`/`confidence_label` junto al valor** - nunca presentar estos números sin su confiabilidad. Estas tablas son un snapshot fijo (igual que el resto de GOLD); la vista `/dashboard/after-hours` en la app consulta el mart `marts.fieldbeat_working_hours_analysis` en vivo para soportar filtros, no estas tablas GOLD.
+
+---
+
+## GOLD_Equipment_Part_Lifecycle_Summary.csv
+
+**Objetivo:** una sola fila con los KPIs globales de la línea "Vida Útil de Repuestos por Máquina".
+
+**Granularidad:** 1 fila.
+
+**Columnas principales:** `total_machine_part_combinations`, `total_machines_analyzed`, `total_parts_analyzed`, `total_clients_analyzed`, `estimate_status_breakdown` (JSON en texto), `confidence_label_breakdown` (JSON en texto), `total_insights_generated`.
+
+**Uso BI recomendado:** tarjetas de KPI en el header de `/dashboard/equipment-lifecycle`.
+
+---
+
+## GOLD_Equipment_Part_Lifecycle_By_Machine.csv
+
+**Objetivo:** vida útil observada/estimada de cada repuesto en cada máquina, con confiabilidad metodológica explícita - la tabla principal de la vista. **v1.6**: la estimación viene de un motor de modelos AUTO (mediana/Weibull bayesiano/shrinkage/tasa Gamma-Poisson según cuántos datos hay), no solo mediana simple - ver [LIFECYCLE_PREDICTIVE_MODELS.md](LIFECYCLE_PREDICTIVE_MODELS.md). **Esto es inferencia preliminar, no reemplaza especificaciones del fabricante ni garantías contractuales.**
+
+**Granularidad:** 1 fila por `equipment_internal_id` × `dolibarr_ref`, solo combinaciones con al menos 1 evento usable (`match_status=MATCHED`, `calculation_status=OK`).
+
+**Columnas principales:** `observed_event_count`/`n_events`, `valid_interval_count`/`n_intervals`, `selected_model`, `model_family`, `model_reason`, `estimated_life_days`/`estimated_life_months`, `estimated_life_p10/p50/p90_days`, `credible_interval_low/high_days`, `machine_weight`/`cohort_weight`/`cohort_source` (solo si el modelo fue shrinkage), `n_censored_observations` (fijo en 0 en v1), `replacement_rate_per_year`, `predicted_next_replacement_date`, `prediction_status`/`estimate_status`, `model_confidence_score`/`model_confidence_label`/`model_confidence_factors` (alias: `lifecycle_confidence_*`), `manufacturer_life_months`/`manufacturer_life_source`/`observed_vs_manufacturer_ratio`/`comparison_to_manufacturer`, `statistical_notes`.
+
+**Uso BI recomendado:** tabla de repuestos por máquina en la ficha de equipo. **Siempre mostrar `model_confidence_score`/`model_confidence_label` junto a `estimated_life_days`** - nunca presentar una vida útil sin su confiabilidad, y nunca cuando `prediction_status = INSUFFICIENT_DATA` (mostrar "solo un evento observado, sin base estadística" en su lugar). Snapshot fijo - los endpoints filtrables (`/api/dashboard/equipment-lifecycle/machine/[equipmentId]`, etc.) consultan esta tabla y `marts.equipment_part_lifecycle_events` en vivo. El selector de modelo de la UI filtra por `selected_model` (no recalcula un modelo distinto en tiempo real).
+
+---
+
+## GOLD_Equipment_Part_Lifecycle_By_Client.csv, GOLD_Equipment_Part_Lifecycle_By_Part.csv
+
+**Objetivo:** el mismo cálculo de `By_Machine.csv`, agregado por cliente (todas sus máquinas) y globalmente (todos los clientes/máquinas) respectivamente - para comparar "esta máquina" contra "el resto del mismo cliente" y contra "el promedio global observado".
+
+**Granularidad:** `By_Client`: 1 fila por `client_name` × `dolibarr_ref`. `By_Part`: 1 fila por `dolibarr_ref` (global).
+
+**Columnas principales:** mismas que `By_Machine.csv` (misma función `computeGroupMetrics`), sin `equipment_internal_id` (y sin `client_name` en `By_Part`).
+
+**Uso BI recomendado:** panel de comparación (`/api/dashboard/equipment-lifecycle/comparison`) - nunca usar para afirmar causalidad de por qué difieren, solo para mostrar la diferencia descriptiva.
+
+---
+
+## GOLD_Equipment_Part_Lifecycle_Insights.csv
+
+**Objetivo:** frases explicativas en español, generadas por reglas fijas (nunca IA) sobre las filas de `By_Machine.csv` - el insumo del panel "Insights" de la vista.
+
+**Granularidad:** 1 fila por insight (una combinación máquina-repuesto puede generar 0 a varios insights).
+
+**Columnas principales:** `equipment_internal_id`, `dolibarr_ref`, `insight_type`, `insight_text`, `severity`.
+
+**Uso BI recomendado:** renderizar `insight_text` directo en la UI con un ícono/color según `severity`. Ninguna frase afirma causalidad - son correlaciones descriptivas o advertencias metodológicas.

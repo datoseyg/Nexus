@@ -1,0 +1,10 @@
+{
+  "total_fieldbeat_tasks": 3747,
+  "fieldbeat_tasks_with_zendesk_ticket": 1210,
+  "fieldbeat_tasks_without_zendesk_ticket": 2537,
+  "fieldbeat_tasks_linked_to_missing_zendesk_ticket": 920,
+  "zendesk_backfill_tickets_forbidden": 291,
+  "zendesk_backfill_tickets_not_found": 361,
+  "scope_warning": "GOLD v1 representa únicamente el universo Zendesk accesible con las credenciales actuales. Existen FieldBeat tasks vinculadas a tickets Zendesk no accesibles o no existentes que quedan fuera del mart ticket-céntrico.",
+  "phase_2_pending_action": "Revisar los 291 ticket IDs con 403 Forbidden usando un token Zendesk con permisos ampliados. Lista en data/reports/zendesk_ticket_ids_not_accessible_403.json."
+}

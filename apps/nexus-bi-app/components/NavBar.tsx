@@ -10,7 +10,8 @@ const LINKS = [
   { href: "/explorer", label: "Explorador" },
   { href: "/search", label: "Búsqueda" },
   { href: "/audit/manual-review", label: "Auditoría" },
-  { href: "/dashboard/after-hours", label: "Trabajo Fuera de Horario" }
+  { href: "/dashboard/after-hours", label: "Trabajo Fuera de Horario" },
+  { href: "/dashboard/equipment-lifecycle", label: "Vida Útil Repuestos" }
 ];
 
 // Barra de navegación con identidad E&G Medical Systems (ver

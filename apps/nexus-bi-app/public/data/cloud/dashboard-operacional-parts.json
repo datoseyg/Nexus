@@ -1,0 +1,355 @@
+{
+  "rows": [
+    {
+      "sku_dolibarr": "1534958",
+      "nombre_repuesto": "Leaf motor spares kit",
+      "cantidad_consumida": 226,
+      "reportes_asociados": 82,
+      "clientes_asociados": 9
+    },
+    {
+      "sku_dolibarr": "1564298",
+      "nombre_repuesto": "Diaphragm/DLG PCB",
+      "cantidad_consumida": 45,
+      "reportes_asociados": 35,
+      "clientes_asociados": 10
+    },
+    {
+      "sku_dolibarr": "1517657",
+      "nombre_repuesto": "PCB ASSY, LEAF MOTOR DRIVE - 1 Only",
+      "cantidad_consumida": 40,
+      "reportes_asociados": 28,
+      "clientes_asociados": 7
+    },
+    {
+      "sku_dolibarr": "1502613",
+      "nombre_repuesto": "Laser ODI Spares Kit",
+      "cantidad_consumida": 26,
+      "reportes_asociados": 26,
+      "clientes_asociados": 7
+    },
+    {
+      "sku_dolibarr": "45133304800",
+      "nombre_repuesto": "SL ELECTRON GUN ASSY",
+      "cantidad_consumida": 24,
+      "reportes_asociados": 24,
+      "clientes_asociados": 8
+    },
+    {
+      "sku_dolibarr": "1018559",
+      "nombre_repuesto": "ASSY, BRACKET & FAN",
+      "cantidad_consumida": 23,
+      "reportes_asociados": 17,
+      "clientes_asociados": 6
+    },
+    {
+      "sku_dolibarr": "1018265_proveedor_local",
+      "nombre_repuesto": "Proveedor Local, FRU MOTOR BRUSH SET (ELECTROCRAFT)",
+      "cantidad_consumida": 20,
+      "reportes_asociados": 20,
+      "clientes_asociados": 9
+    },
+    {
+      "sku_dolibarr": "4513316442301M",
+      "nombre_repuesto": "FILTER ELEMENT 5 MICRON",
+      "cantidad_consumida": 20,
+      "reportes_asociados": 15,
+      "clientes_asociados": 8
+    },
+    {
+      "sku_dolibarr": "1515098",
+      "nombre_repuesto": "ION PUMP - SPARE",
+      "cantidad_consumida": 19,
+      "reportes_asociados": 17,
+      "clientes_asociados": 6
+    },
+    {
+      "sku_dolibarr": "1010848",
+      "nombre_repuesto": "Mirror assembly, optics (Agility)",
+      "cantidad_consumida": 18,
+      "reportes_asociados": 17,
+      "clientes_asociados": 7
+    },
+    {
+      "sku_dolibarr": "1541718",
+      "nombre_repuesto": "FRU, Pancake Motor Assembly",
+      "cantidad_consumida": 16,
+      "reportes_asociados": 14,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1024939",
+      "nombre_repuesto": "ASSY, 40X40X10MM FAN, HEATSINK",
+      "cantidad_consumida": 15,
+      "reportes_asociados": 15,
+      "clientes_asociados": 6
+    },
+    {
+      "sku_dolibarr": "821321900352",
+      "nombre_repuesto": "Fuse, 10A 32 VAC, time delay, glass cartridge 32 mm x 6.3mm (FS32E)",
+      "cantidad_consumida": 14,
+      "reportes_asociados": 14,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1006737_usado",
+      "nombre_repuesto": "SIB PCB",
+      "cantidad_consumida": 13,
+      "reportes_asociados": 13,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1565836",
+      "nombre_repuesto": "KIT, SPARES, DLG BRAKE",
+      "cantidad_consumida": 12,
+      "reportes_asociados": 7,
+      "clientes_asociados": 6
+    },
+    {
+      "sku_dolibarr": "4513316442101T",
+      "nombre_repuesto": "Potentiometer, 20k, 10 turns Coarse/Check",
+      "cantidad_consumida": 12,
+      "reportes_asociados": 8,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1527814",
+      "nombre_repuesto": "PSU, ION PUMP",
+      "cantidad_consumida": 11,
+      "reportes_asociados": 11,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1556287",
+      "nombre_repuesto": "KIT, SPARES, DIAPHRAGM BRAKE",
+      "cantidad_consumida": 11,
+      "reportes_asociados": 8,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "45133165177",
+      "nombre_repuesto": "THYRATRON e2v CX1154L",
+      "cantidad_consumida": 11,
+      "reportes_asociados": 11,
+      "clientes_asociados": 6
+    },
+    {
+      "sku_dolibarr": "1016474_usado",
+      "nombre_repuesto": "KIT, SPARES, DLG BRAKE",
+      "cantidad_consumida": 11,
+      "reportes_asociados": 11,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1565835",
+      "nombre_repuesto": "KIT, SPARES, DIAPHRAGM BRAKE",
+      "cantidad_consumida": 10,
+      "reportes_asociados": 5,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1016476",
+      "nombre_repuesto": "Leaf motor spares kit",
+      "cantidad_consumida": 10,
+      "reportes_asociados": 10,
+      "clientes_asociados": 3
+    },
+    {
+      "sku_dolibarr": "1564169",
+      "nombre_repuesto": "Kit, Luminus proj assy and PCB assy, LED control",
+      "cantidad_consumida": 8,
+      "reportes_asociados": 8,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1022378",
+      "nombre_repuesto": "DIODE ASSY, FRU",
+      "cantidad_consumida": 8,
+      "reportes_asociados": 7,
+      "clientes_asociados": 6
+    },
+    {
+      "sku_dolibarr": "1017632_usado",
+      "nombre_repuesto": "PCB ASSY CAMERA CCU",
+      "cantidad_consumida": 8,
+      "reportes_asociados": 8,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1557545",
+      "nombre_repuesto": "Camera, DX9",
+      "cantidad_consumida": 7,
+      "reportes_asociados": 7,
+      "clientes_asociados": 6
+    },
+    {
+      "sku_dolibarr": "1568178",
+      "nombre_repuesto": "SIB PCB",
+      "cantidad_consumida": 7,
+      "reportes_asociados": 7,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1015076",
+      "nombre_repuesto": "Cable, retractile, MLC (SK25BB–SK26B)",
+      "cantidad_consumida": 7,
+      "reportes_asociados": 7,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "45133411846",
+      "nombre_repuesto": "CABLE ASSY, PL5 TO SK5A",
+      "cantidad_consumida": 7,
+      "reportes_asociados": 7,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1531145",
+      "nombre_repuesto": "Assy, Fan 70x70x15mm",
+      "cantidad_consumida": 6,
+      "reportes_asociados": 6,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1015075",
+      "nombre_repuesto": "Cable, retractile, MLC (SK25AA–SK26A)",
+      "cantidad_consumida": 6,
+      "reportes_asociados": 6,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1522567",
+      "nombre_repuesto": "RF output window",
+      "cantidad_consumida": 6,
+      "reportes_asociados": 6,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1565768",
+      "nombre_repuesto": "(CCU) PCB ASSY, CAM CID8726DX9 AGI",
+      "cantidad_consumida": 6,
+      "reportes_asociados": 6,
+      "clientes_asociados": 3
+    },
+    {
+      "sku_dolibarr": "1564361",
+      "nombre_repuesto": "Programmed PCB Assy, Router",
+      "cantidad_consumida": 6,
+      "reportes_asociados": 6,
+      "clientes_asociados": 5
+    },
+    {
+      "sku_dolibarr": "1021309___1564281",
+      "nombre_repuesto": "PCB ASSY, WEDGE CONTROL",
+      "cantidad_consumida": 6,
+      "reportes_asociados": 6,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1014474",
+      "nombre_repuesto": "Cable Assy sw1/sw2 T",
+      "cantidad_consumida": 6,
+      "reportes_asociados": 6,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "45133502026_usado",
+      "nombre_repuesto": "X-ray tube (MR)",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1549950",
+      "nombre_repuesto": "HHC kit,Synergy/Infinity",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1011030",
+      "nombre_repuesto": "Lens, Collimator",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1007288",
+      "nombre_repuesto": "KV DCB Control Board",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 3
+    },
+    {
+      "sku_dolibarr": "4513316441202U",
+      "nombre_repuesto": "Potentiometer, 20k, 1 turn Fine",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1541744",
+      "nombre_repuesto": "FRU KIT, HAND HELD CONTROLLER",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 2
+    },
+    {
+      "sku_dolibarr": "1501074",
+      "nombre_repuesto": "DOSE B version 2",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 3
+    },
+    {
+      "sku_dolibarr": "45133308530",
+      "nombre_repuesto": "New fast tune magnetron, MG6370",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "1538261",
+      "nombre_repuesto": "FRU KIT, FLIGHT TUBE DRIVE",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 3
+    },
+    {
+      "sku_dolibarr": "1531790",
+      "nombre_repuesto": "X, Y check or coarse potentiometer (D SHAPE), lateral o longitudinal",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 3,
+      "clientes_asociados": 3
+    },
+    {
+      "sku_dolibarr": "1502964",
+      "nombre_repuesto": "SPARES KIT,LED FIELD LAMP",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 3
+    },
+    {
+      "sku_dolibarr": "4513341185001U",
+      "nombre_repuesto": "Cable Assy, Pl9 to S",
+      "cantidad_consumida": 5,
+      "reportes_asociados": 5,
+      "clientes_asociados": 4
+    },
+    {
+      "sku_dolibarr": "261308039505",
+      "nombre_repuesto": "Seal",
+      "cantidad_consumida": 4,
+      "reportes_asociados": 2,
+      "clientes_asociados": 2
+    },
+    {
+      "sku_dolibarr": "1014204",
+      "nombre_repuesto": "Ceramic ion chamber (MR)",
+      "cantidad_consumida": 4,
+      "reportes_asociados": 4,
+      "clientes_asociados": 3
+    }
+  ],
+  "totalRows": 50
+}

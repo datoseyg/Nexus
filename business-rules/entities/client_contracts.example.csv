@@ -1,0 +1,2 @@
+client_contract_id,client_key,client_name,contract_name,contract_type,effective_from,effective_to,working_days,service_start_time,service_end_time,includes_weekends,includes_holidays,sla_level,response_time_hours,preventive_visits_per_year,notes
+EXAMPLE-001,FIELD_BEAT_CLIENT|00000000-0|CLIENTE EJEMPLO,Contrato Ejemplo,MANTENIMIENTO_PREVENTIVO,2026-01-01,,Lun-Vie,08:30,18:30,false,false,SLA_2,24,4,Fila de ejemplo - reemplazar por contratos reales y borrar esta fila

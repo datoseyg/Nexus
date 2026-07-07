@@ -1,0 +1,8 @@
+{
+  "$id": "lifecycle-model-policy",
+  "type": "json",
+  "required_keys": [
+    "default_model", "minimum_intervals_for_direct_median", "minimum_intervals_for_weibull",
+    "shrinkage_k", "allow_borrowed_estimates", "cohort_priority", "weibull", "confidence"
+  ]
+}

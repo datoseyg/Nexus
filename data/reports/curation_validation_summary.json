@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-07-02T05:58:16.076Z",
+  "curation_dir_exists": true,
+  "all_valid": true,
+  "files": [
+    {
+      "name": "client_aliases",
+      "example_file": "data\\curation\\client_aliases.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "data\\curation\\client_aliases.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK"
+    },
+    {
+      "name": "equipment_aliases",
+      "example_file": "data\\curation\\equipment_aliases.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "data\\curation\\equipment_aliases.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK"
+    },
+    {
+      "name": "part_identity_aliases",
+      "example_file": "data\\curation\\part_identity_aliases.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "data\\curation\\part_identity_aliases.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK"
+    },
+    {
+      "name": "ticket_link_overrides",
+      "example_file": "data\\curation\\ticket_link_overrides.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "data\\curation\\ticket_link_overrides.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK"
+    },
+    {
+      "name": "report_field_corrections",
+      "example_file": "data\\curation\\report_field_corrections.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "data\\curation\\report_field_corrections.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK"
+    },
+    {
+      "name": "placeholder_rules",
+      "example_file": "data\\curation\\placeholder_rules.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "data\\curation\\placeholder_rules.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK"
+    },
+    {
+      "name": "curation_audit_log",
+      "example_file": "data\\curation\\curation_audit_log.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "data\\curation\\curation_audit_log.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK"
+    }
+  ]
+}

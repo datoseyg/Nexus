@@ -1,0 +1,10 @@
+{
+  "rule_set_id": "EYG_RULES_2026_07_V1",
+  "version": "1.0.0",
+  "effective_from": "2026-07-01",
+  "effective_to": null,
+  "status": "DRAFT",
+  "owner": "EYG Nexus - equipo de datos",
+  "last_reviewed_at": "2026-07-05",
+  "description": "Reglas de negocio iniciales para cálculos lifecycle, contratos y horarios. Ver business-rules/README.md antes de modificar cualquier archivo de este directorio."
+}

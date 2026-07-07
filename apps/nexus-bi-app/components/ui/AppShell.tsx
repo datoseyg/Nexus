@@ -1,4 +1,5 @@
 import { NavBar } from "@/components/NavBar";
+import { DemoModeBanner } from "@/components/ui/DemoModeBanner";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface AppShellProps {
 export function AppShell({ children, wide = false }: AppShellProps) {
   return (
     <>
+      <DemoModeBanner />
       <NavBar />
       <main className={`mx-auto ${wide ? "max-w-[1400px]" : "max-w-6xl"} px-4 py-6`}>{children}</main>
     </>

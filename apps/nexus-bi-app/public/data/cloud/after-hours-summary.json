@@ -1,0 +1,12 @@
+{
+  "businessHoursStatus": "DEFAULT_UNVALIDATED",
+  "holidaysStatus": "EXAMPLE_INCOMPLETE",
+  "kpis": {
+    "totalHours": 8234.45,
+    "businessHours": 5576.8,
+    "afterHoursHours": 2493.6,
+    "afterHoursRate": 0.30282532531013,
+    "tasksWithAfterHours": 1571,
+    "tasksNotCalculable": 12
+  }
+}

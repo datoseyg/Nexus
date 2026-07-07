@@ -1,0 +1,2 @@
+worker_contract_id,technician_name,worker_type,effective_from,effective_to,working_days,shift_start_time,shift_end_time,on_call_enabled,overtime_policy,notes
+EXAMPLE-001,glopez,TECNICO_CAMPO,2026-01-01,,Lun-Vie,08:30,18:30,false,NOT_ALLOWED,Fila de ejemplo - reemplazar por contratos reales y borrar esta fila

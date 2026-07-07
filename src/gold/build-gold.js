@@ -186,7 +186,7 @@ function buildEquipmentServiceProfile(ticketRows) {
 }
 
 // Análisis global de repuestos (todas las tasks FieldBeat, no solo las
-// que caen dentro del alcance de tickets Zendesk accesibles) — es un
+// que caen dentro del alcance de tickets Zendesk accesibles) - es un
 // catálogo de calidad de matching, complementario a las métricas
 // ticket-céntricas del resto de GOLD.
 function buildUsedPartsAnalysis(usedPartRows) {

@@ -1,0 +1,7 @@
+{
+  "$id": "part_families",
+  "type": "csv",
+  "required_columns": [
+    "dolibarr_ref", "part_family", "part_criticality", "is_consumable", "is_lifecycle_relevant", "notes"
+  ]
+}

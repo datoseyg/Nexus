@@ -14,7 +14,7 @@ export async function validateDuckDb() {
 
   const results = [];
 
-  for (const { schema, table, csv } of TABLES) {
+  for (const { schema, table, csv, optional } of TABLES) {
     const fullTableName = `${schema}.${table}`;
     const csvRows = await readCsv(csv);
     const csvRowCount = csvRows.length;
@@ -27,16 +27,19 @@ export async function validateDuckDb() {
       sqlRowCount = Number(reader.getRowObjects()[0].n);
       status = sqlRowCount === csvRowCount ? "MATCH" : "MISMATCH";
     } catch {
-      status = "TABLE_NOT_FOUND";
+      // Tabla opcional (ej. rules.* de business-rules/) sin CSV real
+      // todavía - no es un error, es el estado esperado hasta que el
+      // negocio complete el archivo (ver business-rules/README.md).
+      status = optional ? "SKIPPED_OPTIONAL" : "TABLE_NOT_FOUND";
     }
 
     console.log(`${fullTableName}: CSV=${csvRowCount} SQL=${sqlRowCount ?? "n/a"} -> ${status}`);
-    results.push({ table: fullTableName, csv, csv_row_count: csvRowCount, sql_row_count: sqlRowCount, status });
+    results.push({ table: fullTableName, csv, csv_row_count: csvRowCount, sql_row_count: sqlRowCount, status, optional: !!optional });
   }
 
   connection.closeSync();
 
-  const allMatch = results.every(r => r.status === "MATCH");
+  const allMatch = results.every(r => r.status === "MATCH" || r.status === "SKIPPED_OPTIONAL");
 
   const summary = {
     generated_at: new Date().toISOString(),

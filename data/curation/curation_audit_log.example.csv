@@ -1,0 +1,3 @@
+audit_id,timestamp,created_by,curation_file,action,target_summary,reason,estimated_affected_records,rebuild_triggered
+audit-0001,2026-07-02T00:00:00.000Z,ignacio,part_identity_aliases,CREATE,"Alias RAW 1017632 -> producto Dolibarr 11958 (ref 1017632_usado)","Ejemplo ilustrativo de una entrada de auditoria: se crea un alias de repuesto",3,true
+audit-0002,2026-07-02T00:05:00.000Z,ignacio,ticket_link_overrides,CREATE,"Task 1250 marcado CONFIRMED_NO_TICKET (antes referenciaba 150655)","Ejemplo ilustrativo: correccion de un ticket fantasma confirmada con el cliente",1,false

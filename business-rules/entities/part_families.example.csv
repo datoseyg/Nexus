@@ -1,0 +1,2 @@
+dolibarr_ref,part_family,part_criticality,is_consumable,is_lifecycle_relevant,notes
+EJEMPLO-001,TUBOS_RX,CRITICAL,false,true,Fila de ejemplo - reemplazar por familias reales y borrar esta fila

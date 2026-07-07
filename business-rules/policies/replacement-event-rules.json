@@ -1,0 +1,9 @@
+{
+  "description": "Heurísticas de texto usadas por src/marts/build-equipment-part-lifecycle-events.js para inferir event_type_inferred. Documentadas acá como política editable - hoy el mart trae estas mismas listas hardcodeadas como default si este archivo no existe (no conectado todavía, ver docs/BUSINESS_RULES_LAYER.md § próximos pasos).",
+  "corrective_keywords": ["correctiv", "falla", "emergencia"],
+  "preventive_keywords": ["preventiv", "mantenc", "mantenim"],
+  "consumable_keywords": [
+    "consumible", "filtro", "gel", "papel", "guante", "alcohol", "aceite",
+    "correa", "bateria", "batería", "lampara", "lámpara", "electrodo", "aguja"
+  ]
+}

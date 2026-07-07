@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-07-04T21:08:02.985Z",
+  "phase1_status": "READY",
+  "duckdb_file_exists": true,
+  "duckdb_accessible": true,
+  "duckdb_all_match": true,
+  "total_duckdb_schemas": 3,
+  "total_duckdb_tables": 33,
+  "tables_by_schema": {
+    "gold": 16,
+    "marts": 6,
+    "processed": 11
+  },
+  "expected_table_counts": [
+    {
+      "table": "processed.zendesk_tickets",
+      "expected_approx": 628,
+      "actual": 628
+    },
+    {
+      "table": "processed.fieldbeat_tasks",
+      "expected_approx": 3747,
+      "actual": 3747
+    },
+    {
+      "table": "processed.fieldbeat_used_parts",
+      "expected_approx": 2193,
+      "actual": 2193
+    },
+    {
+      "table": "processed.dolibarr_products",
+      "expected_approx": 1609,
+      "actual": 1609
+    },
+    {
+      "table": "marts.fieldbeat_report_dolibarr_operational_view",
+      "expected_approx": 3747,
+      "actual": 3747
+    },
+    {
+      "table": "gold.fieldbeat_report_analysis",
+      "expected_approx": 1,
+      "actual": 1
+    }
+  ],
+  "missing_expected_tables": [],
+  "missing_expected_docs": [],
+  "sql_query_pack_exists": true,
+  "sql_query_pack_file_count": 12,
+  "known_phase2_blockers": [
+    "291 Zendesk ticket IDs con 403 Forbidden (data/reports/zendesk_ticket_ids_not_accessible_403.json).",
+    "Migración serverless pendiente.",
+    "Publicación BI pendiente.",
+    "Movimientos de stock Dolibarr fuera de alcance de Fase 1."
+  ],
+  "recommended_next_step": "Validar KPIs con stakeholders y preparar publicación BI."
+}

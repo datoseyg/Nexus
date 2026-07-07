@@ -1,0 +1,12 @@
+{
+  "reportsOk": 480,
+  "reportsReviewRequired": 1329,
+  "partsMatched": 927,
+  "partsUnmatched": 489,
+  "partsAmbiguous": 56,
+  "partsPlaceholder": 721,
+  "ticketsForbiddenPending": 291,
+  "reportsNoTicket": 2537,
+  "reportsLinkedMissingOrRestricted": 920,
+  "totalFieldbeatReports": 3747
+}

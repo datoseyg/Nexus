@@ -1,0 +1,20 @@
+assigned_to,total_hours,business_hours,after_hours_total_hours,after_hours_rate,tasks_total,tasks_with_after_hours,confidence_score,confidence_label,confidence_factors_summary,valid_rows,invalid_rows,estimated_rows,exact_rows,insufficient_rows
+ccarrasquel,1012.5,587.83,410.38,0.4053,465,243,79,Media,"Basado en 465 tareas: 157 cálculo exacto, 308 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).",465,0,308,157,0
+rguapache,847.5,484,334.42,0.3946,403,221,81,Media,"Basado en 403 tareas: 189 cálculo exacto, 214 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",403,0,214,189,0
+jecheverria,843.37,474.47,330,0.3913,385,203,81,Media,"Basado en 385 tareas: 193 cálculo exacto, 192 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",385,0,192,193,0
+acorbea,916.75,607.4,277.42,0.3026,412,176,81,Media,"Basado en 412 tareas: 189 cálculo exacto, 223 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",412,0,223,189,0
+mabreu,544.5,336,203.68,0.3741,229,125,79,Media,"Basado en 229 tareas: 67 cálculo exacto, 162 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).",229,0,162,67,0
+scarcamo,328,156.13,176.4,0.5378,148,85,81,Media,"Basado en 148 tareas: 66 cálculo exacto, 82 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",148,0,82,66,0
+mreyes,567.92,445.37,120.17,0.2116,249,77,80,Media,"Basado en 249 tareas: 91 cálculo exacto, 158 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).",249,0,158,91,0
+aecheverria,378.75,284.2,82.28,0.2172,170,62,80,Media,"Basado en 170 tareas: 78 cálculo exacto, 92 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).",170,0,92,78,0
+raguila,328.5,249.5,75.93,0.2312,129,58,81,Media,"Basado en 129 tareas: 55 cálculo exacto, 74 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",129,0,74,55,0
+glopez,196.25,112.27,75.22,0.3833,74,39,79,Media,"Basado en 74 tareas: 24 cálculo exacto, 50 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).",74,0,50,24,0
+rcammalleri,538,477.22,60.17,0.1118,258,46,80,Media,"Basado en 258 tareas: 115 cálculo exacto, 143 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).",258,0,143,115,0
+ebecker,514,449.73,42.17,0.0820,228,44,79,Media,"Basado en 228 tareas: 81 cálculo exacto, 147 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).",228,0,147,81,0
+jbustamante,126.25,90.97,39.28,0.3112,50,28,80,Media,"Basado en 50 tareas: 21 cálculo exacto, 29 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).",50,0,29,21,0
+ssalice,105,78.78,31.82,0.3030,98,32,81,Media,"Basado en 98 tareas: 49 cálculo exacto, 49 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",98,0,49,49,0
+varenas,143,120.5,29.98,0.2097,55,16,81,Media,"Basado en 55 tareas: 27 cálculo exacto, 28 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).",55,0,28,27,0
+adiaz,162,143.27,17.65,0.1090,90,12,82,Media,"Basado en 90 tareas: 58 cálculo exacto, 32 estimado, 0 no calculable. Confianza ponderada por horas: 82 (Media).",90,0,32,58,0
+jacuna,21.5,17.2,6.97,0.3240,19,5,80,Media,"Basado en 19 tareas: 8 cálculo exacto, 11 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).",19,0,11,8,0
+mcaballero,2,2,0,0.0000,1,0,76,Media,"Basado en 1 tareas: 0 cálculo exacto, 1 estimado, 0 no calculable. Confianza ponderada por horas: 76 (Media).",1,0,1,0,0
+rsaez,1,1.5,0,0.0000,1,0,86,Alta,"Basado en 1 tareas: 1 cálculo exacto, 0 estimado, 0 no calculable. Confianza ponderada por horas: 86 (Alta).",1,0,0,1,0

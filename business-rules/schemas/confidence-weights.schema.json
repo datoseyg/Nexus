@@ -1,0 +1,5 @@
+{
+  "$id": "confidence-weights",
+  "type": "json",
+  "required_keys": ["factors", "penalties"]
+}

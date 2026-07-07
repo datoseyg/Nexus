@@ -1,0 +1,2 @@
+equipment_contract_id,equipment_internal_id,client_key,equipment_model,effective_from,effective_to,expected_usage_profile,maintenance_plan,warranty_status,notes
+EXAMPLE-001,LINAC-000000,FIELD_BEAT_CLIENT|00000000-0|CLIENTE EJEMPLO,Modelo Ejemplo,2026-01-01,,STANDARD,PREVENTIVO_ANUAL,OUT_OF_WARRANTY,Fila de ejemplo - reemplazar por contratos reales y borrar esta fila

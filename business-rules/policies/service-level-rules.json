@@ -1,0 +1,8 @@
+{
+  "description": "Plantilla mínima para reglas de SLA por nivel de contrato - todavía no consumida por ningún cálculo (ver entities/client_contracts.example.csv § sla_level). Reservado para cuando se conecten los contratos de cliente a exposición operativa/confiabilidad.",
+  "sla_levels": {
+    "SLA_1": { "response_time_hours": 4, "description": "Respuesta crítica" },
+    "SLA_2": { "response_time_hours": 24, "description": "Respuesta estándar" },
+    "SLA_3": { "response_time_hours": 72, "description": "Respuesta best-effort" }
+  }
+}

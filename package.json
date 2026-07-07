@@ -26,7 +26,21 @@
     "db:validate": "node src/db/validate-duckdb.js",
     "db:build": "npm run db:init && npm run db:load && npm run db:validate",
     "build:fieldbeat-report-dolibarr-view": "node src/marts/build-fieldbeat-report-dolibarr-view.js",
-    "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js"
+    "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js",
+    "build:fieldbeat-working-hours": "node src/marts/build-fieldbeat-working-hours-analysis.js",
+    "build:gold:after-hours": "node src/gold/build-after-hours-gold.js",
+    "build:equipment-part-lifecycle-events": "node src/marts/build-equipment-part-lifecycle-events.js",
+    "build:equipment-part-lifecycle-intervals": "node src/marts/build-equipment-part-lifecycle-intervals.js",
+    "build:gold:equipment-lifecycle": "node src/gold/build-equipment-part-lifecycle-gold.js",
+    "business-rules:validate": "node business-rules/loaders/validate-business-rules.js",
+    "qa:phase1": "node src/qa/final-phase1-audit.js",
+    "curation:validate": "node src/curation/validate-curation-files.js",
+    "audit:structure": "node src/qa/audit-project-structure.js",
+    "app:dev": "cd apps/nexus-bi-app && npm run dev",
+    "app:build": "cd apps/nexus-bi-app && npm run build",
+    "cloud:export-snapshot": "node src/cloud/export-cloud-snapshot.js",
+    "cloud:preflight": "node src/cloud/preflight-cloud-demo.js",
+    "app:build:static": "cd apps/nexus-bi-app && npm run build:static"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",

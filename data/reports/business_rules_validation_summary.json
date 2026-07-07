@@ -1,0 +1,103 @@
+{
+  "generated_at": "2026-07-05T08:35:47.000Z",
+  "manifest_exists": true,
+  "entities": [
+    {
+      "name": "client_contracts",
+      "kind": "entity",
+      "example_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\client_contracts.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\client_contracts.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK_EXAMPLE_ONLY"
+    },
+    {
+      "name": "equipment_contracts",
+      "kind": "entity",
+      "example_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\equipment_contracts.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\equipment_contracts.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK_EXAMPLE_ONLY"
+    },
+    {
+      "name": "equipment_usage_profiles",
+      "kind": "entity",
+      "example_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\equipment_usage_profiles.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\equipment_usage_profiles.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK_EXAMPLE_ONLY"
+    },
+    {
+      "name": "part_families",
+      "kind": "entity",
+      "example_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\part_families.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\part_families.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK_EXAMPLE_ONLY"
+    },
+    {
+      "name": "part_manufacturer_life",
+      "kind": "entity",
+      "example_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\part_manufacturer_life.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\part_manufacturer_life.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK_EXAMPLE_ONLY"
+    },
+    {
+      "name": "worker_contracts",
+      "kind": "entity",
+      "example_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\worker_contracts.example.csv",
+      "example_file_exists": true,
+      "example_headers_valid": true,
+      "example_issues": [],
+      "real_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\entities\\worker_contracts.csv",
+      "real_file_exists": false,
+      "real_headers_valid": null,
+      "real_issues": [],
+      "status": "OK_EXAMPLE_ONLY"
+    }
+  ],
+  "policies": [
+    {
+      "name": "confidence-weights",
+      "kind": "policy",
+      "policy_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\policies\\confidence-weights.json",
+      "exists": true,
+      "issues": [],
+      "status": "OK"
+    },
+    {
+      "name": "lifecycle-model-policy",
+      "kind": "policy",
+      "policy_file": "A:\\Documents\\EyG\\Codigo\\eyg-nexus-local\\business-rules\\policies\\lifecycle-model-policy.json",
+      "exists": true,
+      "issues": [],
+      "status": "OK"
+    }
+  ],
+  "all_valid": true
+}

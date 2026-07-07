@@ -1,0 +1,61 @@
+{
+  "total_machine_part_combinations": 558,
+  "total_machines_analyzed": 30,
+  "total_parts_analyzed": 254,
+  "total_clients_analyzed": 15,
+  "prediction_status_breakdown": {
+    "DIRECT_HISTORY_ENOUGH": 28,
+    "LOW_N_SHRINKAGE": 117,
+    "INSUFFICIENT_DATA": 261,
+    "BORROWED_COHORT_ESTIMATE": 152
+  },
+  "confidence_label_breakdown": {
+    "Alta": 2,
+    "Media": 24,
+    "Baja": 20,
+    "Insuficiente": 512
+  },
+  "total_insights_generated": 1529,
+  "filterOptions": {
+    "clientes": [
+      "ACME",
+      "CLINICA ALEMANA DE SANTIAGO",
+      "CLÍNICA ALEMANA DE TEMUCO",
+      "CLÍNICA LAS CONDES",
+      "CLÍNICA SANATORIO ALEMÁN (ONCORAD)",
+      "Control Dosimetrico Linac HCM",
+      "EYG MEDICAL SYSTEMS LTDA.",
+      "FUNDACION ARTURO LOPEZ PEREZ",
+      "HOSPITAL CARLOS VAN BUREN (SSVSA)",
+      "HOSPITAL EXEQUIEL GONZÁLEZ CORTÉS",
+      "Hospital Regional de Coyhaique",
+      "INRAD",
+      "INSTITUTO DE SALUD PUBLICA (ISP)",
+      "Instituto Nacional del Cáncer (INC)",
+      "Mantención Preventiva Anual Linac HCM",
+      "Mantención Simulador Huestis HCM",
+      "No indica",
+      "RADIO NUCLEAR",
+      "RADIO ONCOLOGÍA DEL SUR",
+      "SERVICIO DE SALUD DE MAGALLANES",
+      "TORRE MÉDICA - RANCAGUA",
+      "Tecnoimagen S.A.",
+      "Test",
+      "UC CHRISTUS - CECA",
+      "UC CHRISTUS - SCA"
+    ],
+    "tiposTarea": [
+      "ASISTENCIA REMOTA",
+      "CORRECTIVA NO PROGRAMADA",
+      "CORRECTIVA PROGRAMADA",
+      "CORRECTIVA PROGRAMADA V2",
+      "Guia de Despacho - Entrega de items o insumos a terceros",
+      "INSTALACION - INTEGRACION",
+      "PREVENTIVA NO PROGRAMADA",
+      "PREVENTIVA PROGRAMADA",
+      "PRUEBAS DE ACEPTACION",
+      "PUESTA EN MARCHA",
+      "REQUERIMIENTO DEL CLIENTE"
+    ]
+  }
+}

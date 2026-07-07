@@ -1,0 +1,35 @@
+{
+  "default_model": "AUTO",
+  "minimum_intervals_for_direct_median": 3,
+  "minimum_intervals_for_weibull": 3,
+  "shrinkage_k": 5,
+  "allow_borrowed_estimates": true,
+  "cohort_priority": [
+    "same_equipment_same_part",
+    "same_client_same_part",
+    "same_part_global",
+    "same_part_family",
+    "manufacturer_prior"
+  ],
+  "weibull": {
+    "shape_grid_min": 0.5,
+    "shape_grid_max": 5.0,
+    "shape_grid_steps": 60,
+    "scale_days_min": 30,
+    "scale_days_max": 3650,
+    "scale_grid_steps": 120,
+    "prior_strength": "moderate"
+  },
+  "gamma_poisson": {
+    "prior_alpha": 1.0,
+    "prior_beta": 1.0,
+    "notes": "alpha/beta están en unidades de tasa anual (reemplazos/año) y años de exposición respectivamente - un prior_beta grande implica un prior MUY fuerte (equivalente a esa cantidad de años de exposición previa). prior_alpha=1, prior_beta=1 es un prior débil (media=1 reemplazo/año, peso equivalente a ~1 año de exposición)."
+  },
+  "confidence": {
+    "penalize_n_less_than_10": true,
+    "penalize_n_less_than_3": true,
+    "penalize_borrowed_estimate": true,
+    "penalize_missing_usage_profile": true
+  },
+  "notes": "Ver docs/LIFECYCLE_PREDICTIVE_MODELS.md para la explicación completa de cada campo. Cambiar shrinkage_k o los grids de Weibull requiere reconstruir gold (npm run build:gold:equipment-lifecycle) y bumpear la version en business-rules/manifest.json."
+}

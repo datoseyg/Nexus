@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-07-07T05:12:23.124Z",
+  "status": "READY",
+  "blockers": [],
+  "warnings": [],
+  "checks": {
+    "public_dir_scanned": "apps/nexus-bi-app/public",
+    "files_scanned": 8,
+    "forbidden_content_violations": [],
+    "expected_json": {
+      "present": [
+        "metadata.json",
+        "dashboard-operacional-summary.json",
+        "dashboard-operacional-parts.json",
+        "audit-summary.json",
+        "audit-manual-review.sample.json",
+        "after-hours-summary.json",
+        "scope-warnings.json",
+        "equipment-lifecycle-summary.json"
+      ],
+      "missingRequired": [],
+      "missingOptional": []
+    },
+    "metadata": {
+      "ok": true,
+      "generatedAt": "2026-07-07T05:12:21.923Z",
+      "sourceWarehouse": "eyg_nexus.duckdb"
+    },
+    "pii_scan_hits": [],
+    "oversized_warn": [],
+    "oversized_fail": []
+  }
+}

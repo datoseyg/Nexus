@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-07-07T05:12:21.923Z",
+  "dataMode": "static",
+  "sourceWarehouse": "eyg_nexus.duckdb",
+  "sanitized": true,
+  "files": [
+    "dashboard-operacional-summary.json",
+    "dashboard-operacional-parts.json",
+    "audit-summary.json",
+    "audit-manual-review.sample.json",
+    "after-hours-summary.json",
+    "equipment-lifecycle-summary.json",
+    "scope-warnings.json"
+  ]
+}

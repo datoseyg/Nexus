@@ -1,0 +1,2 @@
+generated_at,total_machine_part_combinations,total_machines_analyzed,total_parts_analyzed,total_clients_analyzed,prediction_status_breakdown,confidence_label_breakdown,total_insights_generated,lifecycle_model_policy_default
+2026-07-05T08:35:36.761Z,558,30,254,15,"{""DIRECT_HISTORY_ENOUGH"":28,""LOW_N_SHRINKAGE"":117,""INSUFFICIENT_DATA"":261,""BORROWED_COHORT_ESTIMATE"":152}","{""Alta"":2,""Media"":24,""Baja"":20,""Insuficiente"":512}",1529,AUTO

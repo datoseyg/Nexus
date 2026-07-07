@@ -2,3 +2,7 @@
 data/raw/
 data/warehouse/
 node_modules/
+.next/
+*.tsbuildinfo
+apps/nexus-bi-app/.cloud-static-build-tmp/
+apps/nexus-bi-app/out/

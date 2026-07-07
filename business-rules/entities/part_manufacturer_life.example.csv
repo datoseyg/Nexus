@@ -1,0 +1,2 @@
+dolibarr_ref,dolibarr_label,manufacturer_life_months,manufacturer_life_hours,manufacturer_source,manufacturer_notes,confidence_of_source,effective_from,effective_to
+EJEMPLO-001,Ejemplo de repuesto (tubo de rayos X),36,,FICHA_TECNICA_FABRICANTE_2024,Fila de ejemplo - reemplazar por el dolibarr_ref real,MEDIA,2026-01-01,

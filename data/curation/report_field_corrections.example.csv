@@ -1,0 +1,2 @@
+fieldbeat_task_id,field_name,original_value,corrected_value,reason,created_by,created_at
+953,TRABAJO REALIZADO,"Se cambio repuesto","Se cambio repuesto MLC reflector spares kit (ver Used_Parts_Dolibarr_Match para detalle)","Ejemplo ilustrativo: descripcion original demasiado vaga, se enriquece con el detalle ya resuelto de repuestos sin alterar el campo original en RAW",ignacio,2026-07-02T00:00:00.000Z

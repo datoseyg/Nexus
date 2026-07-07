@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-07-05T08:35:24.565Z",
+  "total_machine_part_combinations": 558,
+  "total_interval_rows": 697,
+  "interval_status_breakdown": {
+    "VALID_INTERVAL": 276,
+    "SINGLE_EVENT_ONLY": 413,
+    "OUTLIER_CANDIDATE": 8
+  },
+  "notes": "MISSING_DATE e INSUFFICIENT_DATA quedan reservados en el enum pero no se esperan en v1: el mart de eventos ya excluye fechas inválidas antes de llegar acá."
+}

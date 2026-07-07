@@ -1,8 +1,10 @@
-# Pipeline de datos — orden de ejecución
+# Pipeline de datos - orden de ejecución
 
 Todos los comandos se corren desde la raíz del proyecto (`eyg-nexus-local/`). El orden importa: cada etapa depende de que la anterior haya generado sus archivos de salida.
 
-## 1. Miners — RAW
+> **Nota:** este documento detalla el flujo original ticket-céntrico (pasos 1-6). Dos líneas adicionales, complementarias, se agregaron después y se documentan aparte: la línea report-céntrica/FieldBeat-first (`npm run build:fieldbeat-report-dolibarr-view` + `npm run build:gold:fieldbeat`, ver [DATA_DICTIONARY.md](DATA_DICTIONARY.md)) y la de Trabajo Fuera de Horario (`npm run build:fieldbeat-working-hours` + `npm run build:gold:after-hours`, ver [AFTER_HOURS_METRICS.md](AFTER_HOURS_METRICS.md)). Ambas corren después del paso 6 y antes de `npm run db:build` - ver la secuencia completa y actualizada en [LOCAL_OPERATIONS_RUNBOOK.md](LOCAL_OPERATIONS_RUNBOOK.md).
+
+## 1. Miners - RAW
 
 ```bash
 npm run get:fieldbeat:all
@@ -24,7 +26,7 @@ npm run get:zendesk:backfill-fieldbeat
 ```
 Busca en Zendesk, uno por uno, los `zendesk_ticket_id` que FieldBeat menciona pero que no aparecieron en el `get:zendesk` masivo. Guarda RAW en `data/raw/zendesk/backfill_by_fieldbeat_ticket_ids/`.
 
-## 2. Normalizers — RAW → PROCESSED
+## 2. Normalizers - RAW → PROCESSED
 
 ```bash
 npm run normalize:fieldbeat
@@ -34,7 +36,7 @@ npm run normalize:dolibarr
 
 | Comando | Lee | Genera en `data/processed/<plataforma>/` |
 |---|---|---|
-| `normalize:fieldbeat` | Todo `data/raw/fieldbeat/*.json` | `DB_FieldBeat_Tasks.csv`, `DB_FieldBeat_Task_Equipments.csv`, `DB_FieldBeat_Report_Fields.csv`, `DB_FieldBeat_Used_Parts.csv` (con explosión de listas numeradas — ver más abajo), `DIM_Clients.csv`, `DIM_Equipments.csv`, `BR_Ticket_FieldBeat_Task.csv` |
+| `normalize:fieldbeat` | Todo `data/raw/fieldbeat/*.json` | `DB_FieldBeat_Tasks.csv`, `DB_FieldBeat_Task_Equipments.csv`, `DB_FieldBeat_Report_Fields.csv`, `DB_FieldBeat_Used_Parts.csv` (con explosión de listas numeradas - ver más abajo), `DIM_Clients.csv`, `DIM_Equipments.csv`, `BR_Ticket_FieldBeat_Task.csv` |
 | `normalize:zendesk` | Todo `data/raw/zendesk/**/*.json` (recursivo, incluye backfill) | `DB_Zendesk_Tickets.csv`, `DB_Zendesk_Ticket_Tags.csv`, `DB_Zendesk_Custom_Fields.csv` |
 | `normalize:dolibarr` | Todo `data/raw/dolibarr/*.json` | `DB_Dolibarr_Products.csv`, `DIM_Dolibarr_Product_Identity_Map.csv` (una fila por REF/BARCODE/ID de cada producto) |
 
@@ -48,18 +50,18 @@ npm run build:used-parts-dolibarr-match
 
 Corre `src/resolvers/part-identity-resolver.js` sobre cada fila de `DB_FieldBeat_Used_Parts.csv`, con esta cascada de prioridad:
 
-1. **Alias manual** (`data/config/part_identity_aliases.csv`, si existe — ver `.example.csv`)
+1. **Alias manual** (`data/config/part_identity_aliases.csv`, si existe - ver `.example.csv`)
 2. **Placeholder** (`"sin numero"`, `"NC"`, valores vacíos tras normalizar, etc.) → rechazado sin intentar match
 3. `REF_EXACT` → `BARCODE_EXACT` → `ID_EXACT` → `REF_NORMALIZED_EXACT` → `BARCODE_NORMALIZED_EXACT` → `REF_LIKE` (menor confianza) → `NO_MATCH`
 4. Si más de un producto candidato calza → `AMBIGUOUS_MATCH`
 
 Genera:
-- `data/marts/Used_Parts_Dolibarr_Match.csv` (una fila por repuesto, global — todas las tasks FieldBeat, no solo las de tickets accesibles)
+- `data/marts/Used_Parts_Dolibarr_Match.csv` (una fila por repuesto, global - todas las tasks FieldBeat, no solo las de tickets accesibles)
 - `data/reports/used_parts_without_dolibarr_match.csv`, `used_parts_ambiguous_dolibarr_match.csv`
 - `data/reports/used_parts_manual_review_queue.csv` (agrupado por `normalized_part_identifier`, para revisión humana)
 - `data/reports/dolibarr_parts_match_summary.json`
 
-## 4. Marts — cruces entre plataformas
+## 4. Marts - cruces entre plataformas
 
 ```bash
 npm run build:ticket-fieldbeat-view

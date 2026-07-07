@@ -101,7 +101,7 @@ function buildFieldBeatDataQuality(reportRows) {
   });
 }
 
-// Grano (cliente, período mensual) — deliberado: permite responder tanto
+// Grano (cliente, período mensual) - deliberado: permite responder tanto
 // "qué cliente usa más repuestos" (sumando todos los períodos) como
 // "qué cliente usa más repuestos en una ventana de tiempo" (filtrando
 // período en la herramienta BI), sin necesitar dos tablas separadas.

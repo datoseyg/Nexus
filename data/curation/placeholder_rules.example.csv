@@ -1,0 +1,3 @@
+pattern_value,match_type,applies_to,reason,created_by,created_at
+NC,EXACT_NORMALIZED,PART_NUMBER,"Ejemplo ilustrativo: abreviatura de 'no corresponde' detectada en gold.used_parts_analysis con 63 ocurrencias durante Sprint 4 parte 2 (ya esta hardcodeada en part-identity-resolver.js; este archivo es la version curada/editable a futuro)",ignacio,2026-07-02T00:00:00.000Z
+SIN REPUESTO,CONTAINS,PART_NUMBER,"Ejemplo ilustrativo: variante de placeholder no cubierta por la lista original",ignacio,2026-07-02T00:00:00.000Z
