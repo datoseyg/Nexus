@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-07-07T06:23:34.777Z",
+  "generated_at": "2026-07-07T07:13:14.849Z",
   "seeds_dir": "cloud/d1/seeds",
-  "batch_size": 200,
+  "batch_size": 50,
   "tables": [
     {
       "d1Table": "gold_operational_dashboard",

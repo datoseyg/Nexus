@@ -36,18 +36,52 @@ export function getOperationalSummary(): Promise<Record<string, unknown>> {
   }
 }
 
+export interface FieldbeatSummaryFilters {
+  client?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface FieldbeatSummaryRow extends Record<string, unknown> {
+  fieldbeat_task_id: number;
+  fieldbeat_task_date: string | null;
+  client_name: string | null;
+  task_type: string | null;
+  task_state: string | null;
+  used_parts_count: number | null;
+  matched_used_parts_count: number | null;
+  report_quality_status: string | null;
+}
+
+export interface FieldbeatSummaryResponse {
+  source: "local-duckdb" | "d1";
+  data: FieldbeatSummaryRow[];
+  meta: {
+    total: number;
+    totalUsedParts: number;
+    clientOptions: string[];
+    filters: Required<FieldbeatSummaryFilters>;
+  };
+}
+
 // Sin equivalente en el snapshot estático de Fase 1 (no se exportó
-// fieldbeat-summary.json) - solo local-duckdb y d1 lo sirven hoy.
-export async function fetchFieldbeatSummary() {
-  if (process.env.NEXT_PUBLIC_DATA_MODE === "d1") {
-    return fetch("/api/d1/fieldbeat-summary").then((r) => r.json());
-  }
+// fieldbeat-summary.json) - solo local-duckdb y d1 lo sirven hoy. Mismo
+// contrato { source, data, meta } en ambos modos - ver
+// app/api/dashboard/fieldbeat/route.ts y functions/api/d1/fieldbeat-summary.ts.
+export function getFieldbeatSummary(filters?: FieldbeatSummaryFilters): Promise<FieldbeatSummaryResponse> {
+  const mode = getDataMode();
+  if (mode === "static") throw new DataModeUnsupportedError("getFieldbeatSummary", mode);
 
-  if (process.env.NEXT_PUBLIC_DATA_MODE === "static") {
-    return fetch("/data/cloud/fieldbeat-summary.json").then((r) => r.json());
-  }
+  const qs = new URLSearchParams();
+  if (filters?.client) qs.set("client", filters.client);
+  if (filters?.q) qs.set("q", filters.q);
+  if (filters?.from) qs.set("from", filters.from);
+  if (filters?.to) qs.set("to", filters.to);
+  const query = qs.toString() ? `?${qs.toString()}` : "";
 
-  return fetch("/api/dashboard/fieldbeat").then((r) => r.json());
+  if (mode === "d1") return fetchJson(`/api/d1/fieldbeat-summary${query}`);
+  return fetchJson(`/api/dashboard/fieldbeat${query}`);
 }
 
 export function getAuditSummary(): Promise<Record<string, unknown>> {

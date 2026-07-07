@@ -15,7 +15,11 @@ import { sanitizeD1Value } from "./sanitize-d1-export.js";
 // convertirse en un literal SQL.
 
 const SEEDS_DIR = path.join("cloud", "d1", "seeds");
-const BATCH_SIZE = 200;
+// D1 rechaza sentencias SQL demasiado largas (SQLITE_TOOBIG) - verificado
+// contra un D1 local emulado (`wrangler d1 execute --local`): 200 filas por
+// INSERT rompía la tabla más ancha (marts_fieldbeat_working_hours_analysis,
+// ~28 columnas incluyendo varias de texto libre). 50 quedó probado OK.
+const BATCH_SIZE = 50;
 const SUMMARY_FILE = path.join("data", "reports", "cloud_d1_export_summary.json");
 
 // Orden fijo = mismo orden que cloud/d1/schema.sql. `source` puede ser una
@@ -118,7 +122,14 @@ async function writeSeedFile(index, d1Table, columns, rows, note) {
     note ? `-- Nota: ${note}` : null
   ].filter(Boolean);
 
-  const body = rows.length > 0 ? buildInsertStatements(d1Table, columns, rows) : ["-- (sin filas para exportar)"];
+  // `wrangler d1 execute --file` exige al menos una sentencia SQL
+  // ejecutable - un archivo con solo comentarios tira "SQL code did not
+  // contain a statement" (verificado contra un D1 local emulado). Se usa un
+  // SELECT no-op en vez de dejar el archivo sin sentencias, para que "un
+  // seed por tabla" siga siendo válido como archivo de wrangler incluso
+  // cuando la tabla queda vacía.
+  const body =
+    rows.length > 0 ? buildInsertStatements(d1Table, columns, rows) : ["SELECT 1; -- (sin filas para exportar, ver nota arriba)"];
 
   await fs.writeFile(filePath, `${header.join("\n")}\n\n${body.join("\n\n")}\n`, "utf8");
   console.log(`Seed generado: ${filePath} (${rows.length} filas)`);

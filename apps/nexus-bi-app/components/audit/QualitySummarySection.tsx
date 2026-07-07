@@ -4,24 +4,23 @@ import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { ErrorBanner } from "@/components/ErrorBanner";
+import { getAuditSummary } from "@/lib/data-client";
 import type { AuditSummary } from "@/types/audit";
 
 // Alimenta la pestaña "Resumen de calidad" - ver
 // docs/MANUAL_REVIEW_VIEW.md § F. Todos los números vienen de
-// gold.fieldbeat_data_quality / gold.scope_metadata vía
-// /api/audit/summary; nada se calcula de nuevo acá.
+// gold.fieldbeat_data_quality / gold.scope_metadata, vía
+// lib/data-client.ts::getAuditSummary() (elige /api/audit/summary en modo
+// local-duckdb o /api/d1/audit-summary en modo d1 - ver
+// docs/CLOUDFLARE_D1_MIGRATION.md); nada se calcula de nuevo acá.
 export function QualitySummarySection() {
   const [data, setData] = useState<AuditSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/audit/summary")
-      .then(async res => {
-        const body = await res.json();
-        if (!res.ok) throw body;
-        setData(body);
-      })
-      .catch(body => setError(body?.error ?? "Error desconocido"));
+    getAuditSummary()
+      .then(body => setData(body as unknown as AuditSummary))
+      .catch(err => setError(err instanceof Error ? err.message : "Error desconocido"));
   }, []);
 
   if (error) return <ErrorBanner message={error} />;

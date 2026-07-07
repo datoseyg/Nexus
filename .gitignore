@@ -6,6 +6,9 @@ node_modules/
 *.tsbuildinfo
 apps/nexus-bi-app/.cloud-static-build-tmp/
 apps/nexus-bi-app/out/
+# Estado local de `wrangler d1 execute --local` / `wrangler pages dev`
+# (D1 emulado + cache) - nunca debe subirse, se regenera solo.
+apps/nexus-bi-app/.wrangler/
 # Regenerable con `npm run cloud:d1:export` - mismo dato que ya está en
 # data/marts/ y data/gold/, solo reformateado como INSERT SQL. No tiene
 # sentido duplicarlo en git.

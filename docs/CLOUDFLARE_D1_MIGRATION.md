@@ -149,17 +149,41 @@ Todos en `apps/nexus-bi-app/functions/api/d1/`, todos `GET`, todos usan `context
 | Endpoint | Tablas D1 que consulta |
 |---|---|
 | `/api/d1/operational-summary` | `gold_operational_dashboard`, `gold_fieldbeat_data_quality`, `marts_fieldbeat_report_dolibarr_operational_view` |
-| `/api/d1/fieldbeat-summary` | `gold_fieldbeat_report_analysis` |
+| `/api/d1/fieldbeat-summary?client=&q=&from=&to=` | `marts_fieldbeat_report_dolibarr_operational_view` (filtrable, ver abajo) |
 | `/api/d1/after-hours-summary` | `gold_after_hours_work_analysis`, `gold_after_hours_by_client` |
 | `/api/d1/audit-summary` | `gold_fieldbeat_data_quality`, `gold_scope_metadata` |
 | `/api/d1/parts-review?q=&limit=&offset=` | `marts_used_parts_dolibarr_match` |
 | `/api/d1/table-counts` | las 17 (vía `DB.batch()`) |
 
-`apps/nexus-bi-app/lib/data-client.ts` expone un getter por cada uno de estos (`getOperationalSummary()`, `getFieldbeatSummary()`, etc.) que internamente elige `/api/dashboard/*` (local-duckdb) / `static-data-client.ts` (static) / `/api/d1/*` (d1) según `NEXT_PUBLIC_DATA_MODE` - mismo límite conocido que la Fase 1: los componentes existentes (`OperationalDashboardTab`, etc.) todavía no llaman a este dispatcher, siguen pegándole directo a `/api/dashboard/*`. Cablearlos queda para un paso siguiente.
+`apps/nexus-bi-app/lib/data-client.ts` expone un getter por cada uno de estos (`getOperationalSummary()`, `getFieldbeatSummary()`, etc.) que internamente elige `/api/dashboard/*` (local-duckdb) / `static-data-client.ts` (static) / `/api/d1/*` (d1) según `NEXT_PUBLIC_DATA_MODE`. Cableado hoy: `/dashboard/fieldbeat` (completo, con filtros) y la pestaña "Resumen de calidad" de `/audit/manual-review`. El resto de componentes (`OperationalDashboardTab`, `AfterHoursShell`, `PartsReviewSection`) siguen pegándole directo a `/api/dashboard/*` a propósito - tienen filtros (cliente, máquina, técnico, rango de fechas, paginación por página) que `data-client.ts`/los endpoints D1 todavía no replican 1:1; migrarlos sin esa paridad completa rompería el filtrado en modo local-duckdb. Extender el filtro completo a esos tres queda como siguiente paso.
+
+### `/api/d1/fieldbeat-summary` - filtros
+
+`client`, `q`, `from`, `to` viajan siempre parametrizados (`.bind()` en D1 / `$1,$2,...` en DuckDB) - nunca se interpola el valor de un usuario directo en el SQL. `client=ALL` / `client=Todos` (cualquier capitalización) o vacío se tratan como "sin filtro" - ver `isRealFilter()` en `functions/api/d1/fieldbeat-summary.ts` y `app/api/dashboard/fieldbeat/route.ts`. `confidenceLevel` no aplica a esta tabla (no tiene columna de confianza) - se omitió a propósito en vez de agregar un filtro que no haría nada.
+
+## Validado contra un D1 local emulado
+
+Antes de tocar la base D1 real, este corte se probó completo con `wrangler d1 execute --local` (SQLite emulado por miniflare, sin tocar la nube ni requerir login) + `wrangler pages dev`:
+
+```bash
+cd apps/nexus-bi-app
+npx wrangler d1 execute eyg-nexus --local --file=../../cloud/d1/schema.sql
+for f in ../../cloud/d1/seeds/*.sql; do npx wrangler d1 execute eyg-nexus --local --file="$f"; done
+npm run build:d1
+npx wrangler pages dev out --port=8788
+# en otra terminal:
+curl http://127.0.0.1:8788/api/d1/fieldbeat-summary
+```
+
+Esto encontró y corrigió dos bugs reales antes de que llegaran a producción:
+
+1. **`SQLITE_TOOBIG`** al insertar `marts_fieldbeat_working_hours_analysis` con lotes de 200 filas - la tabla tiene ~28 columnas, varias de texto libre, y el `INSERT` superaba el límite de tamaño de sentencia de D1. `BATCH_SIZE` bajó de 200 a 50 en `src/cloud/export-d1-seed.js`.
+2. **`SQL code did not contain a statement`** al cargar los 4 seeds de tablas vacías (solo tenían un comentario) - ahora escriben `SELECT 1;` como sentencia no-op válida.
 
 ## Troubleshooting
 
 - **`cloud:d1:validate` da `NOT_READY` por RUT o PII sin enmascarar**: revisar `data/reports/cloud_d1_export_validation.json` → `blockers`, identificar el archivo/tabla, y si es una columna nueva agregar el caso a `sanitizeD1Value()` en `src/cloud/sanitize-d1-export.js` antes de re-exportar.
-- **`wrangler d1 execute` tira error de tamaño de archivo**: los seeds están en lotes de 200 filas por `INSERT`; si un archivo sigue siendo demasiado grande, bajar `BATCH_SIZE` en `src/cloud/export-d1-seed.js` y volver a exportar.
-- **Un endpoint `/api/d1/*` devuelve error 500 con "no such table"**: falta aplicar `cloud/d1/schema.sql` contra esa base D1 (paso 5), o el `database_id` en `wrangler.toml`/el binding de Pages no apunta a la base correcta.
+- **`wrangler d1 execute` tira `SQLITE_TOOBIG`**: bajar `BATCH_SIZE` en `src/cloud/export-d1-seed.js` (ya en 50, probado OK contra la tabla más ancha) y volver a exportar.
+- **Un endpoint `/api/d1/*` devuelve error 500 con "no such table"**: falta aplicar `cloud/d1/schema.sql` contra esa base D1 (paso 5), o el binding no apunta a la base correcta.
+- **`wrangler pages dev` no encuentra las tablas aunque ya corriste los seeds**: si arrancaste `pages dev` con un flag `--d1=DB=<nombre>` explícito, probá SIN ese flag - deja que tome el binding directo de `wrangler.toml` (`[[d1_databases]]`). Con `--d1` de más se detectó que crea un binding ad-hoc que apunta a un estado local distinto del que usa `wrangler d1 execute`, aunque ambos digan "local" y el mismo nombre de base.
 - **`npm run app:build:d1` falla en el typecheck** con errores de `D1Database`/`PagesFunction`: confirmar que `apps/nexus-bi-app/tsconfig.json` sigue excluyendo `functions/` (`"exclude": ["node_modules", "functions"]`) - si se sacó por error, `next build` intenta tipar Pages Functions con el `lib: ["dom", ...]` de Next, que no las reconoce.
