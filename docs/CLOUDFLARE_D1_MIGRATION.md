@@ -150,10 +150,15 @@ Todos en `apps/nexus-bi-app/functions/api/d1/`, todos `GET`, todos usan `context
 |---|---|
 | `/api/d1/operational-summary` | `gold_operational_dashboard`, `gold_fieldbeat_data_quality`, `marts_fieldbeat_report_dolibarr_operational_view` |
 | `/api/d1/fieldbeat-summary?client=&q=&from=&to=` | `marts_fieldbeat_report_dolibarr_operational_view` (filtrable, ver abajo) |
-| `/api/d1/after-hours-summary` | `gold_after_hours_work_analysis`, `gold_after_hours_by_client` |
-| `/api/d1/audit-summary` | `gold_fieldbeat_data_quality`, `gold_scope_metadata` |
+| `/api/d1/audit/summary` | `gold_fieldbeat_data_quality`, `gold_scope_metadata` |
 | `/api/d1/parts-review?q=&limit=&offset=` | `marts_used_parts_dolibarr_match` |
+| `/api/d1/after-hours/summary` | `marts_fieldbeat_working_hours_analysis` (agregado en vivo, filtrable) |
+| `/api/d1/after-hours/by-client` / `by-task-type` / `by-technician` / `by-period` | `marts_fieldbeat_working_hours_analysis` (agrupado, filtrable) |
+| `/api/d1/after-hours/confidence-distribution` | `marts_fieldbeat_working_hours_analysis` (4 categorías fijas) |
+| `/api/d1/after-hours/detail?page=&pageSize=&...` | `marts_fieldbeat_working_hours_analysis` (paginado, filtrable) |
 | `/api/d1/table-counts` | las 17 (vía `DB.batch()`) |
+
+Convención de rutas: los endpoints con varias "vistas" del mismo dominio viven en subcarpeta (`after-hours/*`, `audit/*`) - el resto son un solo archivo plano (`operational-summary.ts`, `fieldbeat-summary.ts`, `parts-review.ts`, `table-counts.ts`). Todos comparten `functions/api/d1/_shared.ts` (tipos `Env`/helpers de respuesta).
 
 `apps/nexus-bi-app/lib/data-client.ts` expone un getter por cada uno de estos (`getOperationalSummary()`, `getFieldbeatSummary()`, etc.) que internamente elige `/api/dashboard/*` (local-duckdb) / `static-data-client.ts` (static) / `/api/d1/*` (d1) según `NEXT_PUBLIC_DATA_MODE`. Cableado hoy: `/dashboard/fieldbeat` (completo, con filtros) y la pestaña "Resumen de calidad" de `/audit/manual-review`. El resto de componentes (`OperationalDashboardTab`, `AfterHoursShell`, `PartsReviewSection`) siguen pegándole directo a `/api/dashboard/*` a propósito - tienen filtros (cliente, máquina, técnico, rango de fechas, paginación por página) que `data-client.ts`/los endpoints D1 todavía no replican 1:1; migrarlos sin esa paridad completa rompería el filtrado en modo local-duckdb. Extender el filtro completo a esos tres queda como siguiente paso.
 

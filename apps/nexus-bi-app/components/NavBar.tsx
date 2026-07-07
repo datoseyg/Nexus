@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getAuditSummary } from "@/lib/data-client";
 
 const LINKS = [
   { href: "/dashboard/fieldbeat", label: "Dashboard FieldBeat" },
@@ -17,16 +18,28 @@ const LINKS = [
 // Barra de navegación con identidad E&G Medical Systems (ver
 // docs/VISUAL_REDESIGN_EYG.md) - logo verde/teal + link de Auditoría
 // destacado con el conteo de pendientes (gold.fieldbeat_report_analysis
-// .reports_review_required vía /api/audit/summary).
+// .reports_review_required), vía lib/data-client.ts::getAuditSummary()
+// (elige /api/audit/summary en modo local-duckdb o /api/d1/audit/summary en
+// modo d1 - ver docs/CLOUDFLARE_D1_MIGRATION.md). Un error acá nunca debe
+// crashear el NavBar - se degrada a "sin conteo" (badge oculto).
 export function NavBar() {
   const pathname = usePathname();
   const [pendingCount, setPendingCount] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/api/audit/summary")
-      .then(res => res.json())
-      .then(body => setPendingCount(body?.reportsReviewRequired ?? null))
-      .catch(() => setPendingCount(null));
+    let cancelled = false;
+
+    getAuditSummary()
+      .then(body => {
+        if (!cancelled) setPendingCount((body?.reportsReviewRequired as number | undefined) ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setPendingCount(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

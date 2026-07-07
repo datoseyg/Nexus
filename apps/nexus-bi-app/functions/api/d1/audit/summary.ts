@@ -1,4 +1,4 @@
-import { type Env, jsonResponse, errorResponse } from "./_shared";
+import { type Env, jsonResponse, errorResponse } from "../_shared";
 
 interface DataQualityRow {
   report_quality_status: string;
@@ -11,7 +11,7 @@ interface DataQualityRow {
 
 const REVIEW_REQUIRED_STATUSES = new Set(["HAS_PLACEHOLDERS", "HAS_UNMATCHED_PARTS", "HAS_AMBIGUOUS_PARTS", "REVIEW_REQUIRED"]);
 
-// GET /api/d1/audit-summary - equivalente D1 de /api/audit/summary en modo
+// GET /api/d1/audit/summary - equivalente D1 de /api/audit/summary en modo
 // local-duckdb (misma forma de respuesta) - ver
 // docs/CLOUDFLARE_D1_MIGRATION.md y docs/MANUAL_REVIEW_VIEW.md.
 export const onRequestGet: PagesFunction<Env> = async context => {

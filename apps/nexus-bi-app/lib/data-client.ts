@@ -89,7 +89,7 @@ export function getAuditSummary(): Promise<Record<string, unknown>> {
     case "static":
       return staticClient.getAuditSummary();
     case "d1":
-      return fetchJson("/api/d1/audit-summary");
+      return fetchJson("/api/d1/audit/summary");
     default:
       return fetchJson("/api/audit/summary");
   }

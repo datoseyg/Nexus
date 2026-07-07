@@ -11,7 +11,7 @@ import type { AuditSummary } from "@/types/audit";
 // docs/MANUAL_REVIEW_VIEW.md § F. Todos los números vienen de
 // gold.fieldbeat_data_quality / gold.scope_metadata, vía
 // lib/data-client.ts::getAuditSummary() (elige /api/audit/summary en modo
-// local-duckdb o /api/d1/audit-summary en modo d1 - ver
+// local-duckdb o /api/d1/audit/summary en modo d1 - ver
 // docs/CLOUDFLARE_D1_MIGRATION.md); nada se calcula de nuevo acá.
 export function QualitySummarySection() {
   const [data, setData] = useState<AuditSummary | null>(null);
