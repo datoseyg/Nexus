@@ -34,7 +34,17 @@ async function attachPostgres(connection) {
 export async function validateSupabase() {
   console.log("=== Validando migración a Supabase (4 chequeos) ===");
 
-  const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_ONLY" });
+  // READ_WRITE, no READ_ONLY: aunque este script nunca escribe en el
+  // .duckdb local (solo SELECT), sí hace UPDATE sobre
+  // pg.audit.warehouse_sync_state al final - y una conexión DuckDB
+  // abierta READ_ONLY propaga esa restricción a CUALQUIER base adjuntada
+  // vía ATTACH, incluida Postgres, aunque el ATTACH en sí no pida
+  // READ_ONLY explícitamente. Confirmado en la práctica (no solo por
+  // doc): con READ_ONLY acá, el UPDATE fallaba con "Cannot execute
+  // statement of type UPDATE on database pg which is attached in
+  // read-only mode!" - mismo motivo por el que migrate-to-supabase.js
+  // ya usa READ_WRITE.
+  const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_WRITE" });
   const connection = await instance.connect();
   await attachPostgres(connection);
 
