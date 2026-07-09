@@ -1,4 +1,18 @@
 .env
+.env.local
+.env.*.local
 data/raw/
 data/warehouse/
 node_modules/
+
+# Next.js build output (apps/nexus-bi-app)
+.next/
+out/
+next-env.d.ts
+
+# Cloudflare local dev cache (apps/nexus-edge-pipeline)
+.wrangler/
+
+# OS/editor noise
+.DS_Store
+*.log
