@@ -58,10 +58,17 @@ async function attachPostgres(connection) {
 }
 
 async function syncMedallionTables(connection) {
+  // table_catalog = current_catalog() es obligatorio acá: una vez que
+  // ATTACH crea el catálogo "pg", ese catálogo TAMBIÉN tiene schemas
+  // processed/marts/gold con los mismos nombres de tabla (sql/010-030 ya
+  // los creó del lado Postgres) - sin este filtro, information_schema.tables
+  // sin calificar devuelve cada tabla DOS VECES (una por catálogo), y el
+  // loop de abajo sincroniza cada tabla dos veces de forma redundante.
   const tablesReader = await connection.runAndReadAll(
     `SELECT table_schema, table_name
      FROM information_schema.tables
      WHERE table_schema IN ('${SYNC_SCHEMAS.join("','")}')
+       AND table_catalog = current_catalog()
      ORDER BY table_schema, table_name`
   );
   const tables = tablesReader.getRowObjects();

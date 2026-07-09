@@ -38,10 +38,15 @@ export async function validateSupabase() {
   const connection = await instance.connect();
   await attachPostgres(connection);
 
+  // table_catalog = current_catalog() obligatorio - mismo motivo que en
+  // migrate-to-supabase.js: el catálogo "pg" adjuntado tiene sus propios
+  // schemas processed/marts/gold con los mismos nombres, así que sin este
+  // filtro cada tabla aparece duplicada.
   const duckTablesReader = await connection.runAndReadAll(
     `SELECT table_schema, table_name
      FROM information_schema.tables
      WHERE table_schema IN ('${SYNC_SCHEMAS.join("','")}')
+       AND table_catalog = current_catalog()
      ORDER BY table_schema, table_name`
   );
   const duckTables = duckTablesReader.getRowObjects();
