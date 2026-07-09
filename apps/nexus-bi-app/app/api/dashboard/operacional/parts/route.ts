@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import {
@@ -9,6 +9,8 @@ import {
   JUNK_DOLIBARR_REFS,
   parseDashboardFilters
 } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: "Tabla Uso de Repuestos" del Tab "Dashboard Operacional".
 // Fuente: marts.used_parts_dolibarr_match (solo match_status='MATCHED')

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import {
@@ -9,6 +9,8 @@ import {
   createParamPusher,
   parseDashboardFilters
 } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: "Detalle Operativo" del Tab "Dashboard Operacional".
 // Fuente: marts.fieldbeat_report_dolibarr_operational_view.

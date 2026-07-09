@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
+
+export const runtime = "nodejs";
 
 // Todas las queries acá son fijas (sin input de usuario) - el único
 // propósito de este route es alimentar el Dashboard Operacional

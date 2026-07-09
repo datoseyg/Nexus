@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
 import { getAfterHoursConfigStatus } from "@/lib/after-hours-config";
 import { getConfidenceLabel } from "@/lib/confidence";
 import type { AfterHoursSummary, MetricWithConfidence } from "@/types/after-hours";
+
+export const runtime = "nodejs";
 
 // Alimenta los 6 KPIs de /dashboard/after-hours. Consulta
 // marts.fieldbeat_working_hours_analysis EN VIVO (no las tablas GOLD - acá

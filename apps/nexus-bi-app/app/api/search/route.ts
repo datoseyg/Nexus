@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { DuckDBValue } from "@duckdb/node-api";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
+
+export const runtime = "nodejs";
 
 const MAX_KEYWORDS = 6;
 const RESULT_LIMIT_PER_SOURCE = 30;
@@ -34,7 +35,7 @@ function tokenize(query: string): string[] {
 // query) - AND entre keywords, OR entre columnas por keyword.
 function buildDescriptionQuery(keywords: string[]) {
   const conditions: string[] = [];
-  const params: DuckDBValue[] = [];
+  const params: unknown[] = [];
 
   keywords.forEach((keyword, index) => {
     const paramIndex = index + 1;
@@ -63,7 +64,7 @@ function buildDescriptionQuery(keywords: string[]) {
 
 function buildReportFieldsQuery(keywords: string[]) {
   const conditions: string[] = [];
-  const params: DuckDBValue[] = [];
+  const params: unknown[] = [];
 
   keywords.forEach((keyword, index) => {
     const paramIndex = index + 1;
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
     // faltar en el warehouse (ej. un db:build corrido antes del cierre
     // de Fase 1 que la agregó).
     let reportFieldsResults: Record<string, unknown>[] = [];
-    let reportFieldsQuery: { sql: string; params: DuckDBValue[] } | null = null;
+    let reportFieldsQuery: { sql: string; params: unknown[] } | null = null;
 
     try {
       reportFieldsQuery = buildReportFieldsQuery(keywords);

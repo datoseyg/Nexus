@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
 import type { AfterHoursDetailRow } from "@/types/after-hours";
+
+export const runtime = "nodejs";
 
 // Tabla de detalle de /dashboard/after-hours - clon estructural de
 // /api/audit/parts-review/route.ts. Fuente: marts.fieldbeat_working_hours_analysis

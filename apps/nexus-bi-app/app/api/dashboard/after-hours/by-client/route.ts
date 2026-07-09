@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
 import { getConfidenceLabel } from "@/lib/confidence";
 import type { AfterHoursByDimensionRow } from "@/types/after-hours";
+
+export const runtime = "nodejs";
 
 // "Top clientes por horas fuera de horario" - ver docs/AFTER_HOURS_METRICS.md.
 export async function GET(request: NextRequest) {

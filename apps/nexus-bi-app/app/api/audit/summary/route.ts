@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import type { AuditSummary } from "@/types/audit";
+
+export const runtime = "nodejs";
 
 const REVIEW_REQUIRED_STATUSES = new Set(["HAS_PLACEHOLDERS", "HAS_UNMATCHED_PARTS", "HAS_AMBIGUOUS_PARTS", "REVIEW_REQUIRED"]);
 

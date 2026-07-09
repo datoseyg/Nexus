@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { DuckDBValue } from "@duckdb/node-api";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import {
   assertColumnExists,
   assertTableExists,
@@ -11,6 +10,8 @@ import {
   quoteQualifiedTable
 } from "@/lib/sql-guardrails";
 import { handleApiError } from "@/lib/api-error";
+
+export const runtime = "nodejs";
 
 interface RouteParams {
   params: Promise<{ schema: string; table: string }>;
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const qualifiedTable = quoteQualifiedTable(schema, table);
 
     let whereClause = "";
-    const whereParams: DuckDBValue[] = [];
+    const whereParams: unknown[] = [];
 
     if (filterColumn && filterValue) {
       await assertColumnExists(schema, table, filterColumn);

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { buildAuditMartConditions, createParamPusher, parseAuditFilters } from "@/lib/audit-sql";
 import type { ReportReviewRow } from "@/types/audit";
+
+export const runtime = "nodejs";
 
 // Alimenta: pestaña "Reportes con revisión requerida" de
 // /audit/manual-review. Fuente:

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { parseDashboardFilters } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: "Tabla de tareas" del Tab "Integración Uptime / Downtime".
 // Fuente: processed.fieldbeat_tasks, join a la vista report-céntrica

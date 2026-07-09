@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
 import type { ConfidenceDistributionRow } from "@/types/after-hours";
+
+export const runtime = "nodejs";
 
 const TIER_ORDER = ["Insuficiente", "Baja", "Media", "Alta"];
 

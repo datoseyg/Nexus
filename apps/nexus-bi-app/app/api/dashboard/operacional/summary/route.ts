@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import {
   ESTADO_GENERAL_LABELS,
@@ -18,6 +18,8 @@ import {
   parseDashboardFilters,
   ticketEstadoCaseExpr
 } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 const TOP_N_MAQUINAS = 10;
 const TOP_N_CLIENTES_MAQUINAS = 8;

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { splitOriginLocations, TICKET_ESTADO_ORDER } from "@/lib/dashboard-sql";
+
+export const runtime = "nodejs";
 
 // Alimenta: FilterBar (dropdowns de cliente, tipo de tarea, máquina,
 // estado de ticket, origen de registro) + límites del calendario del Tab

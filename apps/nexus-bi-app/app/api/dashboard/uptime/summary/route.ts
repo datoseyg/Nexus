@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { parseDashboardFilters } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: KPIs "Suma de horas que ha tomado cada Tipo de Tarea" +
 // dropdowns de filtro del Tab "Integración Uptime / Downtime".
