@@ -97,8 +97,8 @@ export async function GET(request: NextRequest) {
     // del dashboard de referencia - ver advertencia arriba).
     const periodRows = await runQuery<{ anio: number; mes: number; horas: number }>(`
       SELECT
-        CAST(STRFTIME(start_time, '%Y') AS INTEGER) AS anio,
-        CAST(STRFTIME(start_time, '%m') AS INTEGER) AS mes,
+        CAST(TO_CHAR(start_time, 'YYYY') AS INTEGER) AS anio,
+        CAST(TO_CHAR(start_time, 'MM') AS INTEGER) AS mes,
         COALESCE(SUM(duration_minutes), 0) / 60.0 AS horas
       FROM processed.fieldbeat_tasks
       WHERE start_time IS NOT NULL

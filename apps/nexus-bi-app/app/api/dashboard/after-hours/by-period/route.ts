@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }>(
       `
         SELECT
-          COALESCE(STRFTIME(w.start_time_local, '%Y-%m'), '(sin fecha)') AS key,
+          COALESCE(TO_CHAR(w.start_time_local, 'YYYY-MM'), '(sin fecha)') AS key,
           COALESCE(SUM(w.duration_minutes), 0) AS total_minutes,
           COALESCE(SUM(w.business_minutes), 0) AS business_minutes,
           COALESCE(SUM(w.after_hours_total_minutes), 0) AS after_hours_minutes,

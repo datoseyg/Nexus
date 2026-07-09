@@ -27,7 +27,7 @@ export async function GET() {
     `);
 
     const maquinasRows = await runQuery<{ equipo: string }>(`
-      SELECT DISTINCT UNNEST(STRING_SPLIT(equipment_internal_ids, '|')) AS equipo
+      SELECT DISTINCT UNNEST(STRING_TO_ARRAY(equipment_internal_ids, '|')) AS equipo
       FROM marts.fieldbeat_report_dolibarr_operational_view
       WHERE equipment_internal_ids IS NOT NULL AND equipment_internal_ids != ''
       ORDER BY equipo

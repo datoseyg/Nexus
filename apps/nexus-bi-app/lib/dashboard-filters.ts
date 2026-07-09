@@ -233,8 +233,11 @@ export const JUNK_DOLIBARR_REFS = [
   "NULL"
 ];
 
+// TO_CHAR (Postgres), no STRFTIME (esa es sintaxis DuckDB - los tokens de
+// formato tampoco son iguales: '%Y-%m-%d' en DuckDB es 'YYYY-MM-DD' acá).
+// DATE_TRUNC sí es estándar en ambos motores, sin cambios.
 export function buildPeriodGroupExpr(column: string, grain: Grain): string {
-  if (grain === "day") return `STRFTIME(${column}, '%Y-%m-%d')`;
-  if (grain === "week") return `STRFTIME(DATE_TRUNC('week', ${column}), '%Y-%m-%d')`;
-  return `STRFTIME(${column}, '%Y-%m')`;
+  if (grain === "day") return `TO_CHAR(${column}, 'YYYY-MM-DD')`;
+  if (grain === "week") return `TO_CHAR(DATE_TRUNC('week', ${column}), 'YYYY-MM-DD')`;
+  return `TO_CHAR(${column}, 'YYYY-MM')`;
 }
