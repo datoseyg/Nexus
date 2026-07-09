@@ -9,6 +9,7 @@ node_modules/
 .next/
 out/
 next-env.d.ts
+*.tsbuildinfo
 
 # Cloudflare local dev cache (apps/nexus-edge-pipeline)
 .wrangler/
