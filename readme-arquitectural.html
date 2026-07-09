@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NEXUS — Snapshot Arquitectural v1</title>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#0E1116',
+      primaryColor: '#241A0F',
+      primaryTextColor: '#F1DFB8',
+      primaryBorderColor: '#D8A54D',
+      secondaryColor: '#14302E',
+      secondaryTextColor: '#CDEEEB',
+      secondaryBorderColor: '#5FC9C1',
+      tertiaryColor: '#161B23',
+      tertiaryTextColor: '#E7E4DC',
+      tertiaryBorderColor: '#3A4356',
+      lineColor: '#5B6478',
+      textColor: '#E7E4DC',
+      mainBkg: '#161B23',
+      nodeBorder: '#3A4356',
+      clusterBkg: '#12161D',
+      clusterBorder: '#2B3241',
+      edgeLabelBackground: '#0E1116',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      actorBkg: '#161B23',
+      actorBorder: '#3A4356',
+      actorTextColor: '#E7E4DC',
+      signalColor: '#9099AC',
+      signalTextColor: '#E7E4DC',
+      labelBoxBkgColor: '#1D2430',
+      labelBoxBorderColor: '#3A4356',
+      labelTextColor: '#E7E4DC',
+      loopTextColor: '#9099AC',
+      noteBkgColor: '#3A2E18',
+      noteTextColor: '#F1DFB8',
+      noteBorderColor: '#D8A54D',
+      activationBkgColor: '#1D2430',
+      activationBorderColor: '#3A4356'
+    },
+    flowchart: { curve: 'basis', htmlLabels: true },
+    er: { fontSize: 13 },
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif'
+  });
+</script>
+<style>
+  :root {
+    --bg: #0E1116;
+    --bg-grid: #12161D;
+    --surface: #161B23;
+    --surface-2: #1D2430;
+    --border: #2B3241;
+    --border-strong: #3A4356;
+    --text: #E7E4DC;
+    --text-muted: #9099AC;
+    --text-faint: #616B80;
+    --accent: #D8A54D;
+    --accent-soft: #3A2E18;
+    --accent-strong: #F1CB86;
+    --accent-2: #5FC9C1;
+    --accent-2-soft: #14302E;
+    --accent-2-strong: #9AE3DC;
+    --danger: #D9666B;
+    --danger-soft: #33191B;
+    --ok: #7FB88B;
+    --ok-soft: #16261C;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI Semibold", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", "Consolas", "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { font-size: 16px; }
+
+  body {
+    margin: 0;
+    background:
+      linear-gradient(var(--bg), var(--bg)),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(90, 100, 120, 0.05) 39px, rgba(90,100,120,0.05) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(90, 100, 120, 0.05) 39px, rgba(90,100,120,0.05) 40px);
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--accent-soft); color: var(--accent-strong); }
+
+  a { color: var(--accent-2-strong); text-decoration-color: rgba(95, 201, 193, 0.4); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--accent-2-strong); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+  }
+
+  code, .mono { font-family: var(--font-mono); }
+
+  code {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.1em 0.42em;
+    font-size: 0.86em;
+    color: var(--accent-strong);
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 28px 120px;
+  }
+
+  .prose { max-width: 720px; }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 650;
+    color: var(--text);
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- Cover / header ---------- */
+
+  header.cover {
+    padding: 88px 0 56px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 56px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  h1.title {
+    font-size: clamp(2.1rem, 4.2vw, 2.9rem);
+    line-height: 1.12;
+    margin: 0 0 14px;
+    max-width: 16ch;
+  }
+
+  h1.title span { color: var(--accent); }
+
+  p.subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 56ch;
+    margin: 0 0 36px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .meta-cell {
+    background: var(--surface);
+    padding: 16px 18px;
+  }
+
+  .meta-cell .k {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+  }
+
+  .meta-cell .v {
+    font-size: 0.94rem;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .meta-cell .v.status-frozen { color: var(--accent-strong); }
+
+  @media (max-width: 720px) {
+    .meta-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+
+  /* ---------- TOC ---------- */
+
+  nav.toc {
+    margin: 40px 0 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 20px 24px;
+  }
+
+  nav.toc .toc-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 14px;
+  }
+
+  nav.toc ol {
+    list-style: none;
+    margin: 0; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 32px;
+  }
+
+  nav.toc li a {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--border);
+    font-size: 0.94rem;
+  }
+
+  nav.toc li a:hover { color: var(--accent-strong); }
+  nav.toc li a .n { font-family: var(--font-mono); color: var(--text-faint); }
+
+  @media (max-width: 640px) {
+    nav.toc ol { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Sections ---------- */
+
+  section.chapter {
+    padding-top: 88px;
+    scroll-margin-top: 24px;
+  }
+
+  section.chapter:first-of-type { padding-top: 0; }
+
+  .chapter-head { margin-bottom: 28px; }
+
+  .chapter-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h2.chapter-title {
+    font-size: clamp(1.5rem, 2.6vw, 1.85rem);
+    margin: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 18px;
+  }
+
+  h3 { font-size: 1.2rem; margin: 36px 0 12px; }
+
+  p { color: var(--text); }
+  .prose p, .prose li { color: #C9C6BE; }
+  .prose ul, .prose ol { padding-left: 1.3em; }
+  .prose li { margin-bottom: 8px; }
+
+  .lede {
+    font-size: 1.08rem;
+    color: var(--text);
+    max-width: 68ch;
+  }
+
+  /* ---------- Figure / diagram block ---------- */
+
+  figure.diagram {
+    margin: 32px 0 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  figure.diagram .fig-head {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  figure.diagram .fig-head .fig-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  figure.diagram .fig-head .fig-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: var(--text);
+  }
+
+  .diagram-scroll {
+    overflow-x: auto;
+    padding: 28px 22px;
+    background:
+      radial-gradient(ellipse at top left, rgba(216,165,77,0.05), transparent 60%),
+      var(--bg-grid);
+  }
+
+  .mermaid { display: flex; justify-content: center; min-width: 560px; }
+
+  figcaption.plain-explainer {
+    padding: 18px 22px 22px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  figcaption.plain-explainer .pe-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-2-strong);
+    margin-bottom: 8px;
+    border-left: 2px solid var(--accent-2);
+    padding-left: 10px;
+  }
+
+  figcaption.plain-explainer p {
+    margin: 0;
+    padding-left: 12px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 78ch;
+  }
+
+  /* ---------- Tables ---------- */
+
+  .table-scroll { overflow-x: auto; margin: 24px 0; border: 1px solid var(--border); border-radius: var(--radius-md); }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 560px;
+    font-size: 0.9rem;
+  }
+
+  thead th {
+    text-align: left;
+    background: var(--surface-2);
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(216, 165, 77, 0.035); }
+
+  td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  .layer-chip {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    padding: 3px 9px;
+    border-radius: 100px;
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .layer-raw { color: #C9A9A0; border-color: #4A3530; background: #241B18; }
+  .layer-processed { color: #A9C1D8; border-color: #2E4152; background: #17222C; }
+  .layer-marts { color: #C6B7DE; border-color: #40355A; background: #221B31; }
+  .layer-gold { color: var(--accent-strong); border-color: #5A4520; background: var(--accent-soft); }
+
+  /* ---------- ADR cards ---------- */
+
+  .adr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+
+  .adr-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .adr-head .adr-id {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin-right: 12px;
+  }
+
+  .adr-head h4 { margin: 0; font-size: 1.02rem; display: inline; }
+
+  .status-chip {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .status-vigente { color: var(--accent-strong); border-color: #5A4520; background: var(--accent-soft); }
+  .status-en-migracion { color: var(--accent-2-strong); border-color: #24544F; background: var(--accent-2-soft); }
+  .status-critico { color: #F0A3A8; border-color: #5A2B2E; background: var(--danger-soft); }
+
+  .adr-body { padding: 18px 20px 22px; }
+  .adr-body p { margin: 0 0 10px; color: #C9C6BE; font-size: 0.94rem; }
+  .adr-body .adr-row { display: grid; grid-template-columns: 108px 1fr; gap: 4px 16px; margin-bottom: 8px; font-size: 0.94rem; }
+  .adr-body .adr-row dt { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); padding-top: 2px; }
+  .adr-body .adr-row dd { margin: 0; color: var(--text); }
+
+  /* ---------- Legend for current/edge narrative device ---------- */
+
+  .legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 20px 0 28px;
+    font-size: 0.86rem;
+    color: var(--text-muted);
+  }
+
+  .legend .item { display: flex; align-items: center; gap: 8px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .legend .swatch.current { background: var(--accent); }
+  .legend .swatch.edge { background: var(--accent-2); }
+
+  /* ---------- Callout ---------- */
+
+  .callout {
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 0.94rem;
+    color: var(--text-muted);
+  }
+
+  .callout strong { color: var(--text); }
+
+  /* ---------- Footer ---------- */
+
+  footer {
+    margin-top: 96px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--text-faint);
+    font-size: 0.84rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  footer .mono { font-family: var(--font-mono); }
+
+  /* ---------- print ---------- */
+  @media print {
+    body { background: #fff; color: #111; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="cover">
+    <div class="eyebrow"><span class="dot"></span> Snapshot arquitectural &middot; Documento congelado</div>
+    <h1 class="title">NEXUS <span>—</span> Estado del sistema antes de migrar al edge</h1>
+    <p class="subtitle">
+      Registro de referencia de la arquitectura de integración Zendesk &middot; FieldBeat &middot; Dolibarr
+      tal como opera hoy: local, batch, sin estado compartido. Este documento fija ese estado por escrito
+      antes de iniciar el traslado hacia Cloudflare (Workers, R2, D1).
+    </p>
+
+    <div class="meta-grid">
+      <div class="meta-cell">
+        <div class="k">Versión</div>
+        <div class="v">Snapshot v1</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Estado</div>
+        <div class="v status-frozen">Congelado &middot; baseline</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Alcance</div>
+        <div class="v">Fase 1 &middot; local / serverless-first</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Próximo hito</div>
+        <div class="v">Migración a Cloudflare Edge</div>
+      </div>
+    </div>
+
+    <nav class="toc">
+      <div class="toc-label">Contenido</div>
+      <ol>
+        <li><a href="#s1"><span>Resumen ejecutivo y filosofía de diseño</span><span class="n">01</span></a></li>
+        <li><a href="#s2"><span>Modelado de dominios (bounded contexts)</span><span class="n">02</span></a></li>
+        <li><a href="#s3"><span>Arquitectura de datos y flujo de procesamiento</span><span class="n">03</span></a></li>
+        <li><a href="#s4"><span>Heurística de resolución de identidad</span><span class="n">04</span></a></li>
+        <li><a href="#s5"><span>Motor analítico (DuckDB)</span><span class="n">05</span></a></li>
+        <li><a href="#s6"><span>ADRs y superficie de fractura</span><span class="n">06</span></a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- 1. RESUMEN EJECUTIVO -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s1">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">01 &middot; Fundamentos</div>
+      <h2 class="chapter-title">Resumen ejecutivo y filosofía de diseño</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        Nexus no es un servicio que escucha eventos: es un pipeline por lotes que un operador (o un cron)
+        dispara a mano, corre de principio a fin sobre un mismo directorio de archivos, y termina. Tres
+        decisiones de diseño explican casi todo lo demás en este documento.
+      </p>
+
+      <p>
+        <strong>Batch puro, sin servidor persistente.</strong> Cada etapa del pipeline es un script de Node
+        (<code>node src/....js</code>) invocado por <code>npm run</code>, que abre archivos, procesa, escribe
+        archivos, y termina el proceso. No hay un servidor escuchando peticiones entre etapas, no hay una cola
+        de mensajes, no hay un worker de fondo. La orquestación es la lista ordenada de comandos que un humano
+        ejecuta (documentada en <code>package.json</code> y en <code>CLAUDE.md</code>), no un motor de eventos.
+      </p>
+
+      <p>
+        <strong>Sin estado compartido en memoria.</strong> Ninguna etapa retiene información en RAM para la
+        siguiente: el único canal de comunicación entre pasos es el sistema de archivos. Esto hace que cada
+        etapa sea trivialmente reproducible de forma aislada — se puede correr <code>build:gold</code> sin
+        haber corrido nada en la sesión actual, siempre que los CSV de <code>data/marts/</code> ya existan
+        en disco.
+      </p>
+
+      <p>
+        <strong>Inmutabilidad por capas.</strong> El patrón medallón (RAW &rarr; PROCESSED &rarr; MARTS &rarr; GOLD,
+        ver sección 3) nunca parchea una capa in-place: cada corrida reconstruye la capa completa desde la
+        anterior. <code>load-duckdb.js</code>, por ejemplo, usa literalmente <code>CREATE OR REPLACE TABLE</code>
+        para cada tabla — no hay upserts incrementales en ningún punto del sistema. RAW en particular se trata
+        como hecho histórico: una vez minado un <code>data/raw/&lt;fuente&gt;/*.json</code>, nada aguas abajo
+        lo vuelve a tocar.
+      </p>
+
+      <p>
+        El costo marginal de esto en Fase 1 es prácticamente cero: todo corre en una máquina local o en VS Code,
+        y buena parte de los artefactos intermedios (<code>data/gold/*.csv</code>, <code>data/marts/*.csv</code>)
+        se versionan en git como snapshots reproducibles. El motor de lectura final es DuckDB embebido — un
+        archivo binario único (<code>eyg_nexus.duckdb</code>) que la aplicación de BI abre directamente en modo
+        solo lectura, sin cliente/servidor de por medio.
+      </p>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 01</span>
+        <span class="fig-title">Contexto del sistema (C4 &middot; Nivel 1)</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+flowchart LR
+    subgraph EXT["Sistemas externos, SaaS de terceros"]
+        direction TB
+        ZD["Zendesk<br/>Sistema de tickets de soporte"]
+        FB["FieldBeat<br/>Sistema de tareas de campo"]
+        DL["Dolibarr<br/>ERP, catalogo de productos"]
+    end
+
+    OP(["Operador humano<br/>corre los comandos npm"])
+
+    subgraph CORE["Nexus Core, pipeline batch local"]
+        direction TB
+        PIPE["Pipeline RAW -&gt; PROCESSED -&gt; MARTS -&gt; GOLD<br/>Node.js mas DuckDB embebido"]
+    end
+
+    BI["Nexus BI App<br/>Next.js, solo lectura"]
+    AN(["Analista de negocio<br/>consume dashboards y auditoria"])
+
+    ZD -- "API REST, tickets" --> PIPE
+    FB -- "API REST, cursor next_page" --> PIPE
+    DL -- "API REST, header DOLAPIKEY" --> PIPE
+    OP -- "npm run get:all, build:*, db:build" --> PIPE
+    PIPE -- "eyg_nexus.duckdb, archivo unico" --> BI
+    BI -- "dashboards, auditoria" --> AN
+
+    classDef ext fill:#1B2130,stroke:#3A4256,color:#C7CDDB
+    classDef core fill:#241A0F,stroke:#D8A54D,color:#F1DFB8
+    classDef bi fill:#0F2422,stroke:#5FC9C1,color:#CDEEEB
+    classDef human fill:#161B23,stroke:#616B80,color:#E7E4DC
+
+    class ZD,FB,DL ext
+    class PIPE core
+    class BI bi
+    class OP,AN human
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          Este mapa responde una sola pregunta: ¿quién le habla a quién? A la izquierda están los tres sistemas
+          externos que ya existían antes de Nexus y que Nexus no controla — cada uno con su propia API. Un
+          operador dispara el pipeline a mano. El pipeline junta, limpia y cruza esa información, y la deja
+          lista en un único archivo de base de datos. Ese archivo es lo único que la aplicación de BI necesita
+          para mostrar dashboards a un analista de negocio. Nada de esto ocurre en tiempo real: es un proceso
+          por lotes que se corre cuando alguien lo decide.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. MODELADO DE DOMINIOS -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s2">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">02 &middot; Dominio</div>
+      <h2 class="chapter-title">Modelado de dominios (bounded contexts)</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        Nexus integra tres contextos que nacieron por separado y nunca fueron diseñados para hablar entre sí.
+        Cada uno tiene su propio vocabulario, su propia noción de identidad, y su propia fuente de verdad.
+      </p>
+
+      <p>
+        <strong>Zendesk</strong> es el contexto de <em>soporte</em>: la unidad de trabajo es el
+        <code>ticket</code>, identificado por su <code>zendesk_ticket_id</code>. No sabe nada de técnicos en
+        terreno ni de repuestos — solo sabe que alguien reportó un problema y en qué estado quedó la
+        conversación.
+      </p>
+
+      <p>
+        <strong>FieldBeat</strong> es el contexto de <em>servicio en terreno</em>: la unidad de trabajo es la
+        <code>task</code> (reporte de visita técnica), con su cliente, su equipo intervenido y, opcionalmente,
+        los repuestos usados. FieldBeat puede o no saber que existe un ticket de Zendesk asociado — de hecho
+        una parte importante del sistema existe para reconciliar esa ambigüedad (ver <code>gold.scope_metadata</code>).
+      </p>
+
+      <p>
+        <strong>Dolibarr</strong> es el contexto de <em>catálogo/ERP</em>: la unidad de trabajo es el
+        <code>producto</code>, con su referencia, código de barras y nombre comercial. No tiene ninguna noción
+        de "ticket" o "tarea" — es simplemente el inventario de verdad contra el que hay que resolver qué
+        repuesto usó realmente un técnico cuando lo escribió a mano en un reporte.
+      </p>
+
+      <p>
+        La frontera entre estos tres contextos nunca es una llave foránea limpia. Un <code>ticket</code> puede
+        tener cero, uno o varios <code>reports</code> de FieldBeat vinculados; un repuesto usado en terreno es
+        <em>texto libre</em> escrito por un técnico, no un identificador de Dolibarr — de ahí que exista una capa
+        de resolución de identidad completa (sección 4) en vez de un simple <code>JOIN</code>.
+      </p>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 02</span>
+        <span class="fig-title">Entidad-relación conceptual entre los tres dominios</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+erDiagram
+    ZENDESK_TICKET ||--o{ FIELDBEAT_TASK : "puede generar 0..N reportes"
+    FIELDBEAT_TASK ||--o{ USED_PART : "reporta 0..N repuestos usados"
+    USED_PART }o--o| DOLIBARR_PRODUCT : "resuelve identidad via part-identity-resolver"
+
+    ZENDESK_TICKET {
+        bigint zendesk_ticket_id PK
+        string status
+        string subject
+        timestamp created_at
+    }
+    FIELDBEAT_TASK {
+        bigint fieldbeat_task_id PK
+        bigint linked_zendesk_ticket_id FK
+        string client_name
+        string task_type
+        timestamp start_time
+    }
+    USED_PART {
+        string used_part_id PK
+        bigint fieldbeat_task_id FK
+        string raw_part_identifier
+        string normalized_part_identifier
+    }
+    DOLIBARR_PRODUCT {
+        string dolibarr_product_id PK
+        string dolibarr_ref
+        string dolibarr_barcode
+        string dolibarr_label
+    }
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          Este diagrama no describe tablas de base de datos: describe cómo se relacionan los conceptos de
+          negocio. Un ticket de soporte puede haber generado varias visitas técnicas (o ninguna). Cada visita
+          técnica puede haber usado varios repuestos. Y cada repuesto usado — que en el reporte original es
+          apenas un texto escrito a mano por el técnico — intenta encontrar su producto real en el catálogo de
+          Dolibarr. Esa última relación es la más débil de las tres a propósito: puede no encontrar nada, o
+          encontrar más de un candidato, porque no es una llave técnica sino una búsqueda por parecido.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. ARQUITECTURA DE DATOS -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s3">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">03 &middot; Datos</div>
+      <h2 class="chapter-title">Arquitectura de datos (patrón medallón) y flujo de procesamiento</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        Cada dato pasa por cuatro capas físicas, cada una en su propia carpeta, cada una regenerable desde la
+        anterior. No existe una capa que se edite a mano salvo las excepciones explícitamente curadas
+        (alias manuales, reglas de negocio) que viven fuera de este flujo.
+      </p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Capa</th>
+            <th>Ubicación física</th>
+            <th>Formato</th>
+            <th>Mutabilidad</th>
+            <th>Ejemplo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="layer-chip layer-raw">RAW</span></td>
+            <td><code>data/raw/{zendesk,fieldbeat,dolibarr}/</code></td>
+            <td>JSON, respuesta cruda de la API</td>
+            <td>Inmutable — hecho histórico, nunca se reescribe</td>
+            <td><code>data/raw/fieldbeat/all_tasks_latest.json</code></td>
+          </tr>
+          <tr>
+            <td><span class="layer-chip layer-processed">PROCESSED</span></td>
+            <td><code>data/processed/{zendesk,fieldbeat,dolibarr}/*.csv</code></td>
+            <td>CSV normalizado y tipado, un registro por entidad</td>
+            <td>Reconstruible completo desde RAW</td>
+            <td><code>DB_Zendesk_Tickets.csv</code></td>
+          </tr>
+          <tr>
+            <td><span class="layer-chip layer-marts">MARTS</span></td>
+            <td><code>data/marts/*.csv</code></td>
+            <td>CSV a grano de negocio, con cruces e identidad resuelta</td>
+            <td>Reconstruible completo desde PROCESSED</td>
+            <td><code>Used_Parts_Dolibarr_Match.csv</code></td>
+          </tr>
+          <tr>
+            <td><span class="layer-chip layer-gold">GOLD</span></td>
+            <td><code>data/gold/*.csv</code></td>
+            <td>CSV agregado, listo para BI (1 fila = 1 métrica o resumen)</td>
+            <td>Reconstruible completo desde MARTS</td>
+            <td><code>GOLD_Operational_Dashboard.csv</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 03</span>
+        <span class="fig-title">Flujo de procesamiento, de la ingesta al consumo</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+flowchart LR
+    subgraph L0["Fuentes"]
+        direction TB
+        S1["Zendesk API"]
+        S2["FieldBeat API"]
+        S3["Dolibarr API"]
+    end
+
+    subgraph L1["RAW"]
+        direction TB
+        R1["get:zendesk"]
+        R2["get:fieldbeat:all"]
+        R3["get:dolibarr"]
+    end
+
+    subgraph L2["PROCESSED"]
+        direction TB
+        N1["normalize:zendesk"]
+        N2["normalize:fieldbeat"]
+        N3["normalize:dolibarr"]
+    end
+
+    subgraph L3["Resolucion e identidad"]
+        direction TB
+        M1["part-identity-resolver.js"]
+        M2["build:used-parts-dolibarr-match"]
+    end
+
+    subgraph L4["MARTS"]
+        direction TB
+        M3["build:ticket-fieldbeat-dolibarr-view"]
+        M4["build:fieldbeat-working-hours"]
+    end
+
+    subgraph L5["GOLD"]
+        direction TB
+        G1["build:gold"]
+        G2["build:gold:after-hours"]
+    end
+
+    subgraph L6["Motor analitico"]
+        direction TB
+        D1v["db:build, DuckDB"]
+    end
+
+    subgraph L7["Consumo"]
+        direction TB
+        B1["Nexus BI App"]
+    end
+
+    S1 --> R1
+    S2 --> R2
+    S3 --> R3
+    R1 --> N1
+    R2 --> N2
+    R3 --> N3
+    N2 --> M1
+    N3 --> M1
+    M1 --> M2
+    N1 --> M3
+    M2 --> M3
+    N2 --> M4
+    M3 --> G1
+    M4 --> G2
+    G1 --> D1v
+    G2 --> D1v
+    D1v --> B1
+
+    style L0 fill:#161B23,stroke:#3A4356,color:#E7E4DC
+    style L1 fill:#241B18,stroke:#4A3530,color:#C9A9A0
+    style L2 fill:#17222C,stroke:#2E4152,color:#A9C1D8
+    style L3 fill:#1D1A29,stroke:#40355A,color:#C6B7DE
+    style L4 fill:#221B31,stroke:#40355A,color:#C6B7DE
+    style L5 fill:#241A0F,stroke:#5A4520,color:#F1DFB8
+    style L6 fill:#0F2422,stroke:#24544F,color:#CDEEEB
+    style L7 fill:#0F2422,stroke:#5FC9C1,color:#CDEEEB
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          Leído de izquierda a derecha, este es el viaje completo de un dato: entra crudo desde tres sistemas
+          distintos, se limpia y se le da forma consistente, se cruza contra el catálogo de repuestos, se une
+          todo por cliente/ticket/tarea, se resume en métricas de negocio, y finalmente se carga a un archivo
+          de base de datos que la aplicación de BI lee directamente. Cada caja con nombre en <code>code</code>
+          es un comando real que existe hoy en <code>package.json</code> — no hay pasos ocultos ni magia entre
+          medio: cada flecha es literalmente "este comando lee el archivo que dejó el anterior".
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. HEURISTICA DE RESOLUCION DE IDENTIDAD -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s4">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">04 &middot; Anticorrupción</div>
+      <h2 class="chapter-title">Heurística de resolución de identidad</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        <code>src/resolvers/part-identity-resolver.js</code> es la capa anticorrupción (ACL) entre el mundo de
+        texto libre de FieldBeat y el catálogo estructurado de Dolibarr. Su única responsabilidad es tomar un
+        <code>raw_part_identifier</code> — lo que un técnico escribió a mano — y decidir, con evidencia
+        explícita, a qué producto de Dolibarr corresponde, si es que corresponde a alguno.
+      </p>
+
+      <p>
+        El resolver nunca adivina en silencio: cada resultado incluye un <code>match_method</code> (qué regla
+        ganó), un <code>match_confidence</code> numérico, y un <code>match_status</code> que determina si el
+        dato queda apto para reportar (<code>MATCHED</code>) o marcado para revisión humana
+        (<code>AMBIGUOUS_MATCH</code>, <code>NO_MATCH</code>, <code>PLACEHOLDER_VALUE</code>). Esa distinción
+        alimenta directamente la vista de auditoría (<code>/audit/manual-review</code>) de la aplicación de BI.
+      </p>
+
+      <p>
+        La cascada se detiene en el primer nivel que produce candidatos — nunca sigue "por si acaso" a un nivel
+        más débil una vez que encontró algo en uno más fuerte. Un alias curado a mano por un humano pisa
+        cualquier otro resultado automático, porque representa una decisión de negocio ya tomada.
+      </p>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 04</span>
+        <span class="fig-title">Cascada de resolución de identidad</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> AliasManual
+
+    AliasManual --> MATCHED_Alias: alias curado a mano, maxima prioridad
+    AliasManual --> Placeholder: sin alias definido
+
+    Placeholder --> PLACEHOLDER_VALUE: literal reconocido, ej s-n, n-a, sin numero
+    Placeholder --> MatchExacto: no es placeholder
+
+    MatchExacto --> MATCHED_Exacto: 1 candidato, ref o barcode o id exacto
+    MatchExacto --> AMBIGUOUS_MATCH: mas de 1 candidato
+    MatchExacto --> MatchNormalizado: 0 candidatos
+
+    MatchNormalizado --> MATCHED_Normalizado: 1 candidato, ref o barcode normalizado
+    MatchNormalizado --> AMBIGUOUS_MATCH: mas de 1 candidato
+    MatchNormalizado --> MatchDifuso: 0 candidatos
+
+    MatchDifuso --> MATCHED_Difuso: 1 candidato, LIKE, minimo 4 caracteres, marcado para revision
+    MatchDifuso --> AMBIGUOUS_MATCH: mas de 1 candidato
+    MatchDifuso --> NO_MATCH: 0 candidatos
+
+    MATCHED_Alias --> [*]
+    MATCHED_Exacto --> [*]
+    MATCHED_Normalizado --> [*]
+    MATCHED_Difuso --> [*]
+    PLACEHOLDER_VALUE --> [*]
+    AMBIGUOUS_MATCH --> [*]
+    NO_MATCH --> [*]
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          Piensa en esto como un embudo de cinco preguntas, en orden estricto. ¿Alguien ya decidió a mano qué
+          producto es esto? ¿Es basura conocida tipo "sin número"? ¿Coincide exacto con algún código de
+          Dolibarr? ¿Coincide si le limpiamos espacios y tildes? ¿Se parece lo suficiente a algo, aunque no
+          sea idéntico? En cuanto una pregunta responde que sí, el sistema se detiene ahí y no sigue probando
+          reglas más débiles. Si dos productos distintos calzan igual de bien, o si ninguno calza, el dato
+          queda marcado para que una persona lo revise a mano — nunca se inventa una respuesta.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 5. MOTOR ANALITICO -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s5">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">05 &middot; Consulta</div>
+      <h2 class="chapter-title">Motor analítico (DuckDB)</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        DuckDB corre <em>in-process</em>, embebido dentro del mismo runtime de Node que lo consulta — no hay
+        un servidor de base de datos separado, ni un puerto de red, ni credenciales de conexión. El
+        "warehouse" completo es un único archivo binario, <code>eyg_nexus.duckdb</code>, subordinado por
+        completo a los CSV de <code>data/gold/</code> y <code>data/marts/</code>: nunca es la fuente de verdad,
+        siempre es una materialización desechable de esos archivos.
+      </p>
+
+      <p>
+        Esa subordinación es deliberada: <code>db:build</code> encadena <code>db:init</code> (crea los
+        schemas), <code>db:load</code> (reconstruye cada tabla completa con
+        <code>CREATE OR REPLACE TABLE ... AS SELECT * FROM read_csv_auto(...)</code>) y <code>db:validate</code>
+        (compara el conteo de filas del CSV contra el conteo real en SQL, tabla por tabla, y falla el build si
+        no calzan). Si el archivo <code>.duckdb</code> se corrompe o se borra, se reconstruye desde cero sin
+        pérdida de información — la base de datos es un índice descartable, no un sistema de registro.
+      </p>
+
+      <p>
+        La aplicación de BI (Next.js) abre este archivo en modo <code>READ_ONLY</code> vía
+        <code>@duckdb/node-api</code> — un binding nativo que corre dentro del proceso de Node del servidor,
+        no un cliente de red. Esto es exactamente lo que hace que este componente sea el más difícil de portar
+        tal cual a un runtime edge (ver sección 6).
+      </p>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 05</span>
+        <span class="fig-title">Carga y validación de paridad, de CSV a DuckDB</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+sequenceDiagram
+    actor OP as Operador
+    participant INIT as init-duckdb.js
+    participant LOAD as load-duckdb.js
+    participant FS as data-gold, data-marts (CSV)
+    participant DB as eyg_nexus.duckdb
+    participant VAL as validate-duckdb.js
+
+    OP->>INIT: npm run db:init
+    INIT->>DB: CREATE SCHEMA IF NOT EXISTS, processed marts gold reports rules
+    DB-->>INIT: schemas listos
+
+    OP->>LOAD: npm run db:load
+    loop por cada tabla en warehouse-config.js
+        LOAD->>FS: leer archivo csv
+        FS-->>LOAD: filas
+        LOAD->>DB: CREATE OR REPLACE TABLE AS SELECT desde read_csv_auto
+        DB-->>LOAD: tabla reconstruida
+    end
+
+    OP->>VAL: npm run db:validate
+    loop por cada tabla
+        VAL->>FS: contar filas del csv de origen
+        VAL->>DB: SELECT COUNT desde la tabla
+        DB-->>VAL: conteo SQL
+        VAL->>VAL: comparar csv contra sql
+    end
+
+    alt algun MISMATCH detectado
+        VAL-->>OP: build falla, se detiene el pipeline
+    else todos los conteos calzan
+        VAL-->>OP: duckdb_validation_summary.json, estado OK
+    end
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          Antes de confiar en la base de datos, el sistema se audita a sí mismo: por cada tabla, cuenta cuántas
+          filas tiene el CSV original y cuántas filas terminaron realmente en la base de datos, y exige que
+          los dos números sean idénticos. Si algo se perdió en el camino — un problema de formato, una fila
+          corrupta — el proceso completo se detiene con error en vez de dejar pasar un dashboard con números
+          incompletos sin avisar.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 6. ADRs Y SUPERFICIE DE FRACTURA -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s6">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">06 &middot; Decisiones y migración</div>
+      <h2 class="chapter-title">Registro de decisiones arquitectónicas y superficie de fractura</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        Esta sección documenta los trade-offs asumidos a propósito en Fase 1, y traza explícitamente qué
+        piezas del sistema tendrán que cambiar de forma cuando el pipeline se traslade al edge de Cloudflare.
+      </p>
+    </div>
+
+    <div class="legend">
+      <span class="item"><span class="swatch current"></span> Estado actual (local)</span>
+      <span class="item"><span class="swatch edge"></span> Objetivo edge (Cloudflare)</span>
+    </div>
+
+    <div class="adr">
+      <div class="adr-head">
+        <div><span class="adr-id">ADR-001</span><h4>CSV como formato de intercambio entre capas, no Parquet</h4></div>
+        <span class="status-chip status-vigente">Vigente</span>
+      </div>
+      <div class="adr-body">
+        <dl class="adr-row"><dt>Contexto</dt><dd>El volumen de datos de Fase 1 (miles de filas por tabla, no millones) no justifica un formato columnar comprimido; el costo de legibilidad importa más que el de performance.</dd></dl>
+        <dl class="adr-row"><dt>Decisión</dt><dd>Todo intermedio (PROCESSED, MARTS, GOLD) se persiste como CSV plano, abrible en cualquier hoja de cálculo sin herramientas adicionales.</dd></dl>
+        <dl class="adr-row"><dt>Consecuencia</dt><dd>Sin tipado fuerte persistido — <code>read_csv_auto</code> reinfiere tipos en cada carga — y sin compresión columnar. Aceptado por prioridad de velocidad de iteración y debug transparente sobre eficiencia de almacenamiento.</dd></dl>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-head">
+        <div><span class="adr-id">ADR-002</span><h4>Orquestación secuencial por script, no por eventos o colas</h4></div>
+        <span class="status-chip status-vigente">Vigente</span>
+      </div>
+      <div class="adr-body">
+        <dl class="adr-row"><dt>Contexto</dt><dd>El pipeline corre bajo demanda, disparado por un operador, en una sola máquina, sin necesidad de reaccionar a la llegada de datos en tiempo real.</dd></dl>
+        <dl class="adr-row"><dt>Decisión</dt><dd>Cada etapa se invoca como un comando <code>npm run</code> independiente; el orden de dependencia es implícito en la documentación, no impuesto por un motor de eventos.</dd></dl>
+        <dl class="adr-row"><dt>Consecuencia</dt><dd>No hay reactividad automática a datos nuevos — hay que correr el pipeline a mano o vía cron/CI. A cambio, cada paso es depurable de forma aislada, sin infraestructura de mensajería que razonar.</dd></dl>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-head">
+        <div><span class="adr-id">ADR-003</span><h4>Acoplamiento directo al sistema de archivos local (<code>node:fs/promises</code>)</h4></div>
+        <span class="status-chip status-critico">Punto de fractura</span>
+      </div>
+      <div class="adr-body">
+        <dl class="adr-row"><dt>Contexto</dt><dd>Toda lectura y escritura del pipeline pasa por rutas relativas (<code>data/raw</code>, <code>data/processed</code>, etc.), asumiendo un filesystem persistente y compartido entre pasos.</dd></dl>
+        <dl class="adr-row"><dt>Decisión</dt><dd>Ningún módulo abstrae el acceso a disco detrás de una interfaz — <code>fs.readFile</code>/<code>fs.writeFile</code> se llaman directo en cada script.</dd></dl>
+        <dl class="adr-row"><dt>Consecuencia</dt><dd>Es la pieza más frágil de cara al edge: Cloudflare Workers no ofrece filesystem persistente. Este es el primer adaptador que debe reemplazarse, por objeto de almacenamiento (R2), antes de portar cualquier etapa del pipeline.</dd></dl>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-head">
+        <div><span class="adr-id">ADR-004</span><h4>DuckDB embebido, subordinado al archivo físico</h4></div>
+        <span class="status-chip status-en-migracion">En migración</span>
+      </div>
+      <div class="adr-body">
+        <dl class="adr-row"><dt>Contexto</dt><dd><code>eyg_nexus.duckdb</code> es un archivo binario único abierto en modo <code>READ_ONLY</code> por la app, vía un binding nativo de Node.</dd></dl>
+        <dl class="adr-row"><dt>Decisión</dt><dd>Sin concurrencia de escritura real, sin acceso remoto salvo exponiendo el archivo entero — un motor de un solo proceso, un solo lector a la vez de forma práctica.</dd></dl>
+        <dl class="adr-row"><dt>Consecuencia</dt><dd>Candidato natural a D1 (SQL serverless remoto). Ya en curso: 17 tablas <code>gold_*</code>/<code>marts_*</code> exportadas y servidas read-only desde D1 vía Pages Functions, en paralelo al modo local.</dd></dl>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-head">
+        <div><span class="adr-id">ADR-005</span><h4>Snapshot estático y D1 read-only como primeros puentes al edge</h4></div>
+        <span class="status-chip status-en-migracion">En migración</span>
+      </div>
+      <div class="adr-body">
+        <dl class="adr-row"><dt>Contexto</dt><dd>Migrar el pipeline de escritura completo de una sola vez es alto riesgo; se prefiere exponer primero una copia de solo lectura.</dd></dl>
+        <dl class="adr-row"><dt>Decisión</dt><dd>Un modo <code>NEXT_PUBLIC_DATA_MODE</code> conmuta entre <code>local-duckdb</code>, <code>static</code> (JSON pre-generado) y <code>d1</code> (Cloudflare D1 vía Pages Functions), sin tocar el pipeline de escritura ni el modo local.</dd></dl>
+        <dl class="adr-row"><dt>Consecuencia</dt><dd>El modo local queda intacto como fuente de verdad durante toda la transición; el edge se valida de forma incremental, dashboard por dashboard, antes de considerar mover la escritura.</dd></dl>
+      </div>
+    </div>
+
+    <h3>Superficie de fractura: interfaces a reemplazar</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Adaptador actual</th>
+            <th>Reemplazo Cloudflare</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>node:fs/promises</code> sobre <code>data/raw</code>, <code>data/processed</code>, <code>data/marts</code>, <code>data/gold</code></td>
+            <td>R2 (almacenamiento de objetos)</td>
+            <td><span class="status-chip status-critico">Pendiente</span></td>
+          </tr>
+          <tr>
+            <td><code>@duckdb/node-api</code>, binding nativo, runtime Node</td>
+            <td>D1 (SQLite serverless)</td>
+            <td><span class="status-chip status-en-migracion">Iniciado</span></td>
+          </tr>
+          <tr>
+            <td>Route Handlers de Next.js, runtime Node con acceso directo a fs y DuckDB</td>
+            <td>Pages Functions, runtime Workers, sin fs</td>
+            <td><span class="status-chip status-en-migracion">Iniciado</span></td>
+          </tr>
+          <tr>
+            <td>Orquestación por comandos <code>npm run</code> secuenciales, disparo humano</td>
+            <td>Workflows / Queues</td>
+            <td><span class="status-chip status-critico">Pendiente</span></td>
+          </tr>
+          <tr>
+            <td>Miners HTTP síncronos con paginación manual (<code>fetch</code> nativo)</td>
+            <td>Workers con reintento/backoff, desacoplados vía Queues</td>
+            <td><span class="status-chip status-critico">Pendiente</span></td>
+          </tr>
+          <tr>
+            <td>Warehouse DuckDB único, snapshot congelado por corrida</td>
+            <td>D1 incremental o Analytics Engine</td>
+            <td><span class="status-chip status-vigente">Evaluando</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Lectura de esta tabla:</strong> "Iniciado" no significa que el modo local se haya tocado — significa
+      que existe una segunda ruta, en paralelo, sirviendo datos de solo lectura desde la pieza Cloudflare
+      equivalente, sin escritura real todavía en ningún punto del sistema.
+    </div>
+  </section>
+
+  <footer>
+    <span class="mono">NEXUS &middot; readme-arquitectural.html &middot; snapshot v1</span>
+    <span class="mono">Documento estático, sin dependencias de build</span>
+  </footer>
+
+</div>
+</body>
+</html>

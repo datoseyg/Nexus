@@ -1,0 +1,6 @@
+-- Seed generado por src/cloud/export-d1-seed.js - NO EDITAR A MANO.
+-- Tabla: gold_scope_metadata
+-- Filas: 1
+
+INSERT INTO gold_scope_metadata (total_fieldbeat_tasks, total_fieldbeat_used_parts_global, used_parts_in_ticket_mart, used_parts_outside_ticket_mart, fieldbeat_tasks_with_zendesk_ticket, fieldbeat_tasks_without_zendesk_ticket, fieldbeat_tasks_linked_to_existing_zendesk_ticket, fieldbeat_tasks_linked_to_missing_zendesk_ticket, zendesk_backfill_unique_missing_ticket_ids, zendesk_backfill_tickets_found, zendesk_backfill_tickets_not_found, zendesk_backfill_tickets_forbidden, scope_warning, phase_2_pending_action) VALUES
+(3747, 2193, 200, 1993, 1210, 2537, 290, 920, 656, 4, 361, 291, 'GOLD v1 representa únicamente el universo Zendesk accesible con las credenciales actuales. Existen FieldBeat tasks vinculadas a tickets Zendesk no accesibles o no existentes que quedan fuera del mart ticket-céntrico.', 'Revisar los 291 ticket IDs con 403 Forbidden usando un token Zendesk con permisos ampliados. Lista en data/reports/zendesk_ticket_ids_not_accessible_403.json.');
