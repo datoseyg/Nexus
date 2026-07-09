@@ -21,6 +21,19 @@ function requireEnv(name) {
   return value;
 }
 
+// Mismo patrón que src/db/migrate-to-supabase.js (TRUNCATE): el UPDATE de
+// audit.warehouse_sync_state necesita esto también, no solo un cast DuckDB
+// (::JSON no alcanza - ver comentario en el UPDATE de abajo). postgres_execute
+// manda el SQL directo a Postgres, que sí resuelve ::jsonb con su propio
+// parser sin pasar por la tabla de staging que arma el puente ATTACH.
+function quoteSqlLiteral(value) {
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
+async function postgresExecute(connection, sql) {
+  await connection.run(`CALL postgres_execute('pg', ${quoteSqlLiteral(sql)})`);
+}
+
 async function attachPostgres(connection) {
   // Mismo SUPABASE_DB_URL_DIRECT que migrate-to-supabase.js, rol `postgres`
   // (ver el comentario homólogo ahí) - acá solo hace falta SELECT/UPDATE,
@@ -169,19 +182,23 @@ export async function validateSupabase() {
   // Actualiza la fila de audit.warehouse_sync_state que migrate-to-supabase.js insertó (mismo run_id)
   try {
     const runIdFileContent = JSON.parse(await fs.readFile(RUN_ID_FILE, "utf8"));
-    await connection.run(
-      // validation_summary es jsonb en Postgres. El puente ATTACH de DuckDB
-      // arma una tabla de staging para el UPDATE con el tipo de origen del
-      // parámetro (VARCHAR, porque $2 llega como string de
-      // JSON.stringify) - Postgres no castea VARCHAR -> jsonb implícito en
-      // esa asignación ("column is of type jsonb but expression is of type
-      // character varying"). Cast explícito a JSON (tipo nativo de DuckDB)
-      // antes de la asignación para que la tabla de staging quede con el
-      // tipo correcto.
-      `UPDATE pg.audit.warehouse_sync_state
-       SET validation_status = $1, validation_summary = $2::JSON
-       WHERE run_id = $3`,
-      [validationStatus, JSON.stringify(summary), runIdFileContent.run_id]
+
+    // Probado en producción: un UPDATE parametrizado normal
+    // (connection.run con $1/$2/$3, incluso con ::JSON en $2) falla acá -
+    // el puente ATTACH de DuckDB arma una tabla de staging intermedia
+    // para el UPDATE, y esa tabla queda tipada VARCHAR según el tipo de
+    // ORIGEN del parámetro, ignorando el cast del lado DuckDB. Postgres
+    // rechaza la asignación VARCHAR -> jsonb con "column is of type
+    // jsonb but expression is of type character varying". postgres_execute
+    // manda el SQL ya armado directo a Postgres (mismo mecanismo que el
+    // TRUNCATE) - ahí el ::jsonb lo resuelve el propio parser de Postgres,
+    // sin la tabla de staging de por medio.
+    await postgresExecute(
+      connection,
+      `UPDATE audit.warehouse_sync_state
+       SET validation_status = ${quoteSqlLiteral(validationStatus)},
+           validation_summary = ${quoteSqlLiteral(JSON.stringify(summary))}::jsonb
+       WHERE run_id = ${quoteSqlLiteral(runIdFileContent.run_id)}`
     );
     console.log(`audit.warehouse_sync_state actualizada (run_id ${runIdFileContent.run_id})`);
   } catch (error) {
