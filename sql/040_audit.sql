@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS audit.pipeline_runs (
   finished_at timestamptz,
   rows_affected integer,
   error_message text,
-  metadata jsonb
+  metadata jsonb,
+  CONSTRAINT pipeline_runs_run_id_key UNIQUE (run_id)
 );
 
 CREATE TABLE IF NOT EXISTS audit.data_quality_events (

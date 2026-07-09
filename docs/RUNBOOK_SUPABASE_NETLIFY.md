@@ -51,14 +51,17 @@ Dashboard → **Project Settings → Database → Connection string**:
 - **Direct connection** (puerto 5432, `db.<project-ref>.supabase.co`): solo para los scripts de migración/DDL que corren una vez desde tu máquina local. Nunca se usa desde la app desplegada.
 - **Connection pooler** (Supavisor, puerto 6543, modo *Transaction*, host `aws-*.pooler.supabase.com` o similar): la que usa `apps/nexus-bi-app/lib/db.ts` en runtime. Netlify/Vercel son serverless — conexiones directas agotarían el límite de conexiones de Supabase rápido bajo carga concurrente (ver riesgo 2 del plan de migración).
 
-Para ambas, reemplazar el usuario/password por el rol `nexus_app` (no `postgres`) y la contraseña real que generaste en el paso 2:
+**Ojo con el rol — son roles DISTINTOS a propósito, no el mismo en las dos:**
+
+- **Directa → rol `postgres`** (el superusuario del proyecto, contraseña del paso 1, no la de `nexus_app`). `src/db/migrate-to-supabase.js` hace `TRUNCATE` sobre `processed/marts/gold` para poder resincronizar — y `nexus_app` tiene **a propósito** solo `SELECT` en esos 3 schemas (defensa en profundidad, ver plan de migración § Decisiones de arquitectura). Conectar la migración como `nexus_app` falla con `permission denied for table ...` — es el guardrail funcionando como se diseñó, no un bug: la migración necesita el rol dueño de las tablas.
+- **Pooler → rol `nexus_app`** (mínimo privilegio para el runtime de la app — exactamente lo que no debería poder truncar nada).
 
 ```
-# Directa (para migración local, .env de la raíz)
-SUPABASE_DB_URL_DIRECT=postgresql://nexus_app:<password>@db.<project-ref>.supabase.co:5432/postgres
+# Directa (para migración/DDL local, .env de la raíz) - rol postgres
+SUPABASE_DB_URL_DIRECT=postgresql://postgres:<password-de-postgres-del-paso-1>@db.<project-ref>.supabase.co:5432/postgres
 
-# Pooler (para runtime de la app, .env.local de apps/nexus-bi-app)
-SUPABASE_DB_URL=postgresql://nexus_app.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
+# Pooler (para runtime de la app, .env.local de apps/nexus-bi-app) - rol nexus_app
+SUPABASE_DB_URL=postgresql://nexus_app.<project-ref>:<password-de-nexus_app-del-paso-2>@aws-0-<region>.pooler.supabase.com:6543/postgres
 ```
 
 (El formato exacto de usuario en el pooler — `nexus_app.<project-ref>` — lo confirma el propio dashboard de Supabase al mostrar la connection string del pooler; copiarlo de ahí en vez de adivinarlo.)

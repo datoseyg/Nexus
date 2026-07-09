@@ -22,6 +22,9 @@ function requireEnv(name) {
 }
 
 async function attachPostgres(connection) {
+  // Mismo SUPABASE_DB_URL_DIRECT que migrate-to-supabase.js, rol `postgres`
+  // (ver el comentario homólogo ahí) - acá solo hace falta SELECT/UPDATE,
+  // que postgres cubre de sobra.
   const directUrl = requireEnv("SUPABASE_DB_URL_DIRECT");
   await connection.run("INSTALL postgres");
   await connection.run("LOAD postgres");

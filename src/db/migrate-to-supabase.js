@@ -4,6 +4,22 @@ import { fileURLToPath } from "node:url";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
 
+
+function quoteIdentifier(identifier) {
+  return `"${String(identifier).replaceAll('"', '""')}"`;
+}
+
+function quoteSqlLiteral(value) {
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
+async function postgresExecute(connection, sql) {
+  await connection.run(
+    `CALL postgres_execute('pg', ${quoteSqlLiteral(sql)})`
+  );
+}
+
+
 // Migración DuckDB -> Postgres (Fase 2). Idempotente y repetible: se corre
 // de nuevo después de cada `npm run build:gold` para resincronizar Postgres
 // con el estado actual del .duckdb, vía TRUNCATE + INSERT (nunca DROP, para
@@ -27,6 +43,13 @@ function requireEnv(name) {
 }
 
 async function attachPostgres(connection) {
+  // SUPABASE_DB_URL_DIRECT debe usar el rol `postgres` (superusuario), NO
+  // `nexus_app`. Este script hace TRUNCATE sobre processed/marts/gold, y
+  // nexus_app tiene a propósito solo SELECT ahí (defensa en profundidad -
+  // ver sql/000_roles_and_schemas.sql y docs/RUNBOOK_SUPABASE_NETLIFY.md
+  // § 4). Conectado como nexus_app esto falla con
+  // "permission denied for table ..." - es el guardrail funcionando como
+  // se diseñó, no un bug a parchear dándole más privilegios a nexus_app.
   const directUrl = requireEnv("SUPABASE_DB_URL_DIRECT");
   await connection.run("INSTALL postgres");
   await connection.run("LOAD postgres");
@@ -48,11 +71,16 @@ async function syncMedallionTables(connection) {
   let failed = 0;
 
   for (const { table_schema: schema, table_name: table } of tables) {
-    const fq = `${schema}."${table}"`;
-    const pgFq = `pg.${schema}."${table}"`;
+    const fq = `${quoteIdentifier(schema)}.${quoteIdentifier(table)}`;
+    const pgFq = `pg.${quoteIdentifier(schema)}.${quoteIdentifier(table)}`;
+
 
     try {
-      await connection.run(`TRUNCATE TABLE ${pgFq} RESTART IDENTITY CASCADE`);
+      await postgresExecute(
+        connection,
+        `TRUNCATE TABLE "${schema}"."${table}" RESTART IDENTITY CASCADE`
+      );
+
       await connection.run(`INSERT INTO ${pgFq} SELECT * FROM ${fq}`);
       console.log(`Sincronizada ${schema}.${table}`);
       migrated++;
@@ -74,7 +102,10 @@ async function syncRawJson(connection) {
     const globPath = `data/raw/${platform}/**/*.json`;
 
     try {
-      await connection.run(`TRUNCATE TABLE pg.raw."${table}" RESTART IDENTITY CASCADE`);
+      await postgresExecute(
+        connection,
+        `TRUNCATE TABLE ${quoteIdentifier("raw")}.${quoteIdentifier(table)} RESTART IDENTITY CASCADE`
+      );
       await connection.run(`
         INSERT INTO pg.raw."${table}" (source_file, fetched_at, payload)
         SELECT filename, now(), content::JSON
@@ -97,7 +128,7 @@ export async function migrateToSupabase() {
   const loadRaw = process.env.LOAD_RAW === "true";
   console.log(`LOAD_RAW=${loadRaw} (default: false — ver riesgo de presupuesto de espacio en el plan de migración)`);
 
-  const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_ONLY" });
+  const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_WRITE" });
   const connection = await instance.connect();
 
   await attachPostgres(connection);
