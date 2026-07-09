@@ -60,3 +60,15 @@ src/
 ```
 
 Ver [DATA_PIPELINE.md](DATA_PIPELINE.md) para el orden exacto de ejecución de cada comando.
+
+## Legacy: Cloudflare
+
+Hubo un intento previo de migrar a Cloudflare (Workers/D1/Pages), congelado porque el paso siguiente (R2) exige tarjeta y el proyecto debe usar solo servicios cardless. Ese trabajo **no se borró** — vive completo en otras ramas de este mismo repo, sin tocar por la migración a Supabase:
+
+| Rama | Contenido |
+|---|---|
+| `cloudflare-migration` | Backend: `apps/nexus-edge-pipeline/` con `wrangler.toml` + el pipeline completo portado a TypeScript (`src/domain/{normalizers,marts,gold,resolvers}/*.ts`) pensado para correr en Workers. |
+| `cloud-d1-readonly` | Frontend: dashboards after-hours y equipment-lifecycle completos sirviendo desde D1 vía Cloudflare Pages Functions, más `business-rules/` (reglas de contrato/horario/lifecycle) y `data/curation/` (modelo de datos para alias de repuestos, overrides de tickets, y otras entidades de curación). Incluye `src/cloud/export-d1-seed.js`, el script que generó los seeds en `cloud/d1/seeds/`. |
+| `cloud-smoke-test` | Snapshot de smoke test de despliegue, contenido similar a `cloud-d1-readonly`. |
+
+`main` y `supabase-migration` (donde corre la migración a Supabase) nunca tuvieron mergeado ninguno de estos tres — son puntos de partida limpios, iguales entre sí. Si en el futuro se retoma la ruta Cloudflare, el código de referencia está en esas ramas, no hay que reconstruirlo desde cero.
