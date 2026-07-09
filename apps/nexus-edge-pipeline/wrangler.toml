@@ -1,0 +1,137 @@
+# nexus-edge-pipeline - Fases 1 a 5 del blueprint (target-architecture-cloudflare.html):
+# Fase 1 = abstraccion de I/O (RAW/PROCESSED/MARTS/GOLD sobre R2 en vez de
+# node:fs, ver src/lib/storage.ts). Fase 2 = desacoplamiento temporal
+# (Cron Trigger -> ingestor Zendesk -> Queues, ver src/workers/). Fase 3B =
+# mismo patron aplicado a FieldBeat y Dolibarr. Fase 4 = capa MARTS
+# (cruces y resolucion de identidad, ver src/use-cases/build-marts.ts).
+# Fase 5 = capa GOLD y materializacion en D1 (ver
+# src/use-cases/build-gold.ts y src/lib/d1-loader.ts).
+#
+# Proyecto independiente de apps/nexus-bi-app (que sirve la UI + API de
+# solo lectura vía Pages Functions) - este es el lado de ingesta/ETL, un
+# Worker propio con sus propios bindings.
+
+name = "nexus-edge-pipeline"
+main = "src/index.ts"
+compatibility_date = "2026-07-08"
+
+# A proposito NO se habilita "nodejs_compat": esta app no debe poder
+# importar node:fs/node:path ni por accidente - ver la nota de arriba de
+# src/lib/storage.ts. Si una fase futura necesita alguna API puntual de
+# Node, se agrega explicita y localmente ahi, nunca como flag global aca.
+compatibility_flags = []
+
+# El Vigía Temporal - un Cron Trigger por dominio, cada uno dispara su
+# propio ingestor (src/workers/*-miner.ts, ver el switch por
+# `controller.cron` en src/index.ts). Separados por 10 minutos a proposito
+# - tres ingestas paginadas compitiendo por CPU y golpeando tres APIs
+# externas en el mismo instante es innecesario y dificulta leer los logs.
+# Horas exactas son un placeholder pendiente de decision de negocio sobre
+# la ventana ideal de ingesta.
+#
+# CRITICO: estos 3 strings deben calzar EXACTO con ZENDESK_CRON/
+# FIELDBEAT_CRON/DOLIBARR_CRON en src/index.ts - no hay forma de
+# compartir esto entre este archivo y el codigo sin un paso de build. Si
+# se cambia un horario acá, cambiarlo tambien alla.
+[triggers]
+crons = [
+  "0 6 * * *",  # Zendesk
+  "10 6 * * *", # FieldBeat
+  "20 6 * * *"  # Dolibarr
+]
+
+# Variables no sensibles. Las credenciales (ZENDESK_USER/TOKEN,
+# FIELDBEAT_API_USER/PASS, DOLIBARR_TOKEN) NUNCA van en este archivo
+# (queda versionado en git). Se configuran una sola vez por entorno con:
+#   wrangler secret put ZENDESK_USER
+#   wrangler secret put ZENDESK_TOKEN
+#   wrangler secret put FIELDBEAT_API_USER
+#   wrangler secret put FIELDBEAT_API_PASS
+#   wrangler secret put DOLIBARR_TOKEN
+[vars]
+ZENDESK_URL = "https://REPLACE_WITH_REAL_SUBDOMAIN.zendesk.com"
+FIELDBEAT_API_BASE_URL = "https://api.fieldbeat.com/fleets/REPLACE_WITH_REAL_FLEET/tasks"
+DOLIBARR_URL = "https://REPLACE_WITH_REAL_DOLIBARR_HOST"
+
+# El Archivero (ver blueprint v2, seccion 1) - RAW, PROCESSED, MARTS y los
+# exports de GOLD viven acá como objetos inmutables.
+[[r2_buckets]]
+binding = "DATA_LAKE"
+bucket_name = "nexus-data-lake"
+
+# El Motor Transaccional - GOLD/MARTS consultables. database_id es un
+# placeholder: reemplazar por el id real que devuelve
+# `wrangler d1 create nexus-warehouse`.
+[[d1_databases]]
+binding = "WAREHOUSE"
+database_name = "nexus-warehouse"
+database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+
+# El Sistema Nervioso - una cola por transicion de capa del medallon
+# (RAW->PROCESSED, PROCESSED->MARTS, MARTS->GOLD). Bindings de productor:
+# cualquier handler de este Worker puede encolar hacia cualquiera de las
+# cuatro.
+[[queues.producers]]
+binding = "INGESTION_QUEUE"
+queue = "ingestion-queue"
+
+[[queues.producers]]
+binding = "NORMALIZATION_QUEUE"
+queue = "normalization-queue"
+
+[[queues.producers]]
+binding = "MARTS_QUEUE"
+queue = "marts-queue"
+
+# Fase 5 - build-marts.ts encola MARTS_PROCESSED_READY acá al terminar de
+# escribir los 3 MARTS (ver src/lib/messages.ts); build-gold.ts es el
+# unico consumidor.
+[[queues.producers]]
+binding = "GOLD_QUEUE"
+queue = "gold-queue"
+
+# Consumidores de las mismas cuatro colas. `dead_letter_queue` ahora SÍ está
+# activo (a diferencia de la Fase 1): src/workers/queue-router.ts ya
+# implementa el handler `queue()` real que hace ack()/retry() por mensaje,
+# así que agotar max_retries tiene un destino con sentido. Cada *-dlq debe
+# crearse una vez antes del primer deploy:
+#   wrangler queues create ingestion-queue-dlq
+#   wrangler queues create normalization-queue-dlq
+#   wrangler queues create marts-queue-dlq
+#   wrangler queues create gold-queue-dlq
+[[queues.consumers]]
+queue = "ingestion-queue"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+dead_letter_queue = "ingestion-queue-dlq"
+
+[[queues.consumers]]
+queue = "normalization-queue"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+dead_letter_queue = "normalization-queue-dlq"
+
+[[queues.consumers]]
+queue = "marts-queue"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+dead_letter_queue = "marts-queue-dlq"
+
+# max_batch_size mas chico que las otras tres colas a proposito: cada
+# mensaje de gold-queue dispara un build-gold.ts completo (lee 2 MARTS,
+# agrega 5 tablas GOLD, escribe 5 CSV a R2 + 5 replaceAll() a D1 via
+# D1Loader) - es la unidad de trabajo mas pesada del pipeline. Un batch
+# grande multiplicaria ese costo por mensaje sin necesidad: como
+# build-gold.ts es Fan-In puro (siempre relee el MARTS mas reciente,
+# nunca confia en el mensaje puntual que lo disparo), procesar 1 o 10
+# mensajes del mismo lote produce el mismo resultado final - no hay
+# ganancia en agrupar mas.
+[[queues.consumers]]
+queue = "gold-queue"
+max_batch_size = 5
+max_batch_timeout = 5
+max_retries = 3
+dead_letter_queue = "gold-queue-dlq"
