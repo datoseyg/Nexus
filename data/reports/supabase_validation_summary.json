@@ -1,0 +1,373 @@
+{
+  "generated_at": "2026-07-09T07:30:25.399Z",
+  "validation_status": "PASSED",
+  "checks": {
+    "tables_missing_in_postgres": [],
+    "tables_extra_in_postgres": [],
+    "row_counts_match": true,
+    "columns_match": true,
+    "types_match": true
+  },
+  "tables": [
+    {
+      "table": "gold.after_hours_by_client",
+      "status": "MATCH",
+      "duckdb_row_count": 26,
+      "postgres_row_count": 26,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.after_hours_by_period",
+      "status": "MATCH",
+      "duckdb_row_count": 96,
+      "postgres_row_count": 96,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.after_hours_by_task_type",
+      "status": "MATCH",
+      "duckdb_row_count": 11,
+      "postgres_row_count": 11,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.after_hours_by_technician",
+      "status": "MATCH",
+      "duckdb_row_count": 19,
+      "postgres_row_count": 19,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.after_hours_work_analysis",
+      "status": "MATCH",
+      "duckdb_row_count": 1,
+      "postgres_row_count": 1,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.client_parts_consumption",
+      "status": "MATCH",
+      "duckdb_row_count": 913,
+      "postgres_row_count": 913,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.client_report_volume_by_period",
+      "status": "MATCH",
+      "duckdb_row_count": 913,
+      "postgres_row_count": 913,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.client_service_profile",
+      "status": "MATCH",
+      "duckdb_row_count": 14,
+      "postgres_row_count": 14,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.data_quality_report",
+      "status": "MATCH",
+      "duckdb_row_count": 6,
+      "postgres_row_count": 6,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_by_client",
+      "status": "MATCH",
+      "duckdb_row_count": 510,
+      "postgres_row_count": 510,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_by_machine",
+      "status": "MATCH",
+      "duckdb_row_count": 558,
+      "postgres_row_count": 558,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_by_part",
+      "status": "MATCH",
+      "duckdb_row_count": 254,
+      "postgres_row_count": 254,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_insights",
+      "status": "MATCH",
+      "duckdb_row_count": 1529,
+      "postgres_row_count": 1529,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.equipment_part_lifecycle_summary",
+      "status": "MATCH",
+      "duckdb_row_count": 1,
+      "postgres_row_count": 1,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.equipment_parts_consumption",
+      "status": "MATCH",
+      "duckdb_row_count": 57,
+      "postgres_row_count": 57,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.equipment_service_profile",
+      "status": "MATCH",
+      "duckdb_row_count": 23,
+      "postgres_row_count": 23,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.fieldbeat_data_quality",
+      "status": "MATCH",
+      "duckdb_row_count": 6,
+      "postgres_row_count": 6,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.fieldbeat_report_analysis",
+      "status": "MATCH",
+      "duckdb_row_count": 1,
+      "postgres_row_count": 1,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.operational_dashboard",
+      "status": "MATCH",
+      "duckdb_row_count": 1,
+      "postgres_row_count": 1,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.scope_metadata",
+      "status": "MATCH",
+      "duckdb_row_count": 1,
+      "postgres_row_count": 1,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "gold.used_parts_analysis",
+      "status": "MATCH",
+      "duckdb_row_count": 576,
+      "postgres_row_count": 576,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.equipment_part_lifecycle_events",
+      "status": "MATCH",
+      "duckdb_row_count": 2214,
+      "postgres_row_count": 2214,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.equipment_part_lifecycle_intervals",
+      "status": "MATCH",
+      "duckdb_row_count": 697,
+      "postgres_row_count": 697,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.fieldbeat_report_dolibarr_operational_view",
+      "status": "MATCH",
+      "duckdb_row_count": 3747,
+      "postgres_row_count": 3747,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.fieldbeat_working_hours_analysis",
+      "status": "MATCH",
+      "duckdb_row_count": 3747,
+      "postgres_row_count": 3747,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.ticket_fieldbeat_dolibarr_operational_view",
+      "status": "MATCH",
+      "duckdb_row_count": 628,
+      "postgres_row_count": 628,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.ticket_fieldbeat_operational_view",
+      "status": "MATCH",
+      "duckdb_row_count": 628,
+      "postgres_row_count": 628,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.ticket_fieldbeat_report_detail",
+      "status": "MATCH",
+      "duckdb_row_count": 290,
+      "postgres_row_count": 290,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "marts.used_parts_dolibarr_match",
+      "status": "MATCH",
+      "duckdb_row_count": 2193,
+      "postgres_row_count": 2193,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.dolibarr_product_identity_map",
+      "status": "MATCH",
+      "duckdb_row_count": 3219,
+      "postgres_row_count": 3219,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.dolibarr_products",
+      "status": "MATCH",
+      "duckdb_row_count": 1609,
+      "postgres_row_count": 1609,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.fieldbeat_clients",
+      "status": "MATCH",
+      "duckdb_row_count": 43,
+      "postgres_row_count": 43,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.fieldbeat_equipments",
+      "status": "MATCH",
+      "duckdb_row_count": 83,
+      "postgres_row_count": 83,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.fieldbeat_report_fields",
+      "status": "MATCH",
+      "duckdb_row_count": 66107,
+      "postgres_row_count": 66107,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.fieldbeat_task_equipments",
+      "status": "MATCH",
+      "duckdb_row_count": 3157,
+      "postgres_row_count": 3157,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.fieldbeat_tasks",
+      "status": "MATCH",
+      "duckdb_row_count": 3747,
+      "postgres_row_count": 3747,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.fieldbeat_used_parts",
+      "status": "MATCH",
+      "duckdb_row_count": 2193,
+      "postgres_row_count": 2193,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.zendesk_custom_fields",
+      "status": "MATCH",
+      "duckdb_row_count": 10048,
+      "postgres_row_count": 10048,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.zendesk_ticket_tags",
+      "status": "MATCH",
+      "duckdb_row_count": 8383,
+      "postgres_row_count": 8383,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table": "processed.zendesk_tickets",
+      "status": "MATCH",
+      "duckdb_row_count": 628,
+      "postgres_row_count": 628,
+      "missing_columns": [],
+      "extra_columns": [],
+      "type_mismatches": []
+    }
+  ]
+}
