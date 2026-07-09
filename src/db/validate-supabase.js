@@ -170,8 +170,16 @@ export async function validateSupabase() {
   try {
     const runIdFileContent = JSON.parse(await fs.readFile(RUN_ID_FILE, "utf8"));
     await connection.run(
+      // validation_summary es jsonb en Postgres. El puente ATTACH de DuckDB
+      // arma una tabla de staging para el UPDATE con el tipo de origen del
+      // parámetro (VARCHAR, porque $2 llega como string de
+      // JSON.stringify) - Postgres no castea VARCHAR -> jsonb implícito en
+      // esa asignación ("column is of type jsonb but expression is of type
+      // character varying"). Cast explícito a JSON (tipo nativo de DuckDB)
+      // antes de la asignación para que la tabla de staging quede con el
+      // tipo correcto.
       `UPDATE pg.audit.warehouse_sync_state
-       SET validation_status = $1, validation_summary = $2
+       SET validation_status = $1, validation_summary = $2::JSON
        WHERE run_id = $3`,
       [validationStatus, JSON.stringify(summary), runIdFileContent.run_id]
     );
