@@ -26,6 +26,9 @@
     "db:validate": "node src/db/validate-duckdb.js",
     "db:build": "npm run db:init && npm run db:load && npm run db:validate",
     "db:pg:ddl": "node src/db/generate-postgres-ddl.js",
+    "db:pg:migrate": "node src/db/migrate-to-supabase.js",
+    "db:pg:validate": "node src/db/validate-supabase.js",
+    "db:pg:build": "npm run db:pg:ddl && npm run db:pg:migrate && npm run db:pg:validate",
     "build:fieldbeat-report-dolibarr-view": "node src/marts/build-fieldbeat-report-dolibarr-view.js",
     "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js"
   },

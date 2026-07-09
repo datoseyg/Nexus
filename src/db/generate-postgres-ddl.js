@@ -19,8 +19,10 @@ const OUTPUT_FILES = {
 
 // Solo 6 tipos DuckDB aparecen hoy en estos 3 schemas (verificado por
 // query directa) - se mapean explícitamente. Cualquier tipo no listado
-// cae a TEXT (fallback seguro) en vez de fallar el generador.
-const TYPE_MAP = {
+// cae a TEXT (fallback seguro) en vez de fallar el generador. Exportado
+// para que src/db/validate-supabase.js compare tipos con el mismo mapeo,
+// en vez de duplicar la tabla.
+export const TYPE_MAP = {
   BIGINT: "BIGINT",
   BOOLEAN: "BOOLEAN",
   DOUBLE: "DOUBLE PRECISION",
@@ -29,7 +31,7 @@ const TYPE_MAP = {
   VARCHAR: "TEXT"
 };
 
-function mapType(duckdbType) {
+export function mapType(duckdbType) {
   return TYPE_MAP[duckdbType] ?? "TEXT";
 }
 
