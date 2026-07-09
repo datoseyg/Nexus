@@ -25,6 +25,7 @@
     "db:load": "node src/db/load-duckdb.js",
     "db:validate": "node src/db/validate-duckdb.js",
     "db:build": "npm run db:init && npm run db:load && npm run db:validate",
+    "db:pg:ddl": "node src/db/generate-postgres-ddl.js",
     "build:fieldbeat-report-dolibarr-view": "node src/marts/build-fieldbeat-report-dolibarr-view.js",
     "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js"
   },
