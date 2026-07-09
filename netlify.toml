@@ -1,0 +1,12 @@
+# Config de Netlify para el monorepo - apps/nexus-bi-app es la única app
+# que se despliega acá (el pipeline CSV/DuckDB en la raíz y
+# apps/nexus-edge-pipeline/ legacy no se tocan). Ver
+# docs/RUNBOOK_SUPABASE_NETLIFY.md para el paso a paso completo, incluido
+# el gate-check de billing y el Plan B con Vercel.
+[build]
+  base = "apps/nexus-bi-app"
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
