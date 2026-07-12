@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { HorizontalBarChart } from "@/components/HorizontalBarChart";
 import { ErrorBanner } from "@/components/ErrorBanner";
-import { AppShell } from "@/components/ui/AppShell";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 interface DashboardData {
@@ -53,24 +53,24 @@ export default function FieldBeatDashboardPage() {
 
   if (loading) {
     return (
-      <AppShell>
+      <PageContainer>
         <p style={{ color: "var(--text-muted)" }}>Cargando dashboard…</p>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <AppShell>
+      <PageContainer>
         <ErrorBanner message={error.message} code={error.code} />
-      </AppShell>
+      </PageContainer>
     );
   }
 
   if (!data) return null;
 
   return (
-    <AppShell>
+    <PageContainer>
       <div className="flex flex-col gap-6">
         <PageHeader
           title="Dashboard Operacional FieldBeat"
@@ -134,6 +134,6 @@ export default function FieldBeatDashboardPage() {
           />
         </div>
       </div>
-    </AppShell>
+    </PageContainer>
   );
 }

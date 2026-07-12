@@ -1,0 +1,55 @@
+import { SidebarBrand } from "@/components/layout/SidebarBrand";
+import { SidebarNavigation } from "@/components/layout/SidebarNavigation";
+
+interface SidebarProps {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+  pendingReviewCount: number | null;
+}
+
+// Sidebar fija de desktop (oculta <md, ver MobileTopBar/MobileSidebar para
+// el equivalente móvil). Ancho controlado por --nx-sidebar-width-*; la
+// única transición real de esta etapa (motion-reduce respetado vía el
+// variant de Tailwind, sin config adicional).
+export function Sidebar({ collapsed, onToggleCollapse, pendingReviewCount }: SidebarProps) {
+  return (
+    <aside
+      className="nx-shell-chrome sticky top-0 hidden h-screen shrink-0 flex-col overflow-y-auto transition-[width] duration-200 ease-out motion-reduce:transition-none md:flex"
+      style={{
+        width: collapsed ? "var(--nx-sidebar-width-collapsed)" : "var(--nx-sidebar-width-expanded)",
+        background: "var(--nx-sidebar-bg)"
+      }}
+    >
+      <SidebarBrand collapsed={collapsed} />
+      <div className="flex-1">
+        <SidebarNavigation collapsed={collapsed} pendingReviewCount={pendingReviewCount} />
+      </div>
+      <div className="px-2.5 py-3">
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
+          className="flex w-full items-center justify-center gap-2 rounded-[var(--nx-radius-button)] py-2 text-[13px] font-semibold"
+          style={{ color: "var(--nx-sidebar-text-secondary)", background: "rgba(255,255,255,0.06)" }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            style={{ transform: collapsed ? "rotate(180deg)" : undefined }}
+          >
+            <path d="M14.5 5 8 12l6.5 7" />
+          </svg>
+          <span className={collapsed ? "sr-only" : undefined}>Contraer</span>
+        </button>
+      </div>
+    </aside>
+  );
+}

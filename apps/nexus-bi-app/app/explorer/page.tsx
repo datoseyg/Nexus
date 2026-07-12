@@ -5,7 +5,7 @@ import { DataTable } from "@/components/DataTable";
 import { PaginationControls } from "@/components/PaginationControls";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { downloadRowsAsCsv } from "@/lib/csv-export";
-import { AppShell } from "@/components/ui/AppShell";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 
@@ -126,14 +126,14 @@ export default function ExplorerPage() {
 
   if (loadingTables) {
     return (
-      <AppShell>
+      <PageContainer>
         <p style={{ color: "var(--text-muted)" }}>Cargando tablas…</p>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   return (
-    <AppShell>
+    <PageContainer>
       <div className="flex flex-col gap-4">
         <PageHeader
           title="Explorador de Tablas"
@@ -252,6 +252,6 @@ export default function ExplorerPage() {
         </ResponsiveTableShell>
       )}
       </div>
-    </AppShell>
+    </PageContainer>
   );
 }

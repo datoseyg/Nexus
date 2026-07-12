@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/ui/AppShell";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { AuditManualReviewShell } from "@/components/audit/AuditManualReviewShell";
 
 export const metadata = {
@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function AuditManualReviewPage() {
   return (
-    <AppShell wide>
+    <PageContainer wide>
       <AuditManualReviewShell />
-    </AppShell>
+    </PageContainer>
   );
 }

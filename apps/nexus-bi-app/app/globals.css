@@ -81,6 +81,15 @@
   --nx-text-secondary: #5a5f73;
   --nx-text-muted: #9aa0c0;
 
+  /* Texto sobre --nx-sidebar-bg - --nx-text-primary/secondary/muted están
+     calibrados para fondo claro, reutilizarlos sobre el fondo oscuro de la
+     sidebar sería un bug de contraste real, no una preferencia. */
+  --nx-sidebar-text-primary: #ffffff;
+  --nx-sidebar-text-secondary: #b6bad2;
+  --nx-sidebar-text-muted: #9098c0;
+  --nx-sidebar-eyebrow: #6b7092;
+  --nx-sidebar-eyebrow-muted: #565b7a;
+
   /* Acentos */
   --nx-accent-indigo: #4a55d4;
   --nx-accent-indigo-hover: #383fb0;
@@ -127,6 +136,10 @@
   --nx-shadow-card-dark: 0 6px 18px rgba(20, 20, 40, 0.3);
   --nx-shadow-shell: 0 16px 40px rgba(20, 20, 40, 0.16);
   --nx-shadow-drawer: -14px 0 40px rgba(20, 20, 40, 0.25);
+  /* Mismo --nx-shadow-drawer con el offset X invertido, para un panel
+     anclado a la izquierda (drawer de navegación móvil, Etapa 2 - el
+     original asume un panel a la derecha, como DetailDrawer). */
+  --nx-shadow-drawer-left: 14px 0 40px rgba(20, 20, 40, 0.25);
 
   /* Spacing - solo los valores que se repiten como gap/padding de
      componente, no una escala completa */
@@ -148,6 +161,15 @@
   --nx-z-mobile-drawer: 10;
   --nx-z-overlay: 40;
   --nx-z-drawer: 41;
+}
+
+/* Focus visible acotado a la navegación nueva (Etapa 2) - no un selector
+   global, para no afectar controles ya existentes en dashboards/auditoría
+   fuera de alcance de esta etapa. `.nx-shell-chrome` se aplica
+   individualmente a la raíz de Sidebar/MobileTopBar/MobileSidebar. */
+:where(.nx-shell-chrome) :where(button, a, input):focus-visible {
+  outline: var(--nx-focus-ring-width) solid var(--nx-focus-ring-color);
+  outline-offset: var(--nx-focus-ring-offset);
 }
 
 @keyframes nx-pulse {

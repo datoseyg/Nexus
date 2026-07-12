@@ -4,7 +4,7 @@ import { useState } from "react";
 import { DataTable } from "@/components/DataTable";
 import { QueryDisclosure } from "@/components/QueryDisclosure";
 import { ErrorBanner } from "@/components/ErrorBanner";
-import { AppShell } from "@/components/ui/AppShell";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 
@@ -58,7 +58,7 @@ export default function SearchPage() {
   }
 
   return (
-    <AppShell>
+    <PageContainer>
       <div className="flex flex-col gap-4">
         <PageHeader
           title="Búsqueda / Lupa"
@@ -116,6 +116,6 @@ export default function SearchPage() {
 
         {data && data.queries.length > 0 && <QueryDisclosure queries={data.queries} />}
       </div>
-    </AppShell>
+    </PageContainer>
   );
 }

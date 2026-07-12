@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppShell } from "@/components/ui/AppShell";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 const SCREENS = [
@@ -45,7 +45,7 @@ const NOT_YET = [
 
 export default function HomePage() {
   return (
-    <AppShell>
+    <PageContainer>
       <div className="flex flex-col gap-8">
         <PageHeader
           eyebrow="EyG Medical Systems"
@@ -91,6 +91,6 @@ export default function HomePage() {
           </ul>
         </div>
       </div>
-    </AppShell>
+    </PageContainer>
   );
 }

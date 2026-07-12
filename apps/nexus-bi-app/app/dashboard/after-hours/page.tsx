@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/ui/AppShell";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { AfterHoursShell } from "@/components/after-hours/AfterHoursShell";
@@ -9,10 +9,10 @@ export const metadata = {
 
 // Vista independiente (no una sección de /dashboard/operacional) - ver
 // docs/AFTER_HOURS_METRICS.md. Mismo esqueleto que las otras páginas
-// (AppShell wide + un Shell client-side propio).
+// (PageContainer wide + un Shell client-side propio).
 export default function AfterHoursPage() {
   return (
-    <AppShell wide>
+    <PageContainer wide>
       <div className="space-y-4">
         <PageHeader
           title="Trabajo Fuera de Horario"
@@ -30,6 +30,6 @@ export default function AfterHoursPage() {
 
         <AfterHoursShell />
       </div>
-    </AppShell>
+    </PageContainer>
   );
 }
