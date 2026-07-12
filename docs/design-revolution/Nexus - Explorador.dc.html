@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body{margin:0}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#c7cbd8;border-radius:5px}
+  a{color:#4a55d4}
+  a:hover{color:#383fb0}
+  @keyframes nx-pulse{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
+  button:focus-visible, a:focus-visible, input:focus-visible{outline:2px solid #4a55d4;outline-offset:2px;border-radius:4px;}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#eef0f4;font-family:'Inter',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#181c2c;padding:28px 24px 60px;">
+
+  <!-- ============ DESKTOP ============ -->
+  <div style="max-width:1520px;margin:0 auto;">
+    <div style="background:#eef0f4;border-radius:16px;box-shadow:0 16px 40px rgba(20,20,40,.16);display:flex;overflow:hidden;" data-screen-label="Explorador de datos">
+
+      <!-- SIDEBAR (Nexus Design System v1 — ítem activo: Explorador, herramienta interna) -->
+      <div style="width:{{ sbWidth }};transition:width .18s;background:#181c2c;padding:20px 0;display:flex;flex-direction:column;flex-shrink:0;box-shadow:3px 0 16px rgba(20,20,40,.2);">
+        <div style="padding:0 16px 18px;display:flex;align-items:center;gap:10px;">
+          <div style="background:#fff;border-radius:9px;padding:8px 10px;box-shadow:0 3px 10px rgba(0,0,0,.25);flex-shrink:0;"><img src="assets/eyg-logo-reference.png" alt="EyG" style="height:{{ logoH }};width:auto;display:block;"/></div>
+          <div style="display:{{ lblD }};flex-direction:column;">
+            <span style="font-size:14px;font-weight:700;color:#fff;line-height:1.2;">Nexus</span>
+            <span style="font-size:12px;color:#9098c0;">Inteligencia operacional</span>
+          </div>
+          <button onclick="{{ toggleSidebar }}" style="margin-left:auto;display:{{ lblD }};background:none;border:none;color:#8b90ad;cursor:pointer;padding:4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+        </div>
+
+        <div style="display:{{ lblD }};font-size:12px;font-weight:700;color:#6b7092;letter-spacing:.05em;padding:10px 16px 5px;">INICIO</div>
+        <div style="color:#b6bad2;font-size:14px;padding:10px 16px;display:flex;align-items:center;gap:11px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+          <span style="display:{{ lblD }};">Inicio</span>
+        </div>
+
+        <div style="display:{{ lblD }};font-size:12px;font-weight:700;color:#6b7092;letter-spacing:.05em;padding:14px 16px 5px;">OPERACIÓN</div>
+        <div style="color:#b6bad2;font-size:14px;padding:10px 16px;display:flex;align-items:center;gap:11px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/></svg>
+          <span style="display:{{ lblD }};">Dashboard Operacional</span>
+        </div>
+        <div style="color:#b6bad2;font-size:14px;padding:10px 16px;display:flex;align-items:center;gap:11px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.3 2.3-2-2z"/></svg>
+          <span style="display:{{ lblD }};">FieldBeat</span>
+        </div>
+        <div style="color:#b6bad2;font-size:14px;padding:10px 16px;display:flex;align-items:center;gap:11px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <span style="display:{{ lblD }};">Trabajo fuera de horario</span>
+        </div>
+
+        <div style="display:{{ lblD }};font-size:12px;font-weight:700;color:#6b7092;letter-spacing:.05em;padding:14px 16px 5px;">CALIDAD DE DATOS</div>
+        <div style="color:#b6bad2;font-size:14px;padding:10px 16px;display:flex;align-items:center;gap:11px;justify-content:space-between;">
+          <span style="display:flex;align-items:center;gap:11px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+            <span style="display:{{ lblD }};">Auditoría</span>
+          </span>
+          <span style="display:{{ lblD }};background:#c9564f;color:#fff;border-radius:999px;padding:2px 7px;font-size:12px;font-weight:700;">1.329</span>
+        </div>
+
+        <div style="height:1px;background:#2a2f45;margin:14px 16px;"></div>
+        <div style="display:{{ lblD }};font-size:12px;font-weight:700;color:#565b7a;letter-spacing:.05em;padding:0 16px 5px;">HERRAMIENTAS INTERNAS</div>
+        <div style="background:rgba(255,255,255,.08);color:#fff;font-size:13.5px;padding:8px 16px;margin:0 8px;border-radius:7px;display:flex;align-items:center;gap:11px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+          <span style="display:{{ lblD }};">Explorador</span>
+        </div>
+        <div style="color:#9098c0;font-size:13.5px;padding:8px 16px;display:flex;align-items:center;gap:11px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <span style="display:{{ lblD }};">Búsqueda</span>
+        </div>
+
+        <div style="margin-top:auto;padding-top:14px;">
+          <div style="height:1px;background:#2a2f45;margin:0 16px 12px;"></div>
+          <div style="padding:8px 16px 0;display:{{ collD }};">
+            <button onclick="{{ toggleSidebar }}" style="background:none;border:1px solid #2a2f45;border-radius:7px;color:#8b90ad;cursor:pointer;padding:6px;display:flex;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div style="flex:1;min-width:0;background:#eef0f4;">
+
+        <!-- HEADER -->
+        <div style="background:#fff;padding:20px 28px;border-bottom:1px solid #e2e5ee;">
+          <div style="font-size:21px;font-weight:800;">Explorador de datos</div>
+          <div style="font-size:14px;color:#5a5f73;margin-top:4px;max-width:640px;line-height:1.5;">Consulta registros disponibles utilizando filtros y vistas detalladas.</div>
+        </div>
+
+        <div style="padding:22px 28px 32px;">
+
+          <!-- SELECTOR DE CONJUNTO -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+            <sc-for list="{{ datasetTabs }}" as="d" hint-placeholder-count="7">
+              <button onclick="{{ d.select }}" style="background:{{ d.bg }};color:{{ d.fg }};border:none;border-radius:7px;padding:8px 14px;font-size:13.5px;font-weight:600;cursor:pointer;">{{ d.label }}</button>
+            </sc-for>
+          </div>
+
+          <!-- ENCABEZADO CONTEXTUAL -->
+          <div style="background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 5px 16px rgba(20,20,40,.08);margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:16px;font-weight:800;">{{ dsLabel }}</div>
+                <div style="font-size:13.5px;color:#5a5f73;margin-top:3px;">{{ dsDesc }}</div>
+              </div>
+              <button style="font-size:13px;color:#fff;background:#181c2c;border:none;border-radius:7px;padding:8px 14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/></svg>
+                Exportar resultados
+              </button>
+            </div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #eef0f4;font-size:13px;color:#5a5f73;">
+              <span><strong style="color:#181c2c;">{{ dsCount }}</strong> registros</span>
+              <span>Todo el historial disponible</span>
+              <span>Última actualización aún no disponible</span>
+            </div>
+          </div>
+
+          <!-- FILTROS (cambian segun conjunto) -->
+          <div style="background:#fff;border-radius:13px;padding:14px 16px;margin-bottom:16px;box-shadow:0 5px 16px rgba(20,20,40,.07);">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <sc-for list="{{ dsFilters }}" as="f" hint-placeholder-count="6">
+                <span style="background:#eef0f6;border-radius:7px;padding:7px 12px;font-size:13px;color:#3d4260;">{{ f }}</span>
+              </sc-for>
+              <button onclick="{{ clearChips }}" style="margin-left:auto;background:none;border:none;color:#8a8fa8;font-size:13px;text-decoration:underline;cursor:pointer;">Limpiar filtros</button>
+            </div>
+            <sc-if value="{{ hasChips }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #eef0f6;align-items:center;">
+                <span style="font-size:13px;color:#8a8fa8;">Filtros aplicados:</span>
+                <sc-for list="{{ chipsView }}" as="chip" hint-placeholder-count="2">
+                  <span style="background:#181c2c;color:#fff;border-radius:999px;padding:6px 8px 6px 13px;font-size:13px;display:inline-flex;align-items:center;gap:7px;">{{ chip.label }}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- CONTROLES DE TABLA -->
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+            <input value="{{ tableSearch }}" oninput="{{ setSearch }}" placeholder="Buscar dentro de este conjunto…" style="border:1.5px solid #e2e5ee;border-radius:8px;padding:8px 12px;font-size:13.5px;width:260px;"/>
+            <button onclick="{{ toggleColumnsPanel }}" style="background:none;border:1px solid #d6dae6;border-radius:7px;padding:7px 12px;font-size:13px;color:#4a55d4;font-weight:600;cursor:pointer;">Columnas visibles</button>
+            <div style="display:flex;gap:2px;background:#eef0f6;border-radius:7px;padding:2px;">
+              <button onclick="{{ setDensityNormal }}" style="background:{{ densityNormalBg }};color:{{ densityNormalFg }};border:none;border-radius:5px;padding:6px 11px;font-size:12.5px;font-weight:600;cursor:pointer;">Normal</button>
+              <button onclick="{{ setDensityCompact }}" style="background:{{ densityCompactBg }};color:{{ densityCompactFg }};border:none;border-radius:5px;padding:6px 11px;font-size:12.5px;font-weight:600;cursor:pointer;">Compacta</button>
+            </div>
+          </div>
+
+          <!-- PANEL COLUMNAS VISIBLES -->
+          <sc-if value="{{ columnsPanelOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border:1px solid #e2e5ee;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 6px 18px rgba(20,20,40,.1);">
+              <div style="display:flex;gap:14px;flex-wrap:wrap;">
+                <sc-for list="{{ dsColumns }}" as="col" hint-placeholder-count="9">
+                  <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#3d4260;cursor:pointer;"><input type="checkbox" checked="{{ true }}" style="width:14px;height:14px;"/>{{ col }}</label>
+                </sc-for>
+              </div>
+              <button style="margin-top:10px;background:none;border:none;color:#4a55d4;font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:underline;">Restablecer vista</button>
+            </div>
+          </sc-if>
+
+          <!-- TABLA -->
+          <div style="background:#fff;border-radius:14px;box-shadow:0 5px 16px rgba(20,20,40,.08);overflow:hidden;margin-bottom:8px;">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1100px;">
+                <thead><tr style="background:#f7f8fb;">
+                  <sc-for list="{{ dsColumns }}" as="col2" hint-placeholder-count="9">
+                    <th style="text-align:left;padding:{{ cellPad }};color:#5a5f73;font-weight:600;white-space:nowrap;cursor:pointer;">{{ col2 }}</th>
+                  </sc-for>
+                </tr></thead>
+              </table>
+            </div>
+
+            <sc-if value="{{ isPopulated }}" hint-placeholder-val="{{ true }}">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1100px;margin-top:-1px;">
+                <tbody>
+                  <sc-for list="{{ exampleRows }}" as="row" hint-placeholder-count="4">
+                    <tr onclick="{{ row.select }}" style="border-top:1px solid #eef0f4;cursor:pointer;" style-hover="background:#f7f8fb;">
+                      <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="9">
+                        <td style="padding:{{ cellPad }};white-space:nowrap;color:{{ cell.color }};">{{ cell.text }}</td>
+                      </sc-for>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+              <div style="padding:10px 18px;font-size:12px;color:#9aa0c0;border-top:1px solid #eef0f4;">Filas de ejemplo con entidades reales (clientes/máquinas/categorías confirmadas); no representan reportes o repuestos individuales verificados esta sesión.</div>
+            </sc-if>
+            <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:34px 20px;display:flex;align-items:center;gap:14px;border-top:1px solid #eef0f4;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a7abc4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 3h6l2-3h4"/><path d="M5 12l1.5-6h11L19 12"/><path d="M3 12v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6"/></svg>
+                <div>
+                  <div style="font-size:14.5px;font-weight:700;color:#5a5f73;">No hay registros para los filtros seleccionados.</div>
+                  <div style="font-size:13px;color:#9aa0c0;">Los registros individuales se mostrarán cuando estén disponibles para este conjunto.</div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px;border-top:1px solid #eef0f4;">
+                <sc-for list="{{ skeletonRows }}" as="sk" hint-placeholder-count="5">
+                  <div style="height:16px;border-radius:4px;background:linear-gradient(90deg,#eef0f6,#f7f8fb,#eef0f6);animation:nx-pulse 1.4s ease-in-out infinite;margin-bottom:10px;width:{{ sk.w }}%;"></div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isError }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:34px 20px;display:flex;align-items:center;gap:14px;border-top:1px solid #eef0f4;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16" r=".6" fill="#c0392b"/></svg>
+                <div>
+                  <div style="font-size:14.5px;font-weight:700;color:#a03e2c;">No fue posible cargar la información.</div>
+                  <div style="font-size:13px;color:#9aa0c0;">Intenta nuevamente en unos minutos.</div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isFiltro }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:34px 20px;display:flex;align-items:center;gap:14px;border-top:1px solid #eef0f4;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#b8791c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6 8v6l-4-2v-4z"/></svg>
+                <div>
+                  <div style="font-size:14.5px;font-weight:700;color:#5a5f73;">Ningún registro coincide con los filtros activos.</div>
+                  <div style="font-size:13px;color:#9aa0c0;">Algunos campos no están disponibles en estos registros. Elimina uno o más filtros para ver resultados.</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="padding:9px 18px;font-size:12.5px;color:#9aa0c0;border-top:1px solid #eef0f4;display:flex;justify-content:space-between;align-items:center;">
+              <span onclick="{{ openDrawer }}" style="color:#4a55d4;cursor:pointer;font-weight:600;">Ver ejemplo de panel de detalle</span>
+              <span>Página 1 de 1 · 0 filas visibles</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRAWER -->
+      <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed;inset:0;background:rgba(20,20,40,.35);z-index:40;" onclick="{{ closeDrawer }}"></div>
+        <div style="position:fixed;top:0;right:0;bottom:0;width:380px;background:#fff;z-index:41;box-shadow:-14px 0 40px rgba(20,20,40,.25);padding:22px;overflow-y:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+            <div style="font-size:16px;font-weight:800;">Detalle del registro</div>
+            <button onclick="{{ closeDrawer }}" style="background:none;border:none;color:#8a8fa8;cursor:pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+
+          <div style="font-size:12px;font-weight:700;color:#8a8fa8;letter-spacing:.05em;margin-bottom:6px;">RESUMEN</div>
+          <div style="font-size:14px;color:#9aa0c0;margin-bottom:16px;">Información todavía no disponible.</div>
+
+          <div style="font-size:12px;font-weight:700;color:#8a8fa8;letter-spacing:.05em;margin-bottom:6px;">INFORMACIÓN RELACIONADA</div>
+          <div style="font-size:14px;color:#3d4260;line-height:1.9;margin-bottom:16px;">
+            <div>Cliente: <span style="color:#9aa0c0;">Información todavía no disponible</span></div>
+            <div>Máquina: <span style="color:#9aa0c0;">Información todavía no disponible</span></div>
+            <div>Ticket: <span style="color:#9aa0c0;">Sin ticket asociado</span></div>
+            <div>Repuesto: <span style="color:#9aa0c0;">—</span></div>
+          </div>
+
+          <div style="font-size:12px;font-weight:700;color:#8a8fa8;letter-spacing:.05em;margin-bottom:6px;">HISTORIAL DISPONIBLE</div>
+          <div style="font-size:14px;color:#9aa0c0;margin-bottom:16px;">Este registro no tiene historial adicional disponible.</div>
+
+          <div style="font-size:12px;font-weight:700;color:#8a8fa8;letter-spacing:.05em;margin-bottom:6px;">ENLACES</div>
+          <div style="font-size:14px;color:#9aa0c0;margin-bottom:6px;">Sin enlaces externos disponibles para este registro.</div>
+
+          <div style="border-top:1px solid #eef0f4;margin-top:14px;padding-top:12px;">
+            <button onclick="{{ toggleTecnico }}" style="background:none;border:none;color:#8a8fa8;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ chevPath }}"/></svg>
+              Información técnica
+            </button>
+            <div style="display:{{ tecnicoDisp }};font-size:12.5px;color:#9aa0c0;margin-top:8px;">Identificador interno del registro no disponible en esta iteración.</div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- ============ TABLET ============ -->
+  <div style="max-width:1520px;margin:36px auto 0;">
+    <div style="font-size:13.5px;font-weight:700;color:#5a5f73;margin-bottom:10px;">Vista tablet</div>
+    <div style="width:834px;max-width:100%;background:#eef0f4;border-radius:14px;box-shadow:0 10px 26px rgba(20,20,40,.14);overflow:hidden;">
+      <div style="background:#181c2c;padding:11px 16px;display:flex;align-items:center;gap:9px;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <div style="background:#fff;border-radius:6px;padding:4px 6px;"><img src="assets/eyg-logo-reference.png" alt="EyG" style="height:16px;width:auto;display:block;"/></div>
+        <span style="color:#fff;font-weight:700;font-size:13px;">Explorador de datos</span>
+      </div>
+      <div style="padding:14px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+          <span style="background:#181c2c;color:#fff;border-radius:6px;padding:6px 11px;font-size:12px;font-weight:600;">Reportes de terreno</span>
+          <span style="background:#eef0f6;color:#3d4260;border-radius:6px;padding:6px 11px;font-size:12px;">Tickets</span>
+          <span style="background:#eef0f6;color:#3d4260;border-radius:6px;padding:6px 11px;font-size:12px;">Repuestos</span>
+          <button style="margin-left:auto;background:#fff;border:1px solid #d6dae6;border-radius:6px;padding:6px 11px;font-size:12px;color:#4a55d4;font-weight:600;">Filtros</button>
+        </div>
+        <div style="background:#fff;border-radius:11px;padding:12px 14px;box-shadow:0 4px 12px rgba(20,20,40,.07);margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;">Reportes de terreno</div>
+          <div style="font-size:11.5px;color:#8a8fa8;margin-top:2px;"><strong style="color:#181c2c;">3.747</strong> registros · Ene–Dic 2026</div>
+        </div>
+        <div style="background:#fff;border-radius:11px;box-shadow:0 4px 12px rgba(20,20,40,.07);overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:760px;">
+            <thead><tr style="background:#f7f8fb;"><th style="text-align:left;padding:8px 11px;color:#5a5f73;font-weight:600;">Fecha</th><th style="text-align:left;padding:8px 11px;color:#5a5f73;font-weight:600;">Cliente</th><th style="text-align:left;padding:8px 11px;color:#5a5f73;font-weight:600;">Máquina</th><th style="text-align:left;padding:8px 11px;color:#5a5f73;font-weight:600;">Tipo de tarea</th></tr></thead>
+          </table>
+          <div style="padding:22px;font-size:12.5px;color:#9aa0c0;border-top:1px solid #eef0f4;">No hay registros para los filtros seleccionados.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MOVIL ============ -->
+  <div style="max-width:1520px;margin:36px auto 0;">
+    <div style="font-size:13.5px;font-weight:700;color:#5a5f73;margin-bottom:10px;">Vista móvil</div>
+    <div style="width:390px;background:#eef0f4;border-radius:20px;box-shadow:0 10px 26px rgba(20,20,40,.16);overflow:hidden;position:relative;">
+      <div style="background:#181c2c;padding:13px 16px;display:flex;align-items:center;gap:10px;">
+        <button onclick="{{ toggleMobileDrawer }}" style="background:none;border:none;cursor:pointer;display:flex;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div style="background:#fff;border-radius:7px;padding:5px 7px;"><img src="assets/eyg-logo-reference.png" alt="EyG" style="height:18px;width:auto;display:block;"/></div>
+        <span style="color:#fff;font-weight:700;font-size:13.5px;">Explorador</span>
+      </div>
+      <div style="display:{{ mobileDrawerDisp }};position:absolute;top:0;left:0;bottom:0;width:240px;background:#181c2c;z-index:10;box-shadow:6px 0 24px rgba(0,0,0,.35);padding:16px 0;">
+        <div style="padding:0 16px 14px;display:flex;align-items:center;gap:9px;">
+          <div style="background:#fff;border-radius:7px;padding:6px 8px;"><img src="assets/eyg-logo-reference.png" alt="EyG" style="height:22px;width:auto;display:block;"/></div>
+          <span style="color:#fff;font-weight:700;font-size:14px;">Nexus</span>
+          <button onclick="{{ toggleMobileDrawer }}" style="margin-left:auto;background:none;border:none;color:#8b90ad;cursor:pointer;display:flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#6b7092;letter-spacing:.05em;padding:9px 16px 5px;">OPERACIÓN</div>
+        <div style="color:#b6bad2;font-size:13.5px;padding:9px 16px;">Dashboard Operacional</div>
+        <div style="color:#b6bad2;font-size:13.5px;padding:9px 16px;">FieldBeat</div>
+        <div style="color:#b6bad2;font-size:13.5px;padding:9px 16px;">Trabajo fuera de horario</div>
+        <div style="font-size:12px;font-weight:700;color:#6b7092;letter-spacing:.05em;padding:13px 16px 5px;">CALIDAD DE DATOS</div>
+        <div style="color:#b6bad2;font-size:13.5px;padding:9px 16px;">Auditoría (1.329)</div>
+        <div style="font-size:12px;font-weight:700;color:#565b7a;letter-spacing:.05em;padding:13px 16px 5px;">HERRAMIENTAS INTERNAS</div>
+        <div style="background:rgba(255,255,255,.08);color:#fff;font-size:13.5px;padding:8px 16px;margin:0 8px;border-radius:7px;">Explorador</div>
+        <div style="color:#9098c0;font-size:13.5px;padding:8px 16px;">Búsqueda</div>
+      </div>
+      <div style="padding:16px;">
+        <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;">
+          <span style="background:#181c2c;color:#fff;border-radius:6px;padding:6px 11px;font-size:12px;font-weight:600;white-space:nowrap;">Reportes de terreno</span>
+          <span style="background:#fff;color:#3d4260;border-radius:6px;padding:6px 11px;font-size:12px;white-space:nowrap;">Tickets</span>
+          <span style="background:#fff;color:#3d4260;border-radius:6px;padding:6px 11px;font-size:12px;white-space:nowrap;">Repuestos</span>
+        </div>
+        <button style="width:100%;text-align:left;background:#fff;border:1px solid #e2e5ee;border-radius:9px;padding:10px 12px;font-size:13px;color:#3d4260;font-weight:600;margin-bottom:10px;">Filtros</button>
+        <div style="background:#fff;border-radius:12px;padding:12px 13px;box-shadow:0 4px 12px rgba(20,20,40,.07);margin-bottom:10px;">
+          <div style="font-size:12.5px;color:#8a8fa8;"><strong style="color:#181c2c;">3.747</strong> registros de terreno</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:22px 14px;box-shadow:0 4px 12px rgba(20,20,40,.07);text-align:center;">
+          <div style="font-size:13px;color:#9aa0c0;">No hay registros para los filtros seleccionados.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    mobileDrawerOpen: false,
+    chips: [],
+    dataset: 'reportes',
+    tableSearch: '',
+    columnsPanelOpen: false,
+    density: 'normal',
+    tableView: 'populated',
+    drawerOpen: false,
+    tecnicoOpen: false
+  };
+
+  datasets = [
+    { key: 'reportes', label: 'Reportes de terreno', desc: 'Consulta el detalle de la actividad registrada en FieldBeat.', count: '3.747',
+      filters: ['Período: Ene–Dic 2026', 'Cliente: Todos', 'Máquina: Todas', 'Tipo de tarea: Todas', 'Origen: Todos', 'Ticket asociado: Todos', 'Repuesto asociado: Todos', 'ID de reporte'],
+      columns: ['Fecha y hora', 'ID del reporte', 'Cliente', 'Máquina', 'Tipo de tarea', 'Origen', 'ID del ticket', 'SKU', 'Cantidad descontada'] },
+    { key: 'tickets', label: 'Tickets', desc: 'Consulta el detalle de los tickets de soporte.', count: '628',
+      filters: ['Período: Ene–Dic 2026', 'Cliente: Todos', 'Estado: Todos', 'ID de ticket', 'Reporte relacionado'],
+      columns: ['ID del ticket', 'Fecha', 'Cliente', 'Estado', 'Reporte relacionado', 'Máquina', 'Asunto'] },
+    { key: 'repuestos', label: 'Repuestos', desc: 'Consulta el detalle de los repuestos utilizados.', count: '2.193',
+      filters: ['Período: Ene–Dic 2026', 'SKU', 'Nombre', 'Cliente: Todos', 'Máquina: Todas', 'Bodega: Todas'],
+      columns: ['SKU', 'Nombre', 'Cantidad consumida', 'N.º de reportes', 'Cliente', 'Máquina', 'Bodega', 'Dolibarr'] },
+    { key: 'clientes', label: 'Clientes', desc: 'Consulta el detalle por cliente.', count: '26',
+      filters: ['Nombre', 'Actividad en el período', 'Con tickets: Todos', 'Con repuestos: Todos'],
+      columns: ['Cliente', 'Reportes', 'Tickets', 'Máquinas', 'Repuestos utilizados', 'Actividad más reciente'] },
+    { key: 'maquinas', label: 'Máquinas', desc: 'Consulta el detalle por máquina.', count: '57',
+      filters: ['Cliente: Todos', 'Código o número de serie', 'Tipo de tarea: Todas', 'Actividad en el período'],
+      columns: ['Máquina', 'Cliente', 'N.º de atenciones', 'Tipo de tarea predominante', 'Repuestos utilizados', 'Actividad más reciente'] },
+    { key: 'bodegas', label: 'Bodegas', desc: 'Consulta el detalle por bodega.', count: null,
+      filters: ['Bodega: Todas', 'Cliente: Todos', 'Período: Ene–Dic 2026'],
+      columns: ['Bodega', 'Repuestos consumidos', 'Clientes asociados'] },
+    { key: 'auditoria', label: 'Registros de auditoría', desc: 'Consulta los registros que requieren revisión.', count: '1.329',
+      filters: ['Período: Ene–Dic 2026', 'Importancia: Todas', 'Categoría: Todas', 'Cliente: Todos', 'Estado: Todos'],
+      columns: ['Fecha', 'Registro', 'Cliente', 'Categoría del problema', 'Importancia', 'Estado'] }
+  ];
+
+  skeletonRows = [{ w: 88 }, { w: 72 }, { w: 82 }, { w: 60 }, { w: 76 }];
+
+  toggleSidebar = () => this.setState(s => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  toggleMobileDrawer = () => this.setState(s => ({ mobileDrawerOpen: !s.mobileDrawerOpen }));
+  clearChips = () => this.setState({ chips: [] });
+  setSearch = e => this.setState({ tableSearch: e.target.value });
+  toggleColumnsPanel = () => this.setState(s => ({ columnsPanelOpen: !s.columnsPanelOpen }));
+  setDensityNormal = () => this.setState({ density: 'normal' });
+  setDensityCompact = () => this.setState({ density: 'compact' });
+  setViewData = () => this.setState({ tableView: 'empty' });
+  setViewLoading = () => this.setState({ tableView: 'loading' });
+  setViewError = () => this.setState({ tableView: 'error' });
+  setViewFiltro = () => this.setState({ tableView: 'filtro' });
+  openDrawer = () => this.setState({ drawerOpen: true });
+  closeDrawer = () => this.setState({ drawerOpen: false });
+  toggleTecnico = () => this.setState(s => ({ tecnicoOpen: !s.tecnicoOpen }));
+
+  renderVals() {
+    const s = this.state;
+    const ds = this.datasets.find(d => d.key === s.dataset);
+
+    const datasetTabs = this.datasets.map(d => ({
+      label: d.label,
+      bg: s.dataset === d.key ? '#181c2c' : '#fff',
+      fg: s.dataset === d.key ? '#fff' : '#3d4260',
+      select: () => this.setState({ dataset: d.key, columnsPanelOpen: false })
+    }));
+
+    const chipsView = s.chips.map(c => ({ ...c }));
+
+    return {
+      sbWidth: s.sidebarCollapsed ? '80px' : '240px',
+      lblD: s.sidebarCollapsed ? 'none' : 'flex',
+      collD: s.sidebarCollapsed ? 'flex' : 'none',
+      logoH: s.sidebarCollapsed ? '24px' : '34px',
+      toggleSidebar: this.toggleSidebar,
+
+      datasetTabs,
+      dsLabel: ds.label,
+      dsDesc: ds.desc,
+      dsCount: ds.count ?? 'Información todavía no disponible',
+      dsFilters: ds.filters,
+      dsColumns: ds.columns,
+
+      hasChips: s.chips.length > 0,
+      chipsView,
+      clearChips: this.clearChips,
+
+      tableSearch: s.tableSearch,
+      setSearch: this.setSearch,
+      toggleColumnsPanel: this.toggleColumnsPanel,
+      columnsPanelOpen: s.columnsPanelOpen,
+
+      densityNormalBg: s.density === 'normal' ? '#fff' : 'transparent',
+      densityNormalFg: s.density === 'normal' ? '#181c2c' : '#8a8fa8',
+      densityCompactBg: s.density === 'compact' ? '#fff' : 'transparent',
+      densityCompactFg: s.density === 'compact' ? '#181c2c' : '#8a8fa8',
+      setDensityNormal: this.setDensityNormal,
+      setDensityCompact: this.setDensityCompact,
+      cellPad: s.density === 'compact' ? '6px 12px' : '9px 14px',
+
+      isPopulated: s.tableView === 'populated',
+      exampleRows: (() => {
+        if (s.dataset === 'reportes') {
+          return [
+            ['30 jun 2026', 'Clínica Alemana de Santiago', 'LINAC-153038', 'Correctiva no programada', 'General', 'Sin ticket asociado', '—', '—'],
+            ['24 jun 2026', 'Instituto Nacional del Cáncer (INC)', 'Linac-152171', 'Correctiva programada', 'General', 'Sin ticket asociado', '—', '—'],
+            ['18 jun 2026', 'UC Christus - CECA', 'Linac-153935', 'Preventiva programada', 'Apoteca', 'Sin ticket asociado', '—', '—'],
+            ['12 jun 2026', 'Hospital Carlos Van Buren (SSVSA)', 'Linac-154325', 'Correctiva no programada', 'General', 'Sin ticket asociado', '—', '—']
+          ].map(r => ({ cells: [{ text: r[0], color: '#3d4260' }, { text: r[1], color: '#3d4260' }, { text: r[2], color: '#3d4260' }, { text: r[3], color: '#3d4260' }, { text: r[4], color: '#3d4260' }, { text: r[5], color: '#9aa0c0' }, { text: r[6], color: '#9aa0c0' }, { text: r[7], color: '#9aa0c0' }], select: this.openDrawer }));
+        }
+        if (s.dataset === 'repuestos') {
+          return [
+            ['—', 'Repuesto identificado', '927', '—', '—', '—', '—', '—'],
+            ['—', 'Información incompleta', '721', '—', '—', '—', '—', '—'],
+            ['—', 'Repuesto no identificado', '489', '—', '—', '—', '—', '—'],
+            ['—', 'Identificación ambigua', '56', '—', '—', '—', '—', '—']
+          ].map(r => ({ cells: [{ text: r[0], color: '#9aa0c0' }, { text: r[1], color: '#3d4260' }, { text: r[2], color: '#3d4260' }, { text: r[3], color: '#9aa0c0' }, { text: r[4], color: '#9aa0c0' }, { text: r[5], color: '#9aa0c0' }, { text: r[6], color: '#9aa0c0' }, { text: r[7], color: '#9aa0c0' }], select: this.openDrawer }));
+        }
+        return [];
+      })(),
+      isEmpty: s.tableView === 'empty',
+      isLoading: s.tableView === 'loading',
+      isError: s.tableView === 'error',
+      isFiltro: s.tableView === 'filtro',
+      viewDataBg: s.tableView === 'empty' ? '#181c2c' : '#eef0f6',
+      viewDataFg: s.tableView === 'empty' ? '#fff' : '#3d4260',
+      viewLoadingBg: s.tableView === 'loading' ? '#181c2c' : '#eef0f6',
+      viewLoadingFg: s.tableView === 'loading' ? '#fff' : '#3d4260',
+      viewErrorBg: s.tableView === 'error' ? '#181c2c' : '#eef0f6',
+      viewErrorFg: s.tableView === 'error' ? '#fff' : '#3d4260',
+      viewFiltroBg: s.tableView === 'filtro' ? '#181c2c' : '#eef0f6',
+      viewFiltroFg: s.tableView === 'filtro' ? '#fff' : '#3d4260',
+      setViewData: this.setViewData,
+      setViewLoading: this.setViewLoading,
+      setViewError: this.setViewError,
+      setViewFiltro: this.setViewFiltro,
+      skeletonRows: this.skeletonRows,
+
+      drawerOpen: s.drawerOpen,
+      openDrawer: this.openDrawer,
+      closeDrawer: this.closeDrawer,
+      toggleTecnico: this.toggleTecnico,
+      tecnicoDisp: s.tecnicoOpen ? 'block' : 'none',
+      chevPath: s.tecnicoOpen ? 'M6 9l6 6 6-6' : 'M9 18l6-6-6-6',
+
+      mobileDrawerDisp: s.mobileDrawerOpen ? 'block' : 'none',
+      toggleMobileDrawer: this.toggleMobileDrawer
+    };
+  }
+}
+</script>
+</body>
+</html>

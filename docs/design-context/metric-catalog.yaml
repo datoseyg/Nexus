@@ -1,0 +1,71 @@
+# Derivado de 05-business-metrics.md. No es contenido nuevo, solo estructurado.
+# commit: 4a3d05528e8a970b867848acc80f091cdb1c9454, branch: supabase-migration
+
+status_enums:
+  - name: match_status
+    definition: "Resultado de la cascada de resolucion de identidad de repuestos contra el catalogo Dolibarr"
+    values: [MATCHED, AMBIGUOUS_MATCH, PLACEHOLDER_VALUE, NO_MATCH]
+    source: "src/resolvers/part-identity-resolver.js:151-216"
+    table: "marts.used_parts_dolibarr_match"
+    status: "AS_IS / CONFIRMADA"
+    localRuntimeCounts: { MATCHED: 927, NO_MATCH: 489, AMBIGUOUS_MATCH: 56, PLACEHOLDER_VALUE: 721 }
+
+  - name: report_quality_status
+    definition: "Clasificacion de calidad de un reporte FieldBeat segun sus repuestos usados"
+    values: [OK, NO_USED_PARTS, HAS_PLACEHOLDERS, HAS_UNMATCHED_PARTS, HAS_AMBIGUOUS_PARTS, REVIEW_REQUIRED]
+    source: "src/marts/build-ticket-fieldbeat-dolibarr-view.js:74-93"
+    status: "AS_IS / CONFIRMADA"
+    localRuntimeCounts: { reportsOk: 480, reportsReviewRequired: 1329 }
+
+  - name: zendesk_join_status
+    definition: "Estado del vinculo entre un reporte FieldBeat y un ticket Zendesk"
+    values: [LINKED_TO_ACCESSIBLE_ZENDESK, LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK, NO_TICKET_REPORTED]
+    source: "src/marts/build-fieldbeat-report-dolibarr-view.js"
+    status: "AS_IS / CONFIRMADA"
+    localRuntimeCounts: { reportsNoTicket: 2537, reportsLinkedMissingOrRestricted: 920 }
+
+  - name: calculation_status
+    definition: "Si una tarea FieldBeat permitio calcular horas fuera de horario"
+    values: [CALCULATED, CALCULATED_WITH_WARNINGS, NOT_CALCULABLE]
+    source: "app/api/dashboard/after-hours/summary/route.ts:58"
+    status: "AS_IS / CONFIRMADA"
+    localRuntimeCounts: { tasksNotCalculable: 12 }
+
+confidence_tiers:
+  definition: "Score 0-100 de confiabilidad METODOLOGICA, nunca probabilidad estadistica"
+  tiers:
+    - { min: 0, max: 39, label: "Insuficiente", tone: danger }
+    - { min: 40, max: 64, label: "Baja", tone: warning }
+    - { min: 65, max: 84, label: "Media", tone: info }
+    - { min: 85, max: 100, label: "Alta", tone: success }
+  activeImplementations:
+    - file: "apps/nexus-bi-app/lib/confidence.ts"
+      role: "etiqueta un score ya calculado (label + tone)"
+      status: "AS_IS / CONFIRMADA"
+    - file: "apps/nexus-bi-app/app/api/dashboard/after-hours/summary/route.ts"
+      role: "agrega confidence_score precalculado por fila (promedio ponderado por duration_minutes), delega el etiquetado a lib/confidence.ts"
+      status: "AS_IS / CONFIRMADA"
+  legacyImplementation:
+    file: "src/lib/calculation-confidence.js"
+    role: "calcula el confidence_score POR TAREA desde campos crudos (formula ponderada: 25pt start_time, 25pt duration_minutes, 15pt hora_termino, 15pt calendario_laboral, 10pt feriados, 10pt trazabilidad)"
+    status: "LEGACY - no existe en supabase-migration, recuperado via 'git show 7e69d7c:src/lib/calculation-confidence.js' (branch cloud-smoke-test)"
+    thresholdParity: "confirmada byte-identica con lib/confidence.ts (mismos 4 tiers, mismas etiquetas)"
+  localRuntimeObserved:
+    after_hours_kpi_1_to_4: { confidence_score: 79.3, label: "Media" }
+    after_hours_kpi_5: { confidence_score: 79.8, label: "Media" }
+    after_hours_kpi_6: { confidence_score: 95, label: "Alta" }
+
+scope_metrics:
+  source: "docs/SCOPE_AND_LIMITATIONS.md + confirmado LOCAL_RUNTIME via /api/audit/summary y /api/dashboard/operacional/summary"
+  freshness: "DESCONOCIDA - sin timestamp visible en la respuesta ni en el doc estatico"
+  values:
+    total_zendesk_tickets: 628
+    total_fieldbeat_tasks: 3747
+    used_parts_in_ticket_mart: 200
+    used_parts_global: 2193
+    tickets_forbidden_403: 291
+    pct_con_ticket_accesible: 7.7395249532959705
+
+gold_contract_gaps:
+  freshness_sla_owner_language: "AUSENCIA CONFIRMADA en docs/GOLD_DATA_CONTRACT.md (grep sin coincidencias)"
+  updated_at_field_in_api_responses: "AUSENCIA CONFIRMADA - ninguna respuesta API de GOLD trae updated_at/generated_at"
