@@ -25,7 +25,7 @@ const TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 5000);
 // final. Se usa ese marcador de carga para esas 2 rutas por ser el que
 // realmente esta presente en la respuesta HTTP cruda.
 const ROUTES = [
-  { path: "/", marker: "Nexus BI (Fase 1 MVP)" },
+  { path: "/", marker: "Resumen general" },
   { path: "/dashboard/fieldbeat", marker: "Cargando dashboard…" },
   { path: "/dashboard/operacional", marker: "Dashboard Operacional EyG - Nexus BI" },
   { path: "/dashboard/after-hours", marker: "Trabajo Fuera de Horario" },

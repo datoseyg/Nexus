@@ -1,94 +1,101 @@
 import Link from "next/link";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { HomeNavigationGrid } from "@/components/home/HomeNavigationGrid";
+import { HomeDashboard } from "@/components/home/HomeDashboard";
 
-const SCREENS = [
-  {
-    href: "/dashboard/fieldbeat",
-    title: "Dashboard Operacional FieldBeat",
-    description: "KPIs del universo report-céntrico: reportes, repuestos, clientes y equipos."
-  },
-  {
-    href: "/dashboard/operacional",
-    title: "Dashboard Operacional (estilo Proyecto 7)",
-    description: "Filtros, KPIs, gráficos y tablas de detalle - incluye la pestaña Uptime/Downtime."
-  },
-  {
-    href: "/explorer",
-    title: "Explorador de Tablas",
-    description: "Navegar cualquiera de las tablas del warehouse, tipo planilla, con paginación y filtro."
-  },
-  {
-    href: "/search",
-    title: "Búsqueda / Lupa",
-    description: "Buscar reportes técnicos por texto libre (sin IA en este corte)."
-  },
-  {
-    href: "/audit/manual-review",
-    title: "Auditoría y Validación Manual",
-    description: "Repuestos ambiguos, placeholders, reportes y tickets pendientes de revisión."
-  },
-  {
-    href: "/dashboard/after-hours",
-    title: "Trabajo Fuera de Horario",
-    description: "Análisis de horas fuera de la ventana hábil configurada, con confiabilidad explícita por KPI. Vista independiente del Dashboard Operacional."
-  }
+const TOOLS = [
+  { href: "/explorer", title: "Explorador", description: "Consulta libre de las tablas internas del warehouse." },
+  { href: "/search", title: "Búsqueda", description: "Búsqueda técnica de reportes por palabras clave." }
 ];
 
-const NOT_YET = [
-  "Centro de correcciones",
-  "Rebuild del pipeline desde la UI",
-  "Autenticación / multiusuario",
-  "IA local con Ollama",
-  "Deploy a Cloudflare"
-];
+// Superficie secundaria del standalone (#f7f8fb) para "Herramientas
+// internas" - no existe un token --nx-* que represente exactamente este
+// valor; se usa el literal local en vez de agregar un token global nuevo
+// solo para esta corrección (ver mismo criterio en HomeDataStatus.tsx).
+const TOOL_CARD_BG = "#f7f8fb";
+
+// Server Component: el encabezado, los accesos principales
+// (HomeNavigationGrid) y "Herramientas internas" no dependen de ningún
+// fetch y se renderizan de inmediato. HomeDashboard es el único límite
+// "use client" de la página - posee las 4 llamadas a los endpoints reales
+// (audit/summary, dashboard/operacional/summary, dashboard/fieldbeat,
+// dashboard/after-hours/summary) y sus estados independientes.
+//
+// Corrección de fidelidad visual (referencia: docs/design-revolution/
+// Nexus - Inicio - standalone.html, script[type="__bundler/template"]):
+// el lienzo de contenido de Inicio se fija a --nx-page-bg (#eef0f4) de
+// forma explícita en vez de heredar el fondo de <body> (--page-plane,
+// que resuelve a --eyg-bg y SÍ tiene una variante oscura vía
+// prefers-color-scheme: dark). Sin este fondo propio, un visitante con
+// tema oscuro del sistema ve el lienzo casi negro (#131a17) mientras el
+// texto de las secciones (tokens --nx-text-* de components/home/**, sin
+// variante oscura por diseño) se mantiene oscuro - texto oscuro sobre
+// fondo oscuro. --nx-page-bg no depende de prefers-color-scheme, así que
+// fijarlo acá hace que Inicio se vea igual (claro) sin importar el tema
+// del sistema, sin tocar app/globals.css ni afectar otras rutas.
+//
+// PageHeader (reutilizado sin editar su archivo) lee --eyg-green-dark/
+// --text-primary/--text-secondary, que sí tienen variante oscura - se
+// sobrescriben esas 3 custom properties únicamente en el scope de este
+// wrapper (mecanismo estándar de cascada CSS - React.CSSProperties no
+// tipa custom properties arbitrarias, de ahí el cast puntual a ese mismo
+// tipo, sin relación con los guards runtime de HomeDashboard.tsx) para
+// que el header, ahora con fondo blanco explícito, quede siempre con
+// texto oscuro legible, sin depender del tema del sistema y sin
+// modificar components/ui/PageHeader.tsx.
+const SHELL_STYLE = {
+  background: "var(--nx-page-bg)",
+  boxShadow: "var(--nx-shadow-shell)",
+  "--eyg-green-dark": "#3c8c2e",
+  "--text-primary": "#243033",
+  "--text-secondary": "#5e6b70"
+} as React.CSSProperties;
 
 export default function HomePage() {
   return (
-    <PageContainer>
-      <div className="flex flex-col gap-8">
-        <PageHeader
-          eyebrow="EyG Medical Systems"
-          title="Nexus BI (Fase 1 MVP)"
-          description={
-            <>
-              App local, solo lectura, conectada a <code>data/warehouse/eyg_nexus.duckdb</code>. No modifica RAW,
-              PROCESSED, MARTS, GOLD ni la base - ver{" "}
-              <a href="../../docs/PRODUCT_APP_ARCHITECTURE.md" style={{ color: "var(--eyg-green-dark)" }}>
-                PRODUCT_APP_ARCHITECTURE.md
-              </a>
-              .
-            </>
-          }
-        />
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {SCREENS.map(screen => (
-            <Link
-              key={screen.href}
-              href={screen.href}
-              className="rounded-xl border p-4 transition-colors hover:border-current"
-              style={{ borderColor: "var(--eyg-border)", background: "var(--eyg-card)", boxShadow: "0 1px 3px rgba(36,48,51,0.07)" }}
-            >
-              <h2 className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                {screen.title}
-              </h2>
-              <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-                {screen.description}
-              </p>
-            </Link>
-          ))}
+    <PageContainer wide>
+      <div className="overflow-hidden rounded-[var(--nx-radius-shell)]" style={SHELL_STYLE}>
+        <div
+          className="p-5 sm:p-7"
+          style={{ background: "var(--nx-card-bg)", borderBottom: "1px solid var(--nx-border)" }}
+        >
+          <PageHeader
+            eyebrow="EyG Medical Systems"
+            title="Bienvenido a Nexus"
+            description="Nexus reúne en un mismo lugar la información de servicio técnico (FieldBeat), tickets de soporte (Zendesk) y repuestos utilizados (Dolibarr), para poder revisar el estado de cada área desde un solo lugar."
+          />
         </div>
 
-        <div className="rounded-xl border p-4 text-sm" style={{ borderColor: "var(--eyg-border)", background: "var(--eyg-card)" }}>
-          <p className="font-medium" style={{ color: "var(--text-primary)" }}>
-            Qué NO está implementado todavía en este corte:
-          </p>
-          <ul className="mt-2 list-disc pl-5" style={{ color: "var(--text-secondary)" }}>
-            {NOT_YET.map(item => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+        <div className="flex flex-col gap-6 p-5 sm:p-7">
+          <HomeDashboard navigationSlot={<HomeNavigationGrid />} />
+
+          <section>
+            <h2
+              className="mb-2 text-xs font-bold uppercase tracking-wide"
+              style={{ color: "var(--nx-text-muted)" }}
+            >
+              Herramientas internas
+            </h2>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {TOOLS.map(tool => (
+                <li key={tool.href}>
+                  <Link
+                    href={tool.href}
+                    className="flex min-w-0 flex-col gap-1 rounded-[var(--nx-radius-card)] border p-3.5"
+                    style={{ background: TOOL_CARD_BG, borderColor: "var(--nx-border)" }}
+                  >
+                    <span className="text-sm font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
+                      {tool.title}
+                    </span>
+                    <span className="break-words text-xs" style={{ color: "var(--nx-text-muted)" }}>
+                      {tool.description}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </div>
     </PageContainer>
