@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { BUTTON_SECONDARY } from "./search.styles";
 import { isSearchDetailResponse, type DetailState } from "./search.types";
 import { formatDateEsCl, resolveTicketTitle, splitEquipmentIds, ticketStatusTone } from "./search.utils";
 import type { SearchEntity } from "@/types/search";
@@ -14,7 +15,65 @@ interface SearchDetailDrawerContainerProps {
 
 const GLOBAL_NOTE = "Esta vista muestra el estado global de la entidad, sin aplicar los filtros de búsqueda actuales.";
 
-function DetailBody({ state }: { state: DetailState }) {
+// Causa raíz del contraste: ni DetailDrawer.tsx (components/ui, --nx-card-bg
+// fijo) ni este contenido aplicaban una propiedad `color` explícita a nivel
+// de contenedor - varios nodos (dd, li, título de ticket) no fijaban color
+// propio y heredaban el `color` YA COMPUTADO en un ancestro superior (body,
+// vía --text-primary con variante oscura bajo prefers-color-scheme:dark).
+// Redefinir --text-primary/--text-secondary/--text-muted más abajo en el
+// árbol NO alcanza a esos nodos: ese valor de `color` heredado ya quedó
+// resuelto en el ancestro, antes de llegar acá. Por eso el wrapper de abajo
+// FIJA `color` de verdad (no solo redefine la custom property) - así todo
+// hijo sin color propio hereda un tono oscuro real, y además se redefinen
+// los tokens heredados por si algún componente compartido los consumiera.
+const DETAIL_SURFACE_STYLE = {
+  color: "var(--nx-text-primary)",
+  "--text-primary": "#181c2c",
+  "--text-secondary": "#5a5f73",
+  "--text-muted": "#9aa0c0",
+  "--border": "#e2e5ee",
+  "--surface-1": "#ffffff",
+  "--surface-2": "#f7f8fb"
+} as React.CSSProperties;
+
+const SECTION_TITLE_STYLE: React.CSSProperties = { color: "var(--nx-text-secondary)" };
+const LABEL_STYLE: React.CSSProperties = { color: "var(--nx-text-secondary)" };
+const VALUE_CLASS = "font-semibold";
+const EMPTY_STYLE: React.CSSProperties = { color: "var(--nx-text-muted)" };
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wide" style={SECTION_TITLE_STYLE}>
+      {children}
+    </h3>
+  );
+}
+
+/** Fila de lista de 2 líneas (primaria oscura/semibold + secundaria legible) - reemplaza el patrón de una sola línea en gris parejo. */
+function DetailListItem({ primary, secondary }: { primary: React.ReactNode; secondary?: React.ReactNode }) {
+  return (
+    <li className="-mx-2 rounded-[var(--nx-radius-chip)] border-b px-2 py-2 last:border-b-0 hover:bg-[var(--nx-page-bg)]" style={{ borderColor: "var(--nx-border)" }}>
+      <p className="text-[13.5px] font-semibold" style={{ color: "var(--nx-text-primary)" }}>
+        {primary}
+      </p>
+      {secondary && (
+        <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--nx-text-secondary)" }}>
+          {secondary}
+        </p>
+      )}
+    </li>
+  );
+}
+
+function EmptyListItem({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="text-[13px]" style={EMPTY_STYLE}>
+      {children}
+    </li>
+  );
+}
+
+function DetailBody({ state, onRetry }: { state: DetailState; onRetry: () => void }) {
   if (state.status === "loading") {
     return (
       <p aria-busy="true" style={{ color: "var(--nx-text-secondary)" }}>
@@ -24,8 +83,18 @@ function DetailBody({ state }: { state: DetailState }) {
   }
   if (state.status === "error") {
     return (
-      <div role="alert" style={{ color: "var(--nx-danger-fg)" }}>
-        {state.message}
+      <div className="flex flex-col gap-2.5">
+        <div role="alert" style={{ color: "var(--nx-danger-fg)" }}>
+          {state.message}
+        </div>
+        <button
+          type="button"
+          onClick={onRetry}
+          className={`self-start whitespace-nowrap rounded-[var(--nx-radius-button)] border px-4 text-[13px] font-semibold ${BUTTON_SECONDARY}`}
+          style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", minHeight: 44 }}
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -37,51 +106,43 @@ function DetailBody({ state }: { state: DetailState }) {
     return (
       <div className="flex flex-col gap-4 text-sm">
         <dl className="grid grid-cols-2 gap-2">
-          <dt style={{ color: "var(--nx-text-muted)" }}>Reportes</dt>
-          <dd>{data.summary.reportCount.toLocaleString("es-CL")}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Tickets</dt>
-          <dd>{data.summary.ticketCount.toLocaleString("es-CL")}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Máquinas</dt>
-          <dd>{data.summary.machineCount.toLocaleString("es-CL")}</dd>
+          <dt style={LABEL_STYLE}>Reportes</dt>
+          <dd className={VALUE_CLASS}>{data.summary.reportCount.toLocaleString("es-CL")}</dd>
+          <dt style={LABEL_STYLE}>Tickets</dt>
+          <dd className={VALUE_CLASS}>{data.summary.ticketCount.toLocaleString("es-CL")}</dd>
+          <dt style={LABEL_STYLE}>Máquinas</dt>
+          <dd className={VALUE_CLASS}>{data.summary.machineCount.toLocaleString("es-CL")}</dd>
         </dl>
         <section>
-          <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-            Reportes recientes
-          </h3>
-          <ul className="flex flex-col gap-1.5">
+          <SectionTitle>Reportes recientes</SectionTitle>
+          <ul className="flex flex-col">
             {data.recentReports.map(r => (
-              <li key={r.key} className="text-[13px]">
-                #{r.fieldbeatTaskId} · {formatDateEsCl(r.date)} · {r.taskType ?? "—"}
-              </li>
+              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.taskType ?? "—"} />
             ))}
-            {data.recentReports.length === 0 && <li className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>Sin reportes.</li>}
+            {data.recentReports.length === 0 && <EmptyListItem>Sin reportes.</EmptyListItem>}
           </ul>
         </section>
         <section>
-          <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-            Máquinas
-          </h3>
-          <ul className="flex flex-col gap-1.5">
+          <SectionTitle>Máquinas</SectionTitle>
+          <ul className="flex flex-col">
             {data.machines.map(m => (
-              <li key={m.key} className="text-[13px]">
-                {m.machineId} · {m.reportCount.toLocaleString("es-CL")} reportes
-              </li>
+              <DetailListItem key={m.key} primary={m.machineId} secondary={`${m.reportCount.toLocaleString("es-CL")} reportes`} />
             ))}
-            {data.machines.length === 0 && <li className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>Sin máquinas.</li>}
+            {data.machines.length === 0 && <EmptyListItem>Sin máquinas.</EmptyListItem>}
           </ul>
         </section>
         <section>
-          <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-            Tickets
-          </h3>
-          <ul className="flex flex-col gap-1.5">
+          <SectionTitle>Tickets</SectionTitle>
+          <ul className="flex flex-col">
             {data.tickets.map(t => (
-              <li key={t.key} className="flex items-center gap-2 text-[13px]">
+              <li key={t.key} className="flex items-start gap-2 border-b py-2 last:border-b-0" style={{ borderColor: "var(--nx-border)" }}>
                 <StatusBadge label={t.status ?? "Sin estado"} tone={ticketStatusTone(t.status)} size="sm" />
-                {resolveTicketTitle(t.title, t.ticketId)}
+                <span className="text-[13.5px] leading-5" style={{ color: "var(--nx-text-primary)" }}>
+                  {resolveTicketTitle(t.title, t.ticketId)}
+                </span>
               </li>
             ))}
-            {data.tickets.length === 0 && <li className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>Sin tickets vinculados.</li>}
+            {data.tickets.length === 0 && <EmptyListItem>Sin tickets vinculados.</EmptyListItem>}
           </ul>
         </section>
       </div>
@@ -92,23 +153,20 @@ function DetailBody({ state }: { state: DetailState }) {
     return (
       <div className="flex flex-col gap-4 text-sm">
         <dl className="grid grid-cols-2 gap-2">
-          <dt style={{ color: "var(--nx-text-muted)" }}>Cliente</dt>
-          <dd>{data.summary.clientName ?? "—"}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Reportes</dt>
-          <dd>{data.summary.reportCount.toLocaleString("es-CL")}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Tickets</dt>
-          <dd>{data.summary.ticketCount.toLocaleString("es-CL")}</dd>
+          <dt style={LABEL_STYLE}>Cliente</dt>
+          <dd className={VALUE_CLASS}>{data.summary.clientName ?? "—"}</dd>
+          <dt style={LABEL_STYLE}>Reportes</dt>
+          <dd className={VALUE_CLASS}>{data.summary.reportCount.toLocaleString("es-CL")}</dd>
+          <dt style={LABEL_STYLE}>Tickets</dt>
+          <dd className={VALUE_CLASS}>{data.summary.ticketCount.toLocaleString("es-CL")}</dd>
         </dl>
         <section>
-          <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-            Reportes recientes
-          </h3>
-          <ul className="flex flex-col gap-1.5">
+          <SectionTitle>Reportes recientes</SectionTitle>
+          <ul className="flex flex-col">
             {data.recentReports.map(r => (
-              <li key={r.key} className="text-[13px]">
-                #{r.fieldbeatTaskId} · {formatDateEsCl(r.date)} · {r.clientName ?? "—"}
-              </li>
+              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.clientName ?? "—"} />
             ))}
+            {data.recentReports.length === 0 && <EmptyListItem>Sin reportes.</EmptyListItem>}
           </ul>
         </section>
       </div>
@@ -120,42 +178,44 @@ function DetailBody({ state }: { state: DetailState }) {
     return (
       <div className="flex flex-col gap-4 text-sm">
         <dl className="grid grid-cols-2 gap-2">
-          <dt style={{ color: "var(--nx-text-muted)" }}>Fecha</dt>
-          <dd>{formatDateEsCl(data.summary.date)}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Cliente</dt>
-          <dd>{data.summary.clientName ?? "—"}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Máquina(s)</dt>
-          <dd>{machines.length ? machines.join(", ") : "—"}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Tipo de tarea</dt>
-          <dd>{data.summary.taskType ?? "—"}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Ticket</dt>
-          <dd>{data.summary.ticketId ?? "Sin ticket asociado"}</dd>
+          <dt style={LABEL_STYLE}>Fecha</dt>
+          <dd className={VALUE_CLASS}>{formatDateEsCl(data.summary.date)}</dd>
+          <dt style={LABEL_STYLE}>Cliente</dt>
+          <dd className={VALUE_CLASS}>{data.summary.clientName ?? "—"}</dd>
+          <dt style={LABEL_STYLE}>Máquina(s)</dt>
+          <dd className={VALUE_CLASS}>{machines.length ? machines.join(", ") : "—"}</dd>
+          <dt style={LABEL_STYLE}>Tipo de tarea</dt>
+          <dd className={VALUE_CLASS}>{data.summary.taskType ?? "—"}</dd>
+          <dt style={LABEL_STYLE}>Ticket</dt>
+          <dd className={VALUE_CLASS}>{data.summary.ticketId ?? "Sin ticket asociado"}</dd>
         </dl>
         <section>
-          <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-            Campos del reporte
-          </h3>
+          <SectionTitle>Campos del reporte</SectionTitle>
           <dl className="grid grid-cols-2 gap-1.5 text-[13px]">
             {data.fields.map((f, i) => (
               <div key={i} className="contents">
-                <dt style={{ color: "var(--nx-text-muted)" }}>{f.label}</dt>
-                <dd>{f.value ?? "—"}</dd>
+                <dt style={LABEL_STYLE}>{f.label}</dt>
+                <dd style={{ color: "var(--nx-text-primary)" }}>{f.value ?? "—"}</dd>
               </div>
             ))}
           </dl>
-          {data.fields.length === 0 && <p className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>Sin campos adicionales.</p>}
+          {data.fields.length === 0 && (
+            <p className="text-[13px]" style={EMPTY_STYLE}>
+              Sin campos adicionales.
+            </p>
+          )}
         </section>
         <section>
-          <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-            Repuestos usados
-          </h3>
-          <ul className="flex flex-col gap-1.5">
+          <SectionTitle>Repuestos usados</SectionTitle>
+          <ul className="flex flex-col">
             {data.parts.map(p => (
-              <li key={p.key} className="text-[13px]">
-                {p.partName ?? p.sku ?? p.rawIdentifier} · {p.quantityConsumed.toLocaleString("es-CL")}
-              </li>
+              <DetailListItem
+                key={p.key}
+                primary={p.partName ?? p.sku ?? p.rawIdentifier}
+                secondary={`${p.quantityConsumed.toLocaleString("es-CL")} consumidos`}
+              />
             ))}
-            {data.parts.length === 0 && <li className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>Sin repuestos registrados.</li>}
+            {data.parts.length === 0 && <EmptyListItem>Sin repuestos registrados.</EmptyListItem>}
           </ul>
         </section>
       </div>
@@ -166,26 +226,22 @@ function DetailBody({ state }: { state: DetailState }) {
     return (
       <div className="flex flex-col gap-4 text-sm">
         <dl className="grid grid-cols-2 gap-2">
-          <dt style={{ color: "var(--nx-text-muted)" }}>Estado</dt>
+          <dt style={LABEL_STYLE}>Estado</dt>
           <dd>
             <StatusBadge label={data.summary.status ?? "Sin estado"} tone={ticketStatusTone(data.summary.status)} size="sm" />
           </dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Cliente</dt>
-          <dd>{data.summary.clientName ?? "—"}</dd>
-          <dt style={{ color: "var(--nx-text-muted)" }}>Fecha</dt>
-          <dd>{formatDateEsCl(data.summary.date)}</dd>
+          <dt style={LABEL_STYLE}>Cliente</dt>
+          <dd className={VALUE_CLASS}>{data.summary.clientName ?? "—"}</dd>
+          <dt style={LABEL_STYLE}>Fecha</dt>
+          <dd className={VALUE_CLASS}>{formatDateEsCl(data.summary.date)}</dd>
         </dl>
         <section>
-          <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-            Reportes vinculados
-          </h3>
-          <ul className="flex flex-col gap-1.5">
+          <SectionTitle>Reportes vinculados</SectionTitle>
+          <ul className="flex flex-col">
             {data.linkedReports.map(r => (
-              <li key={r.key} className="text-[13px]">
-                #{r.fieldbeatTaskId} · {formatDateEsCl(r.date)} · {r.taskType ?? "—"}
-              </li>
+              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.taskType ?? "—"} />
             ))}
-            {data.linkedReports.length === 0 && <li className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>Sin reportes vinculados.</li>}
+            {data.linkedReports.length === 0 && <EmptyListItem>Sin reportes vinculados.</EmptyListItem>}
           </ul>
         </section>
       </div>
@@ -196,28 +252,24 @@ function DetailBody({ state }: { state: DetailState }) {
   return (
     <div className="flex flex-col gap-4 text-sm">
       <dl className="grid grid-cols-2 gap-2">
-        <dt style={{ color: "var(--nx-text-muted)" }}>SKU</dt>
-        <dd>{data.summary.sku ?? "—"}</dd>
-        <dt style={{ color: "var(--nx-text-muted)" }}>Identificador crudo</dt>
-        <dd>{data.summary.rawIdentifier ?? "—"}</dd>
-        <dt style={{ color: "var(--nx-text-muted)" }}>Cantidad consumida</dt>
-        <dd>{data.summary.quantityConsumed.toLocaleString("es-CL")}</dd>
-        <dt style={{ color: "var(--nx-text-muted)" }}>Reportes</dt>
-        <dd>{data.summary.reportCount.toLocaleString("es-CL")}</dd>
-        <dt style={{ color: "var(--nx-text-muted)" }}>Clientes</dt>
-        <dd>{data.summary.clientCount.toLocaleString("es-CL")}</dd>
+        <dt style={LABEL_STYLE}>SKU</dt>
+        <dd className={VALUE_CLASS}>{data.summary.sku ?? "—"}</dd>
+        <dt style={LABEL_STYLE}>Identificador crudo</dt>
+        <dd className={VALUE_CLASS}>{data.summary.rawIdentifier ?? "—"}</dd>
+        <dt style={LABEL_STYLE}>Cantidad consumida</dt>
+        <dd className={VALUE_CLASS}>{data.summary.quantityConsumed.toLocaleString("es-CL")}</dd>
+        <dt style={LABEL_STYLE}>Reportes</dt>
+        <dd className={VALUE_CLASS}>{data.summary.reportCount.toLocaleString("es-CL")}</dd>
+        <dt style={LABEL_STYLE}>Clientes</dt>
+        <dd className={VALUE_CLASS}>{data.summary.clientCount.toLocaleString("es-CL")}</dd>
       </dl>
       <section>
-        <h3 className="mb-1 text-xs font-bold uppercase" style={{ color: "var(--nx-text-muted)" }}>
-          Usos recientes
-        </h3>
-        <ul className="flex flex-col gap-1.5">
+        <SectionTitle>Usos recientes</SectionTitle>
+        <ul className="flex flex-col">
           {data.recentUsages.map(r => (
-            <li key={r.key} className="text-[13px]">
-              #{r.fieldbeatTaskId} · {formatDateEsCl(r.date)} · {r.clientName ?? "—"}
-            </li>
+            <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.clientName ?? "—"} />
           ))}
-          {data.recentUsages.length === 0 && <li className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>Sin usos registrados.</li>}
+          {data.recentUsages.length === 0 && <EmptyListItem>Sin usos registrados.</EmptyListItem>}
         </ul>
       </section>
     </div>
@@ -239,6 +291,7 @@ function titleForRequest(entity: Exclude<SearchEntity, "all">, state: DetailStat
 // drawer nunca cancela la búsqueda en curso y viceversa.
 export function SearchDetailDrawerContainer({ request, onClose }: SearchDetailDrawerContainerProps) {
   const [state, setState] = useState<DetailState>({ status: "closed" });
+  const [retryCount, setRetryCount] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -273,7 +326,8 @@ export function SearchDetailDrawerContainer({ request, onClose }: SearchDetailDr
       });
 
     return () => controller.abort();
-  }, [request]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request, retryCount]);
 
   const isOpen = request !== null && state.status !== "closed";
 
@@ -284,7 +338,9 @@ export function SearchDetailDrawerContainer({ request, onClose }: SearchDetailDr
       title={request ? titleForRequest(request.entity, state) : "Detalle"}
       footerNote={GLOBAL_NOTE}
     >
-      <DetailBody state={state} />
+      <div style={DETAIL_SURFACE_STYLE}>
+        <DetailBody state={state} onRetry={() => setRetryCount(c => c + 1)} />
+      </div>
     </DetailDrawer>
   );
 }

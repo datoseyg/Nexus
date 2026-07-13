@@ -117,9 +117,9 @@ export function DetailDrawer({ open, onClose, title, children, footerNote }: Det
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            aria-label="Cerrar panel"
-            className="rounded p-1"
-            style={{ color: "var(--nx-text-muted)" }}
+            aria-label="Cerrar detalle"
+            className="-m-2.5 flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full transition-colors duration-150 ease-out hover:bg-[rgba(74,85,212,0.08)] active:bg-[rgba(74,85,212,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nx-focus-ring-color)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+            style={{ color: "var(--nx-text-secondary)" }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" />

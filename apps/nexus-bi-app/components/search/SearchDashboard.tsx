@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { QueryDisclosure } from "@/components/QueryDisclosure";
-import { PaginationControls } from "@/components/PaginationControls";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { SearchForm } from "./SearchForm";
 import { SearchTabs } from "./SearchTabs";
 import { SearchFilters, type SearchFilterValues } from "./SearchFilters";
 import { SearchGroup } from "./SearchGroup";
+import { SearchPagination } from "./SearchPagination";
 import { SearchDetailDrawerContainer } from "./SearchDetailDrawerContainer";
+import { BUTTON_SECONDARY } from "./search.styles";
 import { isSearchFiltersResponse, isSearchResponse, type SearchState } from "./search.types";
 import { ENTITY_LABELS, ENTITY_ORDER, normalizeSearchQuery, resolveQueryAdjustmentMessage } from "./search.utils";
 import type { ConRepuestoFilter, SearchEntity, SearchFiltersResponse } from "@/types/search";
@@ -74,6 +75,7 @@ export function SearchDashboard() {
   const [filtersOptions, setFiltersOptions] = useState<SearchFiltersResponse | null>(null);
   const [searchState, setSearchState] = useState<SearchState>({ status: "idle" });
   const [detailRequest, setDetailRequest] = useState<{ entity: Exclude<SearchEntity, "all">; key: string } | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -97,7 +99,7 @@ export function SearchDashboard() {
   const hasCommittedQuery = urlState.q.trim().length > 0;
   const isInvalid = hasCommittedQuery && normalized.tokens.length === 0;
 
-  const requestKey = JSON.stringify(urlState);
+  const requestKey = JSON.stringify(urlState) + `|retry:${retryCount}`;
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -196,6 +198,7 @@ export function SearchDashboard() {
 
   const openDetail = useCallback((entity: Exclude<SearchEntity, "all">, key: string) => setDetailRequest({ entity, key }), []);
   const closeDetail = useCallback(() => setDetailRequest(null), []);
+  const handleRetry = useCallback(() => setRetryCount(c => c + 1), []);
 
   const filterValues: SearchFilterValues = {
     from: urlState.from,
@@ -221,7 +224,7 @@ export function SearchDashboard() {
         {searchState.status === "empty" && "Sin resultados para esta búsqueda."}
       </div>
 
-      <SearchForm initialQuery={urlState.q} onSubmit={handleSubmit} onClearAll={handleClearAll} />
+      <SearchForm initialQuery={urlState.q} loading={searchState.status === "loading"} onSubmit={handleSubmit} onClearAll={handleClearAll} />
 
       {hasCommittedQuery && (
         <>
@@ -246,8 +249,16 @@ export function SearchDashboard() {
       )}
 
       {searchState.status === "error" && (
-        <div role="alert">
+        <div role="alert" className="flex flex-col gap-2">
           <ErrorBanner message={searchState.message} />
+          <button
+            type="button"
+            onClick={handleRetry}
+            className={`self-start whitespace-nowrap rounded-[var(--nx-radius-button)] border px-4 text-[13px] font-semibold ${BUTTON_SECONDARY}`}
+            style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", minHeight: 44 }}
+          >
+            Reintentar
+          </button>
         </div>
       )}
 
@@ -292,7 +303,7 @@ export function SearchDashboard() {
                 onOpenDetail={openDetail}
               />
               {searchState.data.pagination && searchState.data.pagination.totalPages > 1 && (
-                <PaginationControls
+                <SearchPagination
                   page={searchState.data.pagination.page}
                   totalPages={searchState.data.pagination.totalPages}
                   totalRows={searchState.data.pagination.total}

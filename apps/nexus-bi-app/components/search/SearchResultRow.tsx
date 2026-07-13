@@ -1,6 +1,7 @@
 "use client";
 
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { BUTTON_TEXT_LINK } from "./search.styles";
 import { formatDateEsCl, resolveTicketTitle, splitEquipmentIds, ticketStatusTone } from "./search.utils";
 import type { SearchClientResult, SearchEntity, SearchMachineResult, SearchPartResult, SearchReportResult, SearchTicketResult } from "@/types/search";
 
@@ -106,8 +107,8 @@ export function SearchResultRow({ entity, row, onOpenDetail }: SearchResultRowPr
       <button
         type="button"
         onClick={() => onOpenDetail(entity, row.key)}
-        className="shrink-0 whitespace-nowrap text-[13px] font-semibold underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-        style={{ color: "var(--nx-accent-indigo)", minHeight: 44, padding: "0 6px" }}
+        className={`shrink-0 whitespace-nowrap px-3 text-[13px] font-semibold underline ${BUTTON_TEXT_LINK}`}
+        style={{ color: "var(--nx-accent-indigo)", minHeight: 44 }}
       >
         Ver detalle
       </button>

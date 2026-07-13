@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { PILL_SELECTED_DARK, PILL_UNSELECTED } from "./search.styles";
 import { ENTITY_LABELS, ENTITY_ORDER } from "./search.utils";
 import type { SearchCounts, SearchEntity } from "@/types/search";
 
@@ -60,12 +61,7 @@ export function SearchTabs({ active, counts, onChange }: SearchTabsProps) {
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(entity)}
             onKeyDown={event => handleKeyDown(event, index)}
-            className="rounded-[var(--nx-radius-button)] px-3.5 text-[13.5px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-            style={{
-              background: isActive ? "var(--nx-sidebar-bg)" : "var(--nx-page-bg)",
-              color: isActive ? "#ffffff" : "var(--nx-text-secondary)",
-              minHeight: 44
-            }}
+            className={`rounded-[var(--nx-radius-button)] px-3.5 text-[13.5px] font-semibold ${isActive ? PILL_SELECTED_DARK : PILL_UNSELECTED}`}
           >
             {ENTITY_LABELS[entity]}
             {count !== null && <span className="ml-1.5 opacity-80">({count.toLocaleString("es-CL")})</span>}

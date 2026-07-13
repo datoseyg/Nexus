@@ -1,25 +1,29 @@
 "use client";
 
 import { useId, useState } from "react";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, FOCUS_RING } from "./search.styles";
 
 interface SearchFormProps {
   initialQuery: string;
+  loading: boolean;
   onSubmit: (query: string) => void;
   onClearAll: () => void;
 }
 
-const FOCUS_RING = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]";
-
 // Disparador de búsqueda: SOLO submit/Enter - nunca blur, nunca por
 // pulsación de tecla individual. El estado local (draft) puede diferir de
 // la última consulta comprometida hasta que el usuario presiona Buscar.
-export function SearchForm({ initialQuery, onSubmit, onClearAll }: SearchFormProps) {
+// `loading` (del padre) deshabilita Buscar mientras la request está en
+// curso - evita doble submit y muestra "Buscando…" sin cambiar el ancho
+// del botón (min-width fijo).
+export function SearchForm({ initialQuery, loading, onSubmit, onClearAll }: SearchFormProps) {
   const [draft, setDraft] = useState(initialQuery);
   const inputId = useId();
   const describedById = useId();
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (loading) return;
     onSubmit(draft);
   }
 
@@ -53,15 +57,17 @@ export function SearchForm({ initialQuery, onSubmit, onClearAll }: SearchFormPro
       <div className="flex gap-2">
         <button
           type="submit"
-          className={`whitespace-nowrap rounded-[var(--nx-radius-button)] px-5 text-[14px] font-semibold text-white ${FOCUS_RING}`}
+          disabled={loading}
+          aria-busy={loading}
+          className={`inline-flex min-w-[104px] items-center justify-center whitespace-nowrap rounded-[var(--nx-radius-button)] px-5 text-[14px] font-semibold text-white ${BUTTON_PRIMARY}`}
           style={{ background: "var(--nx-sidebar-bg)", minHeight: 44 }}
         >
-          Buscar
+          {loading ? "Buscando…" : "Buscar"}
         </button>
         <button
           type="button"
           onClick={handleClear}
-          className={`whitespace-nowrap rounded-[var(--nx-radius-button)] border px-4 text-[14px] font-semibold ${FOCUS_RING}`}
+          className={`whitespace-nowrap rounded-[var(--nx-radius-button)] border px-4 text-[14px] font-semibold ${BUTTON_SECONDARY}`}
           style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", minHeight: 44 }}
         >
           Limpiar

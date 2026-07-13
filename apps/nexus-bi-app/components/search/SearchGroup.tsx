@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchResultRow } from "./SearchResultRow";
+import { BUTTON_TEXT_LINK } from "./search.styles";
 import { ENTITY_LABELS } from "./search.utils";
 import type { SearchClientResult, SearchEntity, SearchMachineResult, SearchPartResult, SearchReportResult, SearchTicketResult } from "@/types/search";
 
@@ -45,7 +46,7 @@ export function SearchGroup({ entity, rows, totalCount, onOpenDetail, onViewAll 
           <button
             type="button"
             onClick={onViewAll}
-            className="text-[13px] font-semibold underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
+            className={`px-2.5 text-[13px] font-semibold underline ${BUTTON_TEXT_LINK}`}
             style={{ color: "var(--nx-accent-indigo)", minHeight: 44 }}
           >
             Ver todos

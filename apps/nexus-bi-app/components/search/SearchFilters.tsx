@@ -1,6 +1,7 @@
 "use client";
 
 import type { ConRepuestoFilter } from "@/types/search";
+import { BUTTON_TEXT_LINK, FORM_CONTROL, PILL_SELECTED_GREEN, PILL_UNSELECTED } from "./search.styles";
 
 export interface SearchFilterValues {
   from?: string;
@@ -19,15 +20,14 @@ interface SearchFiltersProps {
   onClear: () => void;
 }
 
-const FOCUS_RING = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]";
-
-const SELECT_STYLE: React.CSSProperties = {
-  border: "1px solid var(--nx-border)",
+// Sizing/tipografía únicamente - el color/fondo/borde de reposo y de hover
+// vive enteramente en FORM_CONTROL (search.styles.ts). Un `style` inline
+// con border/background/color anularía cualquier regla :hover generada
+// por Tailwind (mayor especificidad que una pseudo-clase) - esa fue la
+// causa real de que los selects/inputs no mostraran feedback.
+const CONTROL_SIZE_STYLE: React.CSSProperties = {
   borderRadius: "var(--nx-radius-button)",
-  background: "#ffffff",
-  color: "var(--nx-text-primary)",
   fontSize: 13,
-  minHeight: 44,
   minWidth: 150,
   maxWidth: "100%",
   padding: "0 10px"
@@ -75,21 +75,20 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
     <div className="flex flex-col gap-2.5">
       <div className="flex flex-wrap items-center gap-2">
         <span className="sr-only">Período</span>
-        {PERIOD_PRESETS.map(preset => (
-          <button
-            key={preset.label}
-            type="button"
-            className={`rounded-[var(--nx-radius-pill)] px-3 py-1.5 text-[12.5px] font-semibold ${FOCUS_RING}`}
-            style={{
-              background: isActivePreset(preset) ? "var(--nx-accent-green)" : "var(--nx-page-bg)",
-              color: isActivePreset(preset) ? "#ffffff" : "var(--nx-text-secondary)",
-              minHeight: 36
-            }}
-            onClick={() => onChange(preset.range())}
-          >
-            {preset.label}
-          </button>
-        ))}
+        {PERIOD_PRESETS.map(preset => {
+          const active = isActivePreset(preset);
+          return (
+            <button
+              key={preset.label}
+              type="button"
+              aria-pressed={active}
+              className={`rounded-[var(--nx-radius-pill)] px-3.5 text-[12.5px] font-semibold ${active ? PILL_SELECTED_GREEN : PILL_UNSELECTED}`}
+              onClick={() => onChange(preset.range())}
+            >
+              {preset.label}
+            </button>
+          );
+        })}
         <label className="sr-only" htmlFor="search-from">
           Desde
         </label>
@@ -100,8 +99,7 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
           min={options?.dateRange.min ?? undefined}
           max={values.to ?? options?.dateRange.max ?? undefined}
           onChange={event => onChange({ from: event.target.value || undefined })}
-          className={`rounded-[var(--nx-radius-button)] text-[12.5px] ${FOCUS_RING}`}
-          style={{ border: "1px solid var(--nx-border)", color: "var(--nx-text-primary)", minHeight: 44, padding: "0 8px" }}
+          className={`rounded-[var(--nx-radius-button)] px-2 text-[12.5px] text-[var(--nx-text-primary)] ${FORM_CONTROL}`}
         />
         <span style={{ color: "var(--nx-text-muted)" }}>a</span>
         <label className="sr-only" htmlFor="search-to">
@@ -114,8 +112,7 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
           min={values.from ?? options?.dateRange.min ?? undefined}
           max={options?.dateRange.max ?? undefined}
           onChange={event => onChange({ to: event.target.value || undefined })}
-          className={`rounded-[var(--nx-radius-button)] text-[12.5px] ${FOCUS_RING}`}
-          style={{ border: "1px solid var(--nx-border)", color: "var(--nx-text-primary)", minHeight: 44, padding: "0 8px" }}
+          className={`rounded-[var(--nx-radius-button)] px-2 text-[12.5px] text-[var(--nx-text-primary)] ${FORM_CONTROL}`}
         />
       </div>
 
@@ -125,8 +122,8 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
         </label>
         <select
           id="search-cliente"
-          className={FOCUS_RING}
-          style={SELECT_STYLE}
+          className={`text-[var(--nx-text-primary)] ${FORM_CONTROL}`}
+          style={CONTROL_SIZE_STYLE}
           value={values.cliente ?? ""}
           onChange={event => onChange({ cliente: event.target.value || undefined })}
         >
@@ -143,8 +140,8 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
         </label>
         <select
           id="search-maquina"
-          className={FOCUS_RING}
-          style={SELECT_STYLE}
+          className={`text-[var(--nx-text-primary)] ${FORM_CONTROL}`}
+          style={CONTROL_SIZE_STYLE}
           value={values.maquina ?? ""}
           onChange={event => onChange({ maquina: event.target.value || undefined })}
         >
@@ -161,8 +158,8 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
         </label>
         <select
           id="search-tipo-tarea"
-          className={FOCUS_RING}
-          style={SELECT_STYLE}
+          className={`text-[var(--nx-text-primary)] ${FORM_CONTROL}`}
+          style={CONTROL_SIZE_STYLE}
           value={values.tipoTarea ?? ""}
           onChange={event => onChange({ tipoTarea: event.target.value || undefined })}
         >
@@ -179,8 +176,8 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
         </label>
         <select
           id="search-estado-ticket"
-          className={FOCUS_RING}
-          style={SELECT_STYLE}
+          className={`text-[var(--nx-text-primary)] ${FORM_CONTROL}`}
+          style={CONTROL_SIZE_STYLE}
           value={values.estadoTicket ?? ""}
           onChange={event => onChange({ estadoTicket: event.target.value || undefined })}
         >
@@ -197,8 +194,8 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
         </label>
         <select
           id="search-con-repuesto"
-          className={FOCUS_RING}
-          style={SELECT_STYLE}
+          className={`text-[var(--nx-text-primary)] ${FORM_CONTROL}`}
+          style={CONTROL_SIZE_STYLE}
           value={values.conRepuesto}
           onChange={event => onChange({ conRepuesto: event.target.value as ConRepuestoFilter })}
         >
@@ -210,8 +207,8 @@ export function SearchFilters({ values, options, onChange, onClear }: SearchFilt
         <button
           type="button"
           onClick={onClear}
-          className={`ml-auto whitespace-nowrap text-[13px] font-semibold underline ${FOCUS_RING}`}
-          style={{ color: "var(--nx-accent-indigo)", minHeight: 44, padding: "0 4px" }}
+          className={`ml-auto whitespace-nowrap px-2.5 text-[13px] font-semibold underline ${BUTTON_TEXT_LINK}`}
+          style={{ color: "var(--nx-accent-indigo)", minHeight: 44 }}
         >
           Limpiar filtros
         </button>
