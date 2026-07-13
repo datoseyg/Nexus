@@ -1,21 +1,24 @@
-import styles from "./dashboard.module.css";
+import { formatNumberEsCl } from "@/lib/dashboard-formatters";
 
 interface MiniBarTableCellProps {
   value: number;
   max: number;
 }
 
-// Barra mini proporcional dentro de una celda de tabla, tal como en la
-// "Tabla Uso de Repuestos" del dashboard de referencia.
+// Barra mini proporcional dentro de una celda de tabla ("Cantidad
+// consumida" de la tabla de repuestos), migrada a tokens --nx-*.
 export function MiniBarTableCell({ value, max }: MiniBarTableCellProps) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
 
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-      <span className={styles.barMini}>
-        <span className={styles.barMiniFill} style={{ width: `${pct}%` }} />
+    <span className="inline-flex items-center gap-2" style={{ fontVariantNumeric: "tabular-nums" }}>
+      <span
+        className="inline-block h-4 w-[100px] overflow-hidden rounded"
+        style={{ background: "var(--nx-page-bg)" }}
+      >
+        <span className="block h-full" style={{ width: `${pct}%`, background: "var(--nx-accent-indigo)" }} />
       </span>
-      {value}
+      {formatNumberEsCl(value)}
     </span>
   );
 }

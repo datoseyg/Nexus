@@ -21,7 +21,7 @@ export function isAdminSchema(schema: string): schema is AdminSchema {
 export function assertAdminTable(schema: string, table: string): asserts schema is AdminSchema {
   if (!isAdminSchema(schema)) {
     throw new Error(
-      `Schema no permitido para CRUD: "${schema}" — solo audit/manual_review/stock. ` +
+      `Schema no permitido para CRUD: "${schema}" -solo audit/manual_review/stock. ` +
       "processed/marts/gold son de solo lectura (ver app/api/tables/[schema]/[table] para explorarlas)."
     );
   }

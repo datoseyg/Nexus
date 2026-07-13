@@ -3,8 +3,9 @@
 import "@/lib/chartjs-setup";
 import { useEffect, useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
-import styles from "./dashboard.module.css";
 import { FilterBar, type FilterConfig } from "./FilterBar";
+import { KpiCard } from "./KpiCard";
+import { ChartCard } from "./ChartCard";
 import { DataTableCard, type DataTableColumn } from "./DataTableCard";
 import { DateRangePicker, type DateRangeValue } from "./DateRangePicker";
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -21,6 +22,10 @@ interface UptimeSummary {
     asistenciaRemota: number;
     instalacionIntegracion: number;
   };
+  // Único flag real que gobierna el aviso metodológico (ver
+  // /api/dashboard/uptime/summary/route.ts) - reemplaza el banner
+  // estático anterior, que se mostraba siempre sin leer este campo.
+  downtimeWarning: boolean;
 }
 
 interface TaskRow {
@@ -45,6 +50,8 @@ interface UptimeTableRow {
 }
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+const FOCUS_RING = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]";
 
 function toQueryString(params: Record<string, string | undefined>): string {
   const search = new URLSearchParams();
@@ -172,7 +179,7 @@ export function UptimeDowntimeTab() {
   ];
 
   const chartByYear = useMemo(() => {
-    if (!uptimeTable) return { years: [], datasets: [] as Array<{ label: string; data: number[] }> };
+    if (!uptimeTable) return { years: [] as number[], datasets: [] as Array<{ label: string; data: number[] }> };
 
     const years = Array.from(new Set(uptimeTable.periodChart.map(p => p.anio))).sort();
     const datasets = years.map(year => ({
@@ -186,43 +193,66 @@ export function UptimeDowntimeTab() {
     return { years, datasets };
   }, [uptimeTable]);
 
+  const yearTotals = chartByYear.datasets.map(d => d.data.reduce((sum, v) => sum + v, 0));
+
   if (loading && !summary) {
-    return <p style={{ color: "#6b7280" }}>Cargando integración Uptime / Downtime…</p>;
+    return (
+      <p aria-busy="true" style={{ color: "var(--nx-text-secondary)" }}>
+        Cargando horas registradas…
+      </p>
+    );
   }
 
   if (error) {
-    return <ErrorBanner message={error.message} code={error.code} />;
+    return (
+      <div role="alert">
+        <ErrorBanner message={error.message} code={error.code} />
+      </div>
+    );
   }
 
   return (
     <>
-      <div className={styles.topActions}>
-        <button type="button" className={`${styles.btn} ${styles.btnRefresh}`} onClick={() => setRefreshKey(k => k + 1)}>
-          ⟳ ActualizarDatos
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          className={`rounded-[var(--nx-radius-button)] px-3 py-2 text-[12.5px] font-semibold ${FOCUS_RING}`}
+          style={{ background: "var(--nx-accent-indigo)", color: "#ffffff", minHeight: 40 }}
+          onClick={() => setRefreshKey(k => k + 1)}
+        >
+          ⟳ Actualizar datos
         </button>
-        <h2 style={{ margin: 0, fontSize: 16, textAlign: "center", flex: 1 }}>
-          Integración Dashboard del Proyecto 1 al del 7:
-          <br />
-          <span style={{ fontWeight: 400, fontSize: 14 }}>Visualización de horas registradas por cliente y tipo</span>
-        </h2>
-        <div style={{ width: 150 }} />
       </div>
 
-      <div className={styles.pendingBanner}>
-        <strong>Uptime/Downtime - pendiente de parametrización.</strong> Las métricas de este tab usan{" "}
-        <code>duration_minutes</code> de FieldBeat como <strong>&quot;horas registradas&quot;</strong>, no como downtime real
-        de equipo. El cálculo de uptime final requiere horas base por día/semana, feriados y una fórmula aprobada por
-        negocio que todavía no existen en este warehouse.
-      </div>
+      {summary?.downtimeWarning && (
+        <div
+          className="mb-4 rounded-[var(--nx-radius-card)] p-3.5"
+          style={{ background: "var(--nx-warning-bg)", border: "1.5px solid var(--nx-warning-border)" }}
+        >
+          <p className="text-sm font-bold" style={{ color: "var(--nx-warning-fg)" }}>
+            Las horas registradas no representan por sí solas la disponibilidad real del equipo.
+          </p>
+          <p className="mt-0.5 text-[13.5px]" style={{ color: "var(--nx-warning-fg)" }}>
+            No existe una fórmula de uptime aprobada por negocio para este resumen.
+          </p>
+        </div>
+      )}
 
-      <div className={styles.filterPanel}>
-        <div className="flex items-center justify-between md:hidden" style={{ marginBottom: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--db-text-muted)", textTransform: "uppercase" }}>Filtros</span>
-          <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={() => setFiltersCollapsed(v => !v)}>
+      <div className="mb-4 min-w-0 rounded-[var(--nx-radius-card)] p-4" style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }}>
+        <div className="mb-2 flex items-center justify-between md:hidden">
+          <span className="text-[12px] font-bold uppercase" style={{ color: "var(--nx-text-secondary)" }}>
+            Filtros
+          </span>
+          <button
+            type="button"
+            className={`rounded-[var(--nx-radius-button)] px-3 text-[12.5px] font-semibold ${FOCUS_RING}`}
+            style={{ background: "var(--nx-page-bg)", color: "var(--nx-text-secondary)", minHeight: 44 }}
+            onClick={() => setFiltersCollapsed(v => !v)}
+          >
             {filtersCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
           </button>
         </div>
-        <div className={styles.filterPanelBody} data-collapsed={filtersCollapsed}>
+        <div className={`${filtersCollapsed ? "hidden" : "flex"} min-w-0 flex-col gap-2.5 md:flex`}>
           <DateRangePicker
             value={dateRange}
             onChange={setDateRange}
@@ -234,102 +264,110 @@ export function UptimeDowntimeTab() {
       </div>
 
       {tasks && (
-        <DataTableCard<TaskRow>
-          title="Tabla de Tareas"
-          columns={taskColumns}
-          rows={tasks.rows}
-          page={tasks.page}
-          totalPages={tasks.totalPages}
-          totalRows={tasks.totalRows}
-          onPageChange={setTasksPage}
-          headerExtra={
-            <input
-              type="text"
-              className={styles.filterInput}
-              placeholder="Task_id"
-              value={taskIdSearch}
-              onChange={event => {
-                setTaskIdSearch(event.target.value);
-                setTasksPage(1);
-              }}
-              style={{ marginBottom: 10 }}
-            />
-          }
-        />
+        <div className="mb-4">
+          <DataTableCard<TaskRow>
+            title="Tabla de tareas"
+            columns={taskColumns}
+            rows={tasks.rows}
+            page={tasks.page}
+            totalPages={tasks.totalPages}
+            totalRows={tasks.totalRows}
+            onPageChange={setTasksPage}
+            headerExtra={
+              <input
+                type="text"
+                placeholder="Task_id"
+                className={`mb-2.5 ${FOCUS_RING}`}
+                style={{
+                  border: "1px solid var(--nx-border)",
+                  borderRadius: "var(--nx-radius-button)",
+                  color: "var(--nx-text-primary)",
+                  minHeight: 44,
+                  minWidth: 150,
+                  padding: "0 12px",
+                  fontSize: 13
+                }}
+                value={taskIdSearch}
+                onChange={event => {
+                  setTaskIdSearch(event.target.value);
+                  setTasksPage(1);
+                }}
+              />
+            }
+          />
+        </div>
       )}
 
-      <h3 style={{ margin: "20px 0 12px" }}>Suma de horas registradas que ha tomado cada Tipo de Tarea:</h3>
+      <span className="mb-2.5 block text-[13px] font-bold uppercase tracking-wide" style={{ color: "var(--nx-text-secondary)" }}>
+        Resumen de horas por tipo de tarea
+      </span>
       {summary && (
-        <>
-          <div className={styles.kpiMiniGrid}>
-            <div className={styles.kpiMini}>
-              <div className="label">Correctivas Programadas</div>
-              <div className="value">{formatNumberEsCl(summary.kpis.correctivasProgramadas, 2)}</div>
-            </div>
-            <div className={styles.kpiMini}>
-              <div className="label">Correctivas No Programadas</div>
-              <div className="value">{formatNumberEsCl(summary.kpis.correctivasNoProgramadas, 2)}</div>
-            </div>
-            <div className={styles.kpiMini}>
-              <div className="label">Preventivas Programadas</div>
-              <div className="value">{formatNumberEsCl(summary.kpis.preventivasProgramadas, 2)}</div>
-            </div>
-            <div className={styles.kpiMini}>
-              <div className="label">Requerimiento del Cliente</div>
-              <div className="value">{formatNumberEsCl(summary.kpis.requerimientoCliente, 2)}</div>
-            </div>
-            <div className={styles.kpiMini}>
-              <div className="label">Asistencia Remota</div>
-              <div className="value">{formatNumberEsCl(summary.kpis.asistenciaRemota, 2)}</div>
-            </div>
-            <div className={styles.kpiMini}>
-              <div className="label">Instalación - Integración</div>
-              <div className="value">{formatNumberEsCl(summary.kpis.instalacionIntegracion, 2)}</div>
-            </div>
-          </div>
-          <div className={styles.kpiMini} style={{ maxWidth: 300, margin: "0 auto 20px" }}>
-            <div className="label">Total Horas Registradas (todas las tareas)</div>
-            <div className="value" style={{ color: "var(--db-danger, #d9534f)", fontSize: 22 }}>
+        <div className="mb-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+          <div
+            className="flex min-w-0 flex-col gap-1 rounded-[var(--nx-radius-card)] p-4"
+            style={{ background: "var(--nx-sidebar-bg)", boxShadow: "var(--nx-shadow-card-dark)" }}
+          >
+            <span className="text-[13px]" style={{ color: "var(--nx-sidebar-text-secondary)" }}>
+              Total de horas registradas
+            </span>
+            <span className="text-[26px] font-extrabold [font-variant-numeric:tabular-nums]" style={{ color: "var(--nx-sidebar-text-primary)" }}>
               {formatNumberEsCl(summary.kpis.totalHorasRegistradas, 2)}
-            </div>
+            </span>
           </div>
-        </>
+          <KpiCard label="Correctivas programadas" value={formatNumberEsCl(summary.kpis.correctivasProgramadas, 2)} />
+          <KpiCard label="Correctivas no programadas" value={formatNumberEsCl(summary.kpis.correctivasNoProgramadas, 2)} />
+          <KpiCard label="Preventivas programadas" value={formatNumberEsCl(summary.kpis.preventivasProgramadas, 2)} />
+          <KpiCard label="Requerimiento del cliente" value={formatNumberEsCl(summary.kpis.requerimientoCliente, 2)} />
+          <KpiCard label="Asistencia remota" value={formatNumberEsCl(summary.kpis.asistenciaRemota, 2)} />
+          <KpiCard label="Instalación - integración" value={formatNumberEsCl(summary.kpis.instalacionIntegracion, 2)} />
+        </div>
       )}
 
       {uptimeTable && (
-        <DataTableCard<UptimeTableRow>
-          title="Tabla Uptime/Downtime por Cliente-Máquina (parcial)"
-          columns={uptimeColumns}
-          rows={uptimeTable.table.rows}
-          page={uptimeTable.table.page}
-          totalPages={uptimeTable.table.totalPages}
-          totalRows={uptimeTable.table.totalRows}
-          onPageChange={setTablePage}
-          footerNote={uptimeTable.table.pendingNote}
-        />
-      )}
-
-      <div className={styles.card} style={{ marginTop: 14 }}>
-        <div className={styles.cardTitle}>Duración Registrada por Año-Mes (reemplaza &quot;Downtime&quot;)</div>
-        <div className={styles.chartWrapTall}>
-          <Bar
-            data={{
-              labels: MESES,
-              datasets: chartByYear.datasets.map((d, i) => ({
-                ...d,
-                backgroundColor: DASHBOARD_PALETTE_SEQUENCE[i % DASHBOARD_PALETTE_SEQUENCE.length]
-              }))
-            }}
-            options={{
-              plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } },
-              scales: {
-                y: { beginAtZero: true, title: { display: true, text: "Horas registradas" } },
-                x: { title: { display: true, text: "Mes" } }
-              }
-            }}
+        <div className="mb-4">
+          <DataTableCard<UptimeTableRow>
+            title="Tabla de horas por cliente-máquina (parcial)"
+            columns={uptimeColumns}
+            rows={uptimeTable.table.rows}
+            page={uptimeTable.table.page}
+            totalPages={uptimeTable.table.totalPages}
+            totalRows={uptimeTable.table.totalRows}
+            onPageChange={setTablePage}
+            footerNote={uptimeTable.table.pendingNote}
           />
         </div>
-      </div>
+      )}
+
+      <ChartCard
+        title="Duración registrada por año-mes"
+        subtitle="Suma de horas registradas por mes, agrupada por año."
+        size="matrix"
+        accessibleData={{
+          labels: chartByYear.years.map(String),
+          values: yearTotals,
+          unitLabel: "años",
+          valueSuffix: "horas registradas"
+        }}
+      >
+        <Bar
+          data={{
+            labels: MESES,
+            datasets: chartByYear.datasets.map((d, i) => ({
+              ...d,
+              backgroundColor: DASHBOARD_PALETTE_SEQUENCE[i % DASHBOARD_PALETTE_SEQUENCE.length]
+            }))
+          }}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 12 } } } },
+            scales: {
+              y: { beginAtZero: true, ticks: { font: { size: 12 } }, title: { display: true, text: "Horas registradas", font: { size: 12 } } },
+              x: { ticks: { font: { size: 12 } }, title: { display: true, text: "Mes", font: { size: 12 } } }
+            }
+          }}
+        />
+      </ChartCard>
     </>
   );
 }

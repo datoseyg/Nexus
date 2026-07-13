@@ -1,10 +1,10 @@
 import { Pool, types, type QueryResultRow } from "pg";
 
 // Contrato público idéntico a lib/duckdb.ts (runQuery/serializeRow/
-// serializeRows) a propósito — así el swap en las rutas existentes
+// serializeRows) a propósito -así el swap en las rutas existentes
 // (Fase 4 de la migración) es mecánico: solo cambia el import, no la
 // lógica de cada route.ts. Conecta contra el connection pooler de
-// Supabase (Supavisor/PgBouncer, modo transaction, puerto 6543) — nunca
+// Supabase (Supavisor/PgBouncer, modo transaction, puerto 6543) -nunca
 // la conexión directa, que se reserva para los scripts de migración/DDL
 // que corren una vez desde la máquina local (src/db/migrate-to-supabase.js,
 // src/db/generate-postgres-ddl.js).
