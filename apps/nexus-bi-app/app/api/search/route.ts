@@ -1,165 +1,130 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
+import { normalizeSearchQuery } from "@/lib/search-query-normalizer";
+import { createParamPusher, parseSearchFilters, SearchValidationError, type SearchFilters } from "@/lib/search-filters";
+import {
+  buildConsolidatedCountsQuery,
+  buildEntityRowsQuery,
+  createQueryTimer,
+  getReportFieldsAvailability,
+  mapClientRow,
+  mapMachineRow,
+  mapPartRow,
+  mapReportRow,
+  mapTicketRow,
+  toSafeCount
+} from "@/lib/search-sql";
+import type { SearchCounts, SearchEntity, SearchGroups, SearchResponse } from "@/types/search";
 
 export const runtime = "nodejs";
 
-const MAX_KEYWORDS = 6;
-const RESULT_LIMIT_PER_SOURCE = 30;
+const PREVIEW_LIMIT = 5;
+const ALL_ENTITIES: Array<Exclude<SearchEntity, "all">> = ["reports", "tickets", "clients", "machines", "parts"];
 
-const SELECT_COLUMNS = `
-  m.fieldbeat_task_id,
-  m.fieldbeat_task_date,
-  m.client_name,
-  m.equipment_internal_ids,
-  m.task_type,
-  m.task_state,
-  m.technician_names,
-  m.linked_zendesk_ticket_id,
-  m.used_part_names,
-  m.used_part_numbers,
-  m.dolibarr_refs
-`;
-
-function tokenize(query: string): string[] {
-  return query
-    .trim()
-    .split(/\s+/)
-    .filter(token => token.length >= 2)
-    .slice(0, MAX_KEYWORDS);
-}
-
-// "sin IA todavía" -> clasificación por keywords, sin LLM. Cada keyword
-// debe matchear en AL MENOS una de las columnas de texto buscadas
-// (client_name / task_type / description, o field_value en la segunda
-// query) - AND entre keywords, OR entre columnas por keyword.
-function buildDescriptionQuery(keywords: string[]) {
-  const conditions: string[] = [];
-  const params: unknown[] = [];
-
-  keywords.forEach((keyword, index) => {
-    const paramIndex = index + 1;
-    conditions.push(
-      `(m.client_name ILIKE $${paramIndex} OR m.task_type ILIKE $${paramIndex} OR t.description ILIKE $${paramIndex})`
-    );
-    params.push(`%${keyword}%`);
-  });
-
-  const sql = `
-    SELECT
-      ${SELECT_COLUMNS},
-      t.description,
-      NULL AS field_name,
-      NULL AS field_value,
-      'description' AS match_source
-    FROM marts.fieldbeat_report_dolibarr_operational_view m
-    JOIN processed.fieldbeat_tasks t ON m.fieldbeat_task_id = t.fieldbeat_task_id
-    WHERE ${conditions.join(" AND ")}
-    ORDER BY m.fieldbeat_task_date DESC
-    LIMIT ${RESULT_LIMIT_PER_SOURCE}
-  `;
-
-  return { sql, params };
-}
-
-function buildReportFieldsQuery(keywords: string[]) {
-  const conditions: string[] = [];
-  const params: unknown[] = [];
-
-  keywords.forEach((keyword, index) => {
-    const paramIndex = index + 1;
-    conditions.push(`rf.field_value ILIKE $${paramIndex}`);
-    params.push(`%${keyword}%`);
-  });
-
-  const sql = `
-    SELECT
-      ${SELECT_COLUMNS},
-      NULL AS description,
-      rf.field_name,
-      rf.field_value,
-      'report_field' AS match_source
-    FROM processed.fieldbeat_report_fields rf
-    JOIN marts.fieldbeat_report_dolibarr_operational_view m ON rf.fieldbeat_task_id = m.fieldbeat_task_id
-    WHERE ${conditions.join(" AND ")}
-    ORDER BY m.fieldbeat_task_date DESC
-    LIMIT ${RESULT_LIMIT_PER_SOURCE}
-  `;
-
-  return { sql, params };
-}
-
-// Reemplaza $1, $2... por el valor literal, SOLO para mostrar en el
-// panel "ver query" de la UI - nunca se re-ejecuta este string, la
-// query real corre con parámetros bindeados (runQuery(sql, params)).
+// Reemplaza $1, $2... por el valor literal SOLO para el panel "ver query" -
+// nunca se re-ejecuta este string, la query real corre parametrizada.
 function toReadableSql(sql: string, params: unknown[]): string {
   let readable = sql.trim().replace(/\s+/g, " ");
-
   params.forEach((value, index) => {
     const placeholder = `$${index + 1}`;
     readable = readable.split(placeholder).join(`'${String(value).replace(/'/g, "''")}'`);
   });
-
   return readable;
 }
 
+function emptyGroups(): SearchGroups {
+  return { reports: [], tickets: [], clients: [], machines: [], parts: [] };
+}
+
+function mapEntityRows(entity: Exclude<SearchEntity, "all">, rows: Record<string, unknown>[]) {
+  if (entity === "reports") return rows.map(mapReportRow);
+  if (entity === "clients") return rows.map(mapClientRow);
+  if (entity === "machines") return rows.map(mapMachineRow);
+  if (entity === "tickets") return rows.map(mapTicketRow);
+  return rows.map(mapPartRow);
+}
+
 export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
-
-  if (!q) {
-    return NextResponse.json({ error: "Falta el parámetro de búsqueda (q)." }, { status: 400 });
-  }
-
-  const keywords = tokenize(q);
-
-  if (keywords.length === 0) {
-    return NextResponse.json({
-      query: q,
-      keywords: [],
-      results: [],
-      queries: [],
-      message: "Escribí al menos una palabra de 2 o más caracteres."
-    });
-  }
+  const timer = createQueryTimer();
 
   try {
-    const descriptionQuery = buildDescriptionQuery(keywords);
-    const descriptionResults = await runQuery(descriptionQuery.sql, descriptionQuery.params);
+    const filters: SearchFilters = parseSearchFilters(request.nextUrl.searchParams);
+    const normalized = normalizeSearchQuery(filters.q);
 
-    // processed.fieldbeat_report_fields "si existe": esta segunda
-    // búsqueda no debe tumbar toda la respuesta si esa tabla llegara a
-    // faltar en el warehouse (ej. un db:build corrido antes del cierre
-    // de Fase 1 que la agregó).
-    let reportFieldsResults: Record<string, unknown>[] = [];
-    let reportFieldsQuery: { sql: string; params: unknown[] } | null = null;
-
-    try {
-      reportFieldsQuery = buildReportFieldsQuery(keywords);
-      reportFieldsResults = await runQuery(reportFieldsQuery.sql, reportFieldsQuery.params);
-    } catch (error) {
-      console.warn("Búsqueda en processed.fieldbeat_report_fields no disponible:", error);
+    if (normalized.tokens.length === 0) {
+      throw new SearchValidationError("q debe contener al menos un token de 2 o más caracteres.");
     }
 
-    const results = [...serializeRows(descriptionResults), ...serializeRows(reportFieldsResults)];
+    const reportFieldsAvailable = await timer.timed("capability-check", () => getReportFieldsAvailability());
 
-    const queries = [
-      { label: "Búsqueda en descripción del task", sql: toReadableSql(descriptionQuery.sql, descriptionQuery.params) }
+    const countsPusher = createParamPusher();
+    const countsQuery = buildConsolidatedCountsQuery(filters, normalized.tokens, reportFieldsAvailable, countsPusher);
+    const countsRows = await timer.timed("counts", () => runQuery<Record<string, unknown>>(countsQuery.sql, countsQuery.params));
+    const countsRow = countsRows[0] ?? {};
+
+    const counts: SearchCounts = {
+      reports: toSafeCount(countsRow.reports),
+      tickets: toSafeCount(countsRow.tickets),
+      clients: toSafeCount(countsRow.clients),
+      machines: toSafeCount(countsRow.machines),
+      parts: toSafeCount(countsRow.parts),
+      all: 0
+    };
+    counts.all = counts.reports + counts.tickets + counts.clients + counts.machines + counts.parts;
+
+    const groups = emptyGroups();
+    const queries: Array<{ label: string; sql: string }> = [
+      { label: "Conteos consolidados", sql: toReadableSql(countsQuery.sql, countsQuery.params) }
     ];
 
-    if (reportFieldsQuery) {
-      queries.push({
-        label: "Búsqueda en campos de texto libre del reporte",
-        sql: toReadableSql(reportFieldsQuery.sql, reportFieldsQuery.params)
-      });
+    if (filters.entity === "all") {
+      for (const entity of ALL_ENTITIES) {
+        if (counts[entity] === 0) continue;
+        const pusher = createParamPusher();
+        const rowsQuery = buildEntityRowsQuery(entity, filters, normalized.tokens, reportFieldsAvailable, pusher, PREVIEW_LIMIT, 0);
+        const rawRows = await timer.timed(`preview:${entity}`, () => runQuery<Record<string, unknown>>(rowsQuery.sql, rowsQuery.params));
+        (groups[entity] as unknown[]) = mapEntityRows(entity, serializeRows(rawRows));
+        queries.push({ label: `Preview de ${entity}`, sql: toReadableSql(rowsQuery.sql, rowsQuery.params) });
+      }
+
+      const response: SearchResponse = {
+        query: normalized.effectiveQuery,
+        entity: "all",
+        counts,
+        groups,
+        pagination: null,
+        queryAdjusted: normalized.queryAdjusted,
+        queryAdjustmentReasons: normalized.queryAdjustmentReasons,
+        queries
+      };
+      console.info(`[search] entity=all queries=${timer.count()} totalMs=${timer.timings.reduce((s, t) => s + t.ms, 0)}`, timer.timings);
+      return NextResponse.json(response);
     }
 
-    return NextResponse.json({
-      query: q,
-      keywords,
-      results,
-      resultCount: results.length,
+    const entity = filters.entity as Exclude<SearchEntity, "all">;
+    const offset = (filters.page - 1) * filters.pageSize;
+    const pusher = createParamPusher();
+    const rowsQuery = buildEntityRowsQuery(entity, filters, normalized.tokens, reportFieldsAvailable, pusher, filters.pageSize, offset);
+    const rawRows = await timer.timed(`page:${entity}`, () => runQuery<Record<string, unknown>>(rowsQuery.sql, rowsQuery.params));
+    (groups[entity] as unknown[]) = mapEntityRows(entity, serializeRows(rawRows));
+    queries.push({ label: `Página de ${entity}`, sql: toReadableSql(rowsQuery.sql, rowsQuery.params) });
+
+    const total = counts[entity];
+    const totalPages = Math.max(1, Math.ceil(total / filters.pageSize));
+
+    const response: SearchResponse = {
+      query: normalized.effectiveQuery,
+      entity,
+      counts,
+      groups,
+      pagination: { page: Math.min(filters.page, totalPages), pageSize: filters.pageSize, total, totalPages },
+      queryAdjusted: normalized.queryAdjusted,
+      queryAdjustmentReasons: normalized.queryAdjustmentReasons,
       queries
-    });
+    };
+    console.info(`[search] entity=${entity} queries=${timer.count()} totalMs=${timer.timings.reduce((s, t) => s + t.ms, 0)}`, timer.timings);
+    return NextResponse.json(response);
   } catch (error) {
     return handleApiError(error);
   }

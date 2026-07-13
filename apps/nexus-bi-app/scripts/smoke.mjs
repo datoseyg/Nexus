@@ -31,7 +31,7 @@ const ROUTES = [
   { path: "/dashboard/after-hours", marker: "Trabajo Fuera de Horario" },
   { path: "/audit/manual-review", marker: "Auditoría y Validación Manual - Nexus BI" },
   { path: "/explorer", marker: "Cargando tablas…" },
-  { path: "/search", marker: "Búsqueda / Lupa" }
+  { path: "/search", marker: "Búsqueda" }
 ];
 
 // Marcadores de pagina de error de Next.js/React que a veces se sirven con
