@@ -1,4 +1,4 @@
--- AUTOGENERADO por src/db/generate-postgres-ddl.js — NO EDITAR A MANO.
+-- AUTOGENERADO por src/db/generate-postgres-ddl.js -NO EDITAR A MANO.
 -- Fuente: information_schema.columns de data/warehouse/eyg_nexus.duckdb (introspección en vivo).
 -- Para regenerar: npm run db:pg:ddl
 -- Ver docs/TECH_DEBT_UNREPRODUCIBLE_TABLES.md para las tablas sin script generador propio.

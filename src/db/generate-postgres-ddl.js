@@ -93,7 +93,7 @@ export async function generatePostgresDdl() {
 
   for (const schema of SCHEMAS) {
     const header =
-      `-- AUTOGENERADO por src/db/generate-postgres-ddl.js — NO EDITAR A MANO.\n` +
+      `-- AUTOGENERADO por src/db/generate-postgres-ddl.js -NO EDITAR A MANO.\n` +
       `-- Fuente: information_schema.columns de data/warehouse/eyg_nexus.duckdb (introspección en vivo).\n` +
       `-- Para regenerar: npm run db:pg:ddl\n` +
       `-- Ver docs/TECH_DEBT_UNREPRODUCIBLE_TABLES.md para las tablas sin script generador propio.\n\n`;

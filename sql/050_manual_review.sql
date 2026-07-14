@@ -1,5 +1,5 @@
 -- Schema manual_review: tablas transaccionales para el "Centro de
--- Correcciones" (hoy FutureActionButton.tsx, deshabilitado — no se conecta
+-- Correcciones" (hoy FutureActionButton.tsx, deshabilitado -no se conecta
 -- en esta migración, ver docs/RUNBOOK_SUPABASE_NETLIFY.md y el plan de
 -- migración § Fase 5 sobre por qué el wiring de UI queda bloqueado hasta
 -- que exista autenticación real).
@@ -10,7 +10,7 @@
 
 -- Alineado con data/curation/part_identity_aliases.example.csv:
 -- alias_value, alias_type, dolibarr_product_id, dolibarr_ref, reason,
--- created_by, created_at — mismas columnas, más id/updated_at/active
+-- created_by, created_at -mismas columnas, más id/updated_at/active
 -- porque acá es una tabla relacional real, no un CSV plano.
 CREATE TABLE IF NOT EXISTS manual_review.part_aliases (
   id bigserial PRIMARY KEY,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS manual_review.part_aliases (
   UNIQUE (alias_value, alias_type)
 );
 
--- Alineado con data/curation/ticket_link_overrides.example.csv — modelo de
+-- Alineado con data/curation/ticket_link_overrides.example.csv -modelo de
 -- RESULTADO de la corrección, no de cola de revisión: corrected_* queda
 -- NULL cuando override_type es CONFIRMED_NO_TICKET (se confirma que esa
 -- visita nunca generó ticket real).

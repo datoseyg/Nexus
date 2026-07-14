@@ -5,7 +5,7 @@ import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
 import { mapType } from "./generate-postgres-ddl.js";
 
-// Validación de la migración a Supabase (Fase 2) — 4 chequeos, no solo
+// Validación de la migración a Supabase (Fase 2) -4 chequeos, no solo
 // conteo de filas: 1) filas, 2) tablas presentes, 3) columnas por tabla,
 // 4) tipos principales. Falla con exit code != 0 si cualquiera no pasa,
 // mismo criterio que src/db/validate-duckdb.js. Al terminar, actualiza la

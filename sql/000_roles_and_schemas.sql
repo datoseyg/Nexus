@@ -1,6 +1,6 @@
 -- Fase 1 de la migración Nexus a Supabase Postgres.
 -- Se corre una sola vez (o de nuevo, es idempotente) vía el SQL editor de
--- Supabase o psql, contra la conexión DIRECTA (puerto 5432) — no el pooler.
+-- Supabase o psql, contra la conexión DIRECTA (puerto 5432) -no el pooler.
 -- Orden de ejecución de sql/: 000 -> 005 -> 010 -> 020 -> 030 -> 040 -> 050 -> 060.
 
 -- gen_random_uuid() (usado en audit.pipeline_runs, audit.warehouse_sync_state)
@@ -16,10 +16,10 @@ CREATE SCHEMA IF NOT EXISTS audit;
 CREATE SCHEMA IF NOT EXISTS manual_review;
 CREATE SCHEMA IF NOT EXISTS stock;
 
--- Postgres no tiene "CREATE ROLE IF NOT EXISTS" — se emula con un bloque DO.
+-- Postgres no tiene "CREATE ROLE IF NOT EXISTS" -se emula con un bloque DO.
 -- La contraseña NUNCA se hardcodea acá: el placeholder se reemplaza a mano
 -- en el SQL editor de Supabase (o se rota con ALTER ROLE ... PASSWORD
--- después de correr esto) ANTES de armar SUPABASE_DB_URL — este archivo
+-- después de correr esto) ANTES de armar SUPABASE_DB_URL -este archivo
 -- versionado nunca contiene la contraseña real, ni siquiera temporalmente.
 DO $$
 BEGIN
@@ -41,10 +41,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA audit, manual_revie
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA audit, manual_review, stock TO nexus_app;
 
 -- ALTER DEFAULT PRIVILEGES sin "FOR ROLE x" solo aplica a objetos creados
--- por QUIEN EJECUTA este ALTER — no a todas las tablas futuras sin importar
+-- por QUIEN EJECUTA este ALTER -no a todas las tablas futuras sin importar
 -- quién las cree. sql/010-030 (autogenerado) y las re-corridas de
 -- generate-postgres-ddl.js se ejecutan vía el SQL editor de Supabase, que
--- corre como el rol `postgres` por default — por eso el FOR ROLE explícito.
+-- corre como el rol `postgres` por default -por eso el FOR ROLE explícito.
 -- Si en algún proyecto el SQL editor corre como otro rol, ajustar acá.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA raw, processed, marts, gold
   GRANT SELECT ON TABLES TO nexus_app;

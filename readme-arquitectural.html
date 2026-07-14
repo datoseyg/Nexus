@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NEXUS — Snapshot Arquitectural v1</title>
+<title>NEXUS -Snapshot Arquitectural v1</title>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
   mermaid.initialize({
@@ -528,7 +528,7 @@
 
   <header class="cover">
     <div class="eyebrow"><span class="dot"></span> Snapshot arquitectural &middot; Documento congelado</div>
-    <h1 class="title">NEXUS <span>—</span> Estado del sistema antes de migrar al edge</h1>
+    <h1 class="title">NEXUS <span>-</span> Estado del sistema antes de migrar al edge</h1>
     <p class="subtitle">
       Registro de referencia de la arquitectura de integración Zendesk &middot; FieldBeat &middot; Dolibarr
       tal como opera hoy: local, batch, sin estado compartido. Este documento fija ese estado por escrito
@@ -594,7 +594,7 @@
       <p>
         <strong>Sin estado compartido en memoria.</strong> Ninguna etapa retiene información en RAM para la
         siguiente: el único canal de comunicación entre pasos es el sistema de archivos. Esto hace que cada
-        etapa sea trivialmente reproducible de forma aislada — se puede correr <code>build:gold</code> sin
+        etapa sea trivialmente reproducible de forma aislada -se puede correr <code>build:gold</code> sin
         haber corrido nada en la sesión actual, siempre que los CSV de <code>data/marts/</code> ya existan
         en disco.
       </p>
@@ -603,7 +603,7 @@
         <strong>Inmutabilidad por capas.</strong> El patrón medallón (RAW &rarr; PROCESSED &rarr; MARTS &rarr; GOLD,
         ver sección 3) nunca parchea una capa in-place: cada corrida reconstruye la capa completa desde la
         anterior. <code>load-duckdb.js</code>, por ejemplo, usa literalmente <code>CREATE OR REPLACE TABLE</code>
-        para cada tabla — no hay upserts incrementales en ningún punto del sistema. RAW en particular se trata
+        para cada tabla -no hay upserts incrementales en ningún punto del sistema. RAW en particular se trata
         como hecho histórico: una vez minado un <code>data/raw/&lt;fuente&gt;/*.json</code>, nada aguas abajo
         lo vuelve a tocar.
       </p>
@@ -611,7 +611,7 @@
       <p>
         El costo marginal de esto en Fase 1 es prácticamente cero: todo corre en una máquina local o en VS Code,
         y buena parte de los artefactos intermedios (<code>data/gold/*.csv</code>, <code>data/marts/*.csv</code>)
-        se versionan en git como snapshots reproducibles. El motor de lectura final es DuckDB embebido — un
+        se versionan en git como snapshots reproducibles. El motor de lectura final es DuckDB embebido -un
         archivo binario único (<code>eyg_nexus.duckdb</code>) que la aplicación de BI abre directamente en modo
         solo lectura, sin cliente/servidor de por medio.
       </p>
@@ -664,7 +664,7 @@ flowchart LR
         <div class="pe-label">En términos simples</div>
         <p>
           Este mapa responde una sola pregunta: ¿quién le habla a quién? A la izquierda están los tres sistemas
-          externos que ya existían antes de Nexus y que Nexus no controla — cada uno con su propia API. Un
+          externos que ya existían antes de Nexus y que Nexus no controla -cada uno con su propia API. Un
           operador dispara el pipeline a mano. El pipeline junta, limpia y cruza esa información, y la deja
           lista en un único archivo de base de datos. Ese archivo es lo único que la aplicación de BI necesita
           para mostrar dashboards a un analista de negocio. Nada de esto ocurre en tiempo real: es un proceso
@@ -692,28 +692,28 @@ flowchart LR
       <p>
         <strong>Zendesk</strong> es el contexto de <em>soporte</em>: la unidad de trabajo es el
         <code>ticket</code>, identificado por su <code>zendesk_ticket_id</code>. No sabe nada de técnicos en
-        terreno ni de repuestos — solo sabe que alguien reportó un problema y en qué estado quedó la
+        terreno ni de repuestos -solo sabe que alguien reportó un problema y en qué estado quedó la
         conversación.
       </p>
 
       <p>
         <strong>FieldBeat</strong> es el contexto de <em>servicio en terreno</em>: la unidad de trabajo es la
         <code>task</code> (reporte de visita técnica), con su cliente, su equipo intervenido y, opcionalmente,
-        los repuestos usados. FieldBeat puede o no saber que existe un ticket de Zendesk asociado — de hecho
+        los repuestos usados. FieldBeat puede o no saber que existe un ticket de Zendesk asociado -de hecho
         una parte importante del sistema existe para reconciliar esa ambigüedad (ver <code>gold.scope_metadata</code>).
       </p>
 
       <p>
         <strong>Dolibarr</strong> es el contexto de <em>catálogo/ERP</em>: la unidad de trabajo es el
         <code>producto</code>, con su referencia, código de barras y nombre comercial. No tiene ninguna noción
-        de "ticket" o "tarea" — es simplemente el inventario de verdad contra el que hay que resolver qué
+        de "ticket" o "tarea" -es simplemente el inventario de verdad contra el que hay que resolver qué
         repuesto usó realmente un técnico cuando lo escribió a mano en un reporte.
       </p>
 
       <p>
         La frontera entre estos tres contextos nunca es una llave foránea limpia. Un <code>ticket</code> puede
         tener cero, uno o varios <code>reports</code> de FieldBeat vinculados; un repuesto usado en terreno es
-        <em>texto libre</em> escrito por un técnico, no un identificador de Dolibarr — de ahí que exista una capa
+        <em>texto libre</em> escrito por un técnico, no un identificador de Dolibarr -de ahí que exista una capa
         de resolución de identidad completa (sección 4) en vez de un simple <code>JOIN</code>.
       </p>
     </div>
@@ -762,8 +762,8 @@ erDiagram
         <p>
           Este diagrama no describe tablas de base de datos: describe cómo se relacionan los conceptos de
           negocio. Un ticket de soporte puede haber generado varias visitas técnicas (o ninguna). Cada visita
-          técnica puede haber usado varios repuestos. Y cada repuesto usado — que en el reporte original es
-          apenas un texto escrito a mano por el técnico — intenta encontrar su producto real en el catálogo de
+          técnica puede haber usado varios repuestos. Y cada repuesto usado -que en el reporte original es
+          apenas un texto escrito a mano por el técnico -intenta encontrar su producto real en el catálogo de
           Dolibarr. Esa última relación es la más débil de las tres a propósito: puede no encontrar nada, o
           encontrar más de un candidato, porque no es una llave técnica sino una búsqueda por parecido.
         </p>
@@ -804,7 +804,7 @@ erDiagram
             <td><span class="layer-chip layer-raw">RAW</span></td>
             <td><code>data/raw/{zendesk,fieldbeat,dolibarr}/</code></td>
             <td>JSON, respuesta cruda de la API</td>
-            <td>Inmutable — hecho histórico, nunca se reescribe</td>
+            <td>Inmutable -hecho histórico, nunca se reescribe</td>
             <td><code>data/raw/fieldbeat/all_tasks_latest.json</code></td>
           </tr>
           <tr>
@@ -924,7 +924,7 @@ flowchart LR
           distintos, se limpia y se le da forma consistente, se cruza contra el catálogo de repuestos, se une
           todo por cliente/ticket/tarea, se resume en métricas de negocio, y finalmente se carga a un archivo
           de base de datos que la aplicación de BI lee directamente. Cada caja con nombre en <code>code</code>
-          es un comando real que existe hoy en <code>package.json</code> — no hay pasos ocultos ni magia entre
+          es un comando real que existe hoy en <code>package.json</code> -no hay pasos ocultos ni magia entre
           medio: cada flecha es literalmente "este comando lee el archivo que dejó el anterior".
         </p>
       </figcaption>
@@ -944,7 +944,7 @@ flowchart LR
       <p class="lede">
         <code>src/resolvers/part-identity-resolver.js</code> es la capa anticorrupción (ACL) entre el mundo de
         texto libre de FieldBeat y el catálogo estructurado de Dolibarr. Su única responsabilidad es tomar un
-        <code>raw_part_identifier</code> — lo que un técnico escribió a mano — y decidir, con evidencia
+        <code>raw_part_identifier</code> -lo que un técnico escribió a mano -y decidir, con evidencia
         explícita, a qué producto de Dolibarr corresponde, si es que corresponde a alguno.
       </p>
 
@@ -957,7 +957,7 @@ flowchart LR
       </p>
 
       <p>
-        La cascada se detiene en el primer nivel que produce candidatos — nunca sigue "por si acaso" a un nivel
+        La cascada se detiene en el primer nivel que produce candidatos -nunca sigue "por si acaso" a un nivel
         más débil una vez que encontró algo en uno más fuerte. Un alias curado a mano por un humano pisa
         cualquier otro resultado automático, porque representa una decisión de negocio ya tomada.
       </p>
@@ -1008,7 +1008,7 @@ stateDiagram-v2
           Dolibarr? ¿Coincide si le limpiamos espacios y tildes? ¿Se parece lo suficiente a algo, aunque no
           sea idéntico? En cuanto una pregunta responde que sí, el sistema se detiene ahí y no sigue probando
           reglas más débiles. Si dos productos distintos calzan igual de bien, o si ninguno calza, el dato
-          queda marcado para que una persona lo revise a mano — nunca se inventa una respuesta.
+          queda marcado para que una persona lo revise a mano -nunca se inventa una respuesta.
         </p>
       </figcaption>
     </figure>
@@ -1025,7 +1025,7 @@ stateDiagram-v2
 
     <div class="prose">
       <p class="lede">
-        DuckDB corre <em>in-process</em>, embebido dentro del mismo runtime de Node que lo consulta — no hay
+        DuckDB corre <em>in-process</em>, embebido dentro del mismo runtime de Node que lo consulta -no hay
         un servidor de base de datos separado, ni un puerto de red, ni credenciales de conexión. El
         "warehouse" completo es un único archivo binario, <code>eyg_nexus.duckdb</code>, subordinado por
         completo a los CSV de <code>data/gold/</code> y <code>data/marts/</code>: nunca es la fuente de verdad,
@@ -1038,12 +1038,12 @@ stateDiagram-v2
         <code>CREATE OR REPLACE TABLE ... AS SELECT * FROM read_csv_auto(...)</code>) y <code>db:validate</code>
         (compara el conteo de filas del CSV contra el conteo real en SQL, tabla por tabla, y falla el build si
         no calzan). Si el archivo <code>.duckdb</code> se corrompe o se borra, se reconstruye desde cero sin
-        pérdida de información — la base de datos es un índice descartable, no un sistema de registro.
+        pérdida de información -la base de datos es un índice descartable, no un sistema de registro.
       </p>
 
       <p>
         La aplicación de BI (Next.js) abre este archivo en modo <code>READ_ONLY</code> vía
-        <code>@duckdb/node-api</code> — un binding nativo que corre dentro del proceso de Node del servidor,
+        <code>@duckdb/node-api</code> -un binding nativo que corre dentro del proceso de Node del servidor,
         no un cliente de red. Esto es exactamente lo que hace que este componente sea el más difícil de portar
         tal cual a un runtime edge (ver sección 6).
       </p>
@@ -1096,8 +1096,8 @@ sequenceDiagram
         <p>
           Antes de confiar en la base de datos, el sistema se audita a sí mismo: por cada tabla, cuenta cuántas
           filas tiene el CSV original y cuántas filas terminaron realmente en la base de datos, y exige que
-          los dos números sean idénticos. Si algo se perdió en el camino — un problema de formato, una fila
-          corrupta — el proceso completo se detiene con error en vez de dejar pasar un dashboard con números
+          los dos números sean idénticos. Si algo se perdió en el camino -un problema de formato, una fila
+          corrupta -el proceso completo se detiene con error en vez de dejar pasar un dashboard con números
           incompletos sin avisar.
         </p>
       </figcaption>
@@ -1133,7 +1133,7 @@ sequenceDiagram
       <div class="adr-body">
         <dl class="adr-row"><dt>Contexto</dt><dd>El volumen de datos de Fase 1 (miles de filas por tabla, no millones) no justifica un formato columnar comprimido; el costo de legibilidad importa más que el de performance.</dd></dl>
         <dl class="adr-row"><dt>Decisión</dt><dd>Todo intermedio (PROCESSED, MARTS, GOLD) se persiste como CSV plano, abrible en cualquier hoja de cálculo sin herramientas adicionales.</dd></dl>
-        <dl class="adr-row"><dt>Consecuencia</dt><dd>Sin tipado fuerte persistido — <code>read_csv_auto</code> reinfiere tipos en cada carga — y sin compresión columnar. Aceptado por prioridad de velocidad de iteración y debug transparente sobre eficiencia de almacenamiento.</dd></dl>
+        <dl class="adr-row"><dt>Consecuencia</dt><dd>Sin tipado fuerte persistido -<code>read_csv_auto</code> reinfiere tipos en cada carga -y sin compresión columnar. Aceptado por prioridad de velocidad de iteración y debug transparente sobre eficiencia de almacenamiento.</dd></dl>
       </div>
     </div>
 
@@ -1145,7 +1145,7 @@ sequenceDiagram
       <div class="adr-body">
         <dl class="adr-row"><dt>Contexto</dt><dd>El pipeline corre bajo demanda, disparado por un operador, en una sola máquina, sin necesidad de reaccionar a la llegada de datos en tiempo real.</dd></dl>
         <dl class="adr-row"><dt>Decisión</dt><dd>Cada etapa se invoca como un comando <code>npm run</code> independiente; el orden de dependencia es implícito en la documentación, no impuesto por un motor de eventos.</dd></dl>
-        <dl class="adr-row"><dt>Consecuencia</dt><dd>No hay reactividad automática a datos nuevos — hay que correr el pipeline a mano o vía cron/CI. A cambio, cada paso es depurable de forma aislada, sin infraestructura de mensajería que razonar.</dd></dl>
+        <dl class="adr-row"><dt>Consecuencia</dt><dd>No hay reactividad automática a datos nuevos -hay que correr el pipeline a mano o vía cron/CI. A cambio, cada paso es depurable de forma aislada, sin infraestructura de mensajería que razonar.</dd></dl>
       </div>
     </div>
 
@@ -1156,7 +1156,7 @@ sequenceDiagram
       </div>
       <div class="adr-body">
         <dl class="adr-row"><dt>Contexto</dt><dd>Toda lectura y escritura del pipeline pasa por rutas relativas (<code>data/raw</code>, <code>data/processed</code>, etc.), asumiendo un filesystem persistente y compartido entre pasos.</dd></dl>
-        <dl class="adr-row"><dt>Decisión</dt><dd>Ningún módulo abstrae el acceso a disco detrás de una interfaz — <code>fs.readFile</code>/<code>fs.writeFile</code> se llaman directo en cada script.</dd></dl>
+        <dl class="adr-row"><dt>Decisión</dt><dd>Ningún módulo abstrae el acceso a disco detrás de una interfaz -<code>fs.readFile</code>/<code>fs.writeFile</code> se llaman directo en cada script.</dd></dl>
         <dl class="adr-row"><dt>Consecuencia</dt><dd>Es la pieza más frágil de cara al edge: Cloudflare Workers no ofrece filesystem persistente. Este es el primer adaptador que debe reemplazarse, por objeto de almacenamiento (R2), antes de portar cualquier etapa del pipeline.</dd></dl>
       </div>
     </div>
@@ -1168,7 +1168,7 @@ sequenceDiagram
       </div>
       <div class="adr-body">
         <dl class="adr-row"><dt>Contexto</dt><dd><code>eyg_nexus.duckdb</code> es un archivo binario único abierto en modo <code>READ_ONLY</code> por la app, vía un binding nativo de Node.</dd></dl>
-        <dl class="adr-row"><dt>Decisión</dt><dd>Sin concurrencia de escritura real, sin acceso remoto salvo exponiendo el archivo entero — un motor de un solo proceso, un solo lector a la vez de forma práctica.</dd></dl>
+        <dl class="adr-row"><dt>Decisión</dt><dd>Sin concurrencia de escritura real, sin acceso remoto salvo exponiendo el archivo entero -un motor de un solo proceso, un solo lector a la vez de forma práctica.</dd></dl>
         <dl class="adr-row"><dt>Consecuencia</dt><dd>Candidato natural a D1 (SQL serverless remoto). Ya en curso: 17 tablas <code>gold_*</code>/<code>marts_*</code> exportadas y servidas read-only desde D1 vía Pages Functions, en paralelo al modo local.</dd></dl>
       </div>
     </div>
@@ -1231,7 +1231,7 @@ sequenceDiagram
     </div>
 
     <div class="callout">
-      <strong>Lectura de esta tabla:</strong> "Iniciado" no significa que el modo local se haya tocado — significa
+      <strong>Lectura de esta tabla:</strong> "Iniciado" no significa que el modo local se haya tocado -significa
       que existe una segunda ruta, en paralelo, sirviendo datos de solo lectura desde la pieza Cloudflare
       equivalente, sin escritura real todavía en ningún punto del sistema.
     </div>

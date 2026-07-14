@@ -1,0 +1,46 @@
+Cliente,Abreviación,Equipo,S-N,Año Instalación,Estado Contrato,SPA con Elekta,Lun - Vie,Sab - Dom,Soporte Elekta,Horarios de Atención,HW Refresh,UpDates,UpGrades,Situación Repuestos,Q Mant Prev x Año,Notas,,,,,,,Variables(no considerar para analisis)
+Fundación Arturo López Pérez,FALP,Synergy,153038,ago-2015,Vigente (Ren. Automática) (E&G),Gold (Incluye todos los repuestos),Sí,Sí,Presencial y Remoto,24/7,Sólo si el nuevo SW lo requiere,Sí,Sí,Todo Incluído,6,,,,,,,,
+UC Christus,UC-CECA,Axesse,153935,feb-2016,Vigente (Ren. Automática) (E&G),Gold (Incluye todos los repuestos),Sí,Sí,Remoto,24/7 (fuera de horario hábil solo fallas que impidan tratamiento de pacientes),No,Sólo SW,No,Todo Incluído,2,,,,,,,,
+UC Christus,UC-CECA,Infinity,109374,abr-2023,Garantía con Elekta,Garantía Elekta (Todo incluído),Sí,No,Remoto,Lun a Vie de 8:00 a 17:00 (mientras este vigente la garantia),No,Sólo SW,No,Todo Incluído,2,"2 años de garantía - termina en Abril/2025
+-Gonzalo Hernán López Estay
+",,,,,,,
+UC Christus,UC-SCA,VersaHD,109256,feb-2022,Vigente (Ren. Automática) (E&G),Gold (Incluye todos los repuestos),Sí,No,Remoto,24/7 (fuera de horario hábil solo fallas que impidan tratamiento de pacientes),No,Sólo SW,No,Todo Incluído,2,,,,,,,,
+Clínica Alemana de Santiago,CAS - Nor,Synergy,151673,2009,Desintalado,Desintalado,Sí,Sí,Remoto,24/7,No,Sólo SW,Sólo SW,Todo Incluído,3,"Equipo Desinstalado en Ago-2024
+-Gonzalo Hernán López Estay",,,,,,,
+Clínica Alemana de Santiago,CAS - Sur,Platform,152171,2010,Vigente (Ren. Automática) (E&G),Silver (Sólo Soporte),Sí,Sí,Remoto,24/7,No,Sólo SW,Sólo SW,Todo Incluído,3,,,,,,,,Sí
+Clinica Alemana de Santiago,CAS - Nor,VersaHD,109496,2025,,,Sí,No,,,,,,Todo Incluído,2,,,,,,,,
+Clinica Alemana de Santiago,CAS - Sur,VersaHD,,,,,,,,,,,,,2,,,,,,,,
+Hospital Carlos Van Buren,HCVB,VersaHD,154325,2017,Vigente (Plazo Fijo) (E&G),Gold (Incluye todos los repuestos),Sí,No,Remoto,Días hábiles de 07:00 a 19:00 (No incluye fines de semana ni festivos),No,Sólo SW,No,Todo Incluído,2,,,,,,,,No
+Hospital Clínico de Magallanes,HCM,Platform,152280,2011,Equipo Desinstalado,Equipo Desinstalado,Sí,No,Remoto,Lun a Jue 8:00 a 17:00 - Vie 7:00 a 16:00 (Mant. fuera de horario),No,No,No,"Todos, Excepto Paneles, Magnetron y Thyratron",3,,,,,,,,Sólo si el nuevo SW lo requiere
+Hospital Clínico de Magallanes,HCM,VersaHD,109452,mar-2024,Garantía con Elekta,Garantía Elekta (Todo incluído),Sí,No,Remoto,Días hábiles de 08:00 a 20:00 (No incluye fines de semana ni festivos),,,,Todo Incluído,2,"2 años de garantía. CAT firmado el 04/03/24 - Garantía hasta 04/03/26
+-Gonzalo Hernán López Estay",,,,,,,
+Instituto Nacional del Cáncer,INC,Infinity,156473,feb-2021,Vigente (Plazo Fijo) (E&G),Gold (Incluye todos los repuestos),Sí,No,Remoto,Lunes a viernes de 8:00 a 20:00 horas,No,Sólo SW,No,Todo Incluído,6,"Tenemos SPA Gold - incluye todas las partes y piezas, más no Upgrades.
+-Gonzalo Hernán López Estay",,,,,,,Presencial
+Clínica Las Condes,CLC 1,VersaHD,109166,sept-2021,Directo con Elekta,Garantía Elekta (Gold),Sí,No,Remoto,Lunes a Viernes de 8:00 a 17:00 (horario Elekta),Sí,Sí,Sí,Todo Incluído (Contrato directo con Elekta),2,,,,,,,,Remoto
+Clínica Las Condes,CLC 2,VersaHD,109284,dic-2022,Directo con Elekta,Garantía Elekta (Gold),Sí,No,Remoto,Lunes a Viernes de 8:00 a 17:00 (horario Elekta),Sí,Sí,Sí,Todo Incluído (Contrato directo con Elekta),2,,,,,,,,Presencial y Remoto
+Sanatorio Alemán,Oncorad,Compact,201110,,Vigente (Ren. Automática) (E&G),Silver (Sólo Soporte),Sí,No,Remoto,Horario hábil,No,No,No,No Incluídos,3,,,,,,,,N/A
+Sanatorio Alemán,Oncorad,Precise,105614,,Sin Contrato,Silver (Sólo Soporte),No,No,N/A,N/A,No,No,No,No Incluídos,-,,,,,,,,Todo Incluído
+Instituto Radio Oncológico,Inrad,Compact,201172,,Contrato On Demand (E&G),Silver (Sólo Soporte),Sí,No,Remoto,Horario hábil,No,No,No,No Incluídos,2,,,,,,,,"Todos, Excepto Paneles, Magnetron y Thyratron"
+Torre Médica - Rancagua,Dr. Pérez,Precise,105277,,On Demand (Sin Contrato),Sin SPA (Fuera registros Elekta),Sí,No,N/A,Horario hábil,No,No,No,No Incluídos,-,,,,,,,,No Incluídos
+Radio Oncología del Sur,ROS,Infinity,156187,dic-2021,Vigente (Ren. Automática) (E&G),Silver (Sólo Soporte),Sí,No,Remoto,Horario hábil,No,No,No,No Incluídos,3,,,,,,,,
+UC Christus,UC-CECA,Flexitron,FT02211,nov-24,Garantía con Elekta,Garantía Elekta (Todo incluído),Sí,No,,,,,,,,,,,,,,,No
+Sanatorio Alemán,Oncorad,MicroSelectron,10806,,Vigente (Ren. Automática) (E&G),Silver + 3 Fuentes Ir-192,Sí,No,Remoto,Horario hábil,No,No,No,No Incluídos,3-4,,,,,,,,Sólo SW
+Sanatorio Alemán,Oncorad,Flexitron,FT02181,jul-24,Garantía con Elekta,Garantía Elekta (Todo incluído),Sí,No,,Lunes a Viernes 8:00 a 17:00 (horario Elekta),No,Sólo SW,No,Todo Incluído,Por cada cambio fuente,,,,,,,,
+Fundación Arturo López Pérez,FALP,Flexitron,FT07026,,Vigente (Ren. Automática) (E&G),Silver sin Fuente,Sí,Sí,Remoto,24/7,No,Sólo SW,No,Incluye sólo repuestos bajo USD 1500.- (NO incluye fuente),1,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,Directo con Elekta
+,,,,,,,,,,,,,,,,,,,,,,,Vigente (Ren. Automática) (E&G)
+,,,,,,,,,,,,,,,,,,,,,,,Vigente (Plazo Fijo) (E&G)
+,,,,,,,,,,,,,,,,,,,,,,,Garantía con Elekta
+,,,,,,,,,,,,,,,,,,,,,,,On Demand (Sin Contrato)
+,,,,,,,,,,,,,,,,,,,,,,,Contrato On Demand (E&G)
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,Silver (Sólo Soporte)
+,,,,,,,,,,,,,,,,,,,,,,,Gold (Incluye todos los repuestos)
+,,,,,,,,,,,,,,,,,,,,,,,Platinum (Incluye TR)
+,,,,,,,,,,,,,,,,,,,,,,,Garantía Elekta (Todo incluído)
+,,,,,,,,,,,,,,,,,,,,,,,Garantía Elekta (Gold)
+,,,,,,,,,,,,,,,,,,,,,,,Sin SPA (Fuera registros Elekta)
+,,,,,,,,,,,,,,,,,,,,,,,Silver + 3 Fuentes Ir-192
+,,,,,,,,,,,,,,,,,,,,,,,Silver sin Fuente

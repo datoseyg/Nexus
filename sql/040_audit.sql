@@ -1,6 +1,6 @@
 -- Schema audit: logueo de corridas del pipeline, hallazgos de calidad de
 -- dato, y estado de sincronización DuckDB -> Postgres. Tablas transaccionales
--- (CRUD vía app/api/admin/audit/**) — nunca tocadas por
+-- (CRUD vía app/api/admin/audit/**) -nunca tocadas por
 -- src/db/migrate-to-supabase.js.
 
 CREATE TABLE IF NOT EXISTS audit.pipeline_runs (

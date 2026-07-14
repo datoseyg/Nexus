@@ -1,4 +1,4 @@
--- Schema stock: tabla nueva, forward-looking — no es una migración de datos
+-- Schema stock: tabla nueva, forward-looking -no es una migración de datos
 -- existentes. PHASE_2_BACKLOG.md ítem 4 documenta que el pipeline actual
 -- NO descuenta inventario en Dolibarr; esta tabla es el punto de partida
 -- transaccional para cuando esa automatización se decida construir.

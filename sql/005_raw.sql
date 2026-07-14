@@ -1,5 +1,5 @@
 -- Espejo mínimo de data/raw/<plataforma>/*.json. Carga opcional y apagada
--- por default (LOAD_RAW=false en src/db/migrate-to-supabase.js) — ver
+-- por default (LOAD_RAW=false en src/db/migrate-to-supabase.js) -ver
 -- hallazgo de presupuesto de espacio (106MB de JSON) en el plan de migración.
 -- No hay generador propio por plataforma más allá de este espejo simple:
 -- el payload completo de cada respuesta de API queda en `payload` (jsonb).

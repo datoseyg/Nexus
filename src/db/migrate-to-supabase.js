@@ -25,9 +25,9 @@ async function postgresExecute(connection, sql) {
 // con el estado actual del .duckdb, vía TRUNCATE + INSERT (nunca DROP, para
 // no perder los GRANT ya otorgados en sql/000).
 //
-// Alcance del truncate/reload — límites explícitos: SOLO processed/marts/gold
+// Alcance del truncate/reload -límites explícitos: SOLO processed/marts/gold
 // (+ raw si LOAD_RAW=true). manual_review/stock/audit quedan completamente
-// fuera del loop — son transaccionales, solo entran vía los endpoints CRUD
+// fuera del loop -son transaccionales, solo entran vía los endpoints CRUD
 // o el logueo del propio pipeline. El filtro de information_schema de abajo
 // hace estructuralmente imposible que este script los toque por accidente.
 const SYNC_SCHEMAS = ["processed", "marts", "gold"];
@@ -37,7 +37,7 @@ const RUN_ID_FILE = "data/reports/supabase_sync_run_id.json";
 function requireEnv(name) {
   const value = process.env[name];
   if (!value) {
-    throw new Error(`Falta ${name} en .env — necesaria para conectar a Supabase (conexión directa, puerto 5432).`);
+    throw new Error(`Falta ${name} en .env -necesaria para conectar a Supabase (conexión directa, puerto 5432).`);
   }
   return value;
 }
@@ -133,7 +133,7 @@ export async function migrateToSupabase() {
   console.log("=== Migrando DuckDB -> Supabase Postgres ===");
 
   const loadRaw = process.env.LOAD_RAW === "true";
-  console.log(`LOAD_RAW=${loadRaw} (default: false — ver riesgo de presupuesto de espacio en el plan de migración)`);
+  console.log(`LOAD_RAW=${loadRaw} (default: false -ver riesgo de presupuesto de espacio en el plan de migración)`);
 
   const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_WRITE" });
   const connection = await instance.connect();

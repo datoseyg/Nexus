@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NEXUS — Blueprint Arquitectural v2 (Cloudflare Edge)</title>
+<title>NEXUS -Blueprint Arquitectural v2 (Cloudflare Edge)</title>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
   mermaid.initialize({
@@ -316,14 +316,14 @@
 
   <header class="cover">
     <div class="eyebrow"><span class="dot"></span> Blueprint arquitectural &middot; Estado objetivo</div>
-    <h1 class="title">NEXUS <span>—</span> Topología final en Cloudflare Edge</h1>
+    <h1 class="title">NEXUS <span>-</span> Topología final en Cloudflare Edge</h1>
     <p class="subtitle">
       Diseño de referencia hacia el que evoluciona la plataforma: de un pipeline batch en una sola máquina a
       un sistema distribuido, reactivo a eventos, desplegado en la red de Cloudflare.
     </p>
     <p class="companion-note">
       Complementa a <code>readme-arquitectural.html</code> (Snapshot v1, estado actual congelado). Este
-      documento no describe lo que existe hoy — describe hacia dónde va, y con qué piezas se construye.
+      documento no describe lo que existe hoy -describe hacia dónde va, y con qué piezas se construye.
     </p>
 
     <div class="meta-grid">
@@ -358,7 +358,7 @@
       <p class="lede">
         Cloudflare no es "un servidor en otro lado". Es una plataforma de cómputo distribuido: en vez de un
         único proceso que vive en una máquina y espera peticiones, el trabajo se descompone en piezas
-        pequeñas y sin estado que se ejecutan cerca de donde ocurre el evento que las dispara — y que se
+        pequeñas y sin estado que se ejecutan cerca de donde ocurre el evento que las dispara -y que se
         comunican entre sí por almacenamiento y mensajería, no por llamadas directas de función.
       </p>
       <p>
@@ -369,7 +369,7 @@
       </p>
       <p>
         Para razonar sobre esto sin perderse en nombres de producto, conviene pensar cada primitiva de
-        Cloudflare como un arquetipo con un rol fijo — igual que un organismo tiene órganos especializados,
+        Cloudflare como un arquetipo con un rol fijo -igual que un organismo tiene órganos especializados,
         no una única célula que hace todo.
       </p>
     </div>
@@ -451,14 +451,14 @@
       <p>
         El mecanismo que hace esto posible ya existe en la plataforma sin construir nada a medida:
         R2 puede emitir un evento cuando se escribe un objeto nuevo (<code>PutObject</code>), ese evento se
-        publica en una Queue, y un Worker consumidor procesa ese mensaje — que es exactamente la forma de un
+        publica en una Queue, y un Worker consumidor procesa ese mensaje -que es exactamente la forma de un
         "trigger" de base de datos, pero entre capas de almacenamiento en vez de entre filas de una tabla.
         El resultado es <em>micro-batching</em>: en vez de un batch gigante disparado a mano una vez al día,
         cada objeto nuevo dispara su propio mini-batch de procesamiento, casi en el momento en que llega.
       </p>
       <p>
-        Esto no convierte a Nexus en un sistema de streaming en tiempo real — sigue siendo fundamentalmente
-        batch, con la misma disciplina de inmutabilidad e idempotencia de la Fase 1 — pero el tamaño del lote
+        Esto no convierte a Nexus en un sistema de streaming en tiempo real -sigue siendo fundamentalmente
+        batch, con la misma disciplina de inmutabilidad e idempotencia de la Fase 1 -pero el tamaño del lote
         pasa de "todo lo acumulado desde la última corrida" a "lo que acaba de llegar", y el disparo pasa de
         humano a evento.
       </p>
@@ -504,7 +504,7 @@ flowchart LR
         <p>
           En el modelo actual, alguien tiene que acordarse de correr cada paso en orden. En este diagrama, cada
           capa avisa sola cuando terminó de escribir algo nuevo, y ese aviso es lo que despierta al siguiente
-          paso — nadie tiene que estar pendiente del reloj salvo el primer disparo de ingesta. Las cajas
+          paso -nadie tiene que estar pendiente del reloj salvo el primer disparo de ingesta. Las cajas
           cilíndricas son almacenamiento (donde el dato vive), las cajas rectangulares son cómputo puntual (que
           aparece, procesa, y desaparece), y las cajas ámbar son el "cartero" que lleva el aviso de un punto a
           otro.
@@ -586,7 +586,7 @@ flowchart TB
         <p>
           Este mapa muestra qué pieza de infraestructura atiende cada tipo de tráfico. Cuando un analista abre
           el dashboard, su navegador solo toca dos cajas: la CDN que le entrega la página, y un Worker que le
-          responde con datos ya calculados desde D1 — un camino corto y rápido. Todo el trabajo pesado (traer
+          responde con datos ya calculados desde D1 -un camino corto y rápido. Todo el trabajo pesado (traer
           datos de los sistemas externos, limpiarlos, cruzarlos) ocurre en un plano completamente separado, en
           segundo plano, disparado por el reloj o por eventos, sin que el analista tenga que esperarlo nunca.
         </p>
@@ -613,20 +613,20 @@ flowchart TB
       <p>
         <strong>El riesgo concreto.</strong> Si un operador dispara manualmente una reconstrucción de GOLD
         mientras el Workflow programado del mismo día todavía está corriendo, dos ejecuciones distintas pueden
-        intentar escribir la misma tabla en D1 al mismo tiempo — una condición de carrera clásica, que en el
+        intentar escribir la misma tabla en D1 al mismo tiempo -una condición de carrera clásica, que en el
         pipeline local simplemente no podía ocurrir porque solo había un proceso corriendo a la vez en una
         sola máquina.
       </p>
 
       <p>
         <strong>La solución: un Durable Object como semáforo distribuido.</strong> Un Durable Object es la
-        única primitiva de Cloudflare con ejecución de un solo hilo, por instancia — es decir, dos peticiones
+        única primitiva de Cloudflare con ejecución de un solo hilo, por instancia -es decir, dos peticiones
         a la misma instancia nunca corren en paralelo, se atienden en fila. Eso lo vuelve el lugar natural
         para implementar un lock: antes de arrancar una reconstrucción de GOLD, cada ejecución le pregunta al
         mismo Durable Object (identificado siempre por el mismo nombre, ej. <code>"gold-build-pipeline"</code>)
         si puede tomar el candado. Si ya está tomado, la segunda ejecución se rechaza o espera. Un
         <code>alarm</code> programado libera el candado automáticamente si la ejecución que lo tomó nunca
-        avisó que terminó — para que un crash no deje el pipeline bloqueado para siempre.
+        avisó que terminó -para que un crash no deje el pipeline bloqueado para siempre.
       </p>
 
       <div class="codeblock"><pre><span class="c-com">// Patron de lock distribuido dentro de un Durable Object</span>
@@ -643,8 +643,8 @@ flowchart TB
         <strong>El riesgo silencioso: un dato corrupto envenenando GOLD.</strong> Si un Worker normalizador
         recibe un registro malformado y lo deja pasar a medio transformar, ese error se propaga a MARTS y de
         ahí a GOLD, contaminando un dashboard entero sin que nadie lo note hasta mucho después. La defensa es
-        que cada mensaje se procese con su propio manejo de error — nunca dejar que una excepción sin capturar
-        tumbe el lote completo — y que, agotados los reintentos, el mensaje se mueva a una Dead Letter Queue en
+        que cada mensaje se procese con su propio manejo de error -nunca dejar que una excepción sin capturar
+        tumbe el lote completo -y que, agotados los reintentos, el mensaje se mueva a una Dead Letter Queue en
         cuarentena en vez de reintentarse para siempre o descartarse en silencio.
       </p>
     </div>
@@ -686,7 +686,7 @@ sequenceDiagram
         <p>
           Cuando un dato llega roto, el sistema no lo fuerza a entrar ni lo tira a la basura de inmediato: lo
           reintenta unas cuantas veces por si el problema era pasajero, y si sigue fallando lo aparta en una
-          "sala de espera" separada — la Dead Letter Queue — donde alguien puede revisarlo después con calma.
+          "sala de espera" separada -la Dead Letter Queue -donde alguien puede revisarlo después con calma.
           Lo importante es lo que nunca pasa: un dato roto jamás llega a contaminar los dashboards finales que
           ve un analista de negocio.
         </p>
@@ -708,7 +708,7 @@ sequenceDiagram
         La migración no es un corte de una vez: cada fase agrega una pieza nueva en paralelo a lo que ya
         funciona, y solo se retira el mecanismo anterior cuando la pieza nueva demostró paridad funcional.
         Esto es una continuación directa del criterio ya aplicado en el snapshot v1 (<code>NEXT_PUBLIC_DATA_MODE</code>
-        conmutando entre modos sin tocar el local) — no un cambio de filosofía.
+        conmutando entre modos sin tocar el local) -no un cambio de filosofía.
       </p>
     </div>
 
@@ -723,7 +723,7 @@ sequenceDiagram
         <p>
           Cada escritura que hoy va a <code>data/raw/</code> y <code>data/gold/</code> se espeja también a un
           bucket R2, sin apagar ni modificar el pipeline local. El objetivo de esta fase es exclusivamente
-          validar que el objeto que llega a R2 es idéntico byte a byte al archivo local — todavía no hay
+          validar que el objeto que llega a R2 es idéntico byte a byte al archivo local -todavía no hay
           ningún consumidor leyendo desde R2.
         </p>
         <div class="phase-meta">
@@ -737,7 +737,7 @@ sequenceDiagram
         <p>
           Los tres miners (Zendesk, FieldBeat, Dolibarr) se reescriben como Workers disparados por Cron
           Triggers, escribiendo directo a R2 en vez de a <code>data/raw/</code>. El operador deja de correr
-          <code>npm run get:all</code> a mano — el reloj lo hace por él, en el edge.
+          <code>npm run get:all</code> a mano -el reloj lo hace por él, en el edge.
         </p>
         <div class="phase-meta">
           <span class="status-chip status-target">Nuevo: Workers de ingesta + Cron Triggers</span>
@@ -749,7 +749,7 @@ sequenceDiagram
         <h4>Orquestar el ETL completo con Queues y Workflows</h4>
         <p>
           Se conectan eventos de R2 a Queues, y un Worker/Workflow consumidor por cada transición de capa
-          (RAW&rarr;PROCESSED, PROCESSED&rarr;MARTS, MARTS&rarr;GOLD) — el diagrama 01 de este documento pasa
+          (RAW&rarr;PROCESSED, PROCESSED&rarr;MARTS, MARTS&rarr;GOLD) -el diagrama 01 de este documento pasa
           de blueprint a implementación. Se introduce el Durable Object de lock antes de permitir dos
           ejecuciones de agregación GOLD superpuestas.
         </p>
@@ -778,7 +778,7 @@ sequenceDiagram
         <h4>Retirar el modo local una vez alcanzada paridad completa</h4>
         <p>
           Solo cuando cada dashboard fue validado en el edge contra el mismo resultado que el modo local
-          — no antes — se retira <code>local-duckdb</code> como ruta por defecto. Hasta ese punto, el modo
+          -no antes -se retira <code>local-duckdb</code> como ruta por defecto. Hasta ese punto, el modo
           local sigue siendo la fuente de verdad y el criterio de aceptación de todas las fases anteriores.
         </p>
         <div class="phase-meta">
@@ -789,7 +789,7 @@ sequenceDiagram
 
     <div class="callout warn">
       <strong>Criterio de corte, no de calendario:</strong> ninguna fase de esta lista tiene una fecha objetivo
-      implícita. Cada una termina cuando su validación pasa, no cuando pasa el tiempo — mismo criterio que ya
+      implícita. Cada una termina cuando su validación pasa, no cuando pasa el tiempo -mismo criterio que ya
       rige la migración D1 en curso dentro de este proyecto.
     </div>
   </section>
