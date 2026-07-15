@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
+import { isDuckdbSync } from "./ownership-manifest.js";
 
 
 function quoteIdentifier(identifier) {
@@ -57,7 +58,7 @@ async function attachPostgres(connection) {
   await connection.run(`ATTACH '${directUrl}' AS pg (TYPE postgres)`);
 }
 
-async function syncMedallionTables(connection) {
+export async function syncMedallionTables(connection) {
   // table_catalog = current_catalog() es obligatorio acá: una vez que
   // ATTACH crea el catálogo "pg", ese catálogo TAMBIÉN tiene schemas
   // processed/marts/gold con los mismos nombres de tabla (sql/010-030 ya
@@ -78,9 +79,21 @@ async function syncMedallionTables(connection) {
   let failed = 0;
 
   for (const { table_schema: schema, table_name: table } of tables) {
+    // ETAPA 6.6B0: solo se sincronizan tablas declaradas DUCKDB_SYNC en el
+    // manifiesto de ownership (src/db/ownership-manifest.js). Sin este
+    // filtro, cualquier tabla que exista en el .duckdb bajo processed/marts/
+    // gold se sincroniza por accidente de descubrimiento de schema, sin
+    // importar si tiene un generador real -el caso conocido es
+    // marts.fieldbeat_working_hours_analysis (mart legado congelado, sin
+    // builder en esta rama, ver docs/TECH_DEBT_UNREPRODUCIBLE_TABLES.md).
+    if (!isDuckdbSync(schema, table)) {
+      console.warn(`OMITIENDO ${schema}.${table}: no está declarada DUCKDB_SYNC en el manifiesto de ownership (src/db/ownership-manifest.js) -no se hace TRUNCATE ni INSERT.`);
+      skipped++;
+      continue;
+    }
+
     const fq = `${quoteIdentifier(schema)}.${quoteIdentifier(table)}`;
     const pgFq = `pg.${quoteIdentifier(schema)}.${quoteIdentifier(table)}`;
-
 
     try {
       await postgresExecute(
