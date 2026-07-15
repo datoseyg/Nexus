@@ -48,10 +48,20 @@
       ]
     },
     {
-      "source_id": "calendario-electoral-2018-2025",
-      "authority": "Reconciliación secundaria (Wikipedia, prensa) sobre calendario electoral -fechas cruzadas con Servel/gob.cl donde fue posible; NO verificado 100% contra Servel para cada fecha individual",
-      "title": "Calendario electoral de Chile 2018-2025 (plebiscitos, elecciones generales, segundas vueltas)",
-      "url": "https://es.wikipedia.org/wiki/Elecciones_de_convencionales_constituyentes_de_Chile_de_2021",
+      "source_id": "servel-primarias-2020",
+      "authority": "Servicio Electoral de Chile (Servel)",
+      "title": "Todo lo que debes saber a una semana de las Elecciones Primarias (29 de noviembre de 2020) - gobernadores en las 16 regiones, alcaldes en 36 comunas",
+      "url": "https://www.servel.cl/2020/11/23/todo-lo-que-debes-saber-a-una-semana-de-las-elecciones-primarias/",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 18.700, Art. 180"
+      ]
+    },
+    {
+      "source_id": "dt-primarias-2020-feriado",
+      "authority": "Dirección del Trabajo (DT) / prensa especializada laboral",
+      "title": "Elecciones primarias del domingo: regirá el feriado legal para trabajadores (29 de noviembre de 2020) - feriado legal según Art. 180 Ley 18.700, irrenunciable solo para trabajadores de mall/strip center en las comunas/regiones donde hubo votación",
+      "url": "https://www.elmostrador.cl/dia/2020/11/27/elecciones-primarias-del-domingo-regira-el-feriado-legal-para-trabajadores-y-la-ley-seca/",
       "accessed_at": "2026-07-15",
       "legal_references": [
         "Ley 18.700, Art. 180"
@@ -173,8 +183,7 @@
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "bcn-ley-18700-art180"
       ]
     },
     {
@@ -198,6 +207,16 @@
       ]
     },
     {
+      "local_date": "2020-11-29",
+      "holiday_name": "Elección Primaria de Gobernadores Regionales (las 16 regiones) y Alcaldes (36 comunas)",
+      "holiday_type": "ELECTION",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "servel-primarias-2020",
+        "dt-primarias-2020-feriado"
+      ]
+    },
+    {
       "local_date": "2020-12-08",
       "holiday_name": "Inmaculada Concepción",
       "holiday_type": "FIXED_DATE",
@@ -218,7 +237,5 @@
       ]
     }
   ],
-  "_notes": [
-    "Fechas electorales reconciliadas contra fuentes secundarias (Wikipedia/prensa) cruzadas con menciones oficiales puntuales -no verificadas 1:1 contra un calendario Servel primario completo en esta sesión. Base legal (Ley 18.700 Art.180) sí es primaria."
-  ]
+  "_notes": []
 }

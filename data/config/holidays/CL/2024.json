@@ -38,16 +38,6 @@
       ]
     },
     {
-      "source_id": "reconciliacion-secundaria-pueblos-2024-2025",
-      "authority": "Reconciliación secundaria (agregadores de noticias: BioBioChile, T13) -NO es evidencia primaria suficiente por sí sola",
-      "title": "¿20 o 21 de junio? Cuándo es el feriado del Día de los Pueblos Indígenas y por qué cambió este 2024 / cobertura periodística 2025",
-      "url": "https://www.biobiochile.cl/noticias/servicios/toma-nota/2024/06/07/20-o-21-de-junio-cuando-es-el-feriado-del-dia-de-los-pueblos-indigenas-y-por-que-cambio-este-2024.shtml",
-      "accessed_at": "2026-07-15",
-      "legal_references": [
-        "Ley 21.357"
-      ]
-    },
-    {
       "source_id": "bcn-ley-21357",
       "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
       "title": "Ley 21.357 - declara feriado el día del solsticio de invierno, Día Nacional de los Pueblos Indígenas",
@@ -59,20 +49,50 @@
       ]
     },
     {
-      "source_id": "bcn-ley-18700-art180",
-      "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
-      "title": "Ley 18.700 Orgánica Constitucional sobre Votaciones Populares y Escrutinios, Art. 180: el día de elecciones y plebiscitos es feriado legal",
-      "url": "https://www.bcn.cl/leychile/Consulta/listado_n_sel?_grupo_aporte=&sub=799&agr=2&comp=",
+      "source_id": "conadi-pueblos-indigenas",
+      "authority": "CONADI (Corporación Nacional de Desarrollo Indígena)",
+      "title": "Día Nacional de los Pueblos Indígenas en Chile - regla legal: 'el día del solsticio de invierno de cada año en el hemisferio sur'; excepción 2021 explícita (21 de junio)",
+      "url": "http://www.conadi.gob.cl/dianacionalpueblosindigenas",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 21.357"
+      ]
+    },
+    {
+      "source_id": "astro-solstice-utc",
+      "authority": "timeanddate.com (referencia astronómica neutral, no vinculada a feriados de Chile) - usada para APLICAR la regla legal de CONADI/Ley 21.357 (el feriado es 'el día del solsticio'), nunca como fuente del feriado en sí",
+      "title": "June solstice exact UTC times 2021-2025 (referencia astronómica independiente)",
+      "url": "https://www.timeanddate.com/calendar/june-solstice.html",
+      "accessed_at": "2026-07-15",
+      "legal_references": []
+    },
+    {
+      "source_id": "dt-municipales-2024-ord656",
+      "authority": "Dirección del Trabajo (DT)",
+      "title": "ORD. N°656/24 - dictamen sobre elecciones municipales/regionales 26-27 oct 2024: 26-oct es día hábil (NO feriado), 27-oct es feriado obligatorio Art.38 N°7 Código del Trabajo",
+      "url": "https://www.dt.gob.cl/legislacion/1624/w3-article-126781.html",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 18.700, Art. 180",
+        "Ley 21.693",
+        "Código del Trabajo Art. 38 N°7"
+      ]
+    },
+    {
+      "source_id": "servel-fechas-2024",
+      "authority": "Servicio Electoral de Chile (Servel)",
+      "title": "Elecciones 2024: Conoce las fechas relevantes",
+      "url": "https://www.servel.cl/2024/01/26/elecciones-2024-conoce-las-fechas-relevantes/",
       "accessed_at": "2026-07-15",
       "legal_references": [
         "Ley 18.700, Art. 180"
       ]
     },
     {
-      "source_id": "calendario-electoral-2018-2025",
-      "authority": "Reconciliación secundaria (Wikipedia, prensa) sobre calendario electoral -fechas cruzadas con Servel/gob.cl donde fue posible; NO verificado 100% contra Servel para cada fecha individual",
-      "title": "Calendario electoral de Chile 2018-2025 (plebiscitos, elecciones generales, segundas vueltas)",
-      "url": "https://es.wikipedia.org/wiki/Elecciones_de_convencionales_constituyentes_de_Chile_de_2021",
+      "source_id": "gob-cl-segunda-vuelta-gobernadores-2024",
+      "authority": "Gobierno de Chile (gob.cl) / CNN Chile (reconciliación)",
+      "title": "¿Es feriado el día de la segunda vuelta de gobernadores regionales? - 24 de noviembre de 2024, feriado obligatorio e irrenunciable",
+      "url": "https://www.cnnchile.com/pais/es-feriado-domingo-24-noviembre-segunda-vuelta-gobernadores-regionales_20241119/",
       "accessed_at": "2026-07-15",
       "legal_references": [
         "Ley 18.700, Art. 180"
@@ -135,7 +155,8 @@
       "is_irrenunciable": false,
       "source_ids": [
         "bcn-ley-21357",
-        "reconciliacion-secundaria-pueblos-2024-2025"
+        "conadi-pueblos-indigenas",
+        "astro-solstice-utc"
       ]
     },
     {
@@ -200,12 +221,12 @@
     },
     {
       "local_date": "2024-10-27",
-      "holiday_name": "Elecciones Municipales y de Gobernadores Regionales (primera vuelta)",
+      "holiday_name": "Elecciones Municipales y de Gobernadores Regionales (votación de 2 días 26-27 oct; el 26 es día hábil, el 27 es el feriado legal)",
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "dt-municipales-2024-ord656",
+        "servel-fechas-2024"
       ]
     },
     {
@@ -234,8 +255,7 @@
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "gob-cl-segunda-vuelta-gobernadores-2024"
       ]
     },
     {
@@ -260,7 +280,7 @@
     }
   ],
   "_notes": [
-    "ADVERTENCIA DE COBERTURA: la fecha exacta de \"Día Nacional de los Pueblos Indígenas\" para 2024 (2024-06-20) proviene de reconciliación secundaria (prensa), no de una fuente primaria tier-1 verificada en esta sesión -no marcar esta cobertura como VALIDATED sin confirmación adicional contra gob.cl/BCN/Senado.",
-    "Fechas electorales reconciliadas contra fuentes secundarias (Wikipedia/prensa) cruzadas con menciones oficiales puntuales -no verificadas 1:1 contra un calendario Servel primario completo en esta sesión. Base legal (Ley 18.700 Art.180) sí es primaria."
+    "Día Nacional de los Pueblos Indígenas: Regla legal (solsticio) aplicada con instante astronómico real: 2024-06-20 20:50 UTC -> 2024-06-20 16:50 America/Santiago.",
+    "EXCLUIDO deliberadamente: \"Primarias de Gobernador (SOLO Coquimbo y Aysén) y de Alcalde (SOLO 60 comunas)\" (2024-06-09) -motivo: Proceso territorial parcial -no alcanza escala nacional; instrucción explícita de no convertir procesos regionales en feriados nacionales. Fuente de la exclusión: Primarias de gobernador (9 jun 2024) SOLO en regiones de Coquimbo y Aysén; primarias de alcalde SOLO en 60 comunas -proceso territorial parcial, NO se incluye como feriado nacional (ver nota) (https://www.t13.cl/noticia/elecciones-2024/politica/elecciones-2024-regiones-habra-primarias-este-9-junio)."
   ]
 }

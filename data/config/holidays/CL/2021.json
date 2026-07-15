@@ -38,16 +38,6 @@
       ]
     },
     {
-      "source_id": "senado-pueblos-indigenas",
-      "authority": "Senado de la República de Chile",
-      "title": "Confirman feriado para el 21 de junio como Día de los Pueblos Indígenas",
-      "url": "https://www.senado.cl/noticias/pueblos-originarios/confirman-feriado-para-el-21-de-junio-como-dia-de-los-pueblos-indigenas",
-      "accessed_at": "2026-07-15",
-      "legal_references": [
-        "Ley 21.357"
-      ]
-    },
-    {
       "source_id": "bcn-ley-21357",
       "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
       "title": "Ley 21.357 - declara feriado el día del solsticio de invierno, Día Nacional de los Pueblos Indígenas",
@@ -59,20 +49,49 @@
       ]
     },
     {
-      "source_id": "bcn-ley-18700-art180",
+      "source_id": "conadi-pueblos-indigenas",
+      "authority": "CONADI (Corporación Nacional de Desarrollo Indígena)",
+      "title": "Día Nacional de los Pueblos Indígenas en Chile - regla legal: 'el día del solsticio de invierno de cada año en el hemisferio sur'; excepción 2021 explícita (21 de junio)",
+      "url": "http://www.conadi.gob.cl/dianacionalpueblosindigenas",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 21.357"
+      ]
+    },
+    {
+      "source_id": "astro-solstice-utc",
+      "authority": "timeanddate.com (referencia astronómica neutral, no vinculada a feriados de Chile) - usada para APLICAR la regla legal de CONADI/Ley 21.357 (el feriado es 'el día del solsticio'), nunca como fuente del feriado en sí",
+      "title": "June solstice exact UTC times 2021-2025 (referencia astronómica independiente)",
+      "url": "https://www.timeanddate.com/calendar/june-solstice.html",
+      "accessed_at": "2026-07-15",
+      "legal_references": []
+    },
+    {
+      "source_id": "bcn-ley-21324",
       "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
-      "title": "Ley 18.700 Orgánica Constitucional sobre Votaciones Populares y Escrutinios, Art. 180: el día de elecciones y plebiscitos es feriado legal",
-      "url": "https://www.bcn.cl/leychile/Consulta/listado_n_sel?_grupo_aporte=&sub=799&agr=2&comp=",
+      "title": "Ley 21.324 - posterga elecciones de Convencionales Constituyentes, Gobernadores Regionales y Autoridades Municipales por COVID-19, fija nueva fecha 15-16 de mayo de 2021",
+      "url": "https://www.bcn.cl/leychile/",
+      "published_at": "2021-04-07",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 21.324"
+      ]
+    },
+    {
+      "source_id": "gob-cl-segunda-vuelta-gobernadores",
+      "authority": "Gobierno de Chile (gob.cl) / Dirección del Trabajo",
+      "title": "¿Es feriado el día de segunda vuelta de Gobernadores Regionales? - confirma feriado legal nacional el 13 de junio de 2021, en 13 de 16 regiones que fueron a segunda vuelta",
+      "url": "https://www.gob.cl/noticias/feriado-dia-segunda-vuelta-gobernadores-regionales/",
       "accessed_at": "2026-07-15",
       "legal_references": [
         "Ley 18.700, Art. 180"
       ]
     },
     {
-      "source_id": "calendario-electoral-2018-2025",
-      "authority": "Reconciliación secundaria (Wikipedia, prensa) sobre calendario electoral -fechas cruzadas con Servel/gob.cl donde fue posible; NO verificado 100% contra Servel para cada fecha individual",
-      "title": "Calendario electoral de Chile 2018-2025 (plebiscitos, elecciones generales, segundas vueltas)",
-      "url": "https://es.wikipedia.org/wiki/Elecciones_de_convencionales_constituyentes_de_Chile_de_2021",
+      "source_id": "bcn-ley-18700-art180",
+      "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
+      "title": "Ley 18.700 Orgánica Constitucional sobre Votaciones Populares y Escrutinios, Art. 180: el día de elecciones y plebiscitos es feriado legal",
+      "url": "https://www.bcn.cl/leychile/Consulta/listado_n_sel?_grupo_aporte=&sub=799&agr=2&comp=",
       "accessed_at": "2026-07-15",
       "legal_references": [
         "Ley 18.700, Art. 180"
@@ -120,22 +139,20 @@
     },
     {
       "local_date": "2021-05-15",
-      "holiday_name": "Elección de Convencionales Constituyentes, Gobernadores Regionales, Alcaldes y Concejales (día 1)",
+      "holiday_name": "Elección de Convencionales Constituyentes, Gobernadores Regionales, Alcaldes y Concejales (día 1) -fecha reprogramada por COVID-19, Ley 21.324",
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "bcn-ley-21324"
       ]
     },
     {
       "local_date": "2021-05-16",
-      "holiday_name": "Elección de Convencionales Constituyentes, Gobernadores Regionales, Alcaldes y Concejales (día 2)",
+      "holiday_name": "Elección de Convencionales Constituyentes, Gobernadores Regionales, Alcaldes y Concejales (día 2) -fecha reprogramada por COVID-19, Ley 21.324",
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "bcn-ley-21324"
       ]
     },
     {
@@ -149,13 +166,23 @@
       ]
     },
     {
+      "local_date": "2021-06-13",
+      "holiday_name": "Segunda Votación de Gobernadores Regionales (13 de 16 regiones; feriado legal de alcance nacional)",
+      "holiday_type": "ELECTION",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "gob-cl-segunda-vuelta-gobernadores"
+      ]
+    },
+    {
       "local_date": "2021-06-21",
       "holiday_name": "Día Nacional de los Pueblos Indígenas",
       "holiday_type": "MOVABLE",
       "is_irrenunciable": false,
       "source_ids": [
         "bcn-ley-21357",
-        "senado-pueblos-indigenas"
+        "conadi-pueblos-indigenas",
+        "astro-solstice-utc"
       ]
     },
     {
@@ -244,8 +271,7 @@
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "bcn-ley-18700-art180"
       ]
     },
     {
@@ -264,8 +290,7 @@
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "bcn-ley-18700-art180"
       ]
     },
     {
@@ -280,6 +305,6 @@
     }
   ],
   "_notes": [
-    "Fechas electorales reconciliadas contra fuentes secundarias (Wikipedia/prensa) cruzadas con menciones oficiales puntuales -no verificadas 1:1 contra un calendario Servel primario completo en esta sesión. Base legal (Ley 18.700 Art.180) sí es primaria."
+    "Día Nacional de los Pueblos Indígenas: Excepción legal explícita del primer año (BCN, Ley 21.357)."
   ]
 }

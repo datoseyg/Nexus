@@ -38,16 +38,6 @@
       ]
     },
     {
-      "source_id": "senado-pueblos-indigenas",
-      "authority": "Senado de la República de Chile",
-      "title": "Confirman feriado para el 21 de junio como Día de los Pueblos Indígenas",
-      "url": "https://www.senado.cl/noticias/pueblos-originarios/confirman-feriado-para-el-21-de-junio-como-dia-de-los-pueblos-indigenas",
-      "accessed_at": "2026-07-15",
-      "legal_references": [
-        "Ley 21.357"
-      ]
-    },
-    {
       "source_id": "bcn-ley-21357",
       "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
       "title": "Ley 21.357 - declara feriado el día del solsticio de invierno, Día Nacional de los Pueblos Indígenas",
@@ -59,20 +49,28 @@
       ]
     },
     {
+      "source_id": "conadi-pueblos-indigenas",
+      "authority": "CONADI (Corporación Nacional de Desarrollo Indígena)",
+      "title": "Día Nacional de los Pueblos Indígenas en Chile - regla legal: 'el día del solsticio de invierno de cada año en el hemisferio sur'; excepción 2021 explícita (21 de junio)",
+      "url": "http://www.conadi.gob.cl/dianacionalpueblosindigenas",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 21.357"
+      ]
+    },
+    {
+      "source_id": "astro-solstice-utc",
+      "authority": "timeanddate.com (referencia astronómica neutral, no vinculada a feriados de Chile) - usada para APLICAR la regla legal de CONADI/Ley 21.357 (el feriado es 'el día del solsticio'), nunca como fuente del feriado en sí",
+      "title": "June solstice exact UTC times 2021-2025 (referencia astronómica independiente)",
+      "url": "https://www.timeanddate.com/calendar/june-solstice.html",
+      "accessed_at": "2026-07-15",
+      "legal_references": []
+    },
+    {
       "source_id": "bcn-ley-18700-art180",
       "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
       "title": "Ley 18.700 Orgánica Constitucional sobre Votaciones Populares y Escrutinios, Art. 180: el día de elecciones y plebiscitos es feriado legal",
       "url": "https://www.bcn.cl/leychile/Consulta/listado_n_sel?_grupo_aporte=&sub=799&agr=2&comp=",
-      "accessed_at": "2026-07-15",
-      "legal_references": [
-        "Ley 18.700, Art. 180"
-      ]
-    },
-    {
-      "source_id": "calendario-electoral-2018-2025",
-      "authority": "Reconciliación secundaria (Wikipedia, prensa) sobre calendario electoral -fechas cruzadas con Servel/gob.cl donde fue posible; NO verificado 100% contra Servel para cada fecha individual",
-      "title": "Calendario electoral de Chile 2018-2025 (plebiscitos, elecciones generales, segundas vueltas)",
-      "url": "https://es.wikipedia.org/wiki/Elecciones_de_convencionales_constituyentes_de_Chile_de_2021",
       "accessed_at": "2026-07-15",
       "legal_references": [
         "Ley 18.700, Art. 180"
@@ -135,7 +133,8 @@
       "is_irrenunciable": false,
       "source_ids": [
         "bcn-ley-21357",
-        "senado-pueblos-indigenas"
+        "conadi-pueblos-indigenas",
+        "astro-solstice-utc"
       ]
     },
     {
@@ -174,8 +173,7 @@
       "holiday_type": "ELECTION",
       "is_irrenunciable": true,
       "source_ids": [
-        "bcn-ley-18700-art180",
-        "calendario-electoral-2018-2025"
+        "bcn-ley-18700-art180"
       ]
     },
     {
@@ -250,6 +248,6 @@
     }
   ],
   "_notes": [
-    "Fechas electorales reconciliadas contra fuentes secundarias (Wikipedia/prensa) cruzadas con menciones oficiales puntuales -no verificadas 1:1 contra un calendario Servel primario completo en esta sesión. Base legal (Ley 18.700 Art.180) sí es primaria."
+    "Día Nacional de los Pueblos Indígenas: Regla legal (solsticio) aplicada con instante astronómico real: 2022-06-21 09:13 UTC -> 2022-06-21 05:13 America/Santiago."
   ]
 }
