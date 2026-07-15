@@ -5,6 +5,12 @@ data/raw/
 data/warehouse/
 node_modules/
 
+# Reportes de dry-run de contracts:import (ETAPA 6.5) -pueden contener
+# fechas/estados normalizados de clientes reales; nunca notas/firmas/raw,
+# pero igual se mantienen fuera de git (data/reports/ a secas SÍ se
+# trackea para otros scripts -no tocar ese patrón existente).
+data/reports/contracts/
+
 # Next.js build output (apps/nexus-bi-app)
 .next/
 out/
@@ -17,3 +23,6 @@ next-env.d.ts
 # OS/editor noise
 .DS_Store
 *.log
+
+# Fixtures temporales generados por tests contractuales
+test/contracts/.tmp-fixtures/

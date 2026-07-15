@@ -30,11 +30,16 @@
     "db:pg:validate": "node src/db/validate-supabase.js",
     "db:pg:build": "npm run db:pg:ddl && npm run db:pg:migrate && npm run db:pg:validate",
     "build:fieldbeat-report-dolibarr-view": "node src/marts/build-fieldbeat-report-dolibarr-view.js",
-    "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js"
+    "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js",
+    "contracts:import": "node src/contracts/import-contracts.js",
+    "contracts:test": "node --test \"test/contracts/*.test.js\"",
+    "working-hours:test": "node --test \"test/working-hours/*.test.js\"",
+    "working-hours:ownership:test": "node --test \"test/db/migrate-to-supabase.ownership.test.js\""
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
     "csv-parse": "^7.0.0",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "pg": "^8.22.0"
   }
 }
