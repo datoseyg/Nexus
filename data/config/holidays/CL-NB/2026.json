@@ -1,0 +1,31 @@
+{
+  "schema_version": "holiday-calendar-bundle-v1",
+  "jurisdiction": "CL-NB",
+  "coverage_start": "2026-01-01",
+  "coverage_end_exclusive": "2027-01-01",
+  "sources": [
+    {
+      "source_id": "gob-cl-feriados-2026",
+      "authority": "Gobierno de Chile (gob.cl)",
+      "title": "¿Qué feriados hay en 2026? Revisa cuántos habrá y cuáles son irrenunciables",
+      "url": "https://www.gob.cl/noticias/feriados-2026-revisa-cuantos-habra-y-cuales-son-irrenunciables/",
+      "published_at": "2025-12-19",
+      "accessed_at": "2026-07-15",
+      "legal_references": []
+    }
+  ],
+  "events": [
+    {
+      "local_date": "2026-08-20",
+      "holiday_name": "Natalicio del Prócer de la Independencia Bernardo O'Higgins (Chillán y Chillán Viejo)",
+      "holiday_type": "REGIONAL",
+      "is_irrenunciable": false,
+      "source_ids": ["gob-cl-feriados-2026"]
+    }
+  ],
+  "_notes": [
+    "Jurisdicción regional (comunas de Chillán y Chillán Viejo, Región de Ñuble), separada deliberadamente de CL nacional (ver §9).",
+    "Cobertura SOLO para 2026, verificada contra gob.cl. No se construyó el histórico 2018-2025 -en particular, la Región de Ñuble recién se creó por Ley 21.033 en septiembre de 2018, por lo que ni siquiera es evidente que este feriado, en esta forma regional exacta, existiera para el año 2018 completo -gap documentado, no inventado.",
+    "Ningún cliente/tarea real de FieldBeat tiene una comuna en Chillán o Chillán Viejo (ver hallazgo de investigación de jurisdicción regional, §10 del informe) -sin efecto práctico hoy; de todas formas NO se aplica a tareas en 6.6B1 (deferred a 6.6B2)."
+  ]
+}

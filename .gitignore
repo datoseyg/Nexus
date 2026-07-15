@@ -26,3 +26,7 @@ next-env.d.ts
 
 # Fixtures temporales generados por tests contractuales
 test/contracts/.tmp-fixtures/
+
+# Reportes de dry-run de holidays:import (ETAPA 6.6B1) -datos públicos, pero
+# se mantienen fuera de git por el mismo criterio que data/reports/contracts/.
+data/reports/holidays/

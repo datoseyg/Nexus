@@ -1,0 +1,224 @@
+{
+  "schema_version": "holiday-calendar-bundle-v1",
+  "jurisdiction": "CL",
+  "coverage_start": "2020-01-01",
+  "coverage_end_exclusive": "2021-01-01",
+  "sources": [
+    {
+      "source_id": "gob-cl-feriados-2026",
+      "authority": "Gobierno de Chile (gob.cl)",
+      "title": "¿Qué feriados hay en 2026? Revisa cuántos habrá y cuáles son irrenunciables",
+      "url": "https://www.gob.cl/noticias/feriados-2026-revisa-cuantos-habra-y-cuales-son-irrenunciables/",
+      "published_at": "2025-12-19",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 2.977",
+        "Ley 19.973"
+      ]
+    },
+    {
+      "source_id": "bcn-ley-2977",
+      "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
+      "title": "Ley 2.977 (1915) - feriados nacionales, base legal del sistema vigente",
+      "url": "https://www.bcn.cl/leychile/Navegar?idNorma=23639",
+      "published_at": "1915-02-01",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 2.977"
+      ]
+    },
+    {
+      "source_id": "dt-traslado-feriados",
+      "authority": "Dirección del Trabajo (DT)",
+      "title": "¿Cuáles son los días festivos que han sido trasladados a un día lunes?",
+      "url": "https://www.dt.gob.cl/portal/1628/w3-article-60252.html",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 19.668"
+      ]
+    },
+    {
+      "source_id": "bcn-ley-18700-art180",
+      "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
+      "title": "Ley 18.700 Orgánica Constitucional sobre Votaciones Populares y Escrutinios, Art. 180: el día de elecciones y plebiscitos es feriado legal",
+      "url": "https://www.bcn.cl/leychile/Consulta/listado_n_sel?_grupo_aporte=&sub=799&agr=2&comp=",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 18.700, Art. 180"
+      ]
+    },
+    {
+      "source_id": "calendario-electoral-2018-2025",
+      "authority": "Reconciliación secundaria (Wikipedia, prensa) sobre calendario electoral -fechas cruzadas con Servel/gob.cl donde fue posible; NO verificado 100% contra Servel para cada fecha individual",
+      "title": "Calendario electoral de Chile 2018-2025 (plebiscitos, elecciones generales, segundas vueltas)",
+      "url": "https://es.wikipedia.org/wiki/Elecciones_de_convencionales_constituyentes_de_Chile_de_2021",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 18.700, Art. 180"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "local_date": "2020-01-01",
+      "holiday_name": "Año Nuevo",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-04-10",
+      "holiday_name": "Viernes Santo",
+      "holiday_type": "MOVABLE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2020-04-11",
+      "holiday_name": "Sábado Santo",
+      "holiday_type": "MOVABLE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2020-05-01",
+      "holiday_name": "Día del Trabajo",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-05-21",
+      "holiday_name": "Día de las Glorias Navales",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-06-29",
+      "holiday_name": "San Pedro y San Pablo",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "dt-traslado-feriados",
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2020-07-16",
+      "holiday_name": "Día de la Virgen del Carmen",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-08-15",
+      "holiday_name": "Asunción de la Virgen",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-09-18",
+      "holiday_name": "Independencia Nacional",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-09-19",
+      "holiday_name": "Día de las Glorias del Ejército",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-10-12",
+      "holiday_name": "Encuentro de Dos Mundos",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "dt-traslado-feriados",
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2020-10-25",
+      "holiday_name": "Plebiscito Nacional por una Nueva Constitución",
+      "holiday_type": "ELECTION",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-18700-art180",
+        "calendario-electoral-2018-2025"
+      ]
+    },
+    {
+      "local_date": "2020-10-31",
+      "holiday_name": "Día Nacional de las Iglesias Evangélicas y Protestantes",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-11-01",
+      "holiday_name": "Día de Todos los Santos",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-12-08",
+      "holiday_name": "Inmaculada Concepción",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2020-12-25",
+      "holiday_name": "Navidad",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    }
+  ],
+  "_notes": [
+    "Fechas electorales reconciliadas contra fuentes secundarias (Wikipedia/prensa) cruzadas con menciones oficiales puntuales -no verificadas 1:1 contra un calendario Servel primario completo en esta sesión. Base legal (Ley 18.700 Art.180) sí es primaria."
+  ]
+}

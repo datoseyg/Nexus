@@ -34,7 +34,10 @@
     "contracts:import": "node src/contracts/import-contracts.js",
     "contracts:test": "node --test \"test/contracts/*.test.js\"",
     "working-hours:test": "node --test \"test/working-hours/*.test.js\"",
-    "working-hours:ownership:test": "node --test \"test/db/migrate-to-supabase.ownership.test.js\""
+    "working-hours:ownership:test": "node --test \"test/db/migrate-to-supabase.ownership.test.js\"",
+    "holidays:import": "node src/holidays/import-holidays.js",
+    "holidays:test": "node --test \"test/holidays/*.test.js\"",
+    "holidays:test:integration": "node --test \"test/holidays/*.integration.test.js\""
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
