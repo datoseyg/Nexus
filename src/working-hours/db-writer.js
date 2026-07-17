@@ -28,6 +28,35 @@ export function formatSantiagoLocalTimestamp(utcDate) {
 }
 
 /**
+ * ETAPA 6.5.2B0 - Construye el índice equipment_uuid -> equipment_key de
+ * processed.fieldbeat_equipments, EXCLUYENDO explícitamente filas con
+ * equipment_uuid NULL o '' antes de que entren al Map. Causa raíz
+ * investigada: `new Map(rows.map(r => [r.equipment_uuid, r.equipment_key]))`
+ * usa igualdad SameValueZero -N filas con equipment_uuid=NULL (25 reales en
+ * producción, nunca '' -confirmado) colapsan en UNA sola entrada bajo la
+ * clave `null`, la última iterada gana, y esa entrada NO es falsy (es un
+ * equipment_key real, ajeno) -el guard `if (!key) continue` del llamador
+ * nunca la detecta. Consecuencia confirmada contra datos reales: tareas
+ * cuyo enlace también tiene equipment_uuid=NULL heredaban arbitrariamente
+ * la identidad de OTRO equipo (ej. tareas reales de un cliente heredando
+ * el equipo de otro). Con esta función, equipment_uuid NULL/'' nunca entra
+ * al índice -su lookup siempre da undefined, cae correctamente en
+ * NO_EQUIPMENT (misma semántica que "sin ninguna fila en absoluto": una
+ * identidad desconocida nunca es lo mismo que una identidad ausente
+ * resuelta, así que degradar a NO_EQUIPMENT es honesto, no fabricado).
+ * @param {Array<{ equipment_uuid: string|null, equipment_key: string }>} equipmentRows
+ * @returns {Map<string, string>}
+ */
+export function buildFieldbeatKeyByUuid(equipmentRows) {
+  const map = new Map();
+  for (const r of equipmentRows) {
+    if (r.equipment_uuid === null || r.equipment_uuid === undefined || r.equipment_uuid === "") continue;
+    map.set(r.equipment_uuid, r.equipment_key);
+  }
+  return map;
+}
+
+/**
  * Consulta todas las fuentes gobernadas necesarias para correr el builder
  * sobre TODAS las tareas de processed.fieldbeat_tasks. Nunca lee
  * config.holiday_calendar_entries directo -siempre vía las vistas
@@ -61,7 +90,7 @@ export async function loadReferenceData(client) {
 
   // processed.fieldbeat_equipments (equipment_uuid -> equipment_key FieldBeat) -necesario para unir el bridge con los matches.
   const fbEquipRes = await client.query(`SELECT equipment_uuid, equipment_key FROM processed.fieldbeat_equipments`);
-  const fbKeyByUuid = new Map(fbEquipRes.rows.map(r => [r.equipment_uuid, r.equipment_key]));
+  const fbKeyByUuid = buildFieldbeatKeyByUuid(fbEquipRes.rows);
 
   // processed.fieldbeat_task_equipments puede traer filas duplicadas
   // (tarea, equipo) por reextracciones del ETL de origen -se dedupea por

@@ -120,7 +120,7 @@ before(async () => {
   // correspondiente en processed.fieldbeat_tasks queda invisible en la
   // vista de transición (grano de la vista = tareas reales, no filas de
   // Capa C). Se insertan las fixture task_id usadas por esta suite.
-  const fixtureTaskIds = [900001, 900002, 900101, 900102, 900201, 900301, 900302, 900401, 900501, 900601, 900701, 900702, 900801, 900802];
+  const fixtureTaskIds = [900001, 900002, 900101, 900102, 900201, 900301, 900302, 900401, 900501, 900601, 900701, 900702, 900801, 900802, 901001, 901002, 901003];
   await pool.query(`DELETE FROM processed.fieldbeat_tasks WHERE fieldbeat_task_id = ANY($1)`, [fixtureTaskIds]);
   for (const taskId of fixtureTaskIds) {
     await pool.query(
@@ -153,6 +153,31 @@ before(async () => {
        ('fixture-te-2', 900801, 'fixture-equip-b', 'EQ-INTERNAL-B')`
   );
   // 900802: sin ninguna fila en fieldbeat_task_equipments -tarea sin equipo.
+
+  // ETAPA 6.5.2B0 - fixtures para el defecto de equipment_uuid NULL
+  // colisionando en fbKeyByUuid. Se limpia por equipment_key (equipment_uuid
+  // NULL nunca compara igual a sí mismo en SQL, IN(...) no sirve acá).
+  await pool.query(
+    `DELETE FROM processed.fieldbeat_equipments WHERE equipment_key IN
+       ('FIELDBEAT_EQUIPMENT||FIXTURE-NULL-A','FIELDBEAT_EQUIPMENT||FIXTURE-NULL-B','FIELDBEAT_EQUIPMENT|fixture-real-uuid|FIXTURE-REAL')`
+  );
+  await pool.query(
+    `INSERT INTO processed.fieldbeat_equipments (equipment_key, equipment_uuid, internal_id, client_key) VALUES
+       ('FIELDBEAT_EQUIPMENT||FIXTURE-NULL-A', NULL, 'FIXTURE-NULL-A', 'CLIENTE-NOMBRE-TEST'),
+       ('FIELDBEAT_EQUIPMENT||FIXTURE-NULL-B', NULL, 'FIXTURE-NULL-B', 'CLIENTE-NOMBRE-TEST'),
+       ('FIELDBEAT_EQUIPMENT|fixture-real-uuid|FIXTURE-REAL', 'fixture-real-uuid', 'FIXTURE-REAL', 'CLIENTE-NOMBRE-TEST')`
+  );
+  await pool.query(`DELETE FROM processed.fieldbeat_task_equipments WHERE fieldbeat_task_id IN (901001, 901002, 901003)`);
+  await pool.query(
+    `INSERT INTO processed.fieldbeat_task_equipments (task_equipment_id, fieldbeat_task_id, equipment_uuid, equipment_internal_id) VALUES
+       ('fixture-te-null-1', 901001, NULL, 'FIXTURE-NULL-A'),
+       ('fixture-te-real-1', 901002, 'fixture-real-uuid', 'FIXTURE-REAL'),
+       ('fixture-te-null-2', 901003, NULL, 'FIXTURE-NULL-B')`
+  );
+  // 901001/901003: enlazadas a equipment_uuid=NULL (2 equipos DISTINTOS
+  // reales, mismo patrón que la producción real) -deben terminar sin
+  // ningún equipo resuelto (NO_EQUIPMENT), nunca heredar 901002's real.
+  // 901002: uuid real, único -debe seguir resolviendo exacto pese al ruido NULL.
 });
 
 after(async () => {
@@ -548,6 +573,37 @@ test("publishResults: invariante -start_time_utc presente <=> start_time_local p
   `);
   assert.equal(Number(presence.rows[0].con_utc), 3, "se esperan 3 filas con start_time_utc (CONTRACTUAL, LEGACY_SCHEDULE, NONE-resuelto)");
   assert.equal(Number(presence.rows[0].sin_utc), 1, "se espera 1 fila sin start_time_utc (NONE terminal)");
+});
+
+// === ETAPA 6.5.2B0: nivel de tarea completo, vía loadReferenceData()/
+// runBuild() reales (no la función pura aislada de db-writer.test.js) ===
+
+test("runBuild: 2 tareas con equipment_uuid=NULL (equipos DISTINTOS reales) no heredan ningún equipo -equipmentInputs vacío, NO_EQUIPMENT", { skip: !TEST_DB_URL }, async () => {
+  const refData = await loadReferenceData(pool);
+  assert.equal(refData.equipByTask.has("901001"), false, "901001 (equipment_uuid=NULL) no debe tener ningún equipo resuelto");
+  assert.equal(refData.equipByTask.has("901003"), false, "901003 (equipment_uuid=NULL, OTRO equipo real distinto) no debe tener ningún equipo resuelto");
+
+  const { results } = await runBuild(pool);
+  const r1 = results.find(x => Number(x.fieldbeatTaskId) === 901001);
+  const r3 = results.find(x => Number(x.fieldbeatTaskId) === 901003);
+  assert.equal(r1.contractualReasonCode, "NO_EQUIPMENT");
+  assert.equal(r3.contractualReasonCode, "NO_EQUIPMENT");
+});
+
+test("runBuild: tarea con equipment_uuid real y único sigue resolviendo su equipo exacto, sin contaminarse por el ruido NULL de otras filas", { skip: !TEST_DB_URL }, async () => {
+  const refData = await loadReferenceData(pool);
+  const equip = refData.equipByTask.get("901002");
+  assert.ok(equip, "901002 (equipment_uuid real) debe tener su equipo resuelto");
+  assert.equal(equip.length, 1);
+  assert.equal(equip[0].fieldbeatEquipmentKey, "FIELDBEAT_EQUIPMENT|fixture-real-uuid|FIXTURE-REAL");
+});
+
+test("runBuild: ninguna de las tareas NULL hereda la identidad de la tarea con uuid real (no contaminación cruzada)", { skip: !TEST_DB_URL }, async () => {
+  const refData = await loadReferenceData(pool);
+  const equip1 = refData.equipByTask.get("901001") ?? [];
+  const equip3 = refData.equipByTask.get("901003") ?? [];
+  assert.ok(!equip1.some(e => e.fieldbeatEquipmentKey === "FIELDBEAT_EQUIPMENT|fixture-real-uuid|FIXTURE-REAL"));
+  assert.ok(!equip3.some(e => e.fieldbeatEquipmentKey === "FIELDBEAT_EQUIPMENT|fixture-real-uuid|FIXTURE-REAL"));
 });
 
 test("vista de transición: expone client_name/equipment_internal_ids reales tras la corrección (900801)", { skip: !TEST_DB_URL }, async () => {
