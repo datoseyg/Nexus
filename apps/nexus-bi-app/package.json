@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --test \"test/after-hours/*.test.ts\"",
+    "test:integration": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --test \"test/after-hours/*.integration.test.ts\""
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
