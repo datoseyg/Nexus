@@ -2,42 +2,71 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseArgs, validateArgs } from "../../src/working-hours/cli.js";
 
-test("por defecto -> modo dry-run", () => {
+test("sin subcomando -> subcommand null", () => {
   const args = parseArgs([]);
-  assert.equal(args.mode, "dry-run");
+  assert.equal(args.subcommand, null);
 });
 
-test("--apply explícito con --from -> modo apply", () => {
-  const args = parseArgs(["--from=2026-01-01", "--apply"]);
-  assert.equal(args.mode, "apply");
-});
-
-test("--dry-run gana sobre --apply si ambos están presentes", () => {
-  const args = parseArgs(["--from=2026-01-01", "--dry-run", "--apply"]);
-  assert.equal(args.mode, "dry-run");
-});
-
-test("validateArgs: --apply sin --from ni --to -> inválido (nunca backfill total implícito)", () => {
-  const r = validateArgs({ from: null, to: null, mode: "apply" });
+test("validateArgs: sin subcomando -> inválido", () => {
+  const r = validateArgs(parseArgs([]));
   assert.equal(r.ok, false);
 });
 
-test("validateArgs: --apply con --from -> válido", () => {
-  const r = validateArgs({ from: "2026-01-01", to: null, mode: "apply" });
-  assert.equal(r.ok, true);
+test("dry-run -> subcommand reconocido, válido sin --confirm", () => {
+  const args = parseArgs(["dry-run"]);
+  assert.equal(args.subcommand, "dry-run");
+  assert.equal(validateArgs(args).ok, true);
 });
 
-test("validateArgs: --from posterior a --to -> inválido", () => {
-  const r = validateArgs({ from: "2026-12-31", to: "2026-01-01", mode: "dry-run" });
-  assert.equal(r.ok, false);
+test("apply sin --confirm -> inválido (nunca apply implícito)", () => {
+  const args = parseArgs(["apply"]);
+  assert.equal(args.subcommand, "apply");
+  assert.equal(args.confirm, false);
+  assert.equal(validateArgs(args).ok, false);
 });
 
-test("validateArgs: formato de fecha inválido -> inválido", () => {
-  const r = validateArgs({ from: "01-01-2026", to: null, mode: "dry-run" });
-  assert.equal(r.ok, false);
+test("apply --confirm -> válido", () => {
+  const args = parseArgs(["apply", "--confirm"]);
+  assert.equal(args.confirm, true);
+  assert.equal(validateArgs(args).ok, true);
 });
 
-test("validateArgs: dry-run sin rango -> válido (opcional)", () => {
-  const r = validateArgs({ from: null, to: null, mode: "dry-run" });
-  assert.equal(r.ok, true);
+test("apply --confirm --from=2026-01-01 --to=2026-12-31 -> válido, rango parseado", () => {
+  const args = parseArgs(["apply", "--confirm", "--from=2026-01-01", "--to=2026-12-31"]);
+  assert.equal(args.from, "2026-01-01");
+  assert.equal(args.to, "2026-12-31");
+  assert.equal(validateArgs(args).ok, true);
+});
+
+test("--from posterior a --to -> inválido", () => {
+  const args = parseArgs(["dry-run", "--from=2026-12-31", "--to=2026-01-01"]);
+  assert.equal(validateArgs(args).ok, false);
+});
+
+test("formato de fecha inválido -> inválido", () => {
+  const args = parseArgs(["dry-run", "--from=01-01-2026"]);
+  assert.equal(validateArgs(args).ok, false);
+});
+
+test("parity -> subcommand reconocido, parityMode por defecto 'both'", () => {
+  const args = parseArgs(["parity"]);
+  assert.equal(args.subcommand, "parity");
+  assert.equal(args.parityMode, "both");
+  assert.equal(validateArgs(args).ok, true);
+});
+
+test("parity --parity-mode=exact -> válido", () => {
+  const args = parseArgs(["parity", "--parity-mode=exact"]);
+  assert.equal(validateArgs(args).ok, true);
+});
+
+test("parity --parity-mode=invalid -> inválido", () => {
+  const args = parseArgs(["parity", "--parity-mode=nonsense"]);
+  assert.equal(validateArgs(args).ok, false);
+});
+
+test("subcomando desconocido -> subcommand null, inválido", () => {
+  const args = parseArgs(["frobnicate"]);
+  assert.equal(args.subcommand, null);
+  assert.equal(validateArgs(args).ok, false);
 });

@@ -1,12 +1,14 @@
 // Pruebas de integración contra un Postgres real y DESECHABLE -nunca
-// Supabase productivo. Se saltan enteras si CONTRACTS_TEST_DATABASE_URL no
-// está seteada (reutilizada, mismo Postgres desechable que test/contracts/**
-// y test/db/**, no hace falta una segunda variable).
+// Supabase productivo. Se saltan enteras si WORKING_HOURS_TEST_DATABASE_URL
+// no está seteada. Aislada de CONTRACTS_TEST_DATABASE_URL/
+// HOLIDAYS_TEST_DATABASE_URL a propósito (ETAPA 6.6B2 §16: "mantén suites
+// aisladas de contracts, holidays y working-hours B0") -antes de esta
+// corrección compartía CONTRACTS_TEST_DATABASE_URL, violando ese requisito.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import pg from "pg";
 
-const TEST_DB_URL = process.env.CONTRACTS_TEST_DATABASE_URL;
+const TEST_DB_URL = process.env.WORKING_HOURS_TEST_DATABASE_URL;
 const { Pool } = pg;
 
 let adminPool;

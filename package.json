@@ -34,7 +34,10 @@
     "contracts:import": "node src/contracts/import-contracts.js",
     "contracts:test": "node --test \"test/contracts/*.test.js\"",
     "working-hours:test": "node --test \"test/working-hours/*.test.js\"",
+    "working-hours:test:integration": "node --test --test-concurrency=1 \"test/working-hours/*.integration.test.js\"",
     "working-hours:ownership:test": "node --test \"test/db/migrate-to-supabase.ownership.test.js\"",
+    "working-hours:build": "node src/working-hours/build-working-hours.js",
+    "working-hours:parity": "node src/working-hours/build-working-hours.js parity",
     "holidays:import": "node src/holidays/import-holidays.js",
     "holidays:test": "node --test \"test/holidays/*.test.js\"",
     "holidays:test:integration": "node --test \"test/holidays/*.integration.test.js\""
