@@ -6,8 +6,26 @@
 
 import { STATEMENT_TIMEOUT_MS } from "./db-client.js";
 import { buildTaskCoverage } from "./task-coverage-builder.js";
+import { utcMsToSantiagoParts } from "./timezone-resolver.js";
 
 const BUILD_LOCK_KEY = "working-hours:build";
+
+/**
+ * Deriva start_time_local/end_time_local (hora de Santiago, DST-correcta)
+ * desde el instante UTC ya resuelto por interval-resolver.js -causa raíz
+ * investigada: ni interval-resolver.js ni task-coverage-builder.js
+ * calculaban nunca un equivalente local, y publishResults() tampoco lo
+ * escribía (v2Columns omitía las columnas). null -> null, nunca fabrica
+ * una hora para un intervalo no resuelto (NONE terminal).
+ * @param {Date|null} utcDate
+ * @returns {string|null} "YYYY-MM-DD HH:mm:ss" o null
+ */
+export function formatSantiagoLocalTimestamp(utcDate) {
+  if (!utcDate) return null;
+  const p = utcMsToSantiagoParts(utcDate.getTime());
+  const pad = n => String(n).padStart(2, "0");
+  return `${p.year}-${pad(p.month)}-${pad(p.day)} ${pad(p.hour)}:${pad(p.minute)}:${pad(p.second)}`;
+}
 
 /**
  * Consulta todas las fuentes gobernadas necesarias para correr el builder
@@ -17,7 +35,7 @@ const BUILD_LOCK_KEY = "working-hours:build";
  * @param {import("pg").PoolClient|import("pg").Pool} client
  */
 export async function loadReferenceData(client) {
-  const [tasksRes, bridgeRes, reportFieldsRes, matchesRes, versionsRes, schedulesRes, windowsRes, holidayEntriesRes] = await Promise.all([
+  const [tasksRes, bridgeRes, reportFieldsRes, matchesRes, versionsRes, schedulesRes, windowsRes, holidayEntriesRes, clientsRes] = await Promise.all([
     client.query(`SELECT fieldbeat_task_id, start_time, duration_minutes, client_key, task_type, assigned_to FROM processed.fieldbeat_tasks`),
     client.query(`SELECT fieldbeat_task_id, equipment_uuid, equipment_internal_id FROM processed.fieldbeat_task_equipments`),
     client.query(`
@@ -33,8 +51,13 @@ export async function loadReferenceData(client) {
     client.query(`SELECT contract_version_id, equipment_key, contract_status_code, valid_from, valid_to FROM config.contract_equipment_versions`),
     client.query(`SELECT schedule_id, contract_version_id, coverage_type, parse_status FROM config.contract_service_schedules`),
     client.query(`SELECT schedule_id, day_of_week, start_time, end_time, all_day FROM config.contract_service_windows`),
-    client.query(`SELECT local_date, jurisdiction FROM config.current_holiday_calendar_entries WHERE jurisdiction = 'CL'`)
+    client.query(`SELECT local_date, jurisdiction FROM config.current_holiday_calendar_entries WHERE jurisdiction = 'CL'`),
+    // Fuente gobernada real de client_name/client_rut -processed.fieldbeat_tasks
+    // solo tiene client_key (identidad estable), nunca el nombre/RUT legible.
+    client.query(`SELECT client_key, client_name, rut FROM processed.fieldbeat_clients`)
   ]);
+
+  const clientByKey = new Map(clientsRes.rows.map(r => [r.client_key, { clientName: r.client_name, clientRut: r.rut }]));
 
   // processed.fieldbeat_equipments (equipment_uuid -> equipment_key FieldBeat) -necesario para unir el bridge con los matches.
   const fbEquipRes = await client.query(`SELECT equipment_uuid, equipment_key FROM processed.fieldbeat_equipments`);
@@ -101,7 +124,23 @@ export async function loadReferenceData(client) {
     return holidayDates.has(localDate) ? "CONFIRMED_HOLIDAY" : "CONFIRMED_NOT_HOLIDAY";
   }
 
-  return { tasks: tasksRes.rows, equipByTask, starts, ends, matchByFbKey, versionsByEquipmentKey, scheduleByVersionId, windowsByScheduleId, holidayLookup };
+  return { tasks: tasksRes.rows, equipByTask, starts, ends, matchByFbKey, versionsByEquipmentKey, scheduleByVersionId, windowsByScheduleId, holidayLookup, clientByKey };
+}
+
+/**
+ * Texto descriptivo plano de los equipos de una tarea (paridad con el mart
+ * legado, ver sql/081 -"no identity-bearing"): ids internos distintos,
+ * ordenados para salida determinista, unidos por ", ". Una tarea sin
+ * equipos retorna null (NUNCA "" ni un string vacío) -ausencia real de
+ * equipo, no un dato vacío.
+ * @param {Array<{ fieldbeatInternalId: string|null }>} equipmentList
+ * @returns {string|null}
+ */
+export function buildEquipmentInternalIds(equipmentList) {
+  if (!equipmentList || equipmentList.length === 0) return null;
+  const ids = [...new Set(equipmentList.map(e => e.fieldbeatInternalId).filter(id => id !== null && id !== undefined && id !== ""))];
+  if (ids.length === 0) return null;
+  return ids.sort().join(", ");
 }
 
 function isDateInPgRange(localDate, pgRange) {
@@ -146,7 +185,17 @@ export async function runBuild(pool) {
       businessHoursCfg
     });
 
-    results.push({ fieldbeatTaskId: task.fieldbeat_task_id, ...result });
+    const clientInfo = refData.clientByKey.get(task.client_key) ?? null;
+    results.push({
+      fieldbeatTaskId: task.fieldbeat_task_id,
+      clientKey: task.client_key,
+      clientName: clientInfo?.clientName ?? null,
+      clientRut: clientInfo?.clientRut ?? null,
+      taskType: task.task_type,
+      assignedTo: task.assigned_to,
+      equipmentInternalIds: buildEquipmentInternalIds(equipmentList),
+      ...result
+    });
   }
 
   const summary = summarizeResults(results);
@@ -271,19 +320,21 @@ export async function publishResults(pool, results, builderRunId) {
     await client.query("TRUNCATE TABLE marts.fieldbeat_working_hours_equipment_links, marts.fieldbeat_working_hours_analysis_v2, marts.fieldbeat_contract_coverage_segments RESTART IDENTITY CASCADE");
 
     const v2Columns = [
-      "fieldbeat_task_id", "calculation_status", "coverage_classification", "coverage_reason_code",
+      "fieldbeat_task_id", "client_key", "client_rut", "client_name", "task_type", "assigned_to", "equipment_internal_ids",
+      "calculation_status", "coverage_classification", "coverage_reason_code",
       "contractual_attempt_status", "contractual_coverage_classification", "contractual_reason_code", "fallback_used",
       "data_basis", "contract_resolution_confidence", "contract_resolution_label", "confidence_model_version",
-      "start_time_utc", "end_time_utc", "duration_seconds",
+      "start_time_utc", "start_time_local", "end_time_utc", "end_time_local", "duration_seconds",
       "covered_seconds", "outside_coverage_seconds", "after_hours_weekday_seconds", "weekend_seconds", "holiday_seconds",
       "after_hours_total_seconds", "after_hours_rate", "is_after_hours_task",
       "confidence_score", "confidence_label", "confidence_factors", "calculation_method", "builder_run_id"
     ];
     const v2Rows = results.map(r => [
-      r.fieldbeatTaskId, r.calculationStatus, r.coverageClassification, r.coverageReasonCode,
+      r.fieldbeatTaskId, r.clientKey, r.clientRut, r.clientName, r.taskType, r.assignedTo, r.equipmentInternalIds,
+      r.calculationStatus, r.coverageClassification, r.coverageReasonCode,
       r.contractualAttemptStatus, r.contractualCoverageClassification, r.contractualReasonCode, r.fallbackUsed,
       r.dataBasis, r.contractResolutionConfidence, r.contractResolutionLabel, "contract-v1",
-      r.startTimeUtc, r.endTimeUtc, r.durationSeconds,
+      r.startTimeUtc, formatSantiagoLocalTimestamp(r.startTimeUtc), r.endTimeUtc, formatSantiagoLocalTimestamp(r.endTimeUtc), r.durationSeconds,
       r.coveredSeconds, r.outsideCoverageSeconds, r.afterHoursWeekdaySeconds, r.weekendSeconds, r.holidaySeconds,
       r.afterHoursTotalSeconds, r.afterHoursRate, r.isAfterHoursTask,
       r.confidenceScore, r.confidenceLabel, r.confidenceFactors, r.calculationMethod, builderRunId

@@ -1,149 +1,209 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
-import { StatusBadge, calculationStatusBadge } from "@/components/ui/StatusBadge";
-import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { AfterHoursEmptyBlock } from "./AfterHoursEmptyBlock";
+import { buildDiagnosis, getConfidenceTierLabel } from "@/lib/after-hours-labels";
+import { formatHoursOrDash, splitDateTime, totalAfterHoursHours } from "@/lib/after-hours-detail-view";
 import type { AfterHoursDetailRow } from "@/types/after-hours";
-import type { PaginatedResponse } from "@/types/audit";
-import type { AfterHoursFilterValues } from "./AfterHoursFilterBar";
+
+export type DetailSortColumn = "start_time" | "duration" | "after_hours_rate" | "confidence_score";
+export type DetailSortDir = "asc" | "desc";
 
 interface AfterHoursDetailTableProps {
-  filters: AfterHoursFilterValues;
+  rows: AfterHoursDetailRow[];
+  loading: boolean;
+  error: string | null;
+  page: number;
+  pageSize: number;
+  totalRows: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  sortBy: DetailSortColumn;
+  sortDir: DetailSortDir;
+  onSortChange: (column: DetailSortColumn) => void;
+  onRowClick: (row: AfterHoursDetailRow) => void;
 }
 
-function toQuery(params: Record<string, string | undefined>): string {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) if (value) search.set(key, value);
-  return search.toString();
-}
+const COLUMNS: Array<{ key: string; label: string; sortKey?: DetailSortColumn }> = [
+  { key: "date", label: "Fecha", sortKey: "start_time" },
+  { key: "technician", label: "Técnico" },
+  { key: "client", label: "Cliente" },
+  { key: "equipment", label: "Equipo" },
+  { key: "taskType", label: "Tipo de tarea" },
+  { key: "start", label: "Inicio" },
+  { key: "end", label: "Término" },
+  { key: "afterHours", label: "Tiempo fuera de horario", sortKey: "duration" },
+  { key: "confidence", label: "Confianza", sortKey: "confidence_score" },
+  { key: "diagnosis", label: "Diagnóstico" }
+];
 
-function round1(value: number | null): string {
-  if (value === null || value === undefined) return "-";
-  return (Math.round(value * 10) / 10).toString();
-}
+const SKELETON_WIDTHS = [90, 75, 85, 60, 80];
 
-// Tabla de detalle de tareas fuera de horario - clon estructural de
-// PartsReviewSection.tsx (mismo patrón de fetch/paginación/estado). Fuente:
-// marts.fieldbeat_working_hours_analysis vía /api/dashboard/after-hours/detail.
-export function AfterHoursDetailTable({ filters }: AfterHoursDetailTableProps) {
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<PaginatedResponse<AfterHoursDetailRow> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    const query = toQuery({
-      page: String(page),
-      pageSize: "20",
-      client: filters.client,
-      technician: filters.technician,
-      taskType: filters.taskType,
-      from: filters.from,
-      to: filters.to,
-      confidenceLevel: filters.confidenceLevel,
-      onlyAfterHours: filters.onlyAfterHours,
-      onlyLowConfidence: filters.onlyLowConfidence
-    });
-
-    fetch(`/api/dashboard/after-hours/detail?${query}`)
-      .then(async res => {
-        const body = await res.json();
-        if (!res.ok) throw body;
-        setData(body);
-      })
-      .catch(body => setError(body?.error ?? "Error desconocido"))
-      .finally(() => setLoading(false));
-  }, [filters, page]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [filters]);
-
+// Tabla "Registros detectados fuera de horario" (ETAPA 6.6D §11) -
+// columnas del prototipo + Diagnóstico (traduce data_basis/fallback_used/
+// coverage_reason_code/contractual_reason_code a texto legible vía
+// lib/after-hours-labels.ts, nunca códigos técnicos como texto principal).
+// data_basis=NONE nunca muestra "0 min" (§11): totalAfterHours() retorna
+// null cuando business_hours es null (cobertura no calculable), la celda
+// pinta "—".
+export function AfterHoursDetailTable({
+  rows,
+  loading,
+  error,
+  page,
+  pageSize,
+  totalRows,
+  totalPages,
+  onPageChange,
+  sortBy,
+  sortDir,
+  onSortChange,
+  onRowClick
+}: AfterHoursDetailTableProps) {
   return (
-    <ResponsiveTableShell
-      title="Detalle de tareas fuera de horario"
-      count={data?.totalRows}
-      loading={loading}
-      error={error}
-      empty={!loading && !error && (data?.rows.length ?? 0) === 0}
-      emptyMessage="Sin tareas para este filtro."
-      maxHeight={520}
-      footer={
-        data && (
-          <>
-            <span>
-              Página {data.page} de {data.totalPages}
-            </span>
-            <button type="button" onClick={() => setPage(p => p - 1)} disabled={page <= 1} className="rounded border px-2" style={{ borderColor: "var(--eyg-border)" }}>
-              ‹
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage(p => p + 1)}
-              disabled={page >= data.totalPages}
-              className="rounded border px-2"
-              style={{ borderColor: "var(--eyg-border)" }}
-            >
-              ›
-            </button>
-          </>
-        )
-      }
-    >
-      <table>
-        <thead>
-          <tr>
-            <th>Tarea</th>
-            <th>Inicio</th>
-            <th>Término estimado</th>
-            <th>Cliente</th>
-            <th>Equipo</th>
-            <th>Técnico</th>
-            <th>Tipo</th>
-            <th>Duración (h)</th>
-            <th>Hábil (h)</th>
-            <th>Fuera de horario (h)</th>
-            <th>Fin de semana (h)</th>
-            <th>Feriado (h)</th>
-            <th>% fuera de horario</th>
-            <th>Estado del cálculo</th>
-            <th>Confiabilidad</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.rows.map(row => {
-            const statusBadge = calculationStatusBadge(row.calculation_status);
-            return (
-              <tr key={row.fieldbeat_task_id}>
-                <td>{row.fieldbeat_task_id}</td>
-                <td>{row.start_time?.slice(0, 16) ?? "-"}</td>
-                <td title={row.estimated_end_time ?? ""}>{row.estimated_end_time?.slice(0, 16) ?? "-"}</td>
-                <td title={row.client_name ?? ""}>{row.client_name ?? "-"}</td>
-                <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "-"}</td>
-                <td>{row.assigned_to ?? "-"}</td>
-                <td>{row.task_type ?? "-"}</td>
-                <td>{round1(row.duration_hours)}</td>
-                <td>{round1(row.business_hours)}</td>
-                <td>{round1(row.after_hours)}</td>
-                <td>{round1(row.weekend_hours)}</td>
-                <td>{round1(row.holiday_hours)}</td>
-                <td>{row.after_hours_rate !== null ? `${Math.round(row.after_hours_rate * 100)}%` : "-"}</td>
-                <td>
-                  <StatusBadge label={statusBadge.label} tone={statusBadge.tone} />
-                </td>
-                <td>
-                  {row.confidence_score !== null && (
-                    <ConfidenceBadge score={row.confidence_score} label={row.confidence_label ?? "-"} factors={row.confidence_factors} size="sm" />
+    <div className="mb-2 overflow-hidden rounded-[var(--nx-radius-card)]" style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }}>
+      <div className="flex flex-wrap items-center gap-3 border-b px-4.5 py-3.5" style={{ borderColor: "var(--nx-border)" }}>
+        <div className="text-[15.5px] font-bold" style={{ color: "var(--nx-text-primary)" }}>
+          Registros detectados fuera de horario
+        </div>
+        {totalRows > 0 && (
+          <span className="text-[12.5px]" style={{ color: "var(--nx-text-muted)" }}>
+            {totalRows.toLocaleString("es-CL")} registros
+          </span>
+        )}
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1080px] border-collapse text-[13px]">
+          <thead>
+            <tr style={{ background: "var(--nx-page-bg)" }}>
+              {COLUMNS.map(col => (
+                <th
+                  key={col.key}
+                  className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap"
+                  style={{ color: "var(--nx-text-secondary)" }}
+                >
+                  {col.sortKey ? (
+                    <button type="button" onClick={() => onSortChange(col.sortKey!)} className="inline-flex items-center gap-1">
+                      {col.label}
+                      {sortBy === col.sortKey && <span aria-hidden="true">{sortDir === "asc" ? "↑" : "↓"}</span>}
+                    </button>
+                  ) : (
+                    col.label
                   )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </ResponsiveTableShell>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          {!loading && !error && rows.length > 0 && (
+            <tbody>
+              {rows.map(row => {
+                const start = splitDateTime(row.start_time);
+                const end = splitDateTime(row.estimated_end_time);
+                const total = totalAfterHoursHours(row);
+                const confidenceTier = getConfidenceTierLabel(row.confidence_label);
+                const diagnosis = buildDiagnosis({
+                  dataBasis: row.data_basis,
+                  fallbackUsed: row.fallback_used,
+                  coverageReasonCode: row.coverage_reason_code,
+                  contractualReasonCode: row.contractual_reason_code
+                });
+
+                return (
+                  <tr
+                    key={row.fieldbeat_task_id}
+                    onClick={() => onRowClick(row)}
+                    className="cursor-pointer border-b"
+                    style={{ borderColor: "var(--nx-border)" }}
+                  >
+                    <td className="px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }}>
+                      {start.date}
+                    </td>
+                    <td className="px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }}>
+                      {row.assigned_to ?? "-"}
+                    </td>
+                    <td className="max-w-[220px] truncate px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }} title={row.client_name ?? ""}>
+                      {row.client_name ?? "-"}
+                    </td>
+                    <td className="max-w-[180px] truncate px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }} title={row.equipment_internal_ids ?? ""}>
+                      {row.equipment_internal_ids ?? "-"}
+                    </td>
+                    <td className="px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }}>
+                      {row.task_type ?? "-"}
+                    </td>
+                    <td className="px-3.5 py-2 [font-variant-numeric:tabular-nums]" style={{ color: "var(--nx-text-primary)" }}>
+                      {start.time}
+                    </td>
+                    <td className="px-3.5 py-2 [font-variant-numeric:tabular-nums]" style={{ color: "var(--nx-text-primary)" }}>
+                      {end.time}
+                    </td>
+                    <td className="px-3.5 py-2 [font-variant-numeric:tabular-nums]" style={{ color: "var(--nx-text-primary)" }}>
+                      {formatHoursOrDash(total)}
+                    </td>
+                    <td className="px-3.5 py-2">
+                      <StatusBadge label={confidenceTier.label} tone={confidenceTier.severity} size="sm" />
+                    </td>
+                    <td className="px-3.5 py-2">
+                      <StatusBadge label={diagnosis.primary.shortLabel} tone={diagnosis.primary.severity} size="sm" />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          )}
+        </table>
+      </div>
+
+      {loading && (
+        <div className="border-t px-5 py-5" style={{ borderColor: "var(--nx-border)" }}>
+          {SKELETON_WIDTHS.map((w, i) => (
+            <div
+              key={i}
+              className="mb-2.5 h-4 rounded"
+              style={{ width: `${w}%`, background: "linear-gradient(90deg,var(--nx-page-bg),var(--nx-card-bg),var(--nx-page-bg))", animation: "nx-pulse 1.4s ease-in-out infinite" }}
+            />
+          ))}
+        </div>
+      )}
+      {!loading && error && (
+        <div className="border-t" style={{ borderColor: "var(--nx-border)" }}>
+          <AfterHoursEmptyBlock tone="error" title="No se pudo cargar el detalle" description="Intenta nuevamente en unos minutos." />
+        </div>
+      )}
+      {!loading && !error && rows.length === 0 && (
+        <div className="border-t" style={{ borderColor: "var(--nx-border)" }}>
+          <AfterHoursEmptyBlock title="Sin registros para este filtro" description="Ajusta los filtros aplicados para ver resultados." />
+        </div>
+      )}
+
+      {!loading && !error && totalPages > 1 && (
+        <div className="flex items-center justify-end gap-3 border-t px-4.5 py-3" style={{ borderColor: "var(--nx-border)" }}>
+          <span className="text-[12.5px]" style={{ color: "var(--nx-text-muted)" }}>
+            Página {page} de {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            className="rounded border px-2 py-1 text-[12.5px] disabled:opacity-40"
+            style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)" }}
+          >
+            ‹ Anterior
+          </button>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className="rounded border px-2 py-1 text-[12.5px] disabled:opacity-40"
+            style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)" }}
+          >
+            Siguiente ›
+          </button>
+        </div>
+      )}
+      <div className="border-t px-4.5 py-2.5 text-[12.5px]" style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-muted)" }}>
+        Niveles de clasificación: Alta confianza · Confianza media · Baja confianza · Insuficiente · Sin información.
+      </div>
+    </div>
   );
 }

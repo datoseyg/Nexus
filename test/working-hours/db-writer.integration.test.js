@@ -6,7 +6,7 @@ import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import pg from "pg";
 import { buildTaskCoverage } from "../../src/working-hours/task-coverage-builder.js";
-import { validateBeforePublish, publishResults, summarizeResults } from "../../src/working-hours/db-writer.js";
+import { validateBeforePublish, publishResults, summarizeResults, buildEquipmentInternalIds, loadReferenceData, runBuild } from "../../src/working-hours/db-writer.js";
 
 const TEST_DB_URL = process.env.WORKING_HOURS_TEST_DATABASE_URL;
 const { Pool } = pg;
@@ -120,11 +120,39 @@ before(async () => {
   // correspondiente en processed.fieldbeat_tasks queda invisible en la
   // vista de transición (grano de la vista = tareas reales, no filas de
   // Capa C). Se insertan las fixture task_id usadas por esta suite.
-  const fixtureTaskIds = [900001, 900002, 900101, 900102, 900201, 900301, 900302, 900401, 900501, 900601, 900701, 900702];
+  const fixtureTaskIds = [900001, 900002, 900101, 900102, 900201, 900301, 900302, 900401, 900501, 900601, 900701, 900702, 900801, 900802];
   await pool.query(`DELETE FROM processed.fieldbeat_tasks WHERE fieldbeat_task_id = ANY($1)`, [fixtureTaskIds]);
   for (const taskId of fixtureTaskIds) {
-    await pool.query(`INSERT INTO processed.fieldbeat_tasks (fieldbeat_task_id, start_time, duration_minutes) VALUES ($1, '2026-08-10T20:00:00Z', 60)`, [taskId]);
+    await pool.query(
+      `INSERT INTO processed.fieldbeat_tasks (fieldbeat_task_id, start_time, duration_minutes, client_key) VALUES ($1, '2026-08-10T20:00:00Z', 60, 'CLIENTE-NOMBRE-TEST')`,
+      [taskId]
+    );
   }
+
+  // Fixtures para la corrección de client_name/client_rut/equipment_internal_ids
+  // (loadReferenceData debe resolver estos campos desde fuentes gobernadas
+  // reales -processed.fieldbeat_clients y processed.fieldbeat_task_equipments/
+  // fieldbeat_equipments- no fabricarlos).
+  await pool.query(`DELETE FROM processed.fieldbeat_clients WHERE client_key = 'CLIENTE-NOMBRE-TEST'`);
+  await pool.query(
+    `INSERT INTO processed.fieldbeat_clients (client_key, client_name, rut) VALUES ('CLIENTE-NOMBRE-TEST', 'Cliente De Prueba SPA', '11.111.111-1')`
+  );
+  await pool.query(`DELETE FROM processed.fieldbeat_task_equipments WHERE fieldbeat_task_id IN (900801, 900802)`);
+  await pool.query(`DELETE FROM processed.fieldbeat_equipments WHERE equipment_uuid IN ('fixture-equip-a','fixture-equip-b')`);
+  await pool.query(
+    `INSERT INTO processed.fieldbeat_equipments (equipment_key, equipment_uuid, internal_id, client_key) VALUES
+       ('FIELDBEAT_EQUIPMENT|fixture-equip-a|EQ-A','fixture-equip-a','EQ-INTERNAL-A','CLIENTE-NOMBRE-TEST'),
+       ('FIELDBEAT_EQUIPMENT|fixture-equip-b|EQ-B','fixture-equip-b','EQ-INTERNAL-B','CLIENTE-NOMBRE-TEST')`
+  );
+  // 900801: 2 equipos distintos (multi-equipo) + 1 fila duplicada del mismo
+  // equipo (reextracción del ETL) -debe deduplicarse a exactamente 2 ids.
+  await pool.query(
+    `INSERT INTO processed.fieldbeat_task_equipments (task_equipment_id, fieldbeat_task_id, equipment_uuid, equipment_internal_id) VALUES
+       ('fixture-te-1', 900801, 'fixture-equip-a', 'EQ-INTERNAL-A'),
+       ('fixture-te-1-dup', 900801, 'fixture-equip-a', 'EQ-INTERNAL-A'),
+       ('fixture-te-2', 900801, 'fixture-equip-b', 'EQ-INTERNAL-B')`
+  );
+  // 900802: sin ninguna fila en fieldbeat_task_equipments -tarea sin equipo.
 });
 
 after(async () => {
@@ -265,4 +293,269 @@ test("validateBeforePublish: detecta fieldbeat_task_id duplicado", () => {
   const v = validateBeforePublish(results);
   assert.equal(v.ok, false);
   assert.ok(v.errors.some(e => e.includes("duplicado")));
+});
+
+// === Corrección: client_name/client_rut/equipment_internal_ids (auditoría
+// BLOCKED_UPSTREAM -el builder nunca los persistía, ver db-writer.js) ===
+
+test("buildEquipmentInternalIds: deduplica, ordena y une con ', ' -determinista", () => {
+  const ids = buildEquipmentInternalIds([
+    { fieldbeatInternalId: "EQ-B" },
+    { fieldbeatInternalId: "EQ-A" },
+    { fieldbeatInternalId: "EQ-A" } // duplicado -no debe repetirse
+  ]);
+  assert.equal(ids, "EQ-A, EQ-B");
+});
+
+test("buildEquipmentInternalIds: tarea sin equipos -> null, NUNCA ''", () => {
+  assert.equal(buildEquipmentInternalIds([]), null);
+  assert.equal(buildEquipmentInternalIds(undefined), null);
+});
+
+test("buildEquipmentInternalIds: ids vacíos/null en el origen se descartan, no producen '' en el resultado", () => {
+  const ids = buildEquipmentInternalIds([{ fieldbeatInternalId: null }, { fieldbeatInternalId: "" }, { fieldbeatInternalId: "EQ-X" }]);
+  assert.equal(ids, "EQ-X");
+});
+
+test("buildEquipmentInternalIds: si TODOS los ids del origen son vacíos/null -> null, no una lista vacía", () => {
+  assert.equal(buildEquipmentInternalIds([{ fieldbeatInternalId: null }, { fieldbeatInternalId: "" }]), null);
+});
+
+test("loadReferenceData: resuelve client_name/client_rut desde processed.fieldbeat_clients (fuente gobernada real)", { skip: !TEST_DB_URL }, async () => {
+  const refData = await loadReferenceData(pool);
+  const info = refData.clientByKey.get("CLIENTE-NOMBRE-TEST");
+  assert.equal(info.clientName, "Cliente De Prueba SPA");
+  assert.equal(info.clientRut, "11.111.111-1");
+});
+
+test("loadReferenceData: client_key sin match en fieldbeat_clients -> ausente del mapa, nunca fabricado", { skip: !TEST_DB_URL }, async () => {
+  const refData = await loadReferenceData(pool);
+  assert.equal(refData.clientByKey.has("CLIENTE-QUE-NO-EXISTE"), false);
+});
+
+test("runBuild: tarea multi-equipo (900801) trae los 2 identificadores esperados, deduplicados", { skip: !TEST_DB_URL }, async () => {
+  const { results } = await runBuild(pool);
+  const r = results.find(x => Number(x.fieldbeatTaskId) === 900801);
+  assert.ok(r, "resultado 900801 no encontrado en runBuild()");
+  assert.equal(r.clientName, "Cliente De Prueba SPA");
+  assert.equal(r.clientRut, "11.111.111-1");
+  assert.equal(r.equipmentInternalIds, "EQ-INTERNAL-A, EQ-INTERNAL-B");
+});
+
+test("runBuild: tarea sin equipo (900802) mantiene equipmentInternalIds NULL honesto, pero cliente/RUT sí se resuelven", { skip: !TEST_DB_URL }, async () => {
+  const { results } = await runBuild(pool);
+  const r = results.find(x => Number(x.fieldbeatTaskId) === 900802);
+  assert.ok(r, "resultado 900802 no encontrado en runBuild()");
+  assert.equal(r.equipmentInternalIds, null);
+  assert.equal(r.clientName, "Cliente De Prueba SPA");
+  assert.equal(r.clientRut, "11.111.111-1");
+});
+
+test("publishResults: persiste client_name/client_rut/task_type/assigned_to/equipment_internal_ids -round trip real, no solo en memoria", { skip: !TEST_DB_URL }, async () => {
+  const result = makeResult(900001, {
+    clientKey: "CLIENTE-NOMBRE-TEST", clientName: "Cliente De Prueba SPA", clientRut: "11.111.111-1",
+    taskType: "PM", assignedTo: "tech1", equipmentInternalIds: "EQ-INTERNAL-A, EQ-INTERNAL-B"
+  });
+  await publishResults(pool, [result], await newRunId());
+
+  const row = await pool.query(
+    "SELECT client_key, client_name, client_rut, task_type, assigned_to, equipment_internal_ids FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id=900001"
+  );
+  assert.deepEqual(row.rows[0], {
+    client_key: "CLIENTE-NOMBRE-TEST", client_name: "Cliente De Prueba SPA", client_rut: "11.111.111-1",
+    task_type: "PM", assigned_to: "tech1", equipment_internal_ids: "EQ-INTERNAL-A, EQ-INTERNAL-B"
+  });
+});
+
+test("publishResults: equipment_internal_ids ausente (undefined en el result) persiste como NULL, no como el string 'undefined'", { skip: !TEST_DB_URL }, async () => {
+  const result = makeResult(900101); // sin overrides -campos nuevos undefined
+  await publishResults(pool, [result], await newRunId());
+
+  const row = await pool.query("SELECT client_name, equipment_internal_ids FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id=900101");
+  assert.equal(row.rows[0].client_name, null);
+  assert.equal(row.rows[0].equipment_internal_ids, null);
+});
+
+// === Investigación: start_time_local/end_time_local NULL en TODAS las
+// filas calculables (CONTRACTUAL y LEGACY_SCHEDULE por igual, no es
+// específico de LEGACY_SCHEDULE -ver hipótesis de causa raíz entregada).
+// Causa raíz: publishResults() nunca escribía estas 2 columnas -v2Columns/
+// v2Rows las omitían por completo. Test rojo antes del fix: startTimeRaw=
+// "2026-08-10T20:00:00Z" en invierno chileno (UTC-4) -> local esperado
+// "2026-08-10 16:00:00".
+
+test("publishResults: persiste start_time_local/end_time_local derivados de startTimeUtc/endTimeUtc, CONTRACTUAL", { skip: !TEST_DB_URL }, async () => {
+  const result = makeResult(900001);
+  await publishResults(pool, [result], await newRunId());
+
+  const row = await pool.query("SELECT start_time_local, end_time_local FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id=900001");
+  assert.equal(row.rows[0].start_time_local, "2026-08-10 16:00:00", "startTimeRaw=2026-08-10T20:00:00Z en invierno chileno (UTC-4) debe dar 16:00 local");
+  assert.equal(row.rows[0].end_time_local, "2026-08-10 17:00:00");
+});
+
+test("publishResults: persiste start_time_local/end_time_local también en LEGACY_SCHEDULE (mismo defecto, no exclusivo de CONTRACTUAL)", { skip: !TEST_DB_URL }, async () => {
+  const result = makeLegacyResult(900002);
+  await publishResults(pool, [result], await newRunId());
+
+  const row = await pool.query("SELECT start_time_local, end_time_local FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id=900002");
+  assert.equal(row.rows[0].start_time_local, "2026-08-10 16:00:00");
+  assert.equal(row.rows[0].end_time_local, "2026-08-10 17:00:00");
+});
+
+test("publishResults: start_time_local usa el offset correcto en horario de verano (DST activo, UTC-3), no el de invierno", { skip: !TEST_DB_URL }, async () => {
+  // 2026-10-01 es posterior al inicio de DST confirmado (~2026-09-06,
+  // mismas fechas reales que test/working-hours/timezone-resolver.test.js)
+  // -offset -180 (UTC-3), no -240 (UTC-4) como en el fixture de invierno.
+  const dstResult = buildTaskCoverage({
+    task: { startTimeRaw: "2026-10-01T20:00:00Z", durationMinutes: 60, clientKey: "CLIENTE-TEST", taskType: "PM", assignedTo: "tech1" },
+    confidenceContext: { businessHoursStatus: "DEFAULT_UNVALIDATED", holidaysStatus: "VALIDATED" },
+    equipmentInputs: [{
+      fieldbeatEquipmentKey: "FIELDBEAT_EQUIPMENT|test-uuid|EQ-1",
+      match: { matchStatus: "MATCHED", matchMethod: "SERIAL_SUFFIX", contractEquipmentKey: "SN:TEST1" },
+      versions: [{ contractVersionId: fixtureVersionId, validFrom: "2020-01-01", validTo: null, contractStatusCode: "ACTIVE_AUTO_RENEW" }],
+      scheduleByVersionId: new Map([[fixtureVersionId, { scheduleId: fixtureScheduleId, coverageType: "FIXED_WINDOW", parseStatus: "OK" }]]),
+      windowsByScheduleId: new Map([[fixtureScheduleId, [{ dayOfWeek: "THU", startTime: "00:00", endTime: "23:59", allDay: false }]]])
+    }],
+    holidayLookup: alwaysNotHoliday,
+    businessHoursCfg
+  });
+  await publishResults(pool, [{ fieldbeatTaskId: 900001, ...dstResult }], await newRunId());
+
+  const row = await pool.query("SELECT start_time_local FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id=900001");
+  assert.equal(row.rows[0].start_time_local, "2026-10-01 17:00:00", "20:00 UTC en DST (UTC-3) debe dar 17:00 local, no 16:00 (que sería UTC-4)");
+});
+
+test("publishResults: startTimeUtc=null (NONE terminal) -> start_time_local NULL, nunca fabricado", { skip: !TEST_DB_URL }, async () => {
+  const noneResult = { fieldbeatTaskId: 900501, ...buildTaskCoverage({
+    task: { startTimeRaw: null, durationMinutes: null },
+    confidenceContext: { businessHoursStatus: "DEFAULT_UNVALIDATED", holidaysStatus: "VALIDATED" },
+    equipmentInputs: [], holidayLookup: alwaysNotHoliday, businessHoursCfg
+  }) };
+  await publishResults(pool, [noneResult], await newRunId());
+
+  const row = await pool.query("SELECT start_time_local, end_time_local FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id=900501");
+  assert.equal(row.rows[0].start_time_local, null);
+  assert.equal(row.rows[0].end_time_local, null);
+});
+
+// === Caso pedido explícitamente: NONE con intervalo RESUELTO (fallo de
+// cobertura, no fallo del intervalo) -distinto del NONE terminal de arriba
+// (900501, sin start_time_raw). Acá el intervalo sí se resuelve
+// (EXACT_REPORTED_START_END/ESTIMATED_FROM_START_DURATION), pero AMBOS
+// intentos de cobertura fallan: CONTRACTUAL por NO_EQUIPMENT
+// (equipmentInputs=[]), LEGACY_SCHEDULE por HOLIDAY_COVERAGE_UNKNOWN
+// (holidayLookup siempre COVERAGE_UNKNOWN -> aggregateSegments marca
+// calculable=false). Rama 4 de task-coverage-builder.js.
+function alwaysCoverageUnknown(localDate) {
+  void localDate;
+  return "COVERAGE_UNKNOWN";
+}
+
+test("publishResults: NONE con intervalo resuelto pero cobertura no resuelta -start_time_local/end_time_local derivados, data_basis sigue NONE, fila no se vuelve calculable, reason codes conservados", { skip: !TEST_DB_URL }, async () => {
+  const result = { fieldbeatTaskId: 900901, ...buildTaskCoverage({
+    task: { startTimeRaw: "2026-08-10T20:00:00Z", durationMinutes: 60, clientKey: "CLIENTE-TEST", taskType: "PM", assignedTo: "tech1" },
+    confidenceContext: { businessHoursStatus: "DEFAULT_UNVALIDATED", holidaysStatus: "VALIDATED" },
+    equipmentInputs: [], // sin equipo -> intento CONTRACTUAL falla con NO_EQUIPMENT
+    holidayLookup: alwaysCoverageUnknown, // fallback LEGACY_SCHEDULE también falla -> HOLIDAY_COVERAGE_UNKNOWN
+    businessHoursCfg
+  }) };
+
+  // Confirma en memoria, ANTES de publicar, que buildTaskCoverage() realmente
+  // produjo el escenario pedido -si esto no se cumple, el fixture está mal
+  // construido, no es un resultado real de "fallo de cobertura".
+  assert.equal(result.dataBasis, "NONE");
+  assert.ok(result.startTimeUtc, "el intervalo debe estar resuelto (fallo de COBERTURA, no de intervalo)");
+  assert.ok(result.endTimeUtc);
+  assert.equal(result.calculationStatus, "NOT_CALCULABLE");
+  assert.equal(result.coverageReasonCode, "NO_EQUIPMENT");
+  assert.equal(result.contractualReasonCode, "NO_EQUIPMENT");
+  assert.equal(result.contractualAttemptStatus, "NOT_CALCULABLE");
+
+  await publishResults(pool, [result], await newRunId());
+
+  const row = await pool.query(
+    `SELECT data_basis, calculation_status, coverage_classification, coverage_reason_code,
+            contractual_attempt_status, contractual_coverage_classification, contractual_reason_code,
+            start_time_utc, start_time_local, end_time_utc, end_time_local,
+            covered_seconds, outside_coverage_seconds, after_hours_total_seconds
+     FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id=900901`
+  );
+  const r = row.rows[0];
+
+  // data_basis sigue NONE, la fila no se vuelve calculable.
+  assert.equal(r.data_basis, "NONE");
+  assert.equal(r.calculation_status, "NOT_CALCULABLE");
+  assert.equal(r.coverage_classification, "NOT_CALCULABLE");
+
+  // start_time_local/end_time_local derivados desde start_time_utc/end_time_utc
+  // (2026-08-10T20:00:00Z, invierno chileno UTC-4 -> 16:00 local; +60min -> 17:00).
+  assert.ok(r.start_time_utc, "start_time_utc debe estar presente (intervalo resuelto)");
+  assert.equal(r.start_time_local, "2026-08-10 16:00:00");
+  assert.ok(r.end_time_utc);
+  assert.equal(r.end_time_local, "2026-08-10 17:00:00");
+
+  // business_minutes/after_hours_minutes (covered_seconds/after_hours_total_seconds
+  // en Capa C) con semántica NO CALCULABLE -NULL, nunca 0.
+  assert.equal(r.covered_seconds, null);
+  assert.equal(r.outside_coverage_seconds, null);
+  assert.equal(r.after_hours_total_seconds, null);
+
+  // Motivos de no cálculo conservados, NUNCA descartados silenciosamente.
+  assert.equal(r.coverage_reason_code, "NO_EQUIPMENT");
+  assert.equal(r.contractual_attempt_status, "NOT_CALCULABLE");
+  assert.equal(r.contractual_coverage_classification, "NOT_CALCULABLE");
+  assert.equal(r.contractual_reason_code, "NO_EQUIPMENT");
+});
+
+// === Invariantes de publicación (bicondicional real, no solo "en la
+// mayoría de los casos"): se verifican sobre TODAS las filas publicadas en
+// este test -CONTRACTUAL, LEGACY_SCHEDULE, NONE terminal y NONE con
+// intervalo resuelto, a la vez- para que la ausencia de violaciones no
+// dependa de un único escenario feliz.
+test("publishResults: invariante -start_time_utc presente <=> start_time_local presente, para TODA fila, sin excepción", { skip: !TEST_DB_URL }, async () => {
+  const contractual = makeResult(900001);
+  const legacy = makeLegacyResult(900002);
+  const noneTerminal = { fieldbeatTaskId: 900501, ...buildTaskCoverage({
+    task: { startTimeRaw: null, durationMinutes: null },
+    confidenceContext: { businessHoursStatus: "DEFAULT_UNVALIDATED", holidaysStatus: "VALIDATED" },
+    equipmentInputs: [], holidayLookup: alwaysNotHoliday, businessHoursCfg
+  }) };
+  const noneResolved = { fieldbeatTaskId: 900901, ...buildTaskCoverage({
+    task: { startTimeRaw: "2026-08-10T20:00:00Z", durationMinutes: 60, clientKey: "CLIENTE-TEST", taskType: "PM", assignedTo: "tech1" },
+    confidenceContext: { businessHoursStatus: "DEFAULT_UNVALIDATED", holidaysStatus: "VALIDATED" },
+    equipmentInputs: [], holidayLookup: alwaysCoverageUnknown, businessHoursCfg
+  }) };
+
+  await publishResults(pool, [contractual, legacy, noneTerminal, noneResolved], await newRunId());
+
+  const violations = await pool.query(`
+    SELECT fieldbeat_task_id,
+      (start_time_utc IS NOT NULL) AS has_start_utc, (start_time_local IS NOT NULL) AS has_start_local,
+      (end_time_utc IS NOT NULL) AS has_end_utc, (end_time_local IS NOT NULL) AS has_end_local
+    FROM marts.fieldbeat_working_hours_analysis_v2
+    WHERE fieldbeat_task_id IN (900001, 900002, 900501, 900901)
+      AND ((start_time_utc IS NOT NULL) <> (start_time_local IS NOT NULL)
+        OR (end_time_utc IS NOT NULL) <> (end_time_local IS NOT NULL))
+  `);
+  assert.deepEqual(violations.rows, [], `filas con start/end _utc y _local desincronizados: ${JSON.stringify(violations.rows)}`);
+
+  // Confirma explícitamente que el conjunto de prueba realmente ejerce
+  // ambos lados del bicondicional (presente Y ausente) -si esto no se
+  // cumple, el test anterior sería vacuamente verdadero.
+  const presence = await pool.query(`
+    SELECT count(*) FILTER (WHERE start_time_utc IS NOT NULL) AS con_utc, count(*) FILTER (WHERE start_time_utc IS NULL) AS sin_utc
+    FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id IN (900001, 900002, 900501, 900901)
+  `);
+  assert.equal(Number(presence.rows[0].con_utc), 3, "se esperan 3 filas con start_time_utc (CONTRACTUAL, LEGACY_SCHEDULE, NONE-resuelto)");
+  assert.equal(Number(presence.rows[0].sin_utc), 1, "se espera 1 fila sin start_time_utc (NONE terminal)");
+});
+
+test("vista de transición: expone client_name/equipment_internal_ids reales tras la corrección (900801)", { skip: !TEST_DB_URL }, async () => {
+  const { results } = await runBuild(pool);
+  const r = results.find(x => Number(x.fieldbeatTaskId) === 900801);
+  await publishResults(pool, [r], await newRunId());
+
+  const viewRow = await pool.query("SELECT client_name, equipment_internal_ids FROM marts.fieldbeat_working_hours_analysis_current WHERE fieldbeat_task_id=900801");
+  assert.equal(viewRow.rows[0].client_name, "Cliente De Prueba SPA");
+  assert.equal(viewRow.rows[0].equipment_internal_ids, "EQ-INTERNAL-A, EQ-INTERNAL-B");
 });

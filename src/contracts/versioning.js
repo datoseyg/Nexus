@@ -15,7 +15,11 @@ export function computeVersionAction(candidateFingerprint, currentVersionRow, ef
     return { action: "NEW" };
   }
 
-  if (effectiveDate <= currentVersionRow.valid_from) {
+  // valid_from puede ser NULL (ETAPA 6.5.1, versión UNRESOLVED sin fecha
+  // conocida) - guard explícito, nunca depender de la coerción implícita de
+  // JS (string >= null se compara como NaN >= 0, que da el resultado
+  // correcto por accidente, no por diseño).
+  if (currentVersionRow.valid_from !== null && effectiveDate <= currentVersionRow.valid_from) {
     return {
       action: "FATAL_BACKDATED",
       reason: `effective_date ${effectiveDate} <= valid_from vigente ${currentVersionRow.valid_from}`

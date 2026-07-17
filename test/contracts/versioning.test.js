@@ -27,3 +27,10 @@ test("effective_date <= valid_from vigente -> FATAL_BACKDATED, incluso con finge
   assert.equal(before.action, "FATAL_BACKDATED");
   assert.ok(equal.reason);
 });
+
+test("valid_from vigente NULL (ETAPA 6.5.1, UNRESOLVED) nunca dispara FATAL_BACKDATED -guard explícito, no coerción implícita", () => {
+  const current = { contract_version_id: 1, contract_fingerprint: "fp-old", valid_from: null };
+  const r = computeVersionAction("fp-new", current, "2026-01-01");
+  assert.notEqual(r.action, "FATAL_BACKDATED");
+  assert.equal(r.action, "SUPERSEDE");
+});

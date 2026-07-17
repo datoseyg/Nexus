@@ -8,6 +8,7 @@ import { matchOneEquipment, matchResultToIssues } from "./fieldbeat-matcher.js";
 import { computeVersionAction } from "./versioning.js";
 import { COLUMN } from "./field-map.js";
 import { sourceRowHash } from "./hash.js";
+import { loadKnownContractStartDates, resolveContractStartDate } from "./contract-start-date-resolver.js";
 
 function extractSheetNameFromFilename(filePath) {
   const base = filePath.split(/[\\/]/).pop() ?? filePath;
@@ -52,6 +53,14 @@ async function recordFailedImportStatus(queryable, meta, error) {
 
 function buildVersionInsertParams(record, ctx) {
   const f = record.normalizedFields;
+  // ETAPA 6.5.1: valid_from YA NO es ctx.effectiveDate (fecha de la corrida
+  // de importación) - se resuelve por separado, en orden: fecha de negocio
+  // conocida > installation_month inferido > sin resolver (NULL). Ver
+  // src/contracts/contract-start-date-resolver.js.
+  const resolvedStart = resolveContractStartDate(
+    { equipmentKey: record.equipmentKey, installationMonth: f.installationMonth, installationDatePrecision: f.installationDatePrecision },
+    ctx.knownContractStartDates
+  );
   return [
     record.equipmentKey,
     f.clientNameCanonical,
@@ -80,13 +89,18 @@ function buildVersionInsertParams(record, ctx) {
     f.preventiveMaintenanceRule,
     f.warrantyEndDate,
     record.warrantyEndDateSource,
-    ctx.effectiveDate, // valid_from ($28)
-    record.requiresReview, // $29
-    record.normalizationStatus, // $30
-    ctx.importId, // source_import_id ($31)
-    record.sourceRowNumber, // $32
-    record.sourceRowHash, // $33
-    record.contractFingerprint // $34
+    resolvedStart.validFrom, // $28
+    resolvedStart.validFromIsInferred, // $29
+    resolvedStart.validFromBasis, // $30
+    resolvedStart.validFromPrecision, // $31
+    resolvedStart.validFromSourceField, // $32
+    resolvedStart.validFromSourceValueRaw, // $33
+    record.requiresReview, // $34
+    record.normalizationStatus, // $35
+    ctx.importId, // source_import_id ($36)
+    record.sourceRowNumber, // $37
+    record.sourceRowHash, // $38
+    record.contractFingerprint // $39
   ];
 }
 
@@ -99,11 +113,12 @@ const VERSION_INSERT_SQL = `
     parts_coverage_code, parts_coverage_raw, hw_refresh_code, updates_code, upgrades_code,
     preventive_maintenance_min, preventive_maintenance_max, preventive_maintenance_rule,
     warranty_end_date, warranty_end_date_source,
-    valid_from, valid_to, is_current, requires_review, normalization_status,
+    valid_from, valid_from_is_inferred, valid_from_basis, valid_from_precision, valid_from_source_field, valid_from_source_value_raw,
+    valid_to, is_current, requires_review, normalization_status,
     source_import_id, source_row_number, source_row_hash, contract_fingerprint
   ) VALUES (
     $1,$2,$3,$4,$5,$6, $7,$8, $9,$10,$11,$12, $13,$14,$15,$16,$17, $18,$19,$20,$21,$22,
-    $23,$24,$25, $26,$27, $28, NULL, true, $29, $30, $31,$32,$33,$34
+    $23,$24,$25, $26,$27, $28,$29,$30,$31,$32,$33, NULL, true, $34, $35, $36,$37,$38,$39
   ) RETURNING contract_version_id
 `;
 
@@ -219,6 +234,7 @@ export async function applyContracts(args) {
     }
 
     const clientNameNormalizer = createClientNameNormalizer();
+    const knownContractStartDates = loadKnownContractStartDates();
     const results = [];
 
     for (const classifiedRow of equipmentRows) {
@@ -252,7 +268,7 @@ export async function applyContracts(args) {
 
         const versionInsert = await client.query(
           VERSION_INSERT_SQL,
-          buildVersionInsertParams(record, { effectiveDate: args.effectiveDate, importId })
+          buildVersionInsertParams(record, { importId, knownContractStartDates })
         );
         contractVersionId = versionInsert.rows[0].contract_version_id;
 

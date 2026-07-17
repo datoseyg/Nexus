@@ -38,6 +38,26 @@ test("paso 2 -versión: sin versión vigente en la fecha local de la tarea -> NO
   }));
   assert.equal(r.calculable, false);
   assert.equal(r.reasonCode, "NO_CONTRACT_AT_TASK_DATE");
+});
+
+test("paso 2 -versión: validFrom=NULL (ETAPA 6.5.1, UNRESOLVED) nunca matchea, aunque taskLocalDate sea cualquier fecha -> NO_CONTRACT_AT_TASK_DATE, nunca lanza", () => {
+  const r = resolveEquipmentContract(base({
+    match: { matchStatus: "MATCHED", matchMethod: "SERIAL_SUFFIX", contractEquipmentKey: "SN:1" },
+    versions: [{ contractVersionId: 1, validFrom: null, validTo: null, contractStatusCode: "ACTIVE_AUTO_RENEW" }]
+  }));
+  assert.equal(r.calculable, false);
+  assert.equal(r.reasonCode, "NO_CONTRACT_AT_TASK_DATE");
+});
+
+test("paso 2 -versión: con 2 versiones, una NULL y otra real, matchea la real e ignora la NULL", () => {
+  const r = resolveEquipmentContract(base({
+    match: { matchStatus: "MATCHED", matchMethod: "SERIAL_SUFFIX", contractEquipmentKey: "SN:1" },
+    versions: [
+      { contractVersionId: 1, validFrom: null, validTo: null, contractStatusCode: "ACTIVE_AUTO_RENEW" },
+      { contractVersionId: 2, validFrom: "2020-01-01", validTo: null, contractStatusCode: "ACTIVE_AUTO_RENEW" }
+    ]
+  }));
+  assert.equal(r.contractVersionId, 2);
   assert.equal(r.matchMethod, "SERIAL_SUFFIX", "matchMethod se propaga incluso cuando falla en un paso posterior");
 });
 

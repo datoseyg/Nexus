@@ -47,7 +47,10 @@ export function resolveEquipmentContract({ fieldbeatEquipmentKey, taskLocalDate,
   }
 
   // 2) Versión vigente en la fecha local de la tarea, [valid_from, valid_to).
-  const versionAtDate = (versions ?? []).find(v => taskLocalDate >= v.validFrom && (v.validTo === null || taskLocalDate < v.validTo));
+  // v.validFrom puede ser NULL (ETAPA 6.5.1, versión UNRESOLVED sin fecha
+  // conocida) - guard explícito: nunca puede "matchear" una versión sin
+  // fecha de inicio real, nunca depender de la coerción implícita de JS.
+  const versionAtDate = (versions ?? []).find(v => v.validFrom !== null && taskLocalDate >= v.validFrom && (v.validTo === null || taskLocalDate < v.validTo));
   if (!versionAtDate) {
     return { ...base, calculable: false, reasonCode: "NO_CONTRACT_AT_TASK_DATE", matchStatus: "MATCHED", matchMethod: match.matchMethod ?? null, contractEquipmentKey: match.contractEquipmentKey };
   }
