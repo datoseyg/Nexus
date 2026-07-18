@@ -40,11 +40,19 @@ function isLocalHost(connectionString) {
  * reutilizar el nombre de variable ya usado por contracts/migrate-to-supabase.
  * @returns {import("pg").Pool}
  */
-export function createPool() {
-  const connectionString = requireEnv("HOLIDAYS_DB_URL");
+export function getConnectionString() {
+  return requireEnv("HOLIDAYS_DB_URL");
+}
+
+/**
+ * @param {{ applicationName?: string }} [opts]
+ */
+export function createPool(opts = {}) {
+  const connectionString = getConnectionString();
 
   const pool = new Pool({
     connectionString,
+    application_name: opts.applicationName ?? "holidays-import",
     ssl: isLocalHost(connectionString) ? false : { rejectUnauthorized: false },
     max: 1
   });

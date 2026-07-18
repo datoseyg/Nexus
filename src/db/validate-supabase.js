@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
 import { mapType } from "./generate-postgres-ddl.js";
+import { assertWriteConfirmed } from "../lib/db-safety.js";
 
 // Validación de la migración a Supabase (Fase 2) -4 chequeos, no solo
 // conteo de filas: 1) filas, 2) tablas presentes, 3) columnas por tabla,
@@ -46,6 +47,11 @@ async function attachPostgres(connection) {
 
 export async function validateSupabase() {
   console.log("=== Validando migración a Supabase (4 chequeos) ===");
+
+  // ETAPA SAFETY-1 (Policy C) - aunque mayormente SELECT, este script SÍ
+  // hace un UPDATE real (audit.warehouse_sync_state) -mismo destino
+  // protegido que migrate-to-supabase.js, evaluado ANTES de tocar DuckDB.
+  assertWriteConfirmed(requireEnv("SUPABASE_DB_URL_DIRECT"), { environment: process.env.NODE_ENV ?? "development" });
 
   // READ_WRITE, no READ_ONLY: aunque este script nunca escribe en el
   // .duckdb local (solo SELECT), sí hace UPDATE sobre

@@ -7,8 +7,16 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import pg from "pg";
+import { assertDisposableTarget, printConnectionPreflight } from "../../src/lib/db-safety.js";
 
+// ETAPA SAFETY-1 - WORKING_HOURS_TEST_RUN_ID debe venir del run_id impreso
+// por scripts/bootstrap-disposable-postgres.mjs al sembrar la base. Sin
+// esto, assertDisposableTarget() aborta ANTES del primer INSERT -ver
+// reporte de ETAPA SAFETY-1 (incidente: esta suite corrió una vez contra
+// nexus-afterhours-realdata2 porque el único guard era `if (!TEST_DB_URL)`).
 const TEST_DB_URL = process.env.WORKING_HOURS_TEST_DATABASE_URL;
+const TEST_RUN_ID = process.env.WORKING_HOURS_TEST_RUN_ID;
+const SUITE_ID = "working-hours-ddl-test";
 const { Pool } = pg;
 
 let adminPool;
@@ -16,7 +24,13 @@ let builderRunId;
 
 before(async () => {
   if (!TEST_DB_URL) return;
-  adminPool = new Pool({ connectionString: TEST_DB_URL });
+  if (!TEST_RUN_ID) {
+    throw new Error(`Falta WORKING_HOURS_TEST_RUN_ID -requerido junto con WORKING_HOURS_TEST_DATABASE_URL (ver scripts/bootstrap-disposable-postgres.mjs, ETAPA SAFETY-1).`);
+  }
+  printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
+  adminPool = new Pool({ connectionString: TEST_DB_URL, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
+  await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
+
   const r = await adminPool.query(
     `INSERT INTO audit.pipeline_runs (stage, status) VALUES ('working-hours-test', 'SUCCESS') RETURNING run_id`
   );

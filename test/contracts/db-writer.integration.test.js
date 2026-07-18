@@ -6,8 +6,15 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import pg from "pg";
+import { assertDisposableTarget, printConnectionPreflight } from "../../src/lib/db-safety.js";
 
 const TEST_DB_URL = process.env.CONTRACTS_TEST_DATABASE_URL;
+// ETAPA SAFETY-1 - run_id sembrado por scripts/bootstrap-disposable-postgres.mjs.
+// applyContracts() YA queda protegido internamente (Caso G), pero este
+// before() escribe DDL/DML PROPIO antes de siquiera llamar a
+// applyContracts() -necesita su propia verificación primero.
+const TEST_RUN_ID = process.env.CONTRACTS_TEST_RUN_ID;
+const SUITE_ID = "contracts-db-writer-test";
 
 if (TEST_DB_URL) {
   // db-client.js (usado por applyContracts) lee SUPABASE_DB_URL_DIRECT -se
@@ -56,7 +63,13 @@ async function writeFixture(name, content) {
 
 test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !TEST_DB_URL }, async t => {
   before(async () => {
-    adminPool = new Pool({ connectionString: TEST_DB_URL });
+    if (!TEST_RUN_ID) {
+      throw new Error(`Falta CONTRACTS_TEST_RUN_ID -requerido junto con CONTRACTS_TEST_DATABASE_URL (ver scripts/bootstrap-disposable-postgres.mjs, ETAPA SAFETY-1).`);
+    }
+    printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
+    adminPool = new Pool({ connectionString: TEST_DB_URL, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
+    await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
+
     await adminPool.query("CREATE EXTENSION IF NOT EXISTS pgcrypto");
     await adminPool.query("CREATE SCHEMA IF NOT EXISTS manual_review");
     await adminPool.query("CREATE SCHEMA IF NOT EXISTS processed");
@@ -83,6 +96,19 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
       END $$;
     `);
     await adminPool.query(ddl);
+    // ETAPA 6.5.1 (sql/084_contract_valid_from_correction.sql) agregó
+    // valid_from_is_inferred/valid_from_basis/valid_from_precision/
+    // valid_from_source_field/valid_from_source_value_raw a
+    // config.contract_equipment_versions -VERSION_INSERT_SQL en db-writer.js
+    // ya las usa. Este fixture solo aplicaba 070_config.sql, así que
+    // aplicar() fallaba con "column does not exist" en TODO intento real de
+    // apply, sin relación con la lógica de matching (bug pre-existente,
+    // confirmado idéntico contra el baseline f08896f antes de ETAPA
+    // 6.5.2B1). 084 es autocontenido -solo agrega columnas/constraint a
+    // esta misma tabla, ya creada por 070- por eso alcanza con aplicarlo
+    // acá también, sin reordenar nada más.
+    const validFromDdl = await fs.readFile("sql/084_contract_valid_from_correction.sql", "utf8");
+    await adminPool.query(validFromDdl);
 
     applyContracts = (await import("../../src/contracts/db-writer.js")).applyContracts;
   });

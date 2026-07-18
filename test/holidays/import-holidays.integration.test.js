@@ -6,8 +6,13 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import pg from "pg";
+import { assertDisposableTarget, printConnectionPreflight } from "../../src/lib/db-safety.js";
 
+// ETAPA SAFETY-1 - ver test/working-hours/ddl.integration.test.js para el
+// contexto completo del incidente que motivó este guard.
 const TEST_DB_URL = process.env.HOLIDAYS_TEST_DATABASE_URL;
+const TEST_RUN_ID = process.env.HOLIDAYS_TEST_RUN_ID;
+const SUITE_ID = "holidays-import-test";
 if (TEST_DB_URL) {
   process.env.HOLIDAYS_DB_URL = TEST_DB_URL;
 }
@@ -18,7 +23,12 @@ let applyBundle, checkAlreadyImported, publishCoverage, createPool;
 
 before(async () => {
   if (!TEST_DB_URL) return;
-  adminPool = new Pool({ connectionString: TEST_DB_URL });
+  if (!TEST_RUN_ID) {
+    throw new Error(`Falta HOLIDAYS_TEST_RUN_ID -requerido junto con HOLIDAYS_TEST_DATABASE_URL (ver scripts/bootstrap-disposable-postgres.mjs, ETAPA SAFETY-1).`);
+  }
+  printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
+  adminPool = new Pool({ connectionString: TEST_DB_URL, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
+  await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
   ({ applyBundle, checkAlreadyImported } = await import("../../src/holidays/db-writer.js"));
   ({ publishCoverage } = await import("../../src/holidays/publish-coverage.js"));
   ({ createPool } = await import("../../src/holidays/db-client.js"));

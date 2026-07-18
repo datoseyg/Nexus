@@ -46,13 +46,25 @@ function isLocalHost(connectionString) {
 }
 
 /**
+ * Expuesto por separado de createPool() para que ETAPA SAFETY-1
+ * (assertWriteConfirmed en applyContracts()) pueda evaluar el destino
+ * ANTES de abrir cualquier conexión real.
+ * @returns {string}
+ */
+export function getConnectionString() {
+  return requireEnv("SUPABASE_DB_URL_DIRECT");
+}
+
+/**
+ * @param {{ applicationName?: string }} [opts]
  * @returns {import("pg").Pool}
  */
-export function createPool() {
-  const connectionString = requireEnv("SUPABASE_DB_URL_DIRECT");
+export function createPool(opts = {}) {
+  const connectionString = getConnectionString();
 
   const pool = new Pool({
     connectionString,
+    application_name: opts.applicationName ?? "contracts-import",
     ssl: isLocalHost(connectionString) ? false : { rejectUnauthorized: false },
     max: 1
   });

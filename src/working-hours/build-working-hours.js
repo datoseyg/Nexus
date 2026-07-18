@@ -14,10 +14,12 @@
 // READ_ONLY y los archivos de configuración gobernados del repo.
 
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import { parseArgs, validateArgs } from "./cli.js";
-import { createPool } from "./db-client.js";
+import { createPool, getConnectionString } from "./db-client.js";
 import { runBuild, validateBeforePublish, publishResults, summarizeResults } from "./db-writer.js";
+import { assertWriteConfirmed } from "../lib/db-safety.js";
 import { segmentLegacyCorrectedV2, computeLegacyExactParity } from "./legacy-global-schedule.js";
 import { resolveInterval } from "./interval-resolver.js";
 import { offsetMinutesAt, localDateStringAt } from "./timezone-resolver.js";
@@ -72,7 +74,12 @@ async function runDryRun(args) {
 }
 
 async function runApply(args) {
-  const pool = createPool();
+  // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir cualquier
+  // conexión de escritura. Protege este entrypoint sin importar si se
+  // invoca vía CLI (`working-hours:build -- apply`) o directo.
+  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+
+  const pool = createPool({ applicationName: `working-hours-apply:${randomUUID().slice(0, 8)}` });
   const { results } = await runBuild(pool);
   const scoped = filterTasksByRange(results.map(r => ({ ...r, start_time: r.startTimeUtc })), args.from, args.to);
   const targetResults = args.from || args.to ? scoped : results;

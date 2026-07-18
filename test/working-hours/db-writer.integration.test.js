@@ -7,8 +7,13 @@ import assert from "node:assert/strict";
 import pg from "pg";
 import { buildTaskCoverage } from "../../src/working-hours/task-coverage-builder.js";
 import { validateBeforePublish, publishResults, summarizeResults, buildEquipmentInternalIds, loadReferenceData, runBuild } from "../../src/working-hours/db-writer.js";
+import { assertDisposableTarget, printConnectionPreflight } from "../../src/lib/db-safety.js";
 
+// ETAPA SAFETY-1 - ver test/working-hours/ddl.integration.test.js para el
+// contexto completo del incidente que motivó este guard.
 const TEST_DB_URL = process.env.WORKING_HOURS_TEST_DATABASE_URL;
+const TEST_RUN_ID = process.env.WORKING_HOURS_TEST_RUN_ID;
+const SUITE_ID = "working-hours-db-writer-test";
 const { Pool } = pg;
 
 let pool;
@@ -60,7 +65,12 @@ function makeLegacyResult(taskId) {
 
 before(async () => {
   if (!TEST_DB_URL) return;
-  pool = new Pool({ connectionString: TEST_DB_URL, max: 5 });
+  if (!TEST_RUN_ID) {
+    throw new Error(`Falta WORKING_HOURS_TEST_RUN_ID -requerido junto con WORKING_HOURS_TEST_DATABASE_URL (ver scripts/bootstrap-disposable-postgres.mjs, ETAPA SAFETY-1).`);
+  }
+  printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
+  pool = new Pool({ connectionString: TEST_DB_URL, max: 5, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
+  await assertDisposableTarget(pool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
   // audit.pipeline_runs es prerrequisito de builder_run_id (FK NOT NULL) -
   // se asume ya aplicado sql/000-083 contra este Postgres desechable (mismo
   // criterio que ddl.integration.test.js de este mismo directorio).

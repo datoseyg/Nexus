@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
 import { isDuckdbSync } from "./ownership-manifest.js";
+import { assertWriteConfirmed } from "../lib/db-safety.js";
 
 
 function quoteIdentifier(identifier) {
@@ -144,6 +145,22 @@ async function syncRawJson(connection) {
 
 export async function migrateToSupabase() {
   console.log("=== Migrando DuckDB -> Supabase Postgres ===");
+
+  // ETAPA SAFETY-1 (Policy D, corregida en el cierre) - este script SIEMPRE
+  // apunta a un host protegido (Supabase cloud, vía SUPABASE_DB_URL_DIRECT).
+  // No debe poder escribir ahí por defecto (allowProtectedWithDualConfirmation
+  // habilita el chequeo, no lo salta), pero tampoco debe quedar
+  // permanentemente inutilizable -exige AMBOS CONFIRM_WRITE_TARGET y
+  // CONFIRM_PROTECTED_WRITE_TARGET, cada uno host:puerto/base EXACTOS del
+  // destino efectivo (ver src/lib/db-safety.js), evaluado ANTES de tocar
+  // DuckDB o abrir el ATTACH. Este opt-in es exclusivo de este script -los
+  // demás callers de assertWriteConfirmed (contracts, holidays,
+  // working-hours, validate-supabase) siguen sin poder escribir contra un
+  // target protegido bajo ninguna circunstancia.
+  assertWriteConfirmed(requireEnv("SUPABASE_DB_URL_DIRECT"), {
+    environment: process.env.NODE_ENV ?? "development",
+    allowProtectedWithDualConfirmation: true
+  });
 
   const loadRaw = process.env.LOAD_RAW === "true";
   console.log(`LOAD_RAW=${loadRaw} (default: false -ver riesgo de presupuesto de espacio en el plan de migración)`);

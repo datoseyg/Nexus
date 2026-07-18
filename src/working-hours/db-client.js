@@ -48,17 +48,23 @@ function assertNotProductionHost(connectionString) {
   }
 }
 
+export function getConnectionString() {
+  return requireEnv("WORKING_HOURS_DB_URL");
+}
+
 /**
  * Lee WORKING_HOURS_DB_URL (NUNCA SUPABASE_DB_URL_DIRECT) y rechaza
  * estructuralmente cualquier host reconocido como Supabase productivo.
+ * @param {{ applicationName?: string }} [opts]
  * @returns {import("pg").Pool}
  */
-export function createPool() {
-  const connectionString = requireEnv("WORKING_HOURS_DB_URL");
+export function createPool(opts = {}) {
+  const connectionString = getConnectionString();
   assertNotProductionHost(connectionString);
 
   const pool = new Pool({
     connectionString,
+    application_name: opts.applicationName ?? "working-hours-build",
     ssl: isLocalHost(connectionString) ? false : { rejectUnauthorized: false },
     max: 4
   });

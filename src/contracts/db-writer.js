@@ -1,5 +1,7 @@
 import path from "node:path";
-import { createPool, STATEMENT_TIMEOUT_MS } from "./db-client.js";
+import { randomUUID } from "node:crypto";
+import { createPool, getConnectionString, STATEMENT_TIMEOUT_MS } from "./db-client.js";
+import { assertWriteConfirmed } from "../lib/db-safety.js";
 import { readSourceCsvRaw } from "./csv-source.js";
 import { classifyRows } from "./row-classifier.js";
 import { buildEquipmentRecord } from "./record-builder.js";
@@ -130,7 +132,15 @@ const VERSION_INSERT_SQL = `
  * @param {{ file: string, effectiveDate: string }} args
  */
 export async function applyContracts(args) {
-  const pool = createPool();
+  // ETAPA SAFETY-1 - Caso G: esta función queda protegida sin importar
+  // quién la llame (CLI vía import-contracts.js, o un test/script que la
+  // invoque directamente, como hace test/contracts/db-writer.integration.test.js).
+  // Evalúa el destino ANTES de crear el Pool -ninguna sentencia se ejecuta
+  // si el target no está confirmado.
+  const connectionString = getConnectionString();
+  assertWriteConfirmed(connectionString, { environment: process.env.NODE_ENV ?? "development" });
+
+  const pool = createPool({ applicationName: `contracts-apply:${randomUUID().slice(0, 8)}` });
   const sourceFilename = path.basename(args.file);
   const sourceSheet = extractSheetNameFromFilename(args.file);
 

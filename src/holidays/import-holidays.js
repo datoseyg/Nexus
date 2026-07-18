@@ -1,8 +1,10 @@
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import { readBundleRaw } from "./bundle-source.js";
 import { validateBundle } from "./bundle-validator.js";
 import { buildDryRunReport, writeDryRunReport } from "./dry-run-report.js";
 import { parseArgs, validateArgs } from "./cli.js";
+import { assertWriteConfirmed } from "../lib/db-safety.js";
 
 /**
  * Peek de solo lectura, best-effort -nunca aborta el dry-run si falla
@@ -85,9 +87,11 @@ async function runApply(args) {
     return;
   }
 
-  const { createPool } = await import("./db-client.js");
+  const { createPool, getConnectionString } = await import("./db-client.js");
   const { applyBundle } = await import("./db-writer.js");
-  const pool = createPool();
+  // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir la conexión.
+  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  const pool = createPool({ applicationName: `holidays-apply:${randomUUID().slice(0, 8)}` });
   try {
     const result = await applyBundle({ pool, filename: args.file, sha256, bundle, resolvedEvents: validation.resolvedEvents });
     if (result.alreadyImported) {
@@ -101,9 +105,11 @@ async function runApply(args) {
 }
 
 async function runPublish(args) {
-  const { createPool } = await import("./db-client.js");
+  const { createPool, getConnectionString } = await import("./db-client.js");
   const { publishCoverage } = await import("./publish-coverage.js");
-  const pool = createPool();
+  // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir la conexión.
+  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  const pool = createPool({ applicationName: `holidays-publish:${randomUUID().slice(0, 8)}` });
   try {
     const result = await publishCoverage(pool, {
       coverageId: Number(args.coverageId),
