@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { matchOneEquipment, matchAll, matchResultToIssues } from "../../src/contracts/fieldbeat-matcher.js";
+import { matchOneEquipment, matchAll, matchResultToIssues, computeClaimedFieldbeatEquipmentKeys } from "../../src/contracts/fieldbeat-matcher.js";
 import { buildClientIdentityAliasIndex } from "../../src/contracts/client-identity-aliases.js";
 
 const FIELDBEAT_EQUIPMENTS = [
@@ -294,4 +294,163 @@ test("varias versiones contractuales del mismo serial (misma identidad física) 
   const run2Compact = run2.find(r => r.equipmentKey === "SN:201110");
   assert.equal(run2Compact.matchStatus, "MATCHED");
   assert.equal(run2Compact.fieldbeatEquipmentKey, "FB_COMPACT_201110");
+});
+
+// === ETAPA 6.5.2B2 - matching gobernado de seriales alfanuméricos FT
+// (FT07026, FT02211, ...). Nivel 2 extendido: comparación exacta del
+// TOKEN alfanumérico completo (prefijo gobernado "FT" + dígitos, ceros a
+// la izquierda preservados), nunca solo el sufijo numérico. Reutiliza
+// matchMethod="SERIAL_SUFFIX" -config.contract_equipment_matches tiene un
+// CHECK cerrado de match_method (OVERRIDE/SERIAL_SUFFIX/CLIENT_SITE_MODEL/
+// NONE) que esta etapa NO puede modificar (fuera de alcance: constraints
+// PostgreSQL); un serial alfanumérico exacto es, conceptualmente, la MISMA
+// clase de evidencia que un serial numérico exacto, no un mecanismo nuevo.
+//
+// A diferencia del Nivel 2 numérico existente (que NUNCA verifica cliente,
+// confiando en que un serial es una identidad físicamente única), esta
+// regla exige ADEMÁS cliente canónico compatible (§4 del encargo) -evidencia
+// real: FT02181 (Sanatorio Alemán) tiene un único candidato FieldBeat real
+// con UUID válido, pero pertenece a "RADIO ONCOLOGÍA DEL SUR" (cliente
+// FieldBeat distinto, sin alias gobernado, aunque comparta RUT con
+// "CLÍNICA SANATORIO ALEMÁN (ONCORAD)" -evidencia circunstancial, nunca
+// usada como base de identidad de cliente en este matcher). Debe quedar
+// rechazado con reason "CLIENT_MISMATCH", no autoasociado por serial solo.
+
+const FT_EQUIPMENTS = [
+  { equipment_key: "FB_FT07026", equipment_uuid: "uuid-ft07026", internal_id: "HDR-FT07026", client_key: "C_FALP" },
+  { equipment_key: "FB_FT02211", equipment_uuid: "uuid-ft02211", internal_id: "HDR-FT02211", client_key: "C_UCCHRISTUS" }
+];
+const FT_CLIENTS = [
+  { client_key: "C_FALP", client_name: "Fundación Arturo López Pérez" },
+  { client_key: "C_UCCHRISTUS", client_name: "UC Christus" }
+];
+const ft07026Candidate = { equipmentKey: "SN:FT07026", clientNameCanonical: "Fundación Arturo López Pérez", equipmentModel: "Flexitron", serialNumber: "FT07026" };
+const ft02211Candidate = { equipmentKey: "SN:FT02211", clientNameCanonical: "UC Christus", equipmentModel: "Flexitron", serialNumber: "FT02211" };
+
+test("FT-1: FT07026 exacto, candidato único, cliente compatible -> MATCHED vía SERIAL_SUFFIX (evidencia fuerte, no CLIENT_SITE_MODEL)", () => {
+  const r = matchOneEquipment(ft07026Candidate, { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.equal(r.matchStatus, "MATCHED");
+  assert.equal(r.matchMethod, "SERIAL_SUFFIX");
+  assert.equal(r.fieldbeatEquipmentKey, "FB_FT07026");
+  assert.equal(r.candidateCount, 1);
+});
+
+test("FT-2: FT02211 exacto, candidato único, cliente compatible -> MATCHED vía SERIAL_SUFFIX", () => {
+  const r = matchOneEquipment(ft02211Candidate, { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.equal(r.matchStatus, "MATCHED");
+  assert.equal(r.matchMethod, "SERIAL_SUFFIX");
+  assert.equal(r.fieldbeatEquipmentKey, "FB_FT02211");
+});
+
+test("FT-3: mismo serial FT en dos equipos FieldBeat reales -> AMBIGUOUS, nunca autoconfirmado", () => {
+  const duplicated = [
+    ...FT_EQUIPMENTS,
+    { equipment_key: "FB_FT07026_DUP", equipment_uuid: "uuid-ft07026-dup", internal_id: "HDR-FT07026", client_key: "C_FALP" }
+  ];
+  const r = matchOneEquipment(ft07026Candidate, { fieldbeatEquipments: duplicated, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.equal(r.matchStatus, "AMBIGUOUS");
+  assert.equal(r.matchMethod, "SERIAL_SUFFIX");
+  assert.equal(r.candidateCount, 2);
+  assert.equal(r.fieldbeatEquipmentKey, null);
+});
+
+test("FT-4: FT exacto y único, pero cliente FieldBeat DISTINTO al cliente contractual -> rechazado (CLIENT_MISMATCH), no autoasociado por serial solo (caso real: FT02181)", () => {
+  const wrongClientEquipments = [
+    { equipment_key: "FB_FT02181", equipment_uuid: "uuid-ft02181", internal_id: "HDR-FT02181", client_key: "C_OTRO" }
+  ];
+  const wrongClientClients = [{ client_key: "C_OTRO", client_name: "Radio Oncología del Sur" }];
+  const r = matchOneEquipment(
+    { equipmentKey: "SN:FT02181", clientNameCanonical: "Sanatorio Alemán", equipmentModel: "Flexitron", serialNumber: "FT02181" },
+    { fieldbeatEquipments: wrongClientEquipments, fieldbeatClients: wrongClientClients, overrides: [], clientAliasIndex: ALIAS_INDEX }
+  );
+  assert.equal(r.matchStatus, "UNMATCHED");
+  assert.equal(r.fieldbeatEquipmentKey, null);
+  assert.equal(matchResultToIssues(r)[0].issueType, "UNMATCHED_FIELDBEAT_EQUIPMENT");
+  // reason explícito -no un UNMATCHED genérico indistinguible de "sin candidato".
+  assert.equal(r.matchDetails.reason, "CLIENT_MISMATCH");
+});
+
+test("FT-5: único candidato FT real tiene equipment_uuid NULL/'' (fila fantasma) -> rechazado, la fila fantasma nunca cuenta como identidad física", () => {
+  const ghostOnly = [{ equipment_key: "FB_FT07026_GHOST", equipment_uuid: null, internal_id: "HDR-FT07026", client_key: "C_FALP" }];
+  const r = matchOneEquipment(ft07026Candidate, { fieldbeatEquipments: ghostOnly, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.notEqual(r.matchStatus, "MATCHED");
+
+  const ghostEmpty = [{ equipment_key: "FB_FT07026_GHOST2", equipment_uuid: "", internal_id: "HDR-FT07026", client_key: "C_FALP" }];
+  const r2 = matchOneEquipment(ft07026Candidate, { fieldbeatEquipments: ghostEmpty, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.notEqual(r2.matchStatus, "MATCHED");
+});
+
+test("FT-6: FT07026 (contrato) NUNCA coincide con un FieldBeat cuyo internal_id termina en '07026' sin prefijo FT -no usa solo el sufijo numérico sin gobernanza", () => {
+  const bareNumeric = [{ equipment_key: "FB_BARE", equipment_uuid: "uuid-bare", internal_id: "HDR-07026", client_key: "C_FALP" }];
+  const r = matchOneEquipment(ft07026Candidate, { fieldbeatEquipments: bareNumeric, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.notEqual(r.matchStatus, "MATCHED");
+  assert.notEqual(r.fieldbeatEquipmentKey, "FB_BARE");
+});
+
+test("FT-7: FT07026 (contrato, 5 dígitos con cero a la izquierda) NUNCA coincide con FT7026 (FieldBeat, 4 dígitos) -ceros a la izquierda preservados, comparación exacta", () => {
+  const differentDigits = [{ equipment_key: "FB_FT7026", equipment_uuid: "uuid-ft7026", internal_id: "HDR-FT7026", client_key: "C_FALP" }];
+  const r = matchOneEquipment(ft07026Candidate, { fieldbeatEquipments: differentDigits, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.notEqual(r.matchStatus, "MATCHED");
+  assert.notEqual(r.fieldbeatEquipmentKey, "FB_FT7026");
+});
+
+test("FT-8: el equipo FT ya fue reclamado por OTRO candidato vía override -no puede reutilizarse por la regla alfanumérica para un segundo candidato", () => {
+  const secondCandidateSameEquipment = { equipmentKey: "SN:OTRO-FALP", clientNameCanonical: "Fundación Arturo López Pérez", equipmentModel: "Flexitron", serialNumber: "FT07026" };
+  const claimed = computeClaimedFieldbeatEquipmentKeys(
+    [ft07026Candidate],
+    { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] }
+  );
+  assert.ok(claimed.has("FB_FT07026"), "el candidato original debe reclamar el equipo por evidencia fuerte");
+
+  // matchAll sobre AMBOS candidatos -el segundo (mismo serial FT07026,
+  // literalmente el mismo token) no puede "reclamarlo de nuevo" como si
+  // fuera un candidato independiente exitoso; el propio Nivel 2/2b ya lo
+  // resuelve a MATCHED para el primero, y el segundo, con el MISMO serial,
+  // encuentra el mismo candidato único -comportamiento esperado: ambos
+  // candidatos comparten evidencia fuerte legítima sobre el MISMO equipo
+  // solo si son real y verdaderamente el mismo serial (no es una colisión,
+  // es el mismo dato) - lo que este test verifica es que un candidato
+  // *distinto* sin su propia evidencia fuerte no hereda el equipo vía
+  // Nivel 3 una vez que ya fue reclamado.
+  const thirdCandidateNoSerial = { equipmentKey: "SN:SINSERIAL-FALP", clientNameCanonical: "Fundación Arturo López Pérez", equipmentModel: "Flexitron", serialNumber: null };
+  const results = matchAll([ft07026Candidate, thirdCandidateNoSerial], { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  const thirdResult = results.find(r => r.equipmentKey === "SN:SINSERIAL-FALP");
+  assert.notEqual(thirdResult.matchStatus, "MATCHED");
+  assert.notEqual(thirdResult.fieldbeatEquipmentKey, "FB_FT07026");
+});
+
+test("FT-9: dos candidatos contractuales hermanos de la MISMA categoría en el mismo cliente -uno con serial FT propio (MATCHED), el otro sin serial NUNCA elige arbitrariamente el mismo equipo físico", () => {
+  const siblingNoSerial = { equipmentKey: "SN:HERMANO-FALP", clientNameCanonical: "Fundación Arturo López Pérez", equipmentModel: "Flexitron", serialNumber: null };
+  const results = matchAll([ft07026Candidate, siblingNoSerial], { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  const ft07026Result = results.find(r => r.equipmentKey === "SN:FT07026");
+  const siblingResult = results.find(r => r.equipmentKey === "SN:HERMANO-FALP");
+
+  assert.equal(ft07026Result.matchStatus, "MATCHED");
+  assert.equal(ft07026Result.fieldbeatEquipmentKey, "FB_FT07026");
+  assert.notEqual(siblingResult.matchStatus, "MATCHED");
+  assert.notEqual(siblingResult.fieldbeatEquipmentKey, "FB_FT07026");
+});
+
+test("FT-10: normalización de espacios periféricos y mayúsculas/minúsculas -' ft07026 ' matchea igual que 'FT07026'", () => {
+  const lowercaseCandidate = { equipmentKey: "SN:FT07026-LOWER", clientNameCanonical: "Fundación Arturo López Pérez", equipmentModel: "Flexitron", serialNumber: " ft07026 " };
+  const r = matchOneEquipment(lowercaseCandidate, { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  assert.equal(r.matchStatus, "MATCHED");
+  assert.equal(r.fieldbeatEquipmentKey, "FB_FT07026");
+});
+
+test("FT-11: determinismo -el resultado no depende del orden de entrada de los candidatos", () => {
+  const resultsOrderA = matchAll([ft07026Candidate, ft02211Candidate], { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] });
+  const resultsOrderB = matchAll([ft02211Candidate, ft07026Candidate], { fieldbeatEquipments: FT_EQUIPMENTS, fieldbeatClients: FT_CLIENTS, overrides: [] });
+
+  const a1 = resultsOrderA.find(r => r.equipmentKey === "SN:FT07026");
+  const a2 = resultsOrderA.find(r => r.equipmentKey === "SN:FT02211");
+  const b1 = resultsOrderB.find(r => r.equipmentKey === "SN:FT07026");
+  const b2 = resultsOrderB.find(r => r.equipmentKey === "SN:FT02211");
+
+  assert.equal(a1.matchStatus, b1.matchStatus);
+  assert.equal(a1.fieldbeatEquipmentKey, b1.fieldbeatEquipmentKey);
+  assert.equal(a2.matchStatus, b2.matchStatus);
+  assert.equal(a2.fieldbeatEquipmentKey, b2.fieldbeatEquipmentKey);
+  assert.equal(a1.matchStatus, "MATCHED");
+  assert.equal(a2.matchStatus, "MATCHED");
 });

@@ -1,0 +1,23 @@
+[
+  {"id": "title", "type": "text", "x": 50, "y": 10, "width": 700, "height": 30, "text": "Diagrama de Contenedores — EyG Nexus", "fontSize": 24},
+
+  {"id": "zone-netlify", "type": "rectangle", "x": 50, "y": 60, "width": 560, "height": 330, "backgroundColor": "#b2f2bb", "strokeColor": "#2f9e44", "fillStyle": "solid", "strokeStyle": "dashed"},
+  {"id": "zone-netlify-label", "type": "text", "x": 70, "y": 75, "width": 450, "height": 30, "text": "Plano de Presentación (Netlify)", "fontSize": 20, "strokeColor": "#2f9e44"},
+
+  {"id": "nextjs-ui", "type": "rectangle", "x": 90, "y": 140, "width": 480, "height": 70, "backgroundColor": "#a5d8ff", "strokeColor": "#1971c2", "fillStyle": "solid", "text": "Next.js UI\n(React Server Components)", "fontSize": 16},
+  {"id": "route-handlers", "type": "rectangle", "x": 90, "y": 280, "width": 480, "height": 70, "backgroundColor": "#a5d8ff", "strokeColor": "#1971c2", "fillStyle": "solid", "text": "Route Handlers\n(BFF - Backend for Frontend)", "fontSize": 16},
+
+  {"id": "zone-supabase", "type": "rectangle", "x": 760, "y": 200, "width": 920, "height": 320, "backgroundColor": "#eebefa", "strokeColor": "#9c36b5", "fillStyle": "solid", "strokeStyle": "dashed"},
+  {"id": "zone-supabase-label", "type": "text", "x": 780, "y": 215, "width": 550, "height": 30, "text": "Plano de Cómputo/Estado (Supabase)", "fontSize": 20, "strokeColor": "#9c36b5"},
+
+  {"id": "postgrest-api", "type": "rectangle", "x": 800, "y": 280, "width": 480, "height": 70, "backgroundColor": "#ffd8a8", "strokeColor": "#e8590c", "fillStyle": "solid", "text": "PostgREST API\n(Capa de red de Supabase)", "fontSize": 16},
+  {"id": "postgres-engine", "type": "rectangle", "x": 800, "y": 410, "width": 480, "height": 70, "backgroundColor": "#ffd8a8", "strokeColor": "#e8590c", "fillStyle": "solid", "text": "PostgreSQL Engine\n(Motor de Base de Datos)", "fontSize": 16},
+  {"id": "pg-cron", "type": "rectangle", "x": 1340, "y": 410, "width": 300, "height": 70, "backgroundColor": "#ffc9c9", "strokeColor": "#e03131", "fillStyle": "solid", "text": "pg_cron\n(Orquestador Async)", "fontSize": 16},
+
+  {"id": "ann-http", "type": "text", "x": 615, "y": 295, "width": 140, "height": 40, "text": "SELECT→Oro\nINSERT→Bronce", "fontSize": 13, "strokeColor": "#495057"},
+
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "nextjs-ui", "endElementId": "route-handlers", "text": "Petición UI", "strokeColor": "#1971c2"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "route-handlers", "endElementId": "postgrest-api", "strokeColor": "#495057"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "postgrest-api", "endElementId": "postgres-engine", "text": "SQL", "strokeColor": "#e8590c"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "pg-cron", "endElementId": "postgres-engine", "text": "Refresca MV", "strokeStyle": "dashed", "strokeColor": "#e03131"}
+]

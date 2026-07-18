@@ -267,7 +267,15 @@ export async function applyContracts(args) {
       equipmentModel: record.normalizedFields.equipmentModel,
       serialNumber: record.normalizedFields.serialNumber
     }));
-    const claimedFieldbeatEquipmentKeys = computeClaimedFieldbeatEquipmentKeys(matchingCandidates, { fieldbeatEquipments, overrides });
+    // ETAPA 6.5.2B2 - fieldbeatClients/clientAliasIndex agregados a esta
+    // llamada (antes solo fieldbeatEquipments/overrides): la regla de
+    // serial alfanumérico gobernado (FT07026, FT02211, ...) exige cliente
+    // canónico compatible ANTES de reclamar un equipo -sin estos 2
+    // parámetros, computeClaimedFieldbeatEquipmentKeys() nunca podría
+    // evaluar esa condición y la regla quedaría inerte en producción
+    // (funcionaría solo en tests que la invocan directamente). Mismos
+    // valores ya usados 2 líneas más abajo para matchOneEquipment().
+    const claimedFieldbeatEquipmentKeys = computeClaimedFieldbeatEquipmentKeys(matchingCandidates, { fieldbeatEquipments, fieldbeatClients, overrides, clientAliasIndex });
     const clientCategorySiblingCounts = computeClientCategorySiblingCounts(matchingCandidates, { clientAliasIndex });
 
     const results = [];

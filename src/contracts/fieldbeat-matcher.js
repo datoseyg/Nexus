@@ -31,6 +31,35 @@ function classifyContractEquipmentModel(equipmentModel) {
   return EQUIPMENT_MODEL_TO_CATEGORY[key] ?? null;
 }
 
+// ETAPA 6.5.2B2 - allowlist CERRADA de prefijos de serial alfanumérico
+// gobernados -nunca inferida dinámicamente. Agregar un prefijo nuevo es una
+// decisión humana explícita respaldada por evidencia real (mismo criterio
+// que EQUIPMENT_MODEL_TO_CATEGORY), documentada en el reporte de la etapa
+// que lo agregue. "FT" confirmado contra datos reales: FT07026, FT02211,
+// FT02181 (Flexitron/HDR, categoría BRAQUITERAPIA).
+const GOVERNED_ALPHANUMERIC_SERIAL_PREFIXES = ["FT"];
+
+/**
+ * Extrae el TOKEN alfanumérico completo (prefijo gobernado + dígitos,
+ * ceros a la izquierda preservados como caracteres literales, nunca
+ * parseados como número) al final de un internal_id de FieldBeat, ej.
+ * "HDR-FT07026" -> "FT07026". A diferencia de extractTrailingSerial()
+ * (solo dígitos), esto exige que el prefijo gobernado aparezca INMEDIATA-
+ * MENTE antes de los dígitos -"HDR-07026" (sin FT) o "HDR-FT7026" (menos
+ * dígitos) NUNCA producen el mismo token que "FT07026" (§5/§6 del encargo:
+ * FT07026 ≠ 07026, FT07026 ≠ FT7026).
+ * @param {string | null | undefined} internalId
+ * @returns {string | null}
+ */
+export function extractTrailingGovernedAlphanumericSerial(internalId) {
+  const value = String(internalId ?? "").trim();
+  for (const prefix of GOVERNED_ALPHANUMERIC_SERIAL_PREFIXES) {
+    const match = value.match(new RegExp(`(${prefix}\\d{3,})\\s*$`, "i"));
+    if (match) return match[1].toUpperCase();
+  }
+  return null;
+}
+
 function classifyFieldbeatInternalId(internalId) {
   const value = String(internalId ?? "").toLowerCase();
   if (value.includes("linac")) return "LINAC";
@@ -85,7 +114,7 @@ function filterRealFieldbeatEquipments(fieldbeatEquipments) {
  * candidato por evidencia fuerte" sea EXACTAMENTE la misma lógica en
  * ambos lugares.
  */
-function resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides }) {
+function resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides, fieldbeatClients, clientAliasIndex }) {
   const override = (overrides ?? []).find(o => o.equipmentKey === candidate.equipmentKey);
   if (override) {
     const overridden = fieldbeatEquipments.find(e => e.equipment_key === override.fieldbeatEquipmentId);
@@ -107,6 +136,57 @@ function resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquip
     if (serialCandidates.length > 1) {
       return { status: "AMBIGUOUS", method: "SERIAL_SUFFIX", candidateCount: serialCandidates.length, details: { candidateInternalIds: serialCandidates.map(e => e.internal_id) } };
     }
+
+    // ETAPA 6.5.2B2 - Nivel 2b: serial alfanumérico gobernado (FT07026,
+    // FT02211, ...). Solo se intenta si el sufijo numérico puro (arriba) no
+    // resolvió nada -evita reinterpretar un serial ya cubierto por la regla
+    // existente. Reutiliza match_method="SERIAL_SUFFIX" -el CHECK de
+    // config.contract_equipment_matches tiene un enum cerrado que esta
+    // etapa no puede tocar (fuera de alcance: constraints PostgreSQL); un
+    // alfanumérico exacto es la MISMA clase de evidencia que uno numérico.
+    //
+    // A diferencia del sufijo numérico (que nunca verifica cliente, porque
+    // un serial real es una identidad físicamente única por sí sola), esta
+    // regla exige ADEMÁS cliente canónico compatible (§4 del encargo) antes
+    // de confirmar -evidencia real: un candidato único por serial puede
+    // pertenecer a un client_key de FieldBeat que NO es una variante ni un
+    // alias gobernado del cliente contractual (caso real: FT02181 pertenece
+    // a un client_key distinto de Sanatorio Alemán en FieldBeat, sin alias
+    // aprobado que los una -ver reporte de ETAPA 6.5.2B2). Sin fieldbeatClients
+    // disponible, esta regla nunca se evalúa (nunca asume compatibilidad
+    // por defecto) -mismo criterio conservador que clientAliasIndex ausente.
+    const alphanumericSerial = extractTrailingGovernedAlphanumericSerial(normalizedSerial) === normalizedSerial
+      ? normalizedSerial
+      : null;
+    if (alphanumericSerial && fieldbeatClients) {
+      const alphanumericCandidates = realFieldbeatEquipments.filter(e => extractTrailingGovernedAlphanumericSerial(e.internal_id) === alphanumericSerial);
+
+      if (alphanumericCandidates.length > 1) {
+        return { status: "AMBIGUOUS", method: "SERIAL_SUFFIX", candidateCount: alphanumericCandidates.length, details: { candidateInternalIds: alphanumericCandidates.map(e => e.internal_id) } };
+      }
+      if (alphanumericCandidates.length === 1) {
+        const equipment = alphanumericCandidates[0];
+        const resolveAlias = (name) => clientAliasIndex?.get(foldName(name)) ?? name;
+        const canonicalContractClient = foldName(resolveAlias(candidate.clientNameCanonical));
+        const fbClient = fieldbeatClients.find(c => c.client_key === equipment.client_key);
+        const canonicalFieldbeatClient = fbClient ? foldName(resolveAlias(fbClient.client_name)) : null;
+
+        if (canonicalFieldbeatClient === canonicalContractClient) {
+          return { status: "MATCHED", method: "SERIAL_SUFFIX", equipment, candidateCount: 1, details: {} };
+        }
+        return {
+          status: "UNMATCHED",
+          method: "SERIAL_SUFFIX",
+          candidateCount: 0,
+          details: {
+            reason: "CLIENT_MISMATCH",
+            fieldbeatClientName: fbClient?.client_name ?? null,
+            contractClientName: candidate.clientNameCanonical,
+            note: `serial alfanumérico "${alphanumericSerial}" identifica un único equipo FieldBeat real, pero su cliente ("${fbClient?.client_name ?? "desconocido"}") no coincide con el cliente contractual ("${candidate.clientNameCanonical}") ni con ningún alias gobernado -no se autoasocia solo por serial`
+          }
+        };
+      }
+    }
   }
   return null;
 }
@@ -124,14 +204,14 @@ function resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquip
  * a "encontrar" en el Nivel 3 vía cliente+categoría, aunque ya pertenecía
  * a otro equipo físico distinto).
  * @param {Array<object>} candidates
- * @param {{ fieldbeatEquipments: Array<object>, overrides: Array<object> }} ctx
+ * @param {{ fieldbeatEquipments: Array<object>, overrides: Array<object>, fieldbeatClients?: Array<object>, clientAliasIndex?: Map<string, string> }} ctx fieldbeatClients/clientAliasIndex son necesarios para que la regla de serial alfanumérico gobernado (ETAPA 6.5.2B2) pueda reclamar equipos correctamente -ausentes, esa regla nunca reclama nada (comportamiento previo intacto)
  * @returns {Set<string>} equipment_key de processed.fieldbeat_equipments ya reclamados
  */
-export function computeClaimedFieldbeatEquipmentKeys(candidates, { fieldbeatEquipments, overrides }) {
+export function computeClaimedFieldbeatEquipmentKeys(candidates, { fieldbeatEquipments, overrides, fieldbeatClients, clientAliasIndex }) {
   const realFieldbeatEquipments = filterRealFieldbeatEquipments(fieldbeatEquipments);
   const claimed = new Set();
   for (const candidate of candidates) {
-    const strong = resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides });
+    const strong = resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides, fieldbeatClients, clientAliasIndex });
     if (strong?.status === "MATCHED" && strong.equipment) {
       claimed.add(strong.equipment.equipment_key);
     }
@@ -173,9 +253,10 @@ export function computeClientCategorySiblingCounts(candidates, { clientAliasInde
 export function matchOneEquipment(candidate, { fieldbeatEquipments, fieldbeatClients, overrides, clientAliasIndex, claimedFieldbeatEquipmentKeys, clientCategorySiblingCounts }) {
   const realFieldbeatEquipments = filterRealFieldbeatEquipments(fieldbeatEquipments);
 
-  // Nivel 1 (override) + Nivel 2 (serial exacto) -evidencia fuerte, gana
-  // sobre cualquier resolución de categoría (Regla 2).
-  const strong = resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides });
+  // Nivel 1 (override) + Nivel 2/2b (serial exacto, numérico o alfanumérico
+  // gobernado) -evidencia fuerte, gana sobre cualquier resolución de
+  // categoría (Regla 2).
+  const strong = resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides, fieldbeatClients, clientAliasIndex });
   if (strong) {
     return buildMatchResult({ status: strong.status, method: strong.method, equipment: strong.equipment ?? null, candidateCount: strong.candidateCount, details: strong.details });
   }

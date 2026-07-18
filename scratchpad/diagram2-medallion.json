@@ -1,0 +1,28 @@
+[
+  {"id": "title", "type": "text", "x": 50, "y": 15, "width": 900, "height": 30, "text": "Flujo de Datos — Arquitectura Medallion (dentro de PostgreSQL)", "fontSize": 24},
+  {"id": "ann-gold", "type": "text", "x": 1000, "y": 40, "width": 320, "height": 40, "text": "JOINs pesados +\nagregaciones", "fontSize": 14, "strokeColor": "#f08c00"},
+
+  {"id": "zone-bronze", "type": "rectangle", "x": 50, "y": 100, "width": 380, "height": 420, "backgroundColor": "#fff4e6", "strokeColor": "#e8590c", "fillStyle": "solid", "strokeStyle": "dashed"},
+  {"id": "zone-bronze-label", "type": "text", "x": 70, "y": 115, "width": 340, "height": 30, "text": "Capa Bronce (Ingesta)", "fontSize": 20, "strokeColor": "#e8590c"},
+  {"id": "raw-fieldbeat", "type": "rectangle", "x": 90, "y": 160, "width": 300, "height": 80, "backgroundColor": "#ffd8a8", "strokeColor": "#e8590c", "fillStyle": "solid", "text": "raw_fieldbeat\n(tabla, JSONB)", "fontSize": 16},
+  {"id": "raw-dolibarr", "type": "rectangle", "x": 90, "y": 280, "width": 300, "height": 80, "backgroundColor": "#ffd8a8", "strokeColor": "#e8590c", "fillStyle": "solid", "text": "raw_dolibarr\n(tabla, JSONB)", "fontSize": 16},
+  {"id": "raw-zendesk", "type": "rectangle", "x": 90, "y": 400, "width": 300, "height": 80, "backgroundColor": "#ffd8a8", "strokeColor": "#e8590c", "fillStyle": "solid", "text": "raw_zendesk\n(tabla, JSONB)", "fontSize": 16},
+
+  {"id": "zone-silver", "type": "rectangle", "x": 610, "y": 100, "width": 380, "height": 420, "backgroundColor": "#f1f3f5", "strokeColor": "#868e96", "fillStyle": "solid", "strokeStyle": "dashed"},
+  {"id": "zone-silver-label", "type": "text", "x": 630, "y": 115, "width": 360, "height": 30, "text": "Capa Plata (Estandarización)", "fontSize": 20, "strokeColor": "#868e96"},
+  {"id": "v-silver-tasks", "type": "rectangle", "x": 650, "y": 160, "width": 300, "height": 80, "backgroundColor": "#e9ecef", "strokeColor": "#868e96", "fillStyle": "solid", "text": "v_silver_tasks\n(Vista SQL)", "fontSize": 16},
+  {"id": "v-silver-contracts", "type": "rectangle", "x": 650, "y": 280, "width": 300, "height": 80, "backgroundColor": "#e9ecef", "strokeColor": "#868e96", "fillStyle": "solid", "text": "v_silver_contracts\n(Vista SQL)", "fontSize": 16},
+  {"id": "v-silver-tickets", "type": "rectangle", "x": 650, "y": 400, "width": 300, "height": 80, "backgroundColor": "#e9ecef", "strokeColor": "#868e96", "fillStyle": "solid", "text": "v_silver_tickets\n(Vista SQL)", "fontSize": 16},
+
+  {"id": "zone-gold", "type": "rectangle", "x": 1170, "y": 180, "width": 360, "height": 230, "backgroundColor": "#fff9db", "strokeColor": "#f08c00", "fillStyle": "solid", "strokeStyle": "dashed"},
+  {"id": "zone-gold-label", "type": "text", "x": 1190, "y": 195, "width": 330, "height": 30, "text": "Capa Oro (Desnormalización)", "fontSize": 20, "strokeColor": "#f08c00"},
+  {"id": "mv-gold-operational", "type": "rectangle", "x": 1210, "y": 270, "width": 280, "height": 100, "backgroundColor": "#ffe066", "strokeColor": "#f08c00", "fillStyle": "solid", "text": "mv_gold_operational\n(Vista Materializada)", "fontSize": 16},
+
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "raw-fieldbeat", "endElementId": "v-silver-tasks", "text": "Extrae JSON", "strokeColor": "#e8590c"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "raw-dolibarr", "endElementId": "v-silver-contracts", "text": "Limpia+Cast", "strokeColor": "#e8590c"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "raw-zendesk", "endElementId": "v-silver-tickets", "text": "Resuelve UUID", "strokeColor": "#e8590c"},
+
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "v-silver-tasks", "endElementId": "mv-gold-operational", "strokeColor": "#f08c00"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "v-silver-contracts", "endElementId": "mv-gold-operational", "strokeColor": "#f08c00"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "v-silver-tickets", "endElementId": "mv-gold-operational", "strokeColor": "#f08c00"}
+]
