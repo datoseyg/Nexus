@@ -110,6 +110,16 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
     const validFromDdl = await fs.readFile("sql/084_contract_valid_from_correction.sql", "utf8");
     await adminPool.query(validFromDdl);
 
+    // ETAPA 6.5.1.1 - corrige el UNIQUE(equipment_key, valid_from) global
+    // (sql/070) que impedía dos revisiones autoritativas distintas del
+    // mismo período (ej. una corrección de registro Gold->Silver, mismo
+    // valid_from) -ver sql/085 y el reporte de esta etapa. Debe aplicarse
+    // DESPUÉS de 070+084 (070 crea la tabla y el constraint viejo que 085
+    // reemplaza, 084 agrega las columnas valid_from_basis que 085 verifica
+    // como precondición).
+    const versionUniquenessDdl = await fs.readFile("sql/085_contract_version_revision_uniqueness.sql", "utf8");
+    await adminPool.query(versionUniquenessDdl);
+
     applyContracts = (await import("../../src/contracts/db-writer.js")).applyContracts;
   });
 
@@ -181,26 +191,44 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
     assert.equal(Number(observations.rows[0].count), 2);
   });
 
-  await t.test("cambio real de campo (SPA) -> SUPERSEDE, nueva versión, la anterior cierra valid_to", async () => {
+  await t.test("cambio real de campo (SPA) -> SUPERSEDE, nueva versión, misma vigencia de negocio (ETAPA 6.5.1.1: superseded_at marca la revisión, valid_to NUNCA se toca sin evidencia de fin de vigencia real)", async () => {
     const filePath = await writeFixture("fixture1-changed.csv", makeFixtureCsv({ spa: "Silver (Sólo Soporte)" }));
     const result = await applyContracts({ file: filePath, effectiveDate: "2026-03-01" });
     assert.equal(result.results[0].versionAction, "SUPERSEDE");
 
     const versions = await adminPool.query(
-      "SELECT * FROM config.contract_equipment_versions WHERE equipment_key = 'SN:999001' ORDER BY valid_from"
+      "SELECT * FROM config.contract_equipment_versions WHERE equipment_key = 'SN:999001' ORDER BY contract_version_id"
     );
     assert.equal(versions.rows.length, 2);
+    // Gold (revisión reemplazada): ya no autoritativa, pero su vigencia de
+    // NEGOCIO no cambió -valid_to permanece NULL, solo superseded_at marca
+    // el reemplazo de REGISTRO.
     assert.equal(versions.rows[0].is_current, false);
-    assert.equal(String(versions.rows[0].valid_to).slice(0, 10), "2026-03-01");
+    assert.equal(versions.rows[0].valid_to, null);
+    assert.ok(versions.rows[0].superseded_at, "superseded_at debe quedar seteado al reemplazar la revisión");
+    // Silver (revisión autoritativa nueva): mismo valid_from que Gold -
+    // exactamente el caso que sql/085 habilita.
     assert.equal(versions.rows[1].is_current, true);
+    assert.equal(versions.rows[1].superseded_at, null);
     assert.equal(versions.rows[1].spa_tier_code, "SILVER");
+    assert.equal(versions.rows[1].valid_from, versions.rows[0].valid_from, "misma vigencia de negocio (mismo valid_from), solo cambia el contenido registrado");
   });
 
   await t.test("effective_date <= valid_from vigente -> FATAL, rollback completo + FAILED registrado", async () => {
+    // ETAPA 6.5.1.1: effectiveDate debe ser realmente <= valid_from de la
+    // revisión vigente (2020-01-01, derivado de "ene-2020" en el fixture
+    // base, sin cambios) para disparar FATAL_BACKDATED de verdad. ANTES de
+    // esta etapa, este subtest usaba effectiveDate="2026-01-01" (posterior a
+    // valid_from) y "pasaba" solo porque el archivo coincidía con el mismo
+    // bug de UNIQUE(equipment_key, valid_from) que rompía los subtests 4 y
+    // 6 -cualquier rechazo satisfacía el assert.rejects() genérico, sin
+    // probar realmente la rama FATAL_BACKDATED. Con sql/085 aplicado ese
+    // bug ya no existe, así que ahora se verifica explícitamente que el
+    // motivo del rechazo es el backdating, no cualquier otro error.
     const filePath = await writeFixture("fixture1-backdated.csv", makeFixtureCsv({ spa: "Sin SPA (Fuera registros Elekta)" }));
     const before1 = await adminPool.query("SELECT COUNT(*) FROM config.contract_equipment_versions");
 
-    await assert.rejects(() => applyContracts({ file: filePath, effectiveDate: "2026-01-01" }));
+    await assert.rejects(() => applyContracts({ file: filePath, effectiveDate: "2019-06-01" }), /FATAL/);
 
     const after1 = await adminPool.query("SELECT COUNT(*) FROM config.contract_equipment_versions");
     assert.equal(before1.rows[0].count, after1.rows[0].count); // nada nuevo, rollback completo
@@ -212,7 +240,8 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
   await t.test("un intento FAILED no bloquea reintentar el mismo archivo con una fecha válida", async () => {
     // El archivo del intento FAILED anterior (fixture1-backdated.csv) tiene
     // un SHA distinto al ya importado -se reintenta con effective_date
-    // válida y debe aplicarse limpio (nueva versión).
+    // válida (posterior a valid_from=2020-01-01 Y a la última revisión
+    // autoritativa) y debe aplicarse limpio (SUPERSEDE sobre Silver).
     const filePath = "test/contracts/.tmp-fixtures/fixture1-backdated.csv";
     const result = await applyContracts({ file: filePath, effectiveDate: "2026-04-01" });
     assert.equal(result.alreadyImported, false);

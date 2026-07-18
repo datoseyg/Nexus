@@ -77,7 +77,19 @@ export async function loadReferenceData(client) {
       FROM config.contract_equipment_matches m
       JOIN config.contract_equipment_observations o ON o.observation_id = m.observation_id
     `),
-    client.query(`SELECT contract_version_id, equipment_key, contract_status_code, valid_from, valid_to FROM config.contract_equipment_versions`),
+    // ETAPA 6.5.1.1: SOLO revisiones autoritativas (is_current=true) -tras
+    // la corrección del modelo de versionado, dos revisiones NO autoritativas
+    // del mismo período (ej. una corrección de registro Gold->Silver) pueden
+    // compartir valid_from con valid_to=NULL simultáneamente; sin este
+    // filtro, resolveEquipmentContract() (contract-resolver.js) vería ambas
+    // como candidatas abiertas para el mismo rango de fechas -resolución NO
+    // determinista (viola invariante 5.6). ORDER BY valid_from DESC: si un
+    // equipo llega a tener más de una revisión autoritativa vigente por
+    // vigencias de negocio DISTINTAS (valid_from diferente, ver invariante
+    // 5.7), el resolver (que usa Array.find) debe encontrar primero la de
+    // inicio más reciente que aún aplique a la fecha de la tarea -mismo
+    // criterio que "la vigencia más específica gana".
+    client.query(`SELECT contract_version_id, equipment_key, contract_status_code, valid_from, valid_to FROM config.contract_equipment_versions WHERE is_current = true ORDER BY valid_from DESC NULLS LAST`),
     client.query(`SELECT schedule_id, contract_version_id, coverage_type, parse_status FROM config.contract_service_schedules`),
     client.query(`SELECT schedule_id, day_of_week, start_time, end_time, all_day FROM config.contract_service_windows`),
     client.query(`SELECT local_date, jurisdiction FROM config.current_holiday_calendar_entries WHERE jurisdiction = 'CL'`),

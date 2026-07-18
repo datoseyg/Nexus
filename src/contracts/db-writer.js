@@ -53,16 +53,8 @@ async function recordFailedImportStatus(queryable, meta, error) {
   }
 }
 
-function buildVersionInsertParams(record, ctx) {
+function buildVersionInsertParams(record, resolvedStart, ctx) {
   const f = record.normalizedFields;
-  // ETAPA 6.5.1: valid_from YA NO es ctx.effectiveDate (fecha de la corrida
-  // de importación) - se resuelve por separado, en orden: fecha de negocio
-  // conocida > installation_month inferido > sin resolver (NULL). Ver
-  // src/contracts/contract-start-date-resolver.js.
-  const resolvedStart = resolveContractStartDate(
-    { equipmentKey: record.equipmentKey, installationMonth: f.installationMonth, installationDatePrecision: f.installationDatePrecision },
-    ctx.knownContractStartDates
-  );
   return [
     record.equipmentKey,
     f.clientNameCanonical,
@@ -250,11 +242,28 @@ export async function applyContracts(args) {
     for (const classifiedRow of equipmentRows) {
       const record = buildEquipmentRecord(classifiedRow, args.effectiveDate, clientNameNormalizer);
 
+      // ETAPA 6.5.1.1: valid_from se resuelve ANTES de buscar la versión
+      // "actual" -la búsqueda debe escoparse por (equipment_key, valid_from),
+      // nunca solo equipment_key. Dos vigencias de negocio distintas del
+      // mismo equipo (valid_from diferente) son autoritativas cada una en lo
+      // suyo (invariante 5.7); confundirlas bajo un único "current" global
+      // es exactamente el defecto que esta etapa corrige.
+      const f = record.normalizedFields;
+      const resolvedStart = resolveContractStartDate(
+        { equipmentKey: record.equipmentKey, installationMonth: f.installationMonth, installationDatePrecision: f.installationDatePrecision },
+        knownContractStartDates
+      );
+
+      // IS NOT DISTINCT FROM: comparación NULL-segura -dos versiones
+      // UNRESOLVED (valid_from NULL) del mismo equipo SÍ deben tratarse como
+      // el mismo período para esta búsqueda (a diferencia del UNIQUE de
+      // sql/085, que es una defensa de integridad distinta, no la lógica de
+      // decisión de versionado).
       const currentVersionResult = await client.query(
         `SELECT contract_version_id, contract_fingerprint, valid_from
          FROM config.contract_equipment_versions
-         WHERE equipment_key = $1 AND is_current = true`,
-        [record.equipmentKey]
+         WHERE equipment_key = $1 AND valid_from IS NOT DISTINCT FROM $2 AND is_current = true`,
+        [record.equipmentKey, resolvedStart.validFrom]
       );
       const currentVersionRow = currentVersionResult.rows[0] ?? null;
 
@@ -270,15 +279,20 @@ export async function applyContracts(args) {
         contractVersionId = currentVersionRow.contract_version_id;
       } else {
         if (versionDecision.action === "SUPERSEDE") {
+          // ETAPA 6.5.1.1: nunca se toca valid_to acá -no hay evidencia de
+          // que terminó la vigencia CONTRACTUAL de negocio, solo se
+          // corrigió el registro para el mismo período (ver §4/§11 del
+          // reporte). superseded_at marca cuándo esta revisión dejó de ser
+          // autoritativa, dimensión separada de la vigencia de negocio.
           await client.query(
-            `UPDATE config.contract_equipment_versions SET valid_to = $1, is_current = false, updated_at = now() WHERE contract_version_id = $2`,
-            [args.effectiveDate, currentVersionRow.contract_version_id]
+            `UPDATE config.contract_equipment_versions SET is_current = false, superseded_at = now(), updated_at = now() WHERE contract_version_id = $1`,
+            [currentVersionRow.contract_version_id]
           );
         }
 
         const versionInsert = await client.query(
           VERSION_INSERT_SQL,
-          buildVersionInsertParams(record, { importId, knownContractStartDates })
+          buildVersionInsertParams(record, resolvedStart, { importId })
         );
         contractVersionId = versionInsert.rows[0].contract_version_id;
 
