@@ -40,7 +40,7 @@ function classifyFieldbeatInternalId(internalId) {
   return null;
 }
 
-function foldName(value) {
+export function foldName(value) {
   return String(value ?? "")
     .normalize("NFD")
     .replace(new RegExp(`[${String.fromCharCode(0x0300)}-${String.fromCharCode(0x036f)}]`, "g"), "")
@@ -61,56 +61,187 @@ function buildMatchResult({ status, method, equipment = null, candidateCount, de
   };
 }
 
+function filterRealFieldbeatEquipments(fieldbeatEquipments) {
+  // ETAPA 6.5.2B1 - excluye filas "fantasma" de processed.fieldbeat_equipments
+  // (equipment_uuid NULL/'') antes de que participen como candidatas de
+  // matching -mismo patrón de defecto que 6.5.2B0 (buildFieldbeatKeyByUuid),
+  // en un consumidor distinto. Hallazgo empírico: 24 internal_id de la tabla
+  // maestra tienen una fila real + una fila fantasma con el mismo
+  // internal_id; sin este filtro, extractTrailingSerial() encuentra 2
+  // "candidatos" para un único equipo físico real y el match cae a
+  // AMBIGUOUS en vez de MATCHED, incluso con serial único.
+  return fieldbeatEquipments.filter(e => e.equipment_uuid !== null && e.equipment_uuid !== undefined && e.equipment_uuid !== "");
+}
+
 /**
- * @param {{ equipmentKey: string, clientNameCanonical: string, equipmentModel: string, serialNumber: string | null }} candidate
- * @param {{ fieldbeatEquipments: Array<object>, fieldbeatClients: Array<object>, overrides: Array<{equipmentKey: string, fieldbeatEquipmentId: string}> }} ctx
- * @returns {object} resultado de matching, listo para persistir en config.contract_equipment_matches
+ * Nivel 1 (override) + Nivel 2 (serial exacto) únicamente -evidencia
+ * "fuerte": identifica una máquina física real, nunca una categoría. El
+ * override manual sigue operando sobre fieldbeatEquipments COMPLETO (no
+ * filtrado), porque un override explícito puede apuntar legítimamente a
+ * cualquier equipment_key existente. Devuelve null si ninguno de los 2
+ * niveles resuelve algo -el candidato debe seguir al Nivel 3.
+ * Reutilizado tanto por matchOneEquipment() como por
+ * computeClaimedFieldbeatEquipmentKeys(), para que "qué reclamó este
+ * candidato por evidencia fuerte" sea EXACTAMENTE la misma lógica en
+ * ambos lugares.
  */
-export function matchOneEquipment(candidate, { fieldbeatEquipments, fieldbeatClients, overrides }) {
-  // Nivel 1: override manual activo, nunca se crea automáticamente.
+function resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides }) {
   const override = (overrides ?? []).find(o => o.equipmentKey === candidate.equipmentKey);
   if (override) {
     const overridden = fieldbeatEquipments.find(e => e.equipment_key === override.fieldbeatEquipmentId);
     if (overridden) {
-      return buildMatchResult({ status: "MATCHED", method: "OVERRIDE", equipment: overridden, candidateCount: 1, details: { reason: "override activo" } });
+      return { status: "MATCHED", method: "OVERRIDE", equipment: overridden, candidateCount: 1, details: { reason: "override activo" } };
     }
-    // Override apunta a un equipment_key que ya no existe en el maestro -no
-    // se autoconfirma nada, se reporta como no encontrado vía override.
-    return buildMatchResult({ status: "UNMATCHED", method: "OVERRIDE", candidateCount: 0, details: { reason: "override activo pero fieldbeat_equipment_id ya no existe en el maestro" } });
+    return { status: "UNMATCHED", method: "OVERRIDE", candidateCount: 0, details: { reason: "override activo pero fieldbeat_equipment_id ya no existe en el maestro" } };
   }
 
-  // Nivel 2: sufijo de serie extraído de internal_id, exacto.
   const normalizedSerial = normalizeSerialForMatching(candidate.serialNumber);
   if (normalizedSerial) {
-    const serialCandidates = fieldbeatEquipments.filter(e => {
+    const serialCandidates = realFieldbeatEquipments.filter(e => {
       const extracted = extractTrailingSerial(e.internal_id);
       return extracted && normalizeSerialForMatching(extracted) === normalizedSerial;
     });
-
     if (serialCandidates.length === 1) {
-      return buildMatchResult({ status: "MATCHED", method: "SERIAL_SUFFIX", equipment: serialCandidates[0], candidateCount: 1, details: {} });
+      return { status: "MATCHED", method: "SERIAL_SUFFIX", equipment: serialCandidates[0], candidateCount: 1, details: {} };
     }
     if (serialCandidates.length > 1) {
-      return buildMatchResult({
-        status: "AMBIGUOUS",
-        method: "SERIAL_SUFFIX",
-        candidateCount: serialCandidates.length,
-        details: { candidateInternalIds: serialCandidates.map(e => e.internal_id) }
-      });
+      return { status: "AMBIGUOUS", method: "SERIAL_SUFFIX", candidateCount: serialCandidates.length, details: { candidateInternalIds: serialCandidates.map(e => e.internal_id) } };
     }
-    // 0 candidatos por serie -sigue al nivel 3, no se abandona todavía.
+  }
+  return null;
+}
+
+/**
+ * Regla 3 (corrección de dominio post-6.5.2B1): un serial exacto tiene
+ * precedencia sobre cualquier match de categoría -una vez que un equipo
+ * FieldBeat fue reclamado por CUALQUIER candidato vía evidencia fuerte
+ * (Nivel 1/2), ningún otro candidato puede volver a introducirlo en el
+ * Nivel 3 (cliente+categoría). Debe computarse UNA VEZ sobre la lista
+ * COMPLETA de candidatos de la corrida -nunca por candidato aislado,
+ * porque la contaminación ocurre PRECISAMENTE entre candidatos distintos
+ * (ej. Compact SN:201110 reclama Linac-201110 por serial; sin esta
+ * exclusión, Precise SN:105614 -sin candidato de serial propio- lo volvía
+ * a "encontrar" en el Nivel 3 vía cliente+categoría, aunque ya pertenecía
+ * a otro equipo físico distinto).
+ * @param {Array<object>} candidates
+ * @param {{ fieldbeatEquipments: Array<object>, overrides: Array<object> }} ctx
+ * @returns {Set<string>} equipment_key de processed.fieldbeat_equipments ya reclamados
+ */
+export function computeClaimedFieldbeatEquipmentKeys(candidates, { fieldbeatEquipments, overrides }) {
+  const realFieldbeatEquipments = filterRealFieldbeatEquipments(fieldbeatEquipments);
+  const claimed = new Set();
+  for (const candidate of candidates) {
+    const strong = resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides });
+    if (strong?.status === "MATCHED" && strong.equipment) {
+      claimed.add(strong.equipment.equipment_key);
+    }
+  }
+  return claimed;
+}
+
+/**
+ * Regla 1 (corrección de dominio post-6.5.2B1): cuenta, por cliente
+ * canónico (resuelto vía alias) + categoría funcional gruesa (LINAC,
+ * BRAQUITERAPIA, ...), cuántos candidatos contractuales DISTINTOS de la
+ * corrida comparten esa combinación. "LINAC" identifica una categoría
+ * (Linear Accelerator), nunca una máquina -Compact y Precise son equipos
+ * físicos distintos que caen ambos en categoría LINAC. Cuando un cliente
+ * tiene más de un equipo contractual de la misma categoría, cliente+
+ * categoría NUNCA basta por sí sola para confirmar identidad (no hay
+ * evidencia de sede disponible para desambiguar -ver hallazgo de schema).
+ * @param {Array<object>} candidates
+ * @param {{ clientAliasIndex?: Map<string, string> }} [ctx]
+ * @returns {Map<string, number>} clave "clienteFolded|categoria" -> cantidad de candidatos
+ */
+export function computeClientCategorySiblingCounts(candidates, { clientAliasIndex } = {}) {
+  const resolveAlias = (name) => clientAliasIndex?.get(foldName(name)) ?? name;
+  const counts = new Map();
+  for (const candidate of candidates) {
+    const category = classifyContractEquipmentModel(candidate.equipmentModel);
+    if (!category) continue;
+    const key = `${foldName(resolveAlias(candidate.clientNameCanonical))}|${category}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * @param {{ equipmentKey: string, clientNameCanonical: string, equipmentModel: string, serialNumber: string | null }} candidate
+ * @param {{ fieldbeatEquipments: Array<object>, fieldbeatClients: Array<object>, overrides: Array<{equipmentKey: string, fieldbeatEquipmentId: string}>, clientAliasIndex?: Map<string, string>, claimedFieldbeatEquipmentKeys?: Set<string>, clientCategorySiblingCounts?: Map<string, number> }} ctx clientAliasIndex/claimedFieldbeatEquipmentKeys/clientCategorySiblingCounts son opcionales -ausentes = comportamiento previo sin las reglas cruzadas entre candidatos (matchAll() los computa automáticamente; llamadas directas fuera de matchAll deben precomputarlos con computeClaimedFieldbeatEquipmentKeys()/computeClientCategorySiblingCounts() sobre la lista COMPLETA de candidatos de la corrida)
+ * @returns {object} resultado de matching, listo para persistir en config.contract_equipment_matches
+ */
+export function matchOneEquipment(candidate, { fieldbeatEquipments, fieldbeatClients, overrides, clientAliasIndex, claimedFieldbeatEquipmentKeys, clientCategorySiblingCounts }) {
+  const realFieldbeatEquipments = filterRealFieldbeatEquipments(fieldbeatEquipments);
+
+  // Nivel 1 (override) + Nivel 2 (serial exacto) -evidencia fuerte, gana
+  // sobre cualquier resolución de categoría (Regla 2).
+  const strong = resolveStrongMatch(candidate, { fieldbeatEquipments, realFieldbeatEquipments, overrides });
+  if (strong) {
+    return buildMatchResult({ status: strong.status, method: strong.method, equipment: strong.equipment ?? null, candidateCount: strong.candidateCount, details: strong.details });
   }
 
   // Nivel 3: cliente canónico + categoría de equipo (sin sede real
   // disponible -ver hallazgo arriba). Nunca autoconfirma un match ambiguo.
+  // ETAPA 6.5.2B1 - gobernanza de alias de cliente (data/config/contracts/
+  // client-identity-aliases.json vía clientAliasIndex, opcional -ausente =
+  // comportamiento anterior sin cambios): ambos lados de la comparación se
+  // resuelven primero a su nombre canónico gobernado (identidad, no fuzzy)
+  // antes del fold. Un alias por sí solo NUNCA produce MATCHED -sigue
+  // exigiendo candidato único por cliente+categoría, igual que antes.
   const category = classifyContractEquipmentModel(candidate.equipmentModel);
+  // Lookup directo sobre el Map ya construido por buildClientIdentityAliasIndex()
+  // (data/config/contracts/client-identity-aliases.js) -inline, no una
+  // dependencia hacia ese módulo, para no crear un ciclo de imports (ese
+  // módulo ya depende de foldName exportado desde acá).
+  const resolveAlias = (name) => clientAliasIndex?.get(foldName(name)) ?? name;
+  const canonicalCandidateClientName = resolveAlias(candidate.clientNameCanonical);
   const candidateClientKeys = new Set(
-    fieldbeatClients.filter(c => foldName(c.client_name) === foldName(candidate.clientNameCanonical)).map(c => c.client_key)
+    fieldbeatClients
+      .filter(c => foldName(resolveAlias(c.client_name)) === foldName(canonicalCandidateClientName))
+      .map(c => c.client_key)
   );
 
-  const clientModelCandidates = category
-    ? fieldbeatEquipments.filter(e => candidateClientKeys.has(e.client_key) && classifyFieldbeatInternalId(e.internal_id) === category)
+  const rawClientModelCandidates = category
+    ? realFieldbeatEquipments.filter(e => candidateClientKeys.has(e.client_key) && classifyFieldbeatInternalId(e.internal_id) === category)
     : [];
+
+  if (rawClientModelCandidates.length === 0) {
+    return buildMatchResult({ status: "UNMATCHED", method: "NONE", candidateCount: 0, details: {} });
+  }
+
+  // Regla 1/4: cliente+categoría nunca basta por sí sola como prueba final
+  // de identidad cuando el cliente tiene MÁS DE UN equipo contractual de
+  // esa misma categoría (ej. Compact + Precise, ambos LINAC) -sin
+  // evidencia de sede, no hay forma de saber a cuál de los dos pertenece
+  // el único candidato FieldBeat encontrado. Se revisa ANTES de aplicar la
+  // exclusión de reclamados (abajo) para que la colisión quede visible en
+  // vez de degradarse silenciosamente a UNMATCHED.
+  const siblingKey = category ? `${foldName(canonicalCandidateClientName)}|${category}` : null;
+  const siblingCount = (siblingKey && clientCategorySiblingCounts?.get(siblingKey)) ?? 1;
+  if (siblingCount > 1) {
+    // candidateCount = siblingCount (candidatos CONTRACTUALES en disputa),
+    // no rawClientModelCandidates.length (equipos FieldBeat encontrados) -
+    // config.contract_equipment_matches tiene un CHECK real que exige
+    // candidate_count > 1 para AMBIGUOUS; aquí puede haber exactamente 1
+    // equipo FieldBeat físico pero 2+ candidatos contractuales compitiendo
+    // por él, y ese es precisamente el número que hay que reportar.
+    return buildMatchResult({
+      status: "AMBIGUOUS",
+      method: "CLIENT_SITE_MODEL",
+      candidateCount: siblingCount,
+      details: {
+        candidateInternalIds: rawClientModelCandidates.map(e => e.internal_id),
+        reason: "SIBLING_CATEGORY_COLLISION",
+        note: `el cliente tiene ${siblingCount} equipos contractuales de categoría ${category} -cliente+categoría nunca basta por sí sola para desambiguar entre ellos, sin evidencia de sede`
+      }
+    });
+  }
+
+  // Regla 3: excluye equipos ya reclamados por OTRO candidato vía
+  // evidencia fuerte (Nivel 1/2) -un serial exacto ajeno tiene precedencia,
+  // este candidato no puede volver a introducir ese mismo equipo aquí.
+  const claimed = claimedFieldbeatEquipmentKeys ?? new Set();
+  const clientModelCandidates = rawClientModelCandidates.filter(e => !claimed.has(e.equipment_key));
 
   if (clientModelCandidates.length === 1) {
     return buildMatchResult({ status: "MATCHED", method: "CLIENT_SITE_MODEL", equipment: clientModelCandidates[0], candidateCount: 1, details: { note: "sin precisión de sede -ver hallazgo de schema" } });
@@ -124,18 +255,22 @@ export function matchOneEquipment(candidate, { fieldbeatEquipments, fieldbeatCli
     });
   }
 
-  return buildMatchResult({ status: "UNMATCHED", method: "NONE", candidateCount: 0, details: {} });
+  return buildMatchResult({ status: "UNMATCHED", method: "NONE", candidateCount: 0, details: { reason: "el único candidato por cliente+categoría ya fue reclamado por otro candidato con evidencia fuerte (serial exacto u override)" } });
 }
 
 /**
  * @param {Array<object>} candidates equipos contractuales candidatos (equipmentKey, clientNameCanonical, equipmentModel, serialNumber)
- * @param {{ fieldbeatEquipments: Array<object>, fieldbeatClients: Array<object>, overrides: Array<object> }} ctx
+ * @param {{ fieldbeatEquipments: Array<object>, fieldbeatClients: Array<object>, overrides: Array<object>, clientAliasIndex?: Map<string, string> }} ctx
  * @returns {Array<object & {equipmentKey: string}>}
  */
 export function matchAll(candidates, ctx) {
+  // Computado UNA VEZ sobre TODA la lista de candidatos -ver Reglas 1 y 3
+  // en computeClaimedFieldbeatEquipmentKeys()/computeClientCategorySiblingCounts().
+  const claimedFieldbeatEquipmentKeys = computeClaimedFieldbeatEquipmentKeys(candidates, ctx);
+  const clientCategorySiblingCounts = computeClientCategorySiblingCounts(candidates, ctx);
   return candidates.map(candidate => ({
     equipmentKey: candidate.equipmentKey,
-    ...matchOneEquipment(candidate, ctx)
+    ...matchOneEquipment(candidate, { ...ctx, claimedFieldbeatEquipmentKeys, clientCategorySiblingCounts })
   }));
 }
 

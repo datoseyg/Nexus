@@ -6,11 +6,12 @@ import { readSourceCsvRaw } from "./csv-source.js";
 import { classifyRows } from "./row-classifier.js";
 import { buildEquipmentRecord } from "./record-builder.js";
 import { createClientNameNormalizer } from "./normalize-client.js";
-import { matchOneEquipment, matchResultToIssues } from "./fieldbeat-matcher.js";
+import { matchOneEquipment, matchResultToIssues, computeClaimedFieldbeatEquipmentKeys, computeClientCategorySiblingCounts } from "./fieldbeat-matcher.js";
 import { computeVersionAction } from "./versioning.js";
 import { COLUMN } from "./field-map.js";
 import { sourceRowHash } from "./hash.js";
 import { loadKnownContractStartDates, resolveContractStartDate } from "./contract-start-date-resolver.js";
+import { loadClientIdentityAliases, buildClientIdentityAliasIndex } from "./client-identity-aliases.js";
 
 function extractSheetNameFromFilename(filePath) {
   const base = filePath.split(/[\\/]/).pop() ?? filePath;
@@ -237,17 +238,54 @@ export async function applyContracts(args) {
 
     const clientNameNormalizer = createClientNameNormalizer();
     const knownContractStartDates = loadKnownContractStartDates();
+    // ETAPA 6.5.2B1 - gobernanza de alias de identidad de cliente
+    // (data/config/contracts/client-identity-aliases.json), consumida por
+    // matchOneEquipment() en el Nivel 3 (CLIENT_SITE_MODEL). Solo resuelve
+    // identidad de cliente -nunca crea un match por sí sola.
+    const clientAliasIndex = buildClientIdentityAliasIndex(loadClientIdentityAliases());
+
+    // Registros computados de UNA VEZ, en orden, ANTES del loop de escritura
+    // -necesario para poder derivar la lista COMPLETA de candidatos de
+    // matching de esta corrida (ver más abajo) sin invocar
+    // buildEquipmentRecord() dos veces por fila (evitaría duplicar el
+    // estado interno de clientNameNormalizer).
+    const records = equipmentRows.map(classifiedRow => buildEquipmentRecord(classifiedRow, args.effectiveDate, clientNameNormalizer));
+
+    // Corrección de dominio (post-6.5.2B1) - un serial exacto tiene
+    // precedencia sobre cualquier match de categoría, y cliente+categoría
+    // nunca basta sola cuando el cliente tiene más de un equipo de esa
+    // categoría (ver fieldbeat-matcher.js). Debe computarse UNA VEZ sobre
+    // TODOS los candidatos de ESTA corrida -antes, matchOneEquipment() se
+    // llamaba fila por fila sin visibilidad de los demás candidatos, lo que
+    // permitía que un candidato sin serial "heredara" por cliente+categoría
+    // un equipo que otro candidato de la MISMA corrida ya había reclamado
+    // por serial exacto (caso real: Precise SN:105614 heredaba el equipo
+    // FieldBeat de Compact SN:201110, mismo cliente Sanatorio Alemán).
+    const matchingCandidates = records.map(record => ({
+      equipmentKey: record.equipmentKey,
+      clientNameCanonical: record.normalizedFields.clientNameCanonical,
+      equipmentModel: record.normalizedFields.equipmentModel,
+      serialNumber: record.normalizedFields.serialNumber
+    }));
+    const claimedFieldbeatEquipmentKeys = computeClaimedFieldbeatEquipmentKeys(matchingCandidates, { fieldbeatEquipments, overrides });
+    const clientCategorySiblingCounts = computeClientCategorySiblingCounts(matchingCandidates, { clientAliasIndex });
+
     const results = [];
 
-    for (const classifiedRow of equipmentRows) {
-      const record = buildEquipmentRecord(classifiedRow, args.effectiveDate, clientNameNormalizer);
-
+    for (const record of records) {
       // ETAPA 6.5.1.1: valid_from se resuelve ANTES de buscar la versión
       // "actual" -la búsqueda debe escoparse por (equipment_key, valid_from),
       // nunca solo equipment_key. Dos vigencias de negocio distintas del
       // mismo equipo (valid_from diferente) son autoritativas cada una en lo
       // suyo (invariante 5.7); confundirlas bajo un único "current" global
-      // es exactamente el defecto que esta etapa corrige.
+      // es exactamente el defecto que esta etapa corrige. Usa `record` -ya
+      // precomputado en el bloque de ETAPA 6.5.2B1 de arriba, junto con
+      // matchingCandidates/claimedFieldbeatEquipmentKeys/
+      // clientCategorySiblingCounts- en vez de reconstruirlo vía
+      // buildEquipmentRecord(): reconstruirlo acá duplicaría el estado
+      // interno de clientNameNormalizer (ver comentario del precompute) Y
+      // desalinearía este record del que matchingCandidates ya usó para
+      // calcular claimed keys/sibling counts.
       const f = record.normalizedFields;
       const resolvedStart = resolveContractStartDate(
         { equipmentKey: record.equipmentKey, installationMonth: f.installationMonth, installationDatePrecision: f.installationDatePrecision },
@@ -332,7 +370,7 @@ export async function applyContracts(args) {
           equipmentModel: record.normalizedFields.equipmentModel,
           serialNumber: record.normalizedFields.serialNumber
         },
-        { fieldbeatEquipments, fieldbeatClients, overrides }
+        { fieldbeatEquipments, fieldbeatClients, overrides, clientAliasIndex, claimedFieldbeatEquipmentKeys, clientCategorySiblingCounts }
       );
 
       await client.query(

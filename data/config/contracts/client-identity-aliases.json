@@ -1,0 +1,32 @@
+{
+  "schema_version": "client-identity-aliases-v1",
+  "description": "Equivalencias de identidad de cliente entre nombres crudos observados (FieldBeat u otras fuentes) y el nombre canónico usado en config.contract_equipment_versions/contract_equipment_observations. ETAPA 6.5.2B1 - resuelve únicamente identidad de cliente, nunca vigencia contractual, sede, versión ni cobertura horaria. Un alias no aprobado (approved=false) nunca se consume por el matcher. No se acepta fuzzy matching, embeddings ni distancia de edición como fuente de una entrada - solo confirmación explícita registrada acá.",
+  "entries": [
+    {
+      "canonical_name": "Sanatorio Alemán",
+      "aliases": [
+        "ONCORAD",
+        "CLÍNICA SANATORIO ALEMÁN (ONCORAD)",
+        "Clínica Sanatorio Alemán (ONCORAD)"
+      ],
+      "scope": "CLIENT_IDENTITY",
+      "source_type": "USER_CONFIRMED",
+      "source_reference": "Project owner confirmation, ETAPA 6.5.2B1 (2026-07-17)",
+      "approved": true,
+      "approved_at": "2026-07-17",
+      "notes": "Equivalencia válida para matching de identidad del cliente; no define vigencia contractual, sede ni cobertura. Comparación de variantes de mayúsculas/tildes/espacios se hace vía el mismo plegado (fold) que usa fieldbeat-matcher.js, no requiere una entrada por cada variante de capitalización."
+    },
+    {
+      "canonical_name": "Instituto Radio Oncológico",
+      "aliases": [
+        "INRAD"
+      ],
+      "scope": "CLIENT_IDENTITY",
+      "source_type": "USER_CONFIRMED",
+      "source_reference": "Project owner confirmation, ETAPA 6.5.2B1 (2026-07-17)",
+      "approved": true,
+      "approved_at": "2026-07-17",
+      "notes": "Equivalencia válida para matching de identidad del cliente; no define vigencia contractual, sede ni cobertura."
+    }
+  ]
+}

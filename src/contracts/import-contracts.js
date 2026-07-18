@@ -4,6 +4,7 @@ import { classifyRows } from "./row-classifier.js";
 import { buildEquipmentRecord } from "./record-builder.js";
 import { createClientNameNormalizer } from "./normalize-client.js";
 import { matchAll } from "./fieldbeat-matcher.js";
+import { loadClientIdentityAliases, buildClientIdentityAliasIndex } from "./client-identity-aliases.js";
 import { buildDryRunReport, writeDryRunReport } from "./dry-run-report.js";
 import { parseArgs, validateArgs } from "./cli.js";
 import { readCsv } from "../lib/csv.js";
@@ -85,7 +86,10 @@ async function runDryRun(args) {
     equipmentModel: r.normalizedFields.equipmentModel,
     serialNumber: r.normalizedFields.serialNumber
   }));
-  const matches = matchAll(candidates, { fieldbeatEquipments, fieldbeatClients, overrides });
+  // ETAPA 6.5.2B1 - misma gobernanza de alias que --apply (db-writer.js),
+  // para que el reporte de dry-run refleje el resultado real de matching.
+  const clientAliasIndex = buildClientIdentityAliasIndex(loadClientIdentityAliases());
+  const matches = matchAll(candidates, { fieldbeatEquipments, fieldbeatClients, overrides, clientAliasIndex });
 
   const report = buildDryRunReport({
     sourceFile: args.file,
