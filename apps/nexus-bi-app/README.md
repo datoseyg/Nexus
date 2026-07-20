@@ -20,11 +20,7 @@ npm install
 npm run dev
 ```
 
-Abrir `http://localhost:3000`. También se puede levantar desde la raíz del proyecto con:
-
-```bash
-npm run app:dev
-```
+Abrir `http://localhost:3000`.
 
 ## Esta app es 100% de solo lectura
 
@@ -32,9 +28,9 @@ npm run app:dev
 - No modifica `data/raw/`, `data/processed/`, `data/marts/`, `data/gold/`, ni `data/curation/`.
 - El Explorador de Tablas no tiene edición de celdas. La Búsqueda no tiene acciones de escritura.
 
-## Desarrollo local del dashboard After-Hours (Postgres, no DuckDB)
+## Desarrollo local de los dashboards que usan Postgres, no DuckDB
 
-`/dashboard/after-hours` y sus 10 endpoints (`app/api/dashboard/after-hours/**`) no leen `eyg_nexus.duckdb` -leen Postgres vía `lib/db.ts` (`SUPABASE_DB_URL`). Por defecto esa variable apunta al pooler de Supabase cloud (`.env.local`, no versionado) - para desarrollar sin depender de la nube ni tocar ninguna base compartida:
+`/dashboard/after-hours` (10 endpoints, `app/api/dashboard/after-hours/**`) y `/dashboard/fieldbeat` (`app/api/dashboard/fieldbeat/route.ts`, ETAPA 5) no leen `eyg_nexus.duckdb` -leen Postgres vía `lib/db.ts` (`SUPABASE_DB_URL`). Por defecto esa variable apunta al pooler de Supabase cloud (`.env.local`, no versionado) - para desarrollar sin depender de la nube ni tocar ninguna base compartida:
 
 **1. Preparar un Postgres 16 local desechable** (una sola vez, o cuando quieras empezar de cero):
 
@@ -61,13 +57,22 @@ WORKING_HOURS_DB_URL=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi
 
 (repetir holidays por cada bundle en `data/config/holidays/**`; el puerto exacto lo imprime `dev:local:setup`).
 
+`/dashboard/fieldbeat` lee `gold.fieldbeat_report_analysis`/`gold.fieldbeat_data_quality`/`gold.client_report_volume_by_period`/`gold.client_parts_consumption`/`gold.equipment_parts_consumption` - datos distintos a los de After-Hours (no dependen de `contracts:import`/`holidays:import`/`working-hours:build`). Para poblarlos contra el mismo Postgres local, desde la **raíz del repo**:
+
+```bash
+npm run db:build
+SUPABASE_DB_URL_DIRECT=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run db:pg:migrate
+```
+
+`db:build` construye/valida el warehouse DuckDB completo (`processed`/`marts`/`gold`, incluidas las 5 tablas de arriba); `db:pg:migrate` sincroniza esas tablas hacia el Postgres local (nunca hacia `nexus-afterhours-realdata2` ni Supabase cloud - confirmar el preflight de SAFETY-1 antes de aceptar que tocó el destino correcto).
+
 **3. Verificar que la API responde:**
 
 ```bash
 PORT=<puerto de next dev> npm run smoke
 ```
 
-o `curl http://localhost:<puerto>/api/dashboard/after-hours/summary`.
+o `curl http://localhost:<puerto>/api/dashboard/after-hours/summary` / `curl http://localhost:<puerto>/api/dashboard/fieldbeat`.
 
 **4. Limpiar** (opcional, cuando ya no lo necesites):
 

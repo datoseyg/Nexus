@@ -11,7 +11,7 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
-    "test": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --test \"test/after-hours/*.test.ts\"",
+    "test": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --test \"test/after-hours/*.test.ts\" \"test/fieldbeat/*.test.ts\"",
     "test:integration": "node scripts/run-integration-tests.mjs"
   },
   "dependencies": {

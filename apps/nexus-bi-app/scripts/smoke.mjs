@@ -16,17 +16,21 @@ const TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 5000);
 
 // Marcador textual estable, unico y ya existente hoy en cada pagina, tomado
 // directamente del codigo fuente actual (PageHeader/title visibles o
-// metadata.title). /dashboard/fieldbeat y /explorer son componentes
-// "use client" que hacen fetch de datos en el navegador (useEffect) y
-// muestran su titulo real recien despues de esa carga - una peticion HTTP
-// pura (sin ejecutar JavaScript, como hace este script) solo ve el HTML
-// inicial servido por el servidor, que en esos 2 casos es el estado de
-// carga ("Cargando dashboard...", "Cargando tablas..."), no el titulo
-// final. Se usa ese marcador de carga para esas 2 rutas por ser el que
+// metadata.title). /explorer es un componente "use client" que hace fetch
+// de datos en el navegador (useEffect) y muestra su titulo real recien
+// despues de esa carga - una peticion HTTP pura (sin ejecutar JavaScript,
+// como hace este script) solo ve el HTML inicial servido por el servidor,
+// que en ese caso es el estado de carga ("Cargando tablas..."), no el
+// titulo final. Se usa ese marcador de carga para esa ruta por ser el que
 // realmente esta presente en la respuesta HTTP cruda.
+// /dashboard/fieldbeat (ETAPA 5): aunque también es "use client" con fetch
+// en useEffect, su PageHeader (titulo "Dashboard FieldBeat") es contenido
+// ESTRUCTURAL que se renderiza siempre, sin depender del estado del
+// fetch - por eso ese texto SÍ está presente en el HTML servido por el
+// servidor, sin necesidad de un marcador de carga.
 const ROUTES = [
   { path: "/", marker: "Resumen general" },
-  { path: "/dashboard/fieldbeat", marker: "Cargando dashboard…" },
+  { path: "/dashboard/fieldbeat", marker: "Dashboard FieldBeat" },
   { path: "/dashboard/operacional", marker: "Dashboard Operacional EyG - Nexus BI" },
   { path: "/dashboard/after-hours", marker: "Trabajo Fuera de Horario" },
   { path: "/audit/manual-review", marker: "Auditoría y Validación Manual - Nexus BI" },

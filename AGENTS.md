@@ -1,4 +1,4 @@
-# EYG Nexus Local -Instrucciones para Claude
+# EYG Nexus Local -Instrucciones para Codex
 
 ## Rol del proyecto
 
