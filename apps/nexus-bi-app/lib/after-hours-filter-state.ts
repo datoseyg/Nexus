@@ -1,4 +1,4 @@
-import { getDataBasisLabel, getReasonCodeLabel } from "./after-hours-labels";
+import { getDataBasisLabel, getReasonCodeLabel, getWeekdayLabel } from "./after-hours-labels";
 import type { AfterHoursDataBasis } from "@/types/after-hours";
 
 // Estado de filtros de UI de /dashboard/after-hours (ETAPA 6.6D §7) -
@@ -18,6 +18,15 @@ export interface AfterHoursFilterState {
   fallbackUsed?: boolean;
   coverageReasonCode?: string;
   contractualReasonCode?: string;
+  // Aditivos ETAPA 6.6D: weekday se setea desde el gráfico de día de la
+  // semana (solo) o junto con hour desde una celda del heatmap día×hora.
+  // hour NUNCA se setea de forma independiente - no existe un control de
+  // "Hora" aislado (ver AfterHoursFilters.tsx), por eso buildFilterChips()
+  // los funde en un único chip compuesto solo cuando ambos están
+  // presentes, a diferencia de technician/client (que sí se configuran de
+  // forma independiente entre sí y por lo tanto NUNCA se fusionan).
+  weekday?: number;
+  hour?: number;
 }
 
 export const EMPTY_FILTERS: AfterHoursFilterState = {};
@@ -82,6 +91,19 @@ export function buildFilterChips(filters: AfterHoursFilterState): FilterChip[] {
   if (filters.coverageReasonCode) chips.push({ id: "coverageReasonCode", label: `Motivo final: ${getReasonCodeLabel(filters.coverageReasonCode).shortLabel}` });
   if (filters.contractualReasonCode)
     chips.push({ id: "contractualReasonCode", label: `Motivo contractual: ${getReasonCodeLabel(filters.contractualReasonCode).shortLabel}` });
+
+  // weekday+hour (seleccionados juntos desde una celda del heatmap) son UN
+  // SOLO chip compuesto - a diferencia de technician/client (que se
+  // configuran también de forma independiente y por eso siguen siendo dos
+  // chips separados), hour nunca existe sin weekday en esta UI. `hour`
+  // siempre se compara con `!== undefined` (nunca truthy): 0 = medianoche
+  // es un valor válido que una comprobación truthy descartaría.
+  if (filters.weekday && filters.hour !== undefined) {
+    chips.push({ id: "weekdayHour", label: `Día y hora: ${getWeekdayLabel(filters.weekday)}, ${String(filters.hour).padStart(2, "0")}:00` });
+  } else if (filters.weekday) {
+    chips.push({ id: "weekday", label: `Día: ${getWeekdayLabel(filters.weekday)}` });
+  }
+
   return chips;
 }
 

@@ -2,9 +2,10 @@
 
 import { useMemo } from "react";
 import { FilterBar } from "@/components/ui/FilterBar";
-import { getDataBasisLabel, getReasonCodeLabel } from "@/lib/after-hours-labels";
+import { getDataBasisLabel, getReasonCodeLabel, getWeekdayLabel, WEEKDAY_ORDER } from "@/lib/after-hours-labels";
 import { activeQuickRangeKey as computeActiveQuickRangeKey, buildFilterChips, buildQuickRanges, type AfterHoursFilterState, type QuickRange } from "@/lib/after-hours-filter-state";
-import type { AfterHoursDataBasis, AfterHoursSummary } from "@/types/after-hours";
+import { optionKeysAsc } from "@/lib/after-hours-filter-options";
+import type { AfterHoursByDimensionRow, AfterHoursDataBasis, AfterHoursSummary } from "@/types/after-hours";
 
 export type { AfterHoursFilterState } from "@/lib/after-hours-filter-state";
 export { EMPTY_FILTERS } from "@/lib/after-hours-filter-state";
@@ -26,6 +27,14 @@ interface AfterHoursFiltersProps {
   onChange: (next: AfterHoursFilterState) => void;
   onClear: () => void;
   filterOptions: AfterHoursSummary["filterOptions"] | null;
+  // ETAPA 6.6D-FIX-1 - filas YA filtradas de by-technician/by-client (fecha
+  // + demás filtros activos, autoexcluyendo solo su propia dimensión).
+  // Reemplazan filterOptions.tecnicos/clientes como fuente de las opciones
+  // Y el contador "(N)" del <select> - filterOptions.tecnicos/clientes
+  // sigue existiendo (catálogo global, sin filtrar) pero ya no alimenta
+  // estos dos selectores.
+  technicianOptions: AfterHoursByDimensionRow[] | null;
+  clientOptions: AfterHoursByDimensionRow[] | null;
   moreFiltersOpen: boolean;
   onToggleMoreFilters: () => void;
 }
@@ -39,9 +48,20 @@ const CONFIDENCE_LEVELS = ["Alta", "Media", "Baja", "Insuficiente"];
 // filters.ts) no ofrece un filtro de equipo fiable hoy - agregar un
 // selector sin soporte real en la API violaría el principio de
 // trazabilidad (09-design-principles.md #1).
-export function AfterHoursFilters({ filters, onChange, onClear, filterOptions, moreFiltersOpen, onToggleMoreFilters }: AfterHoursFiltersProps) {
+export function AfterHoursFilters({
+  filters,
+  onChange,
+  onClear,
+  filterOptions,
+  technicianOptions,
+  clientOptions,
+  moreFiltersOpen,
+  onToggleMoreFilters
+}: AfterHoursFiltersProps) {
   const quickRanges = useMemo(() => buildQuickRanges(), []);
   const activeQuickRangeKey = useMemo(() => computeActiveQuickRangeKey(quickRanges, filters), [quickRanges, filters.from, filters.to]);
+  const technicianKeys = useMemo(() => optionKeysAsc(technicianOptions), [technicianOptions]);
+  const clientKeys = useMemo(() => optionKeysAsc(clientOptions), [clientOptions]);
 
   function set<K extends keyof AfterHoursFilterState>(key: K, value: AfterHoursFilterState[K]) {
     onChange({ ...filters, [key]: value });
@@ -61,7 +81,13 @@ export function AfterHoursFilters({ filters, onChange, onClear, filterOptions, m
     onlyLowConfidence: () => set("onlyLowConfidence", undefined),
     fallbackUsed: () => set("fallbackUsed", undefined),
     coverageReasonCode: () => set("coverageReasonCode", undefined),
-    contractualReasonCode: () => set("contractualReasonCode", undefined)
+    contractualReasonCode: () => set("contractualReasonCode", undefined),
+    // weekday solo (seteado desde este selector, o desde el gráfico de día
+    // de la semana) se limpia solo; el chip compuesto "weekdayHour" (solo
+    // existe cuando ambos vienen juntos desde el heatmap) limpia los dos a
+    // la vez con una única acción - ver buildFilterChips.
+    weekday: () => set("weekday", undefined),
+    weekdayHour: () => onChange({ ...filters, weekday: undefined, hour: undefined })
   };
   const chips = buildFilterChips(filters).map(chip => ({ ...chip, onRemove: REMOVE_HANDLERS[chip.id] }));
 
@@ -109,6 +135,20 @@ export function AfterHoursFilters({ filters, onChange, onClear, filterOptions, m
             <input type="checkbox" checked={filters.fallbackUsed ?? false} onChange={e => set("fallbackUsed", e.target.checked || undefined)} />
             Solo con fallback
           </label>
+
+          <select
+            aria-label="Día de la semana"
+            value={filters.weekday ?? ""}
+            onChange={e => set("weekday", e.target.value ? Number(e.target.value) : undefined)}
+            style={selectStyle(filters.weekday !== undefined)}
+          >
+            <option value="">Día de la semana: Todos</option>
+            {WEEKDAY_ORDER.map(iso => (
+              <option key={iso} value={iso}>
+                {getWeekdayLabel(iso)}
+              </option>
+            ))}
+          </select>
 
           <select
             aria-label="Motivo final"
@@ -170,8 +210,8 @@ export function AfterHoursFilters({ filters, onChange, onClear, filterOptions, m
       }
     >
       <select aria-label="Técnico" value={filters.technician ?? ""} onChange={e => set("technician", e.target.value || undefined)} style={selectStyle(!!filters.technician)}>
-        <option value="">Técnico: Todos {filterOptions ? `(${filterOptions.tecnicos.length})` : ""}</option>
-        {(filterOptions?.tecnicos ?? []).map(t => (
+        <option value="">Técnico: Todos {technicianOptions ? `(${technicianKeys.length})` : ""}</option>
+        {technicianKeys.map(t => (
           <option key={t} value={t}>
             {t}
           </option>
@@ -179,8 +219,8 @@ export function AfterHoursFilters({ filters, onChange, onClear, filterOptions, m
       </select>
 
       <select aria-label="Cliente" value={filters.client ?? ""} onChange={e => set("client", e.target.value || undefined)} style={selectStyle(!!filters.client)}>
-        <option value="">Cliente: Todos {filterOptions ? `(${filterOptions.clientes.length})` : ""}</option>
-        {(filterOptions?.clientes ?? []).map(c => (
+        <option value="">Cliente: Todos {clientOptions ? `(${clientKeys.length})` : ""}</option>
+        {clientKeys.map(c => (
           <option key={c} value={c}>
             {c}
           </option>

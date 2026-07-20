@@ -9,13 +9,17 @@ export const runtime = "nodejs";
 
 // "Horas fuera de horario por técnico" - ver docs/AFTER_HOURS_METRICS.md.
 // ETAPA 6.6C: fuente marts.fieldbeat_working_hours_analysis_current.
+// ETAPA 6.6D: autoexcluye su propio filtro `technician` - si el usuario ya
+// seleccionó un técnico de este mismo ranking, este endpoint sigue
+// devolviendo TODOS los técnicos (nunca se auto-colapsa a 1 barra), otros
+// filtros (fecha, dataBasis, etc.) sí se siguen aplicando.
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseAfterHoursFilters(searchParams);
 
     const pusher = createParamPusher();
-    const conditions = [`w.assigned_to IS NOT NULL AND w.assigned_to != ''`, ...buildAfterHoursMartConditions(filters, "w", pusher)];
+    const conditions = [`w.assigned_to IS NOT NULL AND w.assigned_to != ''`, ...buildAfterHoursMartConditions(filters, "w", pusher, ["tecnico"])];
 
     const rows = await runQuery<GroupedAggregateQueryRow>(
       `

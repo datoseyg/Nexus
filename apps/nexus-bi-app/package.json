@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:local:setup": "node scripts/setup-local-dev-db.mjs",
+    "dev:local:teardown": "node scripts/teardown-local-dev-db.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
     "test": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --test \"test/after-hours/*.test.ts\"",
-    "test:integration": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --test \"test/after-hours/*.integration.test.ts\""
+    "test:integration": "node scripts/run-integration-tests.mjs"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",

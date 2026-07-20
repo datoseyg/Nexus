@@ -1,20 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AfterHoursHeader } from "./AfterHoursHeader";
 import { AfterHoursBanner } from "./AfterHoursBanner";
 import { AfterHoursFilters, EMPTY_FILTERS, type AfterHoursFilterState } from "./AfterHoursFilters";
 import { AfterHoursKpiSection } from "./AfterHoursKpiSection";
 import { AfterHoursEvolutionChart } from "./AfterHoursEvolutionChart";
 import { AfterHoursRankingCard } from "./AfterHoursRankingCard";
-import { AfterHoursNotYetAvailable } from "./AfterHoursNotYetAvailable";
+import { AfterHoursWeekdayChart } from "./AfterHoursWeekdayChart";
+import { AfterHoursWeekdayHourHeatmap } from "./AfterHoursWeekdayHourHeatmap";
+import { AfterHoursTechnicianClientCard } from "./AfterHoursTechnicianClientCard";
 import { AfterHoursConfidenceSection } from "./AfterHoursConfidenceSection";
+import { AfterHoursEmptyBlock } from "./AfterHoursEmptyBlock";
 import { AfterHoursDetailTable, type DetailSortColumn, type DetailSortDir } from "./AfterHoursDetailTable";
 import { AfterHoursDrawer } from "./AfterHoursDrawer";
+import { useAfterHoursSection } from "@/lib/use-after-hours-section";
+import { buildAfterHoursQuery } from "@/lib/after-hours-query";
+import { isTechnicianClientResponseEmpty, isWeekdayHourResponseEmpty, isWeekdayResponseEmpty } from "@/lib/after-hours-weekday-view";
 import type {
   AfterHoursByDimensionRow,
+  AfterHoursByWeekdayResponse,
   AfterHoursDetailRow,
   AfterHoursSummary,
+  AfterHoursTechnicianClientResponse,
+  AfterHoursWeekdayHourResponse,
   ConfidenceDistributionResponse
 } from "@/types/after-hours";
 
@@ -26,25 +35,28 @@ const PAGE_SIZE = 20;
 // sus mockups al tema claro, no define variante oscura de esta paleta).
 const SHELL_STYLE = { background: "var(--nx-page-bg)", boxShadow: "var(--nx-shadow-shell)" } as React.CSSProperties;
 
-function toQuery(filters: AfterHoursFilterState, extra: Record<string, string | number | undefined> = {}): string {
-  const search = new URLSearchParams();
-  const entries: Record<string, string | undefined> = {
-    client: filters.client,
-    technician: filters.technician,
-    taskType: filters.taskType,
-    from: filters.from,
-    to: filters.to,
-    dataBasis: filters.dataBasis,
-    confidenceLevel: filters.confidenceLevel,
-    onlyAfterHours: filters.onlyAfterHours ? "true" : undefined,
-    onlyLowConfidence: filters.onlyLowConfidence ? "true" : undefined,
-    fallbackUsed: filters.fallbackUsed ? "true" : undefined,
-    coverageReasonCode: filters.coverageReasonCode,
-    contractualReasonCode: filters.contractualReasonCode
-  };
-  for (const [key, value] of Object.entries(entries)) if (value) search.set(key, value);
-  for (const [key, value] of Object.entries(extra)) if (value !== undefined) search.set(key, String(value));
-  return search.toString();
+// Predicados "vacío" - definidos a nivel de módulo (nunca inline en el
+// render) para que useAfterHoursSection() no dispare un refetch espurio
+// por recibir una identidad de función distinta en cada render.
+function isByDimensionEmpty(body: { rows: AfterHoursByDimensionRow[] }): boolean {
+  return body.rows.length === 0;
+}
+function isSummaryEmpty(body: AfterHoursSummary): boolean {
+  return body.total_tasks === 0;
+}
+function isConfidenceDistributionEmpty(body: ConfidenceDistributionResponse): boolean {
+  return body.rows.every(r => r.task_count === 0) && body.noneWithoutScore === 0;
+}
+function isDetailEmpty(body: { rows: AfterHoursDetailRow[] }): boolean {
+  return body.rows.length === 0;
+}
+
+interface DetailResponse {
+  rows: AfterHoursDetailRow[];
+  page: number;
+  pageSize: number;
+  totalRows: number;
+  totalPages: number;
 }
 
 function formatRangeLabel(filters: AfterHoursFilterState): string {
@@ -57,78 +69,58 @@ function formatRangeLabel(filters: AfterHoursFilterState): string {
 // Orquestador de /dashboard/after-hours (ETAPA 6.6D) - reconstrucción
 // fiel de docs/design-revolution/Claude-Designs/
 // Nexus - Trabajo Fuera de Horario.dc.html sobre datos reales de ETAPA
-// 6.6C. El sidebar vive en components/layout/AppShell.tsx (global, no se
-// duplica acá) - este componente solo reproduce el ÁREA DE CONTENIDO del
-// prototipo (franja blanca de header + cuerpo con padding), igual que
-// components/dashboard/DashboardShell.tsx hace para /dashboard/operacional.
+// 6.6C, completada en ETAPA 6.6D con día de la semana / cruce día×hora /
+// técnico×cliente. El sidebar vive en components/layout/AppShell.tsx
+// (global, no se duplica acá) - este componente solo reproduce el ÁREA DE
+// CONTENIDO del prototipo (franja blanca de header + cuerpo con padding),
+// igual que components/dashboard/DashboardShell.tsx hace para
+// /dashboard/operacional.
+//
+// Cada bloque tiene su PROPIO ciclo de fetch (useAfterHoursSection) en vez
+// de un Promise.all/allSettled compartido: una sección que falla nunca
+// bloquea a las demás, cada una permite reintento local, y ninguna puede
+// aplicar una respuesta obsoleta tras un cambio de filtro (ver
+// lib/use-after-hours-section.ts).
 export function AfterHoursShell() {
   const [filters, setFilters] = useState<AfterHoursFilterState>(EMPTY_FILTERS);
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
 
-  const [summary, setSummary] = useState<AfterHoursSummary | null>(null);
-  const [byPeriod, setByPeriod] = useState<AfterHoursByDimensionRow[]>([]);
-  const [byTechnician, setByTechnician] = useState<AfterHoursByDimensionRow[]>([]);
-  const [byClient, setByClient] = useState<AfterHoursByDimensionRow[]>([]);
-  const [byTaskType, setByTaskType] = useState<AfterHoursByDimensionRow[]>([]);
-  const [confidenceDistribution, setConfidenceDistribution] = useState<ConfidenceDistributionResponse | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-
-  const [detailRows, setDetailRows] = useState<AfterHoursDetailRow[]>([]);
   const [detailPage, setDetailPage] = useState(1);
-  const [detailTotalPages, setDetailTotalPages] = useState(1);
-  const [detailTotalRows, setDetailTotalRows] = useState(0);
-  const [detailLoading, setDetailLoading] = useState(true);
-  const [detailError, setDetailError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<DetailSortColumn>("start_time");
   const [sortDir, setSortDir] = useState<DetailSortDir>("desc");
-
   const [selectedRow, setSelectedRow] = useState<AfterHoursDetailRow | null>(null);
 
-  useEffect(() => {
-    setDetailPage(1);
-  }, [filters]);
+  const filtersQuery = useMemo(() => buildAfterHoursQuery(filters), [filters]);
+  const detailQuery = useMemo(
+    () => buildAfterHoursQuery(filters, { page: detailPage, pageSize: PAGE_SIZE, sortBy, sortDir }),
+    [filters, detailPage, sortBy, sortDir]
+  );
 
-  useEffect(() => {
-    const query = toQuery(filters);
-    setSummaryLoading(true);
-
-    Promise.all([
-      fetch(`/api/dashboard/after-hours/summary?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-period?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-technician?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-client?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/by-task-type?${query}`).then(res => res.json()),
-      fetch(`/api/dashboard/after-hours/confidence-distribution?${query}`).then(res => res.json())
-    ])
-      .then(([summaryBody, periodBody, technicianBody, clientBody, taskTypeBody, confidenceBody]) => {
-        setSummary(summaryBody);
-        setByPeriod(periodBody.rows ?? []);
-        setByTechnician(technicianBody.rows ?? []);
-        setByClient(clientBody.rows ?? []);
-        setByTaskType(taskTypeBody.rows ?? []);
-        setConfidenceDistribution(confidenceBody);
-      })
-      .finally(() => setSummaryLoading(false));
-  }, [filters]);
-
-  useEffect(() => {
-    const query = toQuery(filters, { page: detailPage, pageSize: PAGE_SIZE, sortBy, sortDir });
-    setDetailLoading(true);
-    setDetailError(null);
-
-    fetch(`/api/dashboard/after-hours/detail?${query}`)
-      .then(async res => {
-        const body = await res.json();
-        if (!res.ok) throw body;
-        setDetailRows(body.rows ?? []);
-        setDetailTotalPages(body.totalPages ?? 1);
-        setDetailTotalRows(body.totalRows ?? 0);
-      })
-      .catch(body => setDetailError(body?.error ?? "Error desconocido"))
-      .finally(() => setDetailLoading(false));
-  }, [filters, detailPage, sortBy, sortDir]);
+  const summary = useAfterHoursSection<AfterHoursSummary>("/api/dashboard/after-hours/summary", filtersQuery, isSummaryEmpty);
+  const byPeriod = useAfterHoursSection<{ rows: AfterHoursByDimensionRow[] }>("/api/dashboard/after-hours/by-period", filtersQuery, isByDimensionEmpty);
+  const byTechnician = useAfterHoursSection<{ rows: AfterHoursByDimensionRow[] }>("/api/dashboard/after-hours/by-technician", filtersQuery, isByDimensionEmpty);
+  const byClient = useAfterHoursSection<{ rows: AfterHoursByDimensionRow[] }>("/api/dashboard/after-hours/by-client", filtersQuery, isByDimensionEmpty);
+  const byTaskType = useAfterHoursSection<{ rows: AfterHoursByDimensionRow[] }>("/api/dashboard/after-hours/by-task-type", filtersQuery, isByDimensionEmpty);
+  const confidenceDistribution = useAfterHoursSection<ConfidenceDistributionResponse>(
+    "/api/dashboard/after-hours/confidence-distribution",
+    filtersQuery,
+    isConfidenceDistributionEmpty
+  );
+  const byWeekday = useAfterHoursSection<AfterHoursByWeekdayResponse>("/api/dashboard/after-hours/by-weekday", filtersQuery, isWeekdayResponseEmpty);
+  const weekdayHour = useAfterHoursSection<AfterHoursWeekdayHourResponse>("/api/dashboard/after-hours/weekday-hour", filtersQuery, isWeekdayHourResponseEmpty);
+  const technicianClient = useAfterHoursSection<AfterHoursTechnicianClientResponse>(
+    "/api/dashboard/after-hours/technician-client",
+    filtersQuery,
+    isTechnicianClientResponseEmpty
+  );
+  const detail = useAfterHoursSection<DetailResponse>("/api/dashboard/after-hours/detail", detailQuery, isDetailEmpty);
 
   const rangeLabel = useMemo(() => formatRangeLabel(filters), [filters]);
+
+  function handleFiltersChange(next: AfterHoursFilterState) {
+    setFilters(next);
+    setDetailPage(1);
+  }
 
   function handleSortChange(column: DetailSortColumn) {
     if (column === sortBy) {
@@ -139,6 +131,43 @@ export function AfterHoursShell() {
     }
   }
 
+  // Toggle simple (técnico/cliente/tipo de tarea/día de la semana) - mismo
+  // idioma que OperationalDashboardTab.tsx::toggleFilter: click de nuevo
+  // sobre el mismo valor lo quita.
+  function toggleSimple<K extends keyof AfterHoursFilterState>(key: K, value: AfterHoursFilterState[K]) {
+    setFilters(prev => ({ ...prev, [key]: prev[key] === value ? undefined : value }));
+    setDetailPage(1);
+  }
+
+  function handleWeekdaySelect(row: AfterHoursByDimensionRow) {
+    toggleSimple("weekday", Number(row.key));
+  }
+
+  // Selección compuesta día+hora (heatmap) - una sola acción aplica o
+  // limpia AMBOS campos a la vez, porque `hour` solo existe en esta UI
+  // como resultado de esta interacción.
+  function handleHeatmapSelect(weekday: number, hour: number) {
+    setFilters(prev => (prev.weekday === weekday && prev.hour === hour ? { ...prev, weekday: undefined, hour: undefined } : { ...prev, weekday, hour }));
+    setDetailPage(1);
+  }
+  function handleHeatmapClear() {
+    setFilters(prev => ({ ...prev, weekday: undefined, hour: undefined }));
+    setDetailPage(1);
+  }
+
+  // Selección compuesta técnico+cliente (par del ranking) - ambos se
+  // aplican/limpian juntos con esta interacción específica, pero technician
+  // y client SIGUEN siendo dos filtros independientes en el resto de la UI
+  // (no se fusiona un chip global único - ver AfterHoursFilters).
+  function handleTechnicianClientSelect(row: AfterHoursByDimensionRow) {
+    setFilters(prev =>
+      prev.technician === row.key && prev.client === (row.extra ?? undefined)
+        ? { ...prev, technician: undefined, client: undefined }
+        : { ...prev, technician: row.key, client: row.extra ?? undefined }
+    );
+    setDetailPage(1);
+  }
+
   return (
     <div className="overflow-hidden rounded-[var(--nx-radius-shell)]" style={SHELL_STYLE}>
       <div className="p-5 sm:p-7" style={{ background: "var(--nx-card-bg)", borderBottom: "1px solid var(--nx-border)" }}>
@@ -146,21 +175,30 @@ export function AfterHoursShell() {
       </div>
 
       <div className="p-4 sm:p-7">
-        <AfterHoursBanner fallbackTasks={summary?.fallback_tasks ?? 0} calculableTasks={summary?.calculable_tasks ?? 0} />
+        <AfterHoursBanner fallbackTasks={summary.data?.fallback_tasks ?? 0} calculableTasks={summary.data?.calculable_tasks ?? 0} />
 
         <div className="mb-4.5">
           <AfterHoursFilters
             filters={filters}
-            onChange={setFilters}
-            onClear={() => setFilters(EMPTY_FILTERS)}
-            filterOptions={summary?.filterOptions ?? null}
+            onChange={handleFiltersChange}
+            onClear={() => {
+              setFilters(EMPTY_FILTERS);
+              setDetailPage(1);
+            }}
+            filterOptions={summary.data?.filterOptions ?? null}
+            technicianOptions={byTechnician.data?.rows ?? null}
+            clientOptions={byClient.data?.rows ?? null}
             moreFiltersOpen={moreFiltersOpen}
             onToggleMoreFilters={() => setMoreFiltersOpen(v => !v)}
           />
         </div>
 
-        {summary && !summaryLoading ? (
-          <AfterHoursKpiSection summary={summary} />
+        {summary.status === "error" ? (
+          <div className="mb-6">
+            <AfterHoursEmptyBlock tone="error" title="No se pudieron cargar los indicadores" description={summary.error ?? "Intenta nuevamente en unos minutos."} onRetry={summary.retry} />
+          </div>
+        ) : summary.data ? (
+          <AfterHoursKpiSection summary={summary.data} />
         ) : (
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -170,19 +208,27 @@ export function AfterHoursShell() {
         )}
 
         <div className="mb-4">
-          <AfterHoursEvolutionChart rows={byPeriod} />
+          <AfterHoursEvolutionChart rows={byPeriod.data?.rows ?? []} status={byPeriod.status} error={byPeriod.error} onRetry={byPeriod.retry} />
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-3.5 lg:grid-cols-[1fr_1.2fr]">
-          <AfterHoursNotYetAvailable
-            question="¿Qué días concentran más actividad?"
-            subtitle="Distribución por día de la semana"
-            reason="Requiere una futura API con agregación por día de la semana - no implementada en ETAPA 6.6C."
+          <AfterHoursWeekdayChart
+            rows={byWeekday.data?.rows ?? []}
+            status={byWeekday.status}
+            error={byWeekday.error}
+            onRetry={byWeekday.retry}
+            onSelect={handleWeekdaySelect}
+            selectedWeekday={filters.weekday ?? null}
           />
-          <AfterHoursNotYetAvailable
-            question="¿En qué días y horas se concentra?"
-            subtitle="Cruce de día y hora"
-            reason="Requiere una futura API con agregación por día y hora - no implementada en ETAPA 6.6C."
+          <AfterHoursWeekdayHourHeatmap
+            cells={weekdayHour.data?.cells ?? []}
+            status={weekdayHour.status}
+            error={weekdayHour.error}
+            onRetry={weekdayHour.retry}
+            onSelect={handleHeatmapSelect}
+            onClear={handleHeatmapClear}
+            selectedWeekday={filters.weekday ?? null}
+            selectedHour={filters.hour ?? null}
           />
         </div>
 
@@ -192,32 +238,53 @@ export function AfterHoursShell() {
         <div className="mb-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
           <AfterHoursRankingCard
             question="¿Qué técnicos registran más actividad?"
-            subtitle={summary ? `${summary.filterOptions.tecnicos.length} técnicos identificados` : "Cargando…"}
-            rows={byTechnician}
+            subtitle={summary.data ? `${summary.data.distinct_technicians} técnicos identificados` : "Cargando…"}
+            rows={byTechnician.data?.rows ?? []}
+            status={byTechnician.status}
+            error={byTechnician.error}
+            onRetry={byTechnician.retry}
+            onSelect={row => toggleSimple("technician", row.key)}
+            selectedKey={filters.technician ?? null}
           />
           <AfterHoursRankingCard
             question="¿Qué clientes concentran más actividad?"
-            subtitle={summary ? `${summary.filterOptions.clientes.length} clientes identificados` : "Cargando…"}
-            rows={byClient}
+            subtitle={summary.data ? `${summary.data.distinct_clients} clientes identificados` : "Cargando…"}
+            rows={byClient.data?.rows ?? []}
+            status={byClient.status}
+            error={byClient.error}
+            onRetry={byClient.retry}
+            onSelect={row => toggleSimple("client", row.key)}
+            selectedKey={filters.client ?? null}
           />
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
           <AfterHoursRankingCard
             question="¿Qué tipos de tarea predominan?"
-            subtitle={summary ? `${summary.filterOptions.tiposTarea.length} categorías confirmadas` : "Cargando…"}
-            rows={byTaskType}
+            subtitle={summary.data ? `${summary.data.filterOptions.tiposTarea.length} categorías confirmadas` : "Cargando…"}
+            rows={byTaskType.data?.rows ?? []}
+            status={byTaskType.status}
+            error={byTaskType.error}
+            onRetry={byTaskType.retry}
+            onSelect={row => toggleSimple("taskType", row.key)}
+            selectedKey={filters.taskType ?? null}
           />
-          <AfterHoursNotYetAvailable
-            question="¿Cómo se relacionan técnicos y clientes?"
-            subtitle="Actividad cruzada"
-            reason="Requiere una futura API de agregación técnico×cliente - hoy exigiría una llamada por fila, fuera de alcance de esta etapa."
+          <AfterHoursTechnicianClientCard
+            data={technicianClient.data}
+            status={technicianClient.status}
+            error={technicianClient.error}
+            onRetry={technicianClient.retry}
+            onSelect={handleTechnicianClientSelect}
+            selectedTechnician={filters.technician ?? null}
+            selectedClient={filters.client ?? null}
           />
         </div>
 
         <div className="mb-4">
-          {summary ? (
-            <AfterHoursConfidenceSection summary={summary} distribution={confidenceDistribution} />
+          {confidenceDistribution.status === "error" ? (
+            <AfterHoursEmptyBlock tone="error" title="No se pudo cargar la sección de confianza" description={confidenceDistribution.error ?? "Intenta nuevamente en unos minutos."} onRetry={confidenceDistribution.retry} />
+          ) : summary.data ? (
+            <AfterHoursConfidenceSection summary={summary.data} distribution={confidenceDistribution.data} />
           ) : (
             <div className="h-[260px] rounded-[var(--nx-radius-card)]" style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }} />
           )}
@@ -227,13 +294,13 @@ export function AfterHoursShell() {
           Detalle
         </div>
         <AfterHoursDetailTable
-          rows={detailRows}
-          loading={detailLoading}
-          error={detailError}
+          rows={detail.data?.rows ?? []}
+          loading={detail.status === "loading"}
+          error={detail.status === "error" ? (detail.error ?? "Error desconocido") : null}
           page={detailPage}
           pageSize={PAGE_SIZE}
-          totalRows={detailTotalRows}
-          totalPages={detailTotalPages}
+          totalRows={detail.data?.totalRows ?? 0}
+          totalPages={detail.data?.totalPages ?? 1}
           onPageChange={setDetailPage}
           sortBy={sortBy}
           sortDir={sortDir}

@@ -3,6 +3,8 @@ interface AfterHoursEmptyBlockProps {
   description?: string;
   layout?: "row" | "column";
   tone?: "pending" | "error";
+  onRetry?: () => void;
+  retryLabel?: string;
 }
 
 // Bloque "sin datos todavía" con borde punteado - patrón repetido en cada
@@ -12,7 +14,7 @@ interface AfterHoursEmptyBlockProps {
 // confianza); `layout="column"` para bloques angostos en grilla 2×2
 // (rankings, tipo de tarea). Nunca oculta la tarjeta contenedora ni
 // colapsa la grilla - el padre siempre reserva el mismo espacio.
-export function AfterHoursEmptyBlock({ title, description, layout = "row", tone = "pending" }: AfterHoursEmptyBlockProps) {
+export function AfterHoursEmptyBlock({ title, description, layout = "row", tone = "pending", onRetry, retryLabel = "Reintentar" }: AfterHoursEmptyBlockProps) {
   const isRow = layout === "row";
   const stroke = tone === "error" ? "#c0392b" : "#a7abc4";
 
@@ -41,6 +43,16 @@ export function AfterHoursEmptyBlock({ title, description, layout = "row", tone 
           <div className="text-[13px]" style={{ color: "var(--nx-text-muted)" }}>
             {description}
           </div>
+        )}
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-2 rounded-[var(--nx-radius-button)] px-3 py-1.5 text-[13px] font-semibold"
+            style={{ color: "var(--nx-accent-indigo)", border: "1px solid var(--nx-border)", background: "var(--nx-card-bg)" }}
+          >
+            {retryLabel}
+          </button>
         )}
       </div>
     </div>

@@ -111,3 +111,29 @@ test("buildFilterChips: todos los campos activos a la vez producen 10 chips (uno
   });
   assert.equal(chips.length, 10);
 });
+
+// === weekday/hour (ETAPA 6.6D) ===
+
+test("buildFilterChips: weekday solo (seteado desde el gráfico de día de la semana, sin hour) -> 1 chip 'Día: X'", () => {
+  const chips = buildFilterChips({ weekday: 3 });
+  assert.deepEqual(chips.map(c => c.id), ["weekday"]);
+  assert.equal(chips[0].label, "Día: Miércoles");
+});
+
+test("buildFilterChips: weekday+hour (seteados juntos desde el heatmap) -> UN SOLO chip compuesto, no dos", () => {
+  const chips = buildFilterChips({ weekday: 1, hour: 14 });
+  assert.deepEqual(chips.map(c => c.id), ["weekdayHour"]);
+  assert.ok(chips[0].label.includes("Lunes"));
+  assert.ok(chips[0].label.includes("14:00"));
+});
+
+test("buildFilterChips: hour=0 (medianoche) SÍ genera el chip compuesto - nunca se trata como ausente por ser falsy", () => {
+  const chips = buildFilterChips({ weekday: 2, hour: 0 });
+  assert.deepEqual(chips.map(c => c.id), ["weekdayHour"]);
+  assert.ok(chips[0].label.includes("00:00"));
+});
+
+test("buildFilterChips: technician+client seteados a la vez (selección de un par en el ranking) siguen siendo DOS chips independientes, nunca fusionados", () => {
+  const chips = buildFilterChips({ technician: "tech1", client: "Cliente X" });
+  assert.deepEqual(chips.map(c => c.id).sort(), ["client", "technician"]);
+});

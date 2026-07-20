@@ -11,13 +11,14 @@ export const runtime = "nodejs";
 // ETAPA 6.6C: fuente marts.fieldbeat_working_hours_analysis_current;
 // poblaciones (total/calculable/contractual/legacy/none/fallback) y tasa
 // SUM/SUM centralizadas en lib/after-hours-metrics.ts (§9/§13).
+// ETAPA 6.6D: autoexcluye su propio filtro `client` (ver by-technician).
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseAfterHoursFilters(searchParams);
 
     const pusher = createParamPusher();
-    const conditions = [`w.client_name IS NOT NULL AND w.client_name != ''`, ...buildAfterHoursMartConditions(filters, "w", pusher)];
+    const conditions = [`w.client_name IS NOT NULL AND w.client_name != ''`, ...buildAfterHoursMartConditions(filters, "w", pusher, ["cliente"])];
 
     const rows = await runQuery<GroupedAggregateQueryRow & { client_rut: string | null }>(
       `

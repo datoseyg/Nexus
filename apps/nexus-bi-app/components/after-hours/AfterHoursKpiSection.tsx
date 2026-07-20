@@ -29,8 +29,8 @@ export function AfterHoursKpiSection({ summary }: AfterHoursKpiSectionProps) {
         <AfterHoursKpiTile label="Tareas analizadas" value={formatInt(summary.total_tasks)} />
         <AfterHoursKpiTile label="Tareas fuera de horario" value={formatInt(summary.kpis.tasksWithAfterHours.value)} />
         <AfterHoursKpiTile label="Horas fuera de horario" value={formatHours(summary.kpis.afterHoursHours.value)} />
-        <AfterHoursKpiTile label="Técnicos involucrados" value={formatInt(summary.filterOptions.tecnicos.length)} accentColor="var(--nx-accent-indigo)" />
-        <AfterHoursKpiTile label="Clientes involucrados" value={formatInt(summary.filterOptions.clientes.length)} accentColor="var(--nx-accent-purple)" />
+        <AfterHoursKpiTile label="Técnicos involucrados" value={formatInt(summary.distinct_technicians)} accentColor="var(--nx-accent-indigo)" />
+        <AfterHoursKpiTile label="Clientes involucrados" value={formatInt(summary.distinct_clients)} accentColor="var(--nx-accent-purple)" />
         <AfterHoursKpiTile
           label="Nivel general de confianza"
           value={

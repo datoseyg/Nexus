@@ -160,12 +160,25 @@ export interface GroupedAggregateQueryRow {
   confidence_excluded_tasks: string;
 }
 
+// Fila cruda de agregado sin la parte de identidad (key/extra) - lo que
+// comparten TODAS las agregaciones sobre groupedAggregateSelectSql(),
+// tengan una key simple (by-client/by-technician/by-task-type/by-weekday/
+// technician-client, vía mapGroupedRow) o una identidad compuesta que no
+// cabe en un string único (weekday-hour, vía mapWeekdayHourRow en
+// lib/after-hours-weekday-view.ts). Extraído para que ETAPA 6.6D no tenga
+// que inventarle a mapGroupedRow una key/extra ficticia solo para
+// reutilizar su aritmética (ver mapWeekdayHourRow).
+export type AggregateMetricsRow = Omit<GroupedAggregateQueryRow, "key" | "extra">;
+export type AggregateMetrics = Omit<AfterHoursByDimensionRow, "key" | "extra">;
+
 /**
- * Mapea una fila cruda del bloque groupedAggregateSelectSql() a la forma
- * de respuesta pública AfterHoursByDimensionRow - centraliza el redondeo y
- * las conversiones de tipo, usado por los mismos 4 endpoints.
+ * Aritmética compartida de redondeo/conversión de un bloque
+ * groupedAggregateSelectSql() - centraliza minutos->horas, tasa SUM/SUM y
+ * el mapeo de confianza ponderada. Nunca se llama directamente desde un
+ * route.ts; siempre a través de mapGroupedRow() (identidad simple) o de un
+ * mapper con identidad propia como mapWeekdayHourRow().
  */
-export function mapGroupedRow(row: GroupedAggregateQueryRow): AfterHoursByDimensionRow {
+export function mapAggregateMetrics(row: AggregateMetricsRow): AggregateMetrics {
   const totalMinutes = Number(row.total_minutes ?? 0);
   const afterHoursMinutes = Number(row.after_hours_minutes ?? 0);
   const businessMinutes = row.business_minutes !== null ? Number(row.business_minutes) : 0;
@@ -174,8 +187,6 @@ export function mapGroupedRow(row: GroupedAggregateQueryRow): AfterHoursByDimens
   const totalTasks = Number(row.total_tasks ?? 0);
 
   return {
-    key: row.key,
-    extra: row.extra ?? null,
     total_tasks: totalTasks,
     calculable_tasks: Number(row.calculable_tasks ?? 0),
     not_calculable_tasks: Number(row.not_calculable_tasks ?? 0),
@@ -196,6 +207,22 @@ export function mapGroupedRow(row: GroupedAggregateQueryRow): AfterHoursByDimens
     average_confidence: row.confidence_weighted !== null ? confidenceWeighted : null,
     confidence_eligible_tasks: Number(row.confidence_eligible_tasks ?? 0),
     confidence_excluded_tasks: Number(row.confidence_excluded_tasks ?? 0)
+  };
+}
+
+/**
+ * Mapea una fila cruda del bloque groupedAggregateSelectSql() a la forma
+ * de respuesta pública AfterHoursByDimensionRow - centraliza el redondeo y
+ * las conversiones de tipo, usado por los endpoints con identidad simple
+ * (by-client, by-period, by-task-type, by-technician, by-weekday,
+ * technician-client - éste último con key=técnico/extra=cliente, mismo
+ * patrón que by-client con key=cliente/extra=rut).
+ */
+export function mapGroupedRow(row: GroupedAggregateQueryRow): AfterHoursByDimensionRow {
+  return {
+    key: row.key,
+    extra: row.extra ?? null,
+    ...mapAggregateMetrics(row)
   };
 }
 

@@ -17,6 +17,12 @@ export const TABLES = [
   { schema: "processed", table: "fieldbeat_clients", csv: "data/processed/fieldbeat/DIM_Clients.csv" },
   { schema: "processed", table: "fieldbeat_equipments", csv: "data/processed/fieldbeat/DIM_Equipments.csv" },
   { schema: "processed", table: "fieldbeat_task_equipments", csv: "data/processed/fieldbeat/DB_FieldBeat_Task_Equipments.csv" },
+  // ETAPA cierre BDD - gap de configuración documentado en
+  // docs/TECH_DEBT_UNREPRODUCIBLE_TABLES.md: generador CSV real ya existe,
+  // solo faltaba esta línea para que ownership-manifest.js la clasifique
+  // DUCKDB_SYNC y migrate-to-supabase.js la sincronice (la consultan
+  // src/working-hours/db-writer.js y build-working-hours.js contra Postgres real).
+  { schema: "processed", table: "fieldbeat_report_fields", csv: "data/processed/fieldbeat/DB_FieldBeat_Report_Fields.csv" },
   { schema: "processed", table: "zendesk_ticket_tags", csv: "data/processed/zendesk/DB_Zendesk_Ticket_Tags.csv" },
   { schema: "processed", table: "zendesk_custom_fields", csv: "data/processed/zendesk/DB_Zendesk_Custom_Fields.csv" },
   { schema: "processed", table: "dolibarr_product_identity_map", csv: "data/processed/dolibarr/DIM_Dolibarr_Product_Identity_Map.csv" },

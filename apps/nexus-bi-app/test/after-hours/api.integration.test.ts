@@ -14,7 +14,16 @@ import { assertDisposableTarget, printConnectionPreflight } from "../../../../sr
 const TEST_DB_URL = process.env.AFTER_HOURS_TEST_DATABASE_URL;
 const TEST_RUN_ID = process.env.AFTER_HOURS_TEST_RUN_ID;
 const SUITE_ID = "after-hours-api-test";
-if (TEST_DB_URL) process.env.SUPABASE_DB_URL = TEST_DB_URL;
+// ETAPA 6.6D-V - este archivo siempre apunta a un Postgres local desechable
+// (nunca a un host remoto, por diseño del propio guard SAFETY-1 de arriba)
+// -DATABASE_SSL_MODE=disable es válido y necesario acá para que las rutas
+// bajo prueba (vía lib/db.ts::getPool) no fuercen un handshake SSL contra
+// un Postgres desechable recién creado, que no trae SSL habilitado por
+// defecto. Ver lib/db.ts para el contrato completo.
+if (TEST_DB_URL) {
+  process.env.SUPABASE_DB_URL = TEST_DB_URL;
+  process.env.DATABASE_SSL_MODE = "disable";
+}
 
 const { Pool } = pg;
 let adminPool: pg.Pool;
@@ -32,7 +41,7 @@ before(async () => {
     throw new Error(`Falta AFTER_HOURS_TEST_RUN_ID -requerido junto con AFTER_HOURS_TEST_DATABASE_URL (ver scripts/bootstrap-disposable-postgres.mjs, ETAPA SAFETY-1).`);
   }
   printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
-  adminPool = new Pool({ connectionString: TEST_DB_URL, ssl: { rejectUnauthorized: false }, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
+  adminPool = new Pool({ connectionString: TEST_DB_URL, ssl: false, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
   await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
 
   const runRes = await adminPool.query(`INSERT INTO audit.pipeline_runs (stage, status) VALUES ('after-hours-api-test', 'SUCCESS') RETURNING run_id`);
@@ -221,6 +230,71 @@ test("summary: filtro dataBasis=CONTRACTUAL acota correctamente", { skip: !TEST_
   const body = await res.json();
   assert.equal(body.total_tasks, 1);
   assert.equal(body.contractual_tasks, 1);
+});
+
+// ETAPA 6.6D-FIX-1 - distinct_technicians/distinct_clients: universo
+// FILTRADO real (COUNT DISTINCT NULLIF(BTRIM(...),'')), nunca el catálogo
+// global de filterOptions.tecnicos/clientes.length (bug original: quedaban
+// fijos en 19/26 sin importar el filtro de fecha). Fixture: tech1 aparece
+// en 800001/800003/800005 (3 clientes distintos), tech2 en 800002/800004 (2
+// tareas, comparten... en realidad cada task_id tiene su propio
+// client_name distinto - ver seed arriba) -> sin filtros: 2 técnicos, 5 clientes.
+test("summary: distinct_technicians/distinct_clients sin filtros reflejan el universo real (2 técnicos, 5 clientes)", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/summary/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/summary"));
+  const body = await res.json();
+  assert.equal(body.distinct_technicians, 2);
+  assert.equal(body.distinct_clients, 5);
+});
+
+test("summary: distinct_technicians/distinct_clients con rango de fechas sin tareas -> ambos 0 (nunca el catálogo global)", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/summary/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/summary", { from: "2026-09-01", to: "2026-09-30" }));
+  const body = await res.json();
+  assert.equal(body.total_tasks, 0);
+  assert.equal(body.distinct_technicians, 0);
+  assert.equal(body.distinct_clients, 0);
+});
+
+test("summary: distinct_technicians/distinct_clients con technician=tech1 -> 1 técnico, 3 clientes (universo acotado por tech1)", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/summary/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/summary", { technician: "tech1" }));
+  const body = await res.json();
+  assert.equal(body.distinct_technicians, 1);
+  assert.equal(body.distinct_clients, 3); // Cliente Contractual, Cliente NoneTerminal, Cliente LegacyMartFallback
+});
+
+test("summary: distinct_technicians/distinct_clients con client=Cliente Legacy -> 1 cliente, 1 técnico (tech2)", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/summary/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/summary", { client: "Cliente Legacy" }));
+  const body = await res.json();
+  assert.equal(body.distinct_clients, 1);
+  assert.equal(body.distinct_technicians, 1);
+});
+
+test("by-technician: rango de fechas sin tareas -> rows.length = 0 (el filtro de fecha SÍ se aplica, no solo la autoexclusión)", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/by-technician/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/by-technician", { from: "2026-09-01", to: "2026-09-30" }));
+  const body = await res.json();
+  assert.equal(body.rows.length, 0);
+});
+
+test("by-client: rango de fechas sin tareas -> rows.length = 0 (el filtro de fecha SÍ se aplica, no solo la autoexclusión)", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/by-client/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/by-client", { from: "2026-09-01", to: "2026-09-30" }));
+  const body = await res.json();
+  assert.equal(body.rows.length, 0);
+});
+
+test("by-technician: rango de fechas CON tareas + technician=tech1 activo -> autoexclusión conserva tech2, pero fecha sigue acotando", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/by-technician/route.ts");
+  const withData = await GET(req("/api/dashboard/after-hours/by-technician", { from: "2026-08-01", to: "2026-08-31", technician: "tech1" }));
+  const bodyWithData = await withData.json();
+  assert.equal(bodyWithData.rows.length, 2); // tech1 Y tech2 (autoexclusión), ambos con tareas en agosto
+
+  const withoutData = await GET(req("/api/dashboard/after-hours/by-technician", { from: "2026-09-01", to: "2026-09-30", technician: "tech1" }));
+  const bodyWithoutData = await withoutData.json();
+  assert.equal(bodyWithoutData.rows.length, 0); // ninguno tiene tareas en septiembre, autoexclusión no "rescata" la fecha
 });
 
 test("by-client: agrupa correctamente, tasa SUM/SUM (no promedio por fila)", { skip: !TEST_DB_URL }, async () => {

@@ -97,6 +97,19 @@
   --nx-accent-green-light: #2a8a5a;
   --nx-accent-purple: #8b4fd1;
 
+  /* Rampa secuencial del heatmap día×hora (ETAPA 6.6D) - un solo hue
+     (--nx-accent-indigo), monótona en opacidad sobre --nx-card-bg (nunca
+     un hue nuevo ni un arcoíris categórico - "0" es transparente = sin
+     actividad, "5" es la intensidad máxima). El color nunca es el único
+     canal de información: cada celda del heatmap lleva además su valor
+     real en aria-label/title. */
+  --nx-heat-0: transparent;
+  --nx-heat-1: rgba(74, 85, 212, 0.12);
+  --nx-heat-2: rgba(74, 85, 212, 0.28);
+  --nx-heat-3: rgba(74, 85, 212, 0.46);
+  --nx-heat-4: rgba(74, 85, 212, 0.66);
+  --nx-heat-5: rgba(74, 85, 212, 0.88);
+
   /* Semánticos - triple fondo/borde/texto solo donde está evidenciado en
      los mockups (warning, en los banners "Diseño deseado"/"Análisis
      estimado"); los demás solo aportan el color de texto/ícono evidenciado,

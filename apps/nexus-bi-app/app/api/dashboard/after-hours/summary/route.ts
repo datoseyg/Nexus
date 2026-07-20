@@ -80,6 +80,8 @@ export async function GET(request: NextRequest) {
       after_hours_task_confidence_avg: number | string | null;
       confidence_eligible_tasks: string;
       confidence_excluded_tasks: string;
+      distinct_technicians: string;
+      distinct_clients: string;
     }>(
       `
       SELECT
@@ -91,7 +93,9 @@ export async function GET(request: NextRequest) {
         ${confidenceWeightedSql} AS hours_confidence_weighted,
         AVG(w.confidence_score) FILTER (WHERE w.data_basis IN ('CONTRACTUAL', 'LEGACY_SCHEDULE') AND w.is_after_hours_task = true) AS after_hours_task_confidence_avg,
         ${eligibleCountSql} AS confidence_eligible_tasks,
-        ${excludedCountSql} AS confidence_excluded_tasks
+        ${excludedCountSql} AS confidence_excluded_tasks,
+        COUNT(DISTINCT NULLIF(BTRIM(w.assigned_to), '')) AS distinct_technicians,
+        COUNT(DISTINCT NULLIF(BTRIM(w.client_name), '')) AS distinct_clients
       FROM ${AFTER_HOURS_VIEW} w
       ${whereClause}
       `,
@@ -112,6 +116,8 @@ export async function GET(request: NextRequest) {
     const tasksWithAfterHours = Number(row?.tasks_with_after_hours ?? 0);
     const confidenceEligibleTasks = Number(row?.confidence_eligible_tasks ?? 0);
     const confidenceExcludedTasks = Number(row?.confidence_excluded_tasks ?? 0);
+    const distinctTechnicians = Number(row?.distinct_technicians ?? 0);
+    const distinctClients = Number(row?.distinct_clients ?? 0);
 
     const hoursConfidence = calculableTasks > 0 ? Number(row?.hours_confidence_weighted ?? 0) : 0;
     const afterHoursTaskConfidence = tasksWithAfterHours > 0 ? Number(row?.after_hours_task_confidence_avg ?? 0) : 0;
@@ -157,6 +163,8 @@ export async function GET(request: NextRequest) {
       fallback_tasks: fallbackTasks,
       confidence_eligible_tasks: confidenceEligibleTasks,
       confidence_excluded_tasks: confidenceExcludedTasks,
+      distinct_technicians: distinctTechnicians,
+      distinct_clients: distinctClients,
       filterOptions: {
         clientes: clienteRows.map(r => r.v),
         tecnicos: tecnicoRows.map(r => r.v),

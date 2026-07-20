@@ -243,6 +243,48 @@ export function getConfidenceTierLabel(tier: string | null | undefined): CodeLab
   return lookup(CONFIDENCE_TIER_LABELS, tier);
 }
 
+// === día de la semana (ETAPA 6.6D) - ISODOW (lunes=1..domingo=7), mismo
+// orden que DAY_ORDER en src/contracts/contract-fingerprint.js. Nunca el
+// DOW nativo de Postgres (domingo=0), para que la semana siempre empiece
+// en lunes tanto en SQL como en la UI. ===
+export const WEEKDAY_ORDER: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
+
+const WEEKDAY_LABELS: Record<number, string> = {
+  1: "Lunes",
+  2: "Martes",
+  3: "Miércoles",
+  4: "Jueves",
+  5: "Viernes",
+  6: "Sábado",
+  7: "Domingo"
+};
+
+const WEEKDAY_SHORT_LABELS: Record<number, string> = {
+  1: "Lun",
+  2: "Mar",
+  3: "Mié",
+  4: "Jue",
+  5: "Vie",
+  6: "Sáb",
+  7: "Dom"
+};
+
+function normalizeIsoDow(isoDow: number | string | null | undefined): number | null {
+  if (isoDow === null || isoDow === undefined) return null;
+  const n = typeof isoDow === "string" ? Number(isoDow) : isoDow;
+  return Number.isInteger(n) && n >= 1 && n <= 7 ? n : null;
+}
+
+export function getWeekdayLabel(isoDow: number | string | null | undefined): string {
+  const n = normalizeIsoDow(isoDow);
+  return n === null ? "Sin día" : WEEKDAY_LABELS[n];
+}
+
+export function getWeekdayShortLabel(isoDow: number | string | null | undefined): string {
+  const n = normalizeIsoDow(isoDow);
+  return n === null ? "N/D" : WEEKDAY_SHORT_LABELS[n];
+}
+
 /**
  * Construye el texto de "Diagnóstico" para la tabla de detalle (§11):
  * combina data_basis + fallback_used + coverage_reason_code/

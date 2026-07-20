@@ -36,12 +36,49 @@ export interface AfterHoursFilters {
   fallbackUsed?: boolean;
   coverageReasonCode?: AfterHoursCoverageReasonCode;
   contractualReasonCode?: AfterHoursContractualReasonCode;
+  // Aditivos ETAPA 6.6D - día de la semana (ISODOW 1..7) y hora del día
+  // (0..23), producidos por la interacción con el gráfico de día de la
+  // semana y el heatmap día×hora respectivamente.
+  weekday?: number;
+  hour?: number;
 }
+
+// Claves de AfterHoursFilters que buildAfterHoursMartConditions() sabe
+// excluir (ETAPA 6.6D, autoexclusión) - un endpoint agregado por dimensión
+// X pasa X acá para no auto-colapsar su propio ranking al hacer click en
+// uno de sus elementos (mismo problema ya resuelto por
+// lib/dashboard-filters.ts::buildMartIdentityConditions para el dashboard
+// operacional).
+export type AfterHoursFilterKey =
+  | "cliente"
+  | "tecnico"
+  | "tipoTarea"
+  | "from"
+  | "to"
+  | "confidenceLevel"
+  | "onlyAfterHours"
+  | "onlyLowConfidence"
+  | "dataBasis"
+  | "fallbackUsed"
+  | "coverageReasonCode"
+  | "contractualReasonCode"
+  | "weekday"
+  | "hour";
 
 function parseBooleanFlag(raw: string | null): boolean | undefined {
   if (raw === "true") return true;
   if (raw === "false") return false;
   return undefined;
+}
+
+// Mismo criterio laxo que el resto de los filtros: un valor fuera de rango
+// o no numérico se ignora silenciosamente (nunca 400). `min`/`max` inclusive.
+// OJO: el resultado puede ser 0 (hora=medianoche) - el caller NUNCA debe
+// descartar un 0 con un chequeo de truthiness, solo con `=== undefined`.
+function parseIntInRange(raw: string | null, min: number, max: number): number | undefined {
+  if (raw === null) return undefined;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= min && n <= max ? n : undefined;
 }
 
 export function parseAfterHoursFilters(searchParams: URLSearchParams): AfterHoursFilters {
@@ -71,7 +108,12 @@ export function parseAfterHoursFilters(searchParams: URLSearchParams): AfterHour
     contractualReasonCode:
       contractualReasonCodeRaw && (AFTER_HOURS_CONTRACTUAL_REASON_CODE_VALUES as string[]).includes(contractualReasonCodeRaw)
         ? (contractualReasonCodeRaw as AfterHoursContractualReasonCode)
-        : undefined
+        : undefined,
+    // Aditivos ETAPA 6.6D: weekday (ISODOW 1..7), hour (0..23). `hour=0`
+    // (medianoche) es un valor legítimo - parseIntInRange devuelve 0, nunca
+    // undefined, para ese caso.
+    weekday: parseIntInRange(searchParams.get("weekday"), 1, 7),
+    hour: parseIntInRange(searchParams.get("hour"), 0, 23)
   };
 }
 
@@ -84,23 +126,38 @@ export { createParamPusher, type ParamPusher };
 // `confidence_score < 65` con confidence_score NULL evalúa a NULL (falsy
 // en WHERE), así que las filas NULL quedan excluidas automáticamente, sin
 // necesidad de un `IS NOT NULL` explícito adicional.
-export function buildAfterHoursMartConditions(filters: AfterHoursFilters, alias: string, pusher: ParamPusher): string[] {
+/**
+ * @param exclude claves de filtro a IGNORAR al construir condiciones -
+ * autoexclusión (ETAPA 6.6D): un endpoint agregado por dimensión X pasa X
+ * acá para que seleccionar un elemento de su propio ranking no lo
+ * auto-colapse (mismo patrón que buildMartIdentityConditions en
+ * lib/dashboard-filters.ts). Default [] = comportamiento idéntico al de
+ * antes de 6.6D (regresión cubierta por test).
+ */
+export function buildAfterHoursMartConditions(filters: AfterHoursFilters, alias: string, pusher: ParamPusher, exclude: AfterHoursFilterKey[] = []): string[] {
+  const skip = new Set(exclude);
   const conditions: string[] = [];
 
-  if (filters.cliente) conditions.push(`${col(alias, "client_name")} = ${pusher.push(filters.cliente)}`);
-  if (filters.tecnico) conditions.push(`${col(alias, "assigned_to")} = ${pusher.push(filters.tecnico)}`);
-  if (filters.tipoTarea) conditions.push(`${col(alias, "task_type")} = ${pusher.push(filters.tipoTarea)}`);
-  if (filters.from) conditions.push(`CAST(${col(alias, "start_time_local")} AS DATE) >= ${pusher.push(filters.from)}::DATE`);
-  if (filters.to) conditions.push(`CAST(${col(alias, "start_time_local")} AS DATE) <= ${pusher.push(filters.to)}::DATE`);
-  if (filters.confidenceLevel) conditions.push(`${col(alias, "confidence_label")} = ${pusher.push(filters.confidenceLevel)}`);
-  if (filters.onlyAfterHours) conditions.push(`${col(alias, "is_after_hours_task")} = true`);
-  if (filters.onlyLowConfidence) conditions.push(`${col(alias, "confidence_score")} < 65`);
+  if (!skip.has("cliente") && filters.cliente) conditions.push(`${col(alias, "client_name")} = ${pusher.push(filters.cliente)}`);
+  if (!skip.has("tecnico") && filters.tecnico) conditions.push(`${col(alias, "assigned_to")} = ${pusher.push(filters.tecnico)}`);
+  if (!skip.has("tipoTarea") && filters.tipoTarea) conditions.push(`${col(alias, "task_type")} = ${pusher.push(filters.tipoTarea)}`);
+  if (!skip.has("from") && filters.from) conditions.push(`CAST(${col(alias, "start_time_local")} AS DATE) >= ${pusher.push(filters.from)}::DATE`);
+  if (!skip.has("to") && filters.to) conditions.push(`CAST(${col(alias, "start_time_local")} AS DATE) <= ${pusher.push(filters.to)}::DATE`);
+  if (!skip.has("confidenceLevel") && filters.confidenceLevel) conditions.push(`${col(alias, "confidence_label")} = ${pusher.push(filters.confidenceLevel)}`);
+  if (!skip.has("onlyAfterHours") && filters.onlyAfterHours) conditions.push(`${col(alias, "is_after_hours_task")} = true`);
+  if (!skip.has("onlyLowConfidence") && filters.onlyLowConfidence) conditions.push(`${col(alias, "confidence_score")} < 65`);
 
   // Aditivos ETAPA 6.6C:
-  if (filters.dataBasis) conditions.push(`${col(alias, "data_basis")} = ${pusher.push(filters.dataBasis)}`);
-  if (filters.fallbackUsed !== undefined) conditions.push(`${col(alias, "fallback_used")} = ${pusher.push(filters.fallbackUsed)}`);
-  if (filters.coverageReasonCode) conditions.push(`${col(alias, "coverage_reason_code")} = ${pusher.push(filters.coverageReasonCode)}`);
-  if (filters.contractualReasonCode) conditions.push(`${col(alias, "contractual_reason_code")} = ${pusher.push(filters.contractualReasonCode)}`);
+  if (!skip.has("dataBasis") && filters.dataBasis) conditions.push(`${col(alias, "data_basis")} = ${pusher.push(filters.dataBasis)}`);
+  if (!skip.has("fallbackUsed") && filters.fallbackUsed !== undefined) conditions.push(`${col(alias, "fallback_used")} = ${pusher.push(filters.fallbackUsed)}`);
+  if (!skip.has("coverageReasonCode") && filters.coverageReasonCode) conditions.push(`${col(alias, "coverage_reason_code")} = ${pusher.push(filters.coverageReasonCode)}`);
+  if (!skip.has("contractualReasonCode") && filters.contractualReasonCode) conditions.push(`${col(alias, "contractual_reason_code")} = ${pusher.push(filters.contractualReasonCode)}`);
+
+  // Aditivos ETAPA 6.6D - día de la semana / hora del día. `hour` usa
+  // `!== undefined` (nunca truthy): hour=0 (medianoche) es un valor válido
+  // que una comprobación truthy descartaría por error.
+  if (!skip.has("weekday") && filters.weekday !== undefined) conditions.push(`EXTRACT(ISODOW FROM ${col(alias, "start_time_local")}) = ${pusher.push(filters.weekday)}`);
+  if (!skip.has("hour") && filters.hour !== undefined) conditions.push(`EXTRACT(HOUR FROM ${col(alias, "start_time_local")}) = ${pusher.push(filters.hour)}`);
 
   return conditions;
 }

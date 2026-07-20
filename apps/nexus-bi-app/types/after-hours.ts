@@ -107,6 +107,13 @@ export interface MetricWithConfidence<T> {
 export interface AfterHoursSummary extends AfterHoursPopulationCounts {
   businessHoursStatus: string;
   holidaysStatus: string;
+  // ETAPA 6.6D-FIX-1 - universo FILTRADO real (COUNT DISTINCT sobre las
+  // mismas condiciones de summary, sin autoexclusión: summary aplica TODOS
+  // los filtros activos, incluidos technician/client). Nunca confundir con
+  // filterOptions.tecnicos.length/clientes.length (catálogo global, para
+  // poblar los <select>, deliberadamente sin filtrar - ver route.ts).
+  distinct_technicians: number;
+  distinct_clients: number;
   filterOptions: {
     clientes: string[];
     tecnicos: string[];
@@ -187,4 +194,52 @@ export interface ConfidenceDistributionResponse {
   rows: ConfidenceDistributionRow[];
   noneWithoutScore: number; // filas NONE sin score, reportadas aparte, nunca como "Insuficiente"
   contractResolutionDistribution: ContractResolutionDistributionRow[];
+}
+
+// === ETAPA 6.6D - día de la semana / cruce día×hora / técnico×cliente ===
+
+// Celda de weekday-hour: identidad compuesta (weekday, hour) que NUNCA se
+// codifica en un string "key" concatenado - a diferencia de
+// AfterHoursByDimensionRow (identidad simple de un único string), acá
+// weekday/hour son columnas propias, tal como las devuelve
+// mapWeekdayHourRow() en lib/after-hours-weekday-view.ts.
+export interface AfterHoursWeekdayHourCell extends AfterHoursPopulationCounts {
+  weekday: number; // ISODOW 1 (lunes) .. 7 (domingo)
+  hour: number; // 0..23
+  total_hours: number;
+  business_hours: number;
+  after_hours_total_hours: number;
+  after_hours_rate: number;
+  tasks_total: number;
+  tasks_with_after_hours: number;
+  confidence_score: number;
+  confidence_label: string;
+  average_confidence: number | null;
+  confidence_eligible_tasks: number;
+  confidence_excluded_tasks: number;
+}
+
+// `aggregationUniverseTotal`: universo de tareas bajo los mismos filtros
+// PERO con la(s) dimensión(es) autoexcluida(s) de este endpoint ignoradas
+// (ver lib/after-hours-filters.ts::AfterHoursFilterKey y el `exclude` de
+// buildAfterHoursMartConditions) - solo coincide con
+// AfterHoursSummary.total_tasks cuando ningún filtro de esa(s)
+// dimensión(es) está activo. Ver invariantes de reconciliación en cada
+// route.ts.
+export interface AfterHoursByWeekdayResponse {
+  rows: AfterHoursByDimensionRow[]; // siempre 7, orden fijo lunes->domingo, key = ISODOW como string "1".."7"
+  tasksWithoutDate: number; // tareas con start_time_local NULL, dentro del mismo universo filtrado
+  aggregationUniverseTotal: number;
+}
+
+export interface AfterHoursWeekdayHourResponse {
+  cells: AfterHoursWeekdayHourCell[]; // siempre 168 (7x24), orden row-major fijo
+  tasksWithoutDate: number;
+  aggregationUniverseTotal: number;
+}
+
+export interface AfterHoursTechnicianClientResponse {
+  rows: AfterHoursByDimensionRow[]; // key = técnico (assigned_to), extra = cliente (client_name)
+  excludedTasks: number; // técnico y/o cliente ausentes (NULL o solo espacios) - nunca se pierden ni se duplican en rows
+  aggregationUniverseTotal: number;
 }

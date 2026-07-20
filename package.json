@@ -33,6 +33,7 @@
     "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js",
     "contracts:import": "node src/contracts/import-contracts.js",
     "contracts:test": "node --test \"test/contracts/*.test.js\"",
+    "contracts:test:integration": "node --test --test-concurrency=1 \"test/contracts/*.integration.test.js\"",
     "working-hours:test": "node --test \"test/working-hours/*.test.js\"",
     "working-hours:test:integration": "node --test --test-concurrency=1 \"test/working-hours/*.integration.test.js\"",
     "working-hours:ownership:test": "node --test \"test/db/migrate-to-supabase.ownership.test.js\"",

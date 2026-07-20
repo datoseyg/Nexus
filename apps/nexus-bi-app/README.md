@@ -32,6 +32,53 @@ npm run app:dev
 - No modifica `data/raw/`, `data/processed/`, `data/marts/`, `data/gold/`, ni `data/curation/`.
 - El Explorador de Tablas no tiene edición de celdas. La Búsqueda no tiene acciones de escritura.
 
+## Desarrollo local del dashboard After-Hours (Postgres, no DuckDB)
+
+`/dashboard/after-hours` y sus 10 endpoints (`app/api/dashboard/after-hours/**`) no leen `eyg_nexus.duckdb` -leen Postgres vía `lib/db.ts` (`SUPABASE_DB_URL`). Por defecto esa variable apunta al pooler de Supabase cloud (`.env.local`, no versionado) - para desarrollar sin depender de la nube ni tocar ninguna base compartida:
+
+**1. Preparar un Postgres 16 local desechable** (una sola vez, o cuando quieras empezar de cero):
+
+```bash
+npm run dev:local:setup
+```
+
+Requiere Docker corriendo. Crea (o reutiliza) un único contenedor `nexus_bi_dev_local`, le aplica el esquema (`sql/*.sql`) y escribe `apps/nexus-bi-app/.env.development.local` con la connection string local y `DATABASE_SSL_MODE=disable` (no versionado, `.gitignore` ya lo excluye vía `.env.*.local`). Si ya existía ese archivo, lo respeta moviéndolo a `.env.development.local.previous` en vez de descartarlo.
+
+**2. Levantar Nexus** (sin cambios respecto a lo de arriba):
+
+```bash
+npm run dev
+```
+
+La base queda con el esquema aplicado pero sin datos - el dashboard mostrará KPIs en cero / estados vacíos genuinos (no "no disponible"; eso solo aparece si la conexión falla). Para datos reales, correr desde la **raíz del repo** (no acá), apuntando al mismo Postgres local que imprimió el paso 1:
+
+```bash
+SUPABASE_DB_URL_DIRECT=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run contracts:import -- --file=<csv> --apply --effective-date=YYYY-MM-DD
+HOLIDAYS_DB_URL=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run holidays:import -- apply --file=<bundle.json> --confirm
+HOLIDAYS_DB_URL=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run holidays:import -- publish --coverage-id=<id> --confirm
+WORKING_HOURS_DB_URL=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run working-hours:build -- apply --confirm
+```
+
+(repetir holidays por cada bundle en `data/config/holidays/**`; el puerto exacto lo imprime `dev:local:setup`).
+
+**3. Verificar que la API responde:**
+
+```bash
+PORT=<puerto de next dev> npm run smoke
+```
+
+o `curl http://localhost:<puerto>/api/dashboard/after-hours/summary`.
+
+**4. Limpiar** (opcional, cuando ya no lo necesites):
+
+```bash
+npm run dev:local:teardown
+```
+
+Elimina solo el contenedor `nexus_bi_dev_local` - nunca toca Supabase cloud ni ningún otro contenedor Postgres que tengas corriendo.
+
+**Nunca conectar el runtime de esta app contra un Postgres local sin decidir `DATABASE_SSL_MODE` explícitamente** (`lib/db.ts`): sin la variable, el default es `require` incluso en `localhost` (nunca se infiere del hostname). `DATABASE_SSL_MODE=disable` solo se acepta contra `localhost`/`127.0.0.1`/`::1` - contra cualquier otro host, lanza un error claro en vez de aceptarlo en silencio.
+
 ## Si aparece "Base de datos bloqueada"
 
 DuckDB no permite que otro proceso (ej. DBeaver con una conexión abierta) tenga el archivo abierto en lectura-escritura al mismo tiempo que esta app intenta leerlo - ni siquiera en modo solo-lectura de este lado. Cerrar la conexión en DBeaver (o la herramienta que sea) y refrescar la página.

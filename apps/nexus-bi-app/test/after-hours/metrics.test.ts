@@ -4,12 +4,36 @@ import {
   calculableExpr,
   confidenceEligibilityCountExprs,
   confidenceWeightedExpr,
+  mapAggregateMetrics,
+  mapGroupedRow,
   populationCountExprs,
   populationSelectListSql,
   rateExpr,
   resolveEstimatedEndTime,
   sumMinutesExpr
 } from "../../lib/after-hours-metrics.ts";
+
+function fixtureRow(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    key: "tech1",
+    extra: null,
+    total_tasks: "10",
+    calculable_tasks: "8",
+    not_calculable_tasks: "2",
+    contractual_tasks: "5",
+    legacy_schedule_tasks: "3",
+    none_tasks: "2",
+    fallback_tasks: "1",
+    total_minutes: "600",
+    business_minutes: "400",
+    after_hours_minutes: "200",
+    tasks_with_after_hours: "4",
+    confidence_weighted: "82.5",
+    confidence_eligible_tasks: "8",
+    confidence_excluded_tasks: "0",
+    ...overrides
+  };
+}
 
 // === Poblaciones (§5) ===
 
@@ -104,4 +128,52 @@ test("resolveEstimatedEndTime: EXACT_REPORTED_START_END con reported_end_raw NUL
 
 test("resolveEstimatedEndTime: sin end_time_local (NONE terminal) -> NULL, nunca inventa un valor", () => {
   assert.equal(resolveEstimatedEndTime("INSUFFICIENT_DATA", null, null), null);
+});
+
+// === mapAggregateMetrics / mapGroupedRow (ETAPA 6.6D - extracción de la
+// aritmética compartida, regresión de comportamiento) ===
+
+test("mapAggregateMetrics: convierte minutos a horas (redondeo a 2 decimales) y calcula after_hours_rate = SUM/SUM", () => {
+  const m = mapAggregateMetrics(fixtureRow());
+  assert.equal(m.total_hours, 10); // 600/60
+  assert.equal(m.business_hours, Math.round((400 / 60) * 100) / 100);
+  assert.equal(m.after_hours_total_hours, Math.round((200 / 60) * 100) / 100);
+  assert.equal(m.after_hours_rate, 200 / 600);
+  assert.equal(m.total_tasks, 10);
+  assert.equal(m.tasks_total, 10, "tasks_total preservado por compatibilidad, idéntico a total_tasks");
+});
+
+test("mapAggregateMetrics: confidence_score redondeado, confidence_label vía getConfidenceLabel", () => {
+  const m = mapAggregateMetrics(fixtureRow({ confidence_weighted: "82.6" }));
+  assert.equal(m.confidence_score, 83);
+  assert.equal(typeof m.confidence_label, "string");
+  assert.ok(m.confidence_label.length > 0);
+});
+
+test("mapAggregateMetrics: total_minutes=0 -> after_hours_rate=0 (no NaN por división por cero)", () => {
+  const m = mapAggregateMetrics(fixtureRow({ total_minutes: "0", after_hours_minutes: "0" }));
+  assert.equal(m.after_hours_rate, 0);
+});
+
+test("mapAggregateMetrics: confidence_weighted NULL -> average_confidence NULL (nunca 0 fabricado)", () => {
+  const m = mapAggregateMetrics(fixtureRow({ confidence_weighted: null }));
+  assert.equal(m.average_confidence, null);
+  assert.equal(m.confidence_score, 0);
+});
+
+test("mapGroupedRow: agrega key/extra tal cual sobre el mismo cálculo de mapAggregateMetrics (regresión de comportamiento tras la extracción)", () => {
+  const row = fixtureRow({ key: "Cliente X", extra: "76.123.456-7" });
+  const full = mapGroupedRow(row);
+  const metricsOnly = mapAggregateMetrics(row);
+  assert.equal(full.key, "Cliente X");
+  assert.equal(full.extra, "76.123.456-7");
+  const fullAsRecord = full as unknown as Record<string, unknown>;
+  for (const [k, v] of Object.entries(metricsOnly)) {
+    assert.deepEqual(fullAsRecord[k], v, `campo ${k} debe coincidir entre mapGroupedRow y mapAggregateMetrics`);
+  }
+});
+
+test("mapGroupedRow: extra ausente (undefined) -> null, nunca undefined en la respuesta pública", () => {
+  const row = fixtureRow({ extra: undefined });
+  assert.equal(mapGroupedRow(row).extra, null);
 });

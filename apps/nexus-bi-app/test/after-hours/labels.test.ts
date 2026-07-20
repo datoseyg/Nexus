@@ -7,8 +7,45 @@ import {
   getCoverageClassificationLabel,
   getDataBasisLabel,
   getFallbackLabel,
-  getReasonCodeLabel
+  getReasonCodeLabel,
+  getWeekdayLabel,
+  getWeekdayShortLabel,
+  WEEKDAY_ORDER
 } from "../../lib/after-hours-labels.ts";
+
+// === día de la semana (ETAPA 6.6D) ===
+
+test("WEEKDAY_ORDER es exactamente [1..7] (ISODOW, lunes primero)", () => {
+  assert.deepEqual(WEEKDAY_ORDER, [1, 2, 3, 4, 5, 6, 7]);
+});
+
+test("getWeekdayLabel: 1..7 mapean a Lunes..Domingo", () => {
+  assert.equal(getWeekdayLabel(1), "Lunes");
+  assert.equal(getWeekdayLabel(2), "Martes");
+  assert.equal(getWeekdayLabel(3), "Miércoles");
+  assert.equal(getWeekdayLabel(4), "Jueves");
+  assert.equal(getWeekdayLabel(5), "Viernes");
+  assert.equal(getWeekdayLabel(6), "Sábado");
+  assert.equal(getWeekdayLabel(7), "Domingo");
+});
+
+test("getWeekdayLabel: acepta string numérico (viene de row.key como texto)", () => {
+  assert.equal(getWeekdayLabel("3"), "Miércoles");
+});
+
+test("getWeekdayLabel: degrada de forma segura en 0, 8, null, undefined y no-numérico", () => {
+  assert.equal(getWeekdayLabel(0), "Sin día");
+  assert.equal(getWeekdayLabel(8), "Sin día");
+  assert.equal(getWeekdayLabel(null), "Sin día");
+  assert.equal(getWeekdayLabel(undefined), "Sin día");
+  assert.equal(getWeekdayLabel("abc"), "Sin día");
+});
+
+test("getWeekdayShortLabel: 1..7 mapean a Lun..Dom, degrada a N/D", () => {
+  assert.equal(getWeekdayShortLabel(1), "Lun");
+  assert.equal(getWeekdayShortLabel(7), "Dom");
+  assert.equal(getWeekdayShortLabel(null), "N/D");
+});
 
 // === data_basis (§14) ===
 

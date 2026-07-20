@@ -110,3 +110,103 @@ test("createParamPusher: cada valor pusheado obtiene un placeholder $N secuencia
   assert.deepEqual([a, b, c], ["$1", "$2", "$3"]);
   assert.deepEqual(pusher.params, ["x", "y", "z"]);
 });
+
+// === weekday/hour (ETAPA 6.6D) ===
+
+test("parseAfterHoursFilters: weekday 1..7 válido se acepta", () => {
+  assert.equal(parseAfterHoursFilters(qs({ weekday: "1" })).weekday, 1);
+  assert.equal(parseAfterHoursFilters(qs({ weekday: "7" })).weekday, 7);
+});
+
+test("parseAfterHoursFilters: weekday fuera de rango (0, 8, -1, no-numérico) se ignora silenciosamente, nunca 400", () => {
+  assert.equal(parseAfterHoursFilters(qs({ weekday: "0" })).weekday, undefined);
+  assert.equal(parseAfterHoursFilters(qs({ weekday: "8" })).weekday, undefined);
+  assert.equal(parseAfterHoursFilters(qs({ weekday: "-1" })).weekday, undefined);
+  assert.equal(parseAfterHoursFilters(qs({ weekday: "abc" })).weekday, undefined);
+});
+
+test("parseAfterHoursFilters: hour=0 parsea a 0 (medianoche), NUNCA a undefined - trampa de truthiness", () => {
+  const f = parseAfterHoursFilters(qs({ hour: "0" }));
+  assert.equal(f.hour, 0);
+  assert.notEqual(f.hour, undefined);
+});
+
+test("parseAfterHoursFilters: hour 1..23 válido se acepta, fuera de rango (24, -1, no-numérico) se ignora", () => {
+  assert.equal(parseAfterHoursFilters(qs({ hour: "23" })).hour, 23);
+  assert.equal(parseAfterHoursFilters(qs({ hour: "24" })).hour, undefined);
+  assert.equal(parseAfterHoursFilters(qs({ hour: "-1" })).hour, undefined);
+  assert.equal(parseAfterHoursFilters(qs({ hour: "abc" })).hour, undefined);
+});
+
+test("parseAfterHoursFilters: sin weekday/hour -> ambos undefined", () => {
+  const f = parseAfterHoursFilters(qs({}));
+  assert.equal(f.weekday, undefined);
+  assert.equal(f.hour, undefined);
+});
+
+test("buildAfterHoursMartConditions: weekday/hour generan condiciones EXTRACT parametrizadas", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(qs({ weekday: "3", hour: "0" }));
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher);
+  assert.ok(conditions.some(c => c.includes("EXTRACT(ISODOW FROM w.start_time_local)") && c.includes("$1")));
+  assert.ok(conditions.some(c => c.includes("EXTRACT(HOUR FROM w.start_time_local)") && c.includes("$2")));
+  assert.deepEqual(pusher.params, [3, 0]);
+});
+
+// === exclude (autoexclusión, ETAPA 6.6D) ===
+
+test("buildAfterHoursMartConditions: exclude por defecto ([]) es idéntico al comportamiento actual (regresión)", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(qs({ client: "C1", technician: "T1", taskType: "PM" }));
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher);
+  assert.equal(conditions.length, 3);
+  assert.equal(pusher.params.length, 3);
+});
+
+test("buildAfterHoursMartConditions: exclude=['tecnico'] omite SOLO la condición de técnico, conserva las demás", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(qs({ client: "C1", technician: "T1", taskType: "PM" }));
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher, ["tecnico"]);
+  assert.ok(!conditions.some(c => c.includes("assigned_to")));
+  assert.ok(conditions.some(c => c.includes("client_name")));
+  assert.ok(conditions.some(c => c.includes("task_type")));
+});
+
+test("buildAfterHoursMartConditions: exclude=['weekday','hour'] omite ambas condiciones de tiempo compuesto", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(qs({ weekday: "3", hour: "14", client: "C1" }));
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher, ["weekday", "hour"]);
+  assert.ok(!conditions.some(c => c.includes("ISODOW")));
+  assert.ok(!conditions.some(c => c.includes("EXTRACT(HOUR")));
+  assert.ok(conditions.some(c => c.includes("client_name")));
+});
+
+test("buildAfterHoursMartConditions: exclude=['tecnico'] NUNCA elimina from/to - autoexclusión solo omite la dimensión propia (ETAPA 6.6D-FIX-1)", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(qs({ technician: "T1", from: "2026-08-01", to: "2026-08-31" }));
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher, ["tecnico"]);
+  assert.ok(!conditions.some(c => c.includes("assigned_to")));
+  assert.ok(conditions.some(c => c.includes("start_time_local") && c.includes(">=")));
+  assert.ok(conditions.some(c => c.includes("start_time_local") && c.includes("<=")));
+});
+
+test("buildAfterHoursMartConditions: exclude=['cliente'] NUNCA elimina from/to - autoexclusión solo omite la dimensión propia (ETAPA 6.6D-FIX-1)", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(qs({ client: "C1", from: "2026-08-01", to: "2026-08-31" }));
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher, ["cliente"]);
+  assert.ok(!conditions.some(c => c.includes("client_name")));
+  assert.ok(conditions.some(c => c.includes("start_time_local") && c.includes(">=")));
+  assert.ok(conditions.some(c => c.includes("start_time_local") && c.includes("<=")));
+});
+
+test("buildAfterHoursMartConditions: múltiples filtros simultáneos -> placeholders 1:1 con params, en orden, sin huecos ni duplicados", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(
+    qs({ client: "C1", technician: "T1", taskType: "PM", from: "2026-01-01", to: "2026-01-31", weekday: "3", hour: "14", dataBasis: "CONTRACTUAL" })
+  );
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher);
+  const usedPlaceholders = conditions.flatMap(c => [...c.matchAll(/\$(\d+)/g)].map(m => Number(m[1])));
+  const expected = Array.from({ length: pusher.params.length }, (_, i) => i + 1);
+  assert.deepEqual([...usedPlaceholders].sort((a, b) => a - b), expected, "cada placeholder $N debe usarse exactamente una vez, sin huecos ni duplicados");
+  assert.equal(new Set(usedPlaceholders).size, usedPlaceholders.length, "ningún placeholder se reutiliza para dos valores distintos");
+});
