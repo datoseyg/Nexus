@@ -77,7 +77,11 @@ async function runApply(args) {
   // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir cualquier
   // conexión de escritura. Protege este entrypoint sin importar si se
   // invoca vía CLI (`working-hours:build -- apply`) o directo.
-  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  // DEPLOY NEXUS 2026-07 - mismo opt-in dual-token que migrate-to-supabase.js;
+  // createPool() (db-client.js) exige el MISMO par de tokens por separado
+  // vía assertNotProductionHost antes de conectar -este flag por sí solo no
+  // basta para pasar el segundo guard.
+  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development", allowProtectedWithDualConfirmation: true });
 
   const pool = createPool({ applicationName: `working-hours-apply:${randomUUID().slice(0, 8)}` });
   const { results } = await runBuild(pool);

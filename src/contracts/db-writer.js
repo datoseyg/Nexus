@@ -130,8 +130,14 @@ export async function applyContracts(args) {
   // invoque directamente, como hace test/contracts/db-writer.integration.test.js).
   // Evalúa el destino ANTES de crear el Pool -ninguna sentencia se ejecuta
   // si el target no está confirmado.
+  // DEPLOY NEXUS 2026-07 - allowProtectedWithDualConfirmation:true habilita
+  // el mismo opt-in ya usado por migrate-to-supabase.js (ver ese archivo):
+  // sigue exigiendo AMBOS CONFIRM_WRITE_TARGET y CONFIRM_PROTECTED_WRITE_TARGET
+  // exactos host:puerto/base del destino efectivo -nunca implícito, nunca
+  // una bandera genérica. Sin los 2 tokens exactos, assertWriteConfirmed
+  // sigue abortando igual que antes.
   const connectionString = getConnectionString();
-  assertWriteConfirmed(connectionString, { environment: process.env.NODE_ENV ?? "development" });
+  assertWriteConfirmed(connectionString, { environment: process.env.NODE_ENV ?? "development", allowProtectedWithDualConfirmation: true });
 
   const pool = createPool({ applicationName: `contracts-apply:${randomUUID().slice(0, 8)}` });
   const sourceFilename = path.basename(args.file);

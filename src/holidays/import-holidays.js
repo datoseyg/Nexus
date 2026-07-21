@@ -90,7 +90,10 @@ async function runApply(args) {
   const { createPool, getConnectionString } = await import("./db-client.js");
   const { applyBundle } = await import("./db-writer.js");
   // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir la conexión.
-  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  // DEPLOY NEXUS 2026-07 - mismo opt-in dual-token que migrate-to-supabase.js
+  // (ver ese archivo); sin AMBOS CONFIRM_WRITE_TARGET/CONFIRM_PROTECTED_WRITE_TARGET
+  // exactos, sigue abortando igual que antes.
+  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development", allowProtectedWithDualConfirmation: true });
   const pool = createPool({ applicationName: `holidays-apply:${randomUUID().slice(0, 8)}` });
   try {
     const result = await applyBundle({ pool, filename: args.file, sha256, bundle, resolvedEvents: validation.resolvedEvents });
@@ -108,7 +111,8 @@ async function runPublish(args) {
   const { createPool, getConnectionString } = await import("./db-client.js");
   const { publishCoverage } = await import("./publish-coverage.js");
   // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir la conexión.
-  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  // DEPLOY NEXUS 2026-07 - mismo opt-in dual-token que migrate-to-supabase.js.
+  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development", allowProtectedWithDualConfirmation: true });
   const pool = createPool({ applicationName: `holidays-publish:${randomUUID().slice(0, 8)}` });
   try {
     const result = await publishCoverage(pool, {

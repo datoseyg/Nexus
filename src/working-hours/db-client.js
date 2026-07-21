@@ -1,5 +1,6 @@
 import "dotenv/config";
 import pg from "pg";
+import { describeConnectionTarget, buildWriteConfirmationToken } from "../lib/db-safety.js";
 
 const { Pool, types } = pg;
 
@@ -25,11 +26,25 @@ function isLocalHost(connectionString) {
 }
 
 // Hosts reconocidos como productivos (Supabase) -si WORKING_HOURS_DB_URL
-// apunta a alguno de estos, se rechaza estructuralmente. Promover este
-// builder a producción es una decisión explícita de una subetapa futura
-// (con su propio flag/gate de despliegue), nunca un efecto colateral de
-// reutilizar accidentalmente una URL productiva.
+// apunta a alguno de estos, se rechaza por defecto. Promover este builder a
+// producción exige el mismo opt-in dual-token que ya usan
+// migrate-to-supabase.js/contracts/holidays (ver src/lib/db-safety.js) -
+// nunca un efecto colateral de reutilizar accidentalmente una URL
+// productiva: sin AMBOS CONFIRM_WRITE_TARGET y CONFIRM_PROTECTED_WRITE_TARGET
+// exactos host:puerto/base de ESTE destino, este guard sigue abortando
+// igual que antes de DEPLOY NEXUS 2026-07.
 const PRODUCTION_HOST_PATTERNS = [/\.supabase\.co$/i, /\.supabase\.com$/i, /pooler\.supabase\.com$/i];
+
+function isDualConfirmedProtectedTarget(connectionString) {
+  let target;
+  try {
+    target = describeConnectionTarget(connectionString);
+  } catch {
+    return false;
+  }
+  const expectedToken = buildWriteConfirmationToken(target);
+  return process.env.CONFIRM_WRITE_TARGET === expectedToken && process.env.CONFIRM_PROTECTED_WRITE_TARGET === expectedToken;
+}
 
 function assertNotProductionHost(connectionString) {
   let hostname;
@@ -39,11 +54,12 @@ function assertNotProductionHost(connectionString) {
     return; // formato no parseable -no es nuestra responsabilidad validar más allá acá
   }
   if (PRODUCTION_HOST_PATTERNS.some(re => re.test(hostname))) {
+    if (isDualConfirmedProtectedTarget(connectionString)) return;
     throw new Error(
       `WORKING_HOURS_DB_URL apunta a un host reconocido como productivo (${hostname}). ` +
-      `ETAPA 6.6B2 rechaza esto estructuralmente -este builder solo puede escribir contra ` +
-      `Postgres 16 desechable durante esta subetapa. Promover a producción requiere un ` +
-      `flag/gate de despliegue explícito de una subetapa futura, no editar esta variable.`
+      `Este builder solo escribe contra ese destino con AMBOS CONFIRM_WRITE_TARGET y ` +
+      `CONFIRM_PROTECTED_WRITE_TARGET exactos (host:puerto/base) -nunca editando esta ` +
+      `variable ni con una bandera genérica.`
     );
   }
 }
