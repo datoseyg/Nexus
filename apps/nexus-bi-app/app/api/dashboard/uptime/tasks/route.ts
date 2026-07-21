@@ -1,8 +1,11 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { parseDashboardFilters } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: "Tabla de tareas" del Tab "Integración Uptime / Downtime".
 // Fuente: processed.fieldbeat_tasks, join a la vista report-céntrica
@@ -13,6 +16,9 @@ import { parseDashboardFilters } from "@/lib/dashboard-filters";
 // finished_data_synced_at (solo 8% de cobertura) - es una aproximación
 // documentada, no la hora de término real garantizada.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseDashboardFilters(searchParams);

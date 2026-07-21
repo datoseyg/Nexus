@@ -1,15 +1,21 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { buildAuditMartConditions, createParamPusher, parseAuditFilters, round2, suggestAction } from "@/lib/audit-sql";
 import type { PartsReviewRow } from "@/types/audit";
+
+export const runtime = "nodejs";
 
 // Alimenta: pestaña "Repuestos por revisar" de /audit/manual-review.
 // Fuente: marts.used_parts_dolibarr_match + processed.fieldbeat_used_parts
 // (cantidad) + marts.fieldbeat_report_dolibarr_operational_view (cliente,
 // máquina, fecha) - ver docs/MANUAL_REVIEW_VIEW.md.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = clampPage(Number(searchParams.get("page")));

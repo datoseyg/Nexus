@@ -1,5 +1,6 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import {
@@ -9,6 +10,8 @@ import {
   JUNK_DOLIBARR_REFS,
   parseDashboardFilters
 } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: "Tabla Uso de Repuestos" del Tab "Dashboard Operacional".
 // Fuente: marts.used_parts_dolibarr_match (solo match_status='MATCHED')
@@ -20,6 +23,9 @@ import {
 // "Pag. PDF" del dashboard de referencia no tiene equivalente -> se omite
 // la columna en vez de mantenerla vacía sin aportar nada.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = clampPage(Number(searchParams.get("page")));

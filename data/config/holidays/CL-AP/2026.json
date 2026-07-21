@@ -1,0 +1,31 @@
+{
+  "schema_version": "holiday-calendar-bundle-v1",
+  "jurisdiction": "CL-AP",
+  "coverage_start": "2026-01-01",
+  "coverage_end_exclusive": "2027-01-01",
+  "sources": [
+    {
+      "source_id": "gob-cl-feriados-2026",
+      "authority": "Gobierno de Chile (gob.cl)",
+      "title": "¿Qué feriados hay en 2026? Revisa cuántos habrá y cuáles son irrenunciables",
+      "url": "https://www.gob.cl/noticias/feriados-2026-revisa-cuantos-habra-y-cuales-son-irrenunciables/",
+      "published_at": "2025-12-19",
+      "accessed_at": "2026-07-15",
+      "legal_references": []
+    }
+  ],
+  "events": [
+    {
+      "local_date": "2026-06-07",
+      "holiday_name": "Asalto y Toma del Morro de Arica",
+      "holiday_type": "REGIONAL",
+      "is_irrenunciable": false,
+      "source_ids": ["gob-cl-feriados-2026"]
+    }
+  ],
+  "_notes": [
+    "Jurisdicción regional (Arica y Parinacota), separada deliberadamente de la jurisdicción nacional CL (ver §9 -coberturas separadas por jurisdicción + año evita mezclar feriados nacionales con regionales sin distinguir).",
+    "Cobertura SOLO para 2026, verificada contra gob.cl (fuente tier-1). No se investigó ni se construyó el histórico 2018-2025 para esta jurisdicción en esta subetapa -gap documentado explícitamente, no inventado.",
+    "Ningún cliente/tarea real de FieldBeat tiene una comuna en la Región de Arica y Parinacota (ver hallazgo de investigación de jurisdicción regional, §10 del informe) -esta cobertura no tiene efecto práctico sobre tareas existentes hoy, y de todas formas NO se aplica a tareas en 6.6B1 (deferred a 6.6B2)."
+  ]
+}

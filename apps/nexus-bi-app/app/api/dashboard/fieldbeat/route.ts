@@ -1,11 +1,17 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
+
+export const runtime = "nodejs";
 
 // Todas las queries acá son fijas (sin input de usuario) - el único
 // propósito de este route es alimentar el Dashboard Operacional
 // FieldBeat con las 5 tablas GOLD report-céntricas.
 export async function GET() {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const kpiRows = await runQuery("SELECT * FROM gold.fieldbeat_report_analysis");
 

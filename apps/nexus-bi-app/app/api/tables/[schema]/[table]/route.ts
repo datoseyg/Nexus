@@ -1,6 +1,6 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import type { DuckDBValue } from "@duckdb/node-api";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import {
   assertColumnExists,
   assertTableExists,
@@ -12,6 +12,8 @@ import {
 } from "@/lib/sql-guardrails";
 import { handleApiError } from "@/lib/api-error";
 
+export const runtime = "nodejs";
+
 interface RouteParams {
   params: Promise<{ schema: string; table: string }>;
 }
@@ -22,6 +24,9 @@ interface RouteParams {
 // de interpolarlos en cualquier SQL (no se pueden parametrizar
 // identificadores). sortColumn/filterColumn pasan por el mismo chequeo.
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   const { schema, table } = await params;
 
   try {
@@ -39,7 +44,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const qualifiedTable = quoteQualifiedTable(schema, table);
 
     let whereClause = "";
-    const whereParams: DuckDBValue[] = [];
+    const whereParams: unknown[] = [];
 
     if (filterColumn && filterValue) {
       await assertColumnExists(schema, table, filterColumn);

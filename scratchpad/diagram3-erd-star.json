@@ -1,0 +1,28 @@
+[
+  {"id": "title", "type": "text", "x": 50, "y": 15, "width": 900, "height": 30, "text": "Diagrama Entidad-Relación — Esquema en Estrella", "fontSize": 24},
+
+  {"id": "fact-box", "type": "rectangle", "x": 700, "y": 380, "width": 300, "height": 194, "backgroundColor": "#fff9db", "strokeColor": "#f08c00", "fillStyle": "solid"},
+  {"id": "fact-header", "type": "rectangle", "x": 700, "y": 380, "width": 300, "height": 44, "backgroundColor": "#ffe066", "strokeColor": "#f08c00", "fillStyle": "solid", "text": "FACT_OPERATIONAL_TASK", "fontSize": 18},
+  {"id": "fact-body-text", "type": "text", "x": 720, "y": 434, "width": 260, "height": 140, "text": "PK  task_id\nFK  ticket_id\nFK  client_id\nFK  equipment_id\n    duration_hours\n    confidence_score", "fontSize": 14, "strokeColor": "#343a40"},
+
+  {"id": "dim-time-box", "type": "rectangle", "x": 740, "y": 86, "width": 220, "height": 144, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2", "fillStyle": "solid"},
+  {"id": "dim-time-header", "type": "rectangle", "x": 740, "y": 86, "width": 220, "height": 44, "backgroundColor": "#a5d8ff", "strokeColor": "#1971c2", "fillStyle": "solid", "text": "DIM_TIME", "fontSize": 18},
+  {"id": "dim-time-body", "type": "text", "x": 760, "y": 140, "width": 180, "height": 80, "text": "PK  date_key\n    is_holiday\n    is_after_hours", "fontSize": 14, "strokeColor": "#343a40"},
+
+  {"id": "dim-client-box", "type": "rectangle", "x": 740, "y": 724, "width": 220, "height": 144, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2", "fillStyle": "solid"},
+  {"id": "dim-client-header", "type": "rectangle", "x": 740, "y": 724, "width": 220, "height": 44, "backgroundColor": "#a5d8ff", "strokeColor": "#1971c2", "fillStyle": "solid", "text": "DIM_CLIENT", "fontSize": 18},
+  {"id": "dim-client-body", "type": "text", "x": 760, "y": 778, "width": 180, "height": 80, "text": "PK  client_id\n    company_name\n    sla_level", "fontSize": 14, "strokeColor": "#343a40"},
+
+  {"id": "dim-ticket-box", "type": "rectangle", "x": 330, "y": 405, "width": 220, "height": 144, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2", "fillStyle": "solid"},
+  {"id": "dim-ticket-header", "type": "rectangle", "x": 330, "y": 405, "width": 220, "height": 44, "backgroundColor": "#a5d8ff", "strokeColor": "#1971c2", "fillStyle": "solid", "text": "DIM_TICKET", "fontSize": 18},
+  {"id": "dim-ticket-body", "type": "text", "x": 350, "y": 459, "width": 180, "height": 80, "text": "PK  ticket_id\n    priority\n    root_cause", "fontSize": 14, "strokeColor": "#343a40"},
+
+  {"id": "dim-equipment-box", "type": "rectangle", "x": 1150, "y": 405, "width": 220, "height": 144, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2", "fillStyle": "solid"},
+  {"id": "dim-equipment-header", "type": "rectangle", "x": 1150, "y": 405, "width": 220, "height": 44, "backgroundColor": "#a5d8ff", "strokeColor": "#1971c2", "fillStyle": "solid", "text": "DIM_EQUIPMENT", "fontSize": 18},
+  {"id": "dim-equipment-body", "type": "text", "x": 1170, "y": 459, "width": 180, "height": 80, "text": "PK  equipment_id\n    serial_number\n    status", "fontSize": 14, "strokeColor": "#343a40"},
+
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "dim-time-box", "endElementId": "fact-box", "text": "1:N", "strokeColor": "#1971c2"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "dim-client-box", "endElementId": "fact-box", "text": "1:N", "strokeColor": "#1971c2"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "dim-ticket-box", "endElementId": "fact-box", "text": "1:N", "strokeColor": "#1971c2"},
+  {"type": "arrow", "x": 0, "y": 0, "startElementId": "dim-equipment-box", "endElementId": "fact-box", "text": "1:N", "strokeColor": "#1971c2"}
+]

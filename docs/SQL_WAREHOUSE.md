@@ -1,20 +1,20 @@
-# SQL Warehouse local — DuckDB v1.2
+# SQL Warehouse local -DuckDB v1.2
 
-Capa de consulta SQL analítica sobre las tablas ya generadas por el pipeline CSV (`PROCESSED`, `MARTS`, `GOLD`). **No es la fuente primaria de datos** — el pipeline de archivos CSV sigue siendo la fuente de verdad; DuckDB es una vista de consumo/consulta que se reconstruye completa a partir de esos CSV cada vez que se corre `npm run db:load`.
+Capa de consulta SQL analítica sobre las tablas ya generadas por el pipeline CSV (`PROCESSED`, `MARTS`, `GOLD`). **No es la fuente primaria de datos** -el pipeline de archivos CSV sigue siendo la fuente de verdad; DuckDB es una vista de consumo/consulta que se reconstruye completa a partir de esos CSV cada vez que se corre `npm run db:load`.
 
-Base de datos: `data/warehouse/eyg_nexus.duckdb` (no transaccional — no hay escritura concurrente ni movimientos de stock, es solo lectura analítica).
+Base de datos: `data/warehouse/eyg_nexus.duckdb` (no transaccional -no hay escritura concurrente ni movimientos de stock, es solo lectura analítica).
 
-**Diccionario de datos completo (columna por columna, con significado):** [DATA_DICTIONARY.md](DATA_DICTIONARY.md). Este documento (`SQL_WAREHOUSE.md`) se queda en "cómo conectarse y qué tablas hay" — para "qué significa cada columna" usar el diccionario.
+**Diccionario de datos completo (columna por columna, con significado):** [DATA_DICTIONARY.md](DATA_DICTIONARY.md). Este documento (`SQL_WAREHOUSE.md`) se queda en "cómo conectarse y qué tablas hay" -para "qué significa cada columna" usar el diccionario.
 
-**v1.1** agregó 7 tablas auxiliares/dimensionales que ya existían como CSV pero no estaban cargadas en v1. **v1.2** agregó 6 tablas más del mart/GOLD FieldBeat-first (report-centric) — ver tabla completa más abajo. En ningún caso se tocó un miner, normalizador, ni CSV existente — solo se amplió el mapeo de carga en `src/db/warehouse-config.js`.
+**v1.1** agregó 7 tablas auxiliares/dimensionales que ya existían como CSV pero no estaban cargadas en v1. **v1.2** agregó 6 tablas más del mart/GOLD FieldBeat-first (report-centric) -ver tabla completa más abajo. En ningún caso se tocó un miner, normalizador, ni CSV existente -solo se amplió el mapeo de carga en `src/db/warehouse-config.js`.
 
-**Los 291 tickets Zendesk con `403 Forbidden` (ver [SCOPE_AND_LIMITATIONS.md](SCOPE_AND_LIMITATIONS.md) y [PHASE_2_BACKLOG.md](PHASE_2_BACKLOG.md)) siguen fuera de alcance en v1.2 — esto es esperado y no bloquea el warehouse.** El warehouse solo carga lo que ya existe en `data/processed/`, `data/marts/` y `data/gold/`; esos 291 tickets nunca llegaron a esas capas porque el token actual no tiene permiso para leerlos desde Zendesk. La lista completa sigue en `data/reports/zendesk_ticket_ids_not_accessible_403.json`.
+**Los 291 tickets Zendesk con `403 Forbidden` (ver [SCOPE_AND_LIMITATIONS.md](SCOPE_AND_LIMITATIONS.md) y [PHASE_2_BACKLOG.md](PHASE_2_BACKLOG.md)) siguen fuera de alcance en v1.2 -esto es esperado y no bloquea el warehouse.** El warehouse solo carga lo que ya existe en `data/processed/`, `data/marts/` y `data/gold/`; esos 291 tickets nunca llegaron a esas capas porque el token actual no tiene permiso para leerlos desde Zendesk. La lista completa sigue en `data/reports/zendesk_ticket_ids_not_accessible_403.json`.
 
 ## Comandos
 
 ```bash
 npm run db:init      # crea data/warehouse/ y los 4 schemas (idempotente)
-npm run db:load       # (re)carga las 26 tablas desde los CSV actuales — CREATE OR REPLACE, reconstruible desde cero
+npm run db:load       # (re)carga las 26 tablas desde los CSV actuales -CREATE OR REPLACE, reconstruible desde cero
 npm run db:validate   # compara conteo de filas CSV vs SQL para cada tabla, falla si no calzan
 npm run db:build      # corre los 3 en orden: init -> load -> validate
 ```
@@ -51,13 +51,13 @@ Correr `npm run db:build` después de cualquier `npm run build:gold` para manten
 | `gold` | `client_report_volume_by_period` *(v1.2, report-centric)* | `data/gold/GOLD_Client_Report_Volume_By_Period.csv` |
 | `gold` | `equipment_parts_consumption` *(v1.2, report-centric)* | `data/gold/GOLD_Equipment_Parts_Consumption.csv` |
 | `gold` | `fieldbeat_data_quality` *(v1.2, report-centric)* | `data/gold/GOLD_FieldBeat_Data_Quality.csv` |
-| `reports` | *(vacío en v1)* | — |
+| `reports` | *(vacío en v1)* | -|
 
-Las tablas marcadas *(report-centric)* son **complementarias** a las ticket-céntricas — no las reemplazan. Una fila en `marts.fieldbeat_report_dolibarr_operational_view` es 1 task/reporte FieldBeat (universo completo: 3747, incluye los que nunca tuvieron ticket Zendesk), mientras que una fila en `marts.ticket_fieldbeat_dolibarr_operational_view` es 1 ticket Zendesk (628, solo el universo accesible). Ver [DATA_DICTIONARY.md](DATA_DICTIONARY.md) para el detalle columna por columna de ambas líneas.
+Las tablas marcadas *(report-centric)* son **complementarias** a las ticket-céntricas -no las reemplazan. Una fila en `marts.fieldbeat_report_dolibarr_operational_view` es 1 task/reporte FieldBeat (universo completo: 3747, incluye los que nunca tuvieron ticket Zendesk), mientras que una fila en `marts.ticket_fieldbeat_dolibarr_operational_view` es 1 ticket Zendesk (628, solo el universo accesible). Ver [DATA_DICTIONARY.md](DATA_DICTIONARY.md) para el detalle columna por columna de ambas líneas.
 
-El schema `reports` se crea (`CREATE SCHEMA IF NOT EXISTS`) pero **no tiene tablas cargadas todavía** — los archivos de `data/reports/` son mayormente JSON de resumen, no CSV tabulares pensados para SQL. Queda reservado para una futura carga (ej. `used_parts_manual_review_queue.csv`, `scope_reconciliation_summary.json` aplanado) si se decide en Fase 2.
+El schema `reports` se crea (`CREATE SCHEMA IF NOT EXISTS`) pero **no tiene tablas cargadas todavía** -los archivos de `data/reports/` son mayormente JSON de resumen, no CSV tabulares pensados para SQL. Queda reservado para una futura carga (ej. `used_parts_manual_review_queue.csv`, `scope_reconciliation_summary.json` aplanado) si se decide en Fase 2.
 
-Los tipos de columna se infieren automáticamente (`read_csv_auto`) — no hay un schema SQL manual definido. **Ojo:** esto NO garantiza que una columna con el mismo nombre tenga el mismo tipo en todas las tablas — por ejemplo `zendesk_ticket_id` es `BIGINT` en la mayoría de las tablas pero `VARCHAR` en `marts.used_parts_dolibarr_match` (esa columna viene casi vacía). Ver la sección **"Anomalías y advertencias de tipos"** en [DATA_DICTIONARY.md](DATA_DICTIONARY.md) antes de escribir un join nuevo.
+Los tipos de columna se infieren automáticamente (`read_csv_auto`) -no hay un schema SQL manual definido. **Ojo:** esto NO garantiza que una columna con el mismo nombre tenga el mismo tipo en todas las tablas -por ejemplo `zendesk_ticket_id` es `BIGINT` en la mayoría de las tablas pero `VARCHAR` en `marts.used_parts_dolibarr_match` (esa columna viene casi vacía). Ver la sección **"Anomalías y advertencias de tipos"** en [DATA_DICTIONARY.md](DATA_DICTIONARY.md) antes de escribir un join nuevo.
 
 ## Cómo consultar la base
 
@@ -141,7 +141,7 @@ FROM marts.fieldbeat_report_dolibarr_operational_view
 WHERE zendesk_join_status != 'LINKED_TO_ACCESSIBLE_ZENDESK'
 ORDER BY used_parts_count DESC;
 ```
-A diferencia de las queries 1-3 (que solo ven los 628 tickets accesibles), esta trae los 3457 reportes FieldBeat que NO tienen ticket Zendesk accesible (2537 nunca reportaron ticket + 920 con ticket fantasma/restringido) — el universo que el mart ticket-céntrico deja afuera.
+A diferencia de las queries 1-3 (que solo ven los 628 tickets accesibles), esta trae los 3457 reportes FieldBeat que NO tienen ticket Zendesk accesible (2537 nunca reportaron ticket + 920 con ticket fantasma/restringido) -el universo que el mart ticket-céntrico deja afuera.
 
 ### 8. Clientes por consumo de repuestos en una ventana de tiempo
 ```sql
@@ -152,11 +152,11 @@ GROUP BY client_name
 ORDER BY repuestos_periodo DESC
 LIMIT 10;
 ```
-`gold.client_parts_consumption` tiene grano (cliente, período mensual) a propósito — filtrar `period` antes de sumar es lo que permite responder "en una ventana de tiempo" sin reconstruir el pipeline.
+`gold.client_parts_consumption` tiene grano (cliente, período mensual) a propósito -filtrar `period` antes de sumar es lo que permite responder "en una ventana de tiempo" sin reconstruir el pipeline.
 
 ## Reglas de esta capa
 
-- No reemplaza el pipeline CSV — sigue siendo necesario correr `npm run build:gold` (y todo lo anterior) antes de `npm run db:load`.
+- No reemplaza el pipeline CSV -sigue siendo necesario correr `npm run build:gold` (y todo lo anterior) antes de `npm run db:load`.
 - No transaccional: no hay `INSERT`/`UPDATE` manuales esperados, ni movimientos de stock. Es de solo lectura para análisis.
 - Reconstruible desde cero: borrar `data/warehouse/eyg_nexus.duckdb` y correr `npm run db:build` la regenera completa.
 - `npm run db:validate` es el chequeo de confianza: si algún conteo CSV vs SQL no calza, el comando falla explícitamente (exit code ≠ 0) en vez de fallar en silencio.

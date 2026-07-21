@@ -1,0 +1,102 @@
+{
+  "schema_version": "known-contract-start-dates-v1",
+  "description": "Fechas reales de inicio de vigencia contractual conocidas por el negocio, distintas de la fecha de instalación del equipo (installation_month) y de effective_date (fecha de importación del CSV). ETAPA 6.5.1 - corrección de la persistencia previa que usaba effective_date como valid_from. Clave: equipment_key real (mismo identificador estable de config.contract_equipment_versions/matches). No incluir un equipo acá cuando la fecha no pueda confirmarse contra una fuente real - en ese caso, el importador cae a installation_month (inferido) o queda sin resolver (NULL), nunca se inventa.",
+  "entries": [
+    {
+      "equipment_key": "SN:153038",
+      "client": "Fundación Arturo López Pérez",
+      "equipment_model": "Synergy",
+      "valid_from": "2021-07-24",
+      "valid_from_precision": "DAY",
+      "source_field": "known_business_date",
+      "source_value_raw": "2021-07-24",
+      "notes": "Instalación real (installation_month) es 2015-08 - contrato de servicio EYG comenzó ~6 años después. Confirmado conflicto, se usa la fecha de negocio, no la de instalación."
+    },
+    {
+      "equipment_key": "SN:152171",
+      "client": "Clínica Alemana de Santiago",
+      "equipment_model": "Platform",
+      "valid_from": "2021-07-24",
+      "valid_from_precision": "DAY",
+      "source_field": "known_business_date",
+      "source_value_raw": "2021-07-24",
+      "notes": "Instalación real (installation_month) es 2010 (YEAR) - contrato de servicio EYG comenzó ~11 años después. Confirmado conflicto, se usa la fecha de negocio, no la de instalación."
+    },
+    {
+      "equipment_key": "SN:FT07026",
+      "client": "Fundación Arturo López Pérez",
+      "equipment_model": "Flexitron",
+      "valid_from": "2023-07-24",
+      "valid_from_precision": "DAY",
+      "source_field": "known_business_date",
+      "source_value_raw": "2023-07-24",
+      "notes": "Sin installation_month disponible en el CSV para cruzar - fecha de negocio sin contradicción, pero tampoco corroborada por fuente gobernada."
+    },
+    {
+      "equipment_key": "SN:156473",
+      "client": "Instituto Nacional del Cáncer",
+      "equipment_model": "Infinity",
+      "valid_from": "2021-02-01",
+      "valid_from_precision": "DAY",
+      "source_field": "known_business_date",
+      "source_value_raw": "2021-02-01",
+      "notes": "Coincide con installation_month=2021-02 (MONTH) - corroborado."
+    },
+    {
+      "equipment_key": "SN:156187",
+      "client": "Radio Oncología del Sur",
+      "equipment_model": "Infinity",
+      "valid_from": "2021-12-01",
+      "valid_from_precision": "DAY",
+      "source_field": "known_business_date",
+      "source_value_raw": "2021-12-01",
+      "notes": "Coincide con installation_month=2021-12 (MONTH) - corroborado."
+    },
+    {
+      "equipment_key": "SN:109256",
+      "client": "UC Christus",
+      "equipment_model": "VersaHD",
+      "valid_from": "2022-02-01",
+      "valid_from_precision": "DAY",
+      "source_field": "known_business_date",
+      "source_value_raw": "2022-02-01",
+      "notes": "Coincide con installation_month=2022-02 (MONTH) - corroborado."
+    },
+    {
+      "equipment_key": "SN:153935",
+      "client": "UC Christus",
+      "equipment_model": "Axesse",
+      "valid_from": "2016-02-01",
+      "valid_from_precision": "DAY",
+      "source_field": "known_business_date",
+      "source_value_raw": "2016-02-01",
+      "notes": "Coincide con installation_month=2016-02 (MONTH) - corroborado."
+    },
+    {
+      "equipment_key": "SN:154325",
+      "client": "Hospital Carlos Van Buren",
+      "equipment_model": "VersaHD",
+      "valid_from": "2017-01-01",
+      "valid_from_precision": "YEAR",
+      "source_field": "known_business_date",
+      "source_value_raw": "año 2017, fecha exacta no disponible",
+      "notes": "Coincide con installation_month=2017 (YEAR) - corroborado. Precisión YEAR real, nunca inventar día/mes."
+    }
+  ],
+  "excluded": [
+    {
+      "equipment_key": "SN:10806",
+      "client": "Sanatorio Alemán",
+      "equipment_model": "MicroSelectron",
+      "reason": "CONTRATO_CERRADO",
+      "notes": "Contrato cerrado, no vigente (confirmado por el negocio, 2026-07-17). No se resuelve valid_from: no hay ventana de cobertura contractual verificable que asignar. La fecha 2023-04-03 mencionada originalmente no tiene rastro en ninguna columna del CSV fuente (anio_instalacion_raw, notas_raw, raw_payload) para este equipo específico y no se persiste."
+    },
+    {
+      "equipment_key": "SN:201110",
+      "client": "Sanatorio Alemán",
+      "equipment_model": "Compact",
+      "reason": "SIN_FECHA_APROBADA",
+      "notes": "Contrato vigente pero sin fecha de inicio explícita resuelta ni regla aprobada - queda UNRESOLVED hasta que exista una regla aprobada (regla 7 de ETAPA 6.5.1)."
+    }
+  ]
+}

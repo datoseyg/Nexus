@@ -60,6 +60,143 @@
   }
 }
 
+/* Nexus Product Palette v1 - propuesta de diseño del rediseño de Nexus
+   (docs/design-revolution/*.dc.html), NO es identidad oficial de EyG
+   confirmada. Ver docs/design-context/11-product-decision-register.md #D10
+   (decisión abierta sobre fuentes oficiales de branding). Coexiste con los
+   tokens --eyg-* de arriba sin modificarlos - no es una migración, es una
+   paleta nueva agregada aparte hasta que se conecte a una pantalla real.
+   Solo se formalizan aquí valores repetidos y verificados en los 8 mockups
+   leídos; no se inventa una escala completa. Solo tema claro por ahora: los
+   mockups no definen una variante oscura de esta paleta. */
+:root {
+  /* Superficie */
+  --nx-page-bg: #eef0f4;
+  --nx-card-bg: #ffffff;
+  --nx-border: #e2e5ee;
+  --nx-sidebar-bg: #181c2c;
+
+  /* Texto */
+  --nx-text-primary: #181c2c;
+  --nx-text-secondary: #5a5f73;
+  --nx-text-muted: #9aa0c0;
+
+  /* Texto sobre --nx-sidebar-bg - --nx-text-primary/secondary/muted están
+     calibrados para fondo claro, reutilizarlos sobre el fondo oscuro de la
+     sidebar sería un bug de contraste real, no una preferencia. */
+  --nx-sidebar-text-primary: #ffffff;
+  --nx-sidebar-text-secondary: #b6bad2;
+  --nx-sidebar-text-muted: #9098c0;
+  --nx-sidebar-eyebrow: #6b7092;
+  --nx-sidebar-eyebrow-muted: #565b7a;
+
+  /* Acentos */
+  --nx-accent-indigo: #4a55d4;
+  --nx-accent-indigo-hover: #383fb0;
+  --nx-accent-green: #1f6e46;
+  --nx-accent-green-light: #2a8a5a;
+  --nx-accent-purple: #8b4fd1;
+
+  /* Rampa secuencial del heatmap día×hora (ETAPA 6.6D) - un solo hue
+     (--nx-accent-indigo), monótona en opacidad sobre --nx-card-bg (nunca
+     un hue nuevo ni un arcoíris categórico - "0" es transparente = sin
+     actividad, "5" es la intensidad máxima). El color nunca es el único
+     canal de información: cada celda del heatmap lleva además su valor
+     real en aria-label/title. */
+  --nx-heat-0: transparent;
+  --nx-heat-1: rgba(74, 85, 212, 0.12);
+  --nx-heat-2: rgba(74, 85, 212, 0.28);
+  --nx-heat-3: rgba(74, 85, 212, 0.46);
+  --nx-heat-4: rgba(74, 85, 212, 0.66);
+  --nx-heat-5: rgba(74, 85, 212, 0.88);
+
+  /* Semánticos - triple fondo/borde/texto solo donde está evidenciado en
+     los mockups (warning, en los banners "Diseño deseado"/"Análisis
+     estimado"); los demás solo aportan el color de texto/ícono evidenciado,
+     sin inventar un fondo/borde que ningún mockup mostró. */
+  --nx-warning-bg: #fdf3e0;
+  --nx-warning-border: #e0ac52;
+  --nx-warning-fg: #7a4f0a;
+  --nx-danger-fg: #c0392b;
+  --nx-success-fg: var(--nx-accent-green);
+  --nx-info-fg: var(--nx-accent-indigo);
+
+  /* Tipografía - 'Inter' primero, degrada al stack de sistema si no está
+     instalada localmente; no se agrega ningún archivo de fuente ni import
+     externo en esta etapa. */
+  --nx-font-family: "Inter", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --nx-text-size-title: 21px;
+  --nx-text-size-heading: 15.5px;
+  --nx-text-size-body: 14px;
+  --nx-text-size-secondary: 13px;
+  --nx-text-size-label: 12px;
+  --nx-font-weight-bold: 700;
+  --nx-font-weight-extrabold: 800;
+
+  /* Sidebar (idéntico en los 8 mockups) */
+  --nx-sidebar-width-expanded: 240px;
+  --nx-sidebar-width-collapsed: 80px;
+
+  /* Radios */
+  --nx-radius-chip: 7px;
+  --nx-radius-button: 9px;
+  --nx-radius-card: 14px;
+  --nx-radius-shell: 16px;
+  --nx-radius-pill: 999px;
+
+  /* Sombras */
+  --nx-shadow-card: 0 5px 16px rgba(20, 20, 40, 0.08);
+  --nx-shadow-card-dark: 0 6px 18px rgba(20, 20, 40, 0.3);
+  --nx-shadow-shell: 0 16px 40px rgba(20, 20, 40, 0.16);
+  --nx-shadow-drawer: -14px 0 40px rgba(20, 20, 40, 0.25);
+  /* Mismo --nx-shadow-drawer con el offset X invertido, para un panel
+     anclado a la izquierda (drawer de navegación móvil, Etapa 2 - el
+     original asume un panel a la derecha, como DetailDrawer). */
+  --nx-shadow-drawer-left: 14px 0 40px rgba(20, 20, 40, 0.25);
+
+  /* Spacing - solo los valores que se repiten como gap/padding de
+     componente, no una escala completa */
+  --nx-space-xs: 6px;
+  --nx-space-sm: 10px;
+  --nx-space-md: 16px;
+  --nx-space-lg: 22px;
+  --nx-space-xl: 28px;
+
+  /* Focus ring (mismo bloque CSS repetido literal en los 8 mockups) */
+  --nx-focus-ring-color: var(--nx-accent-indigo);
+  --nx-focus-ring-width: 2px;
+  --nx-focus-ring-offset: 2px;
+
+  /* Overlay de drawer/modal (idéntico en los 5 drawers leídos) */
+  --nx-overlay-bg: rgba(20, 20, 40, 0.35);
+
+  /* Z-index - solo los 3 valores realmente usados en los mockups */
+  --nx-z-mobile-drawer: 10;
+  --nx-z-overlay: 40;
+  --nx-z-drawer: 41;
+}
+
+/* Focus visible acotado a la navegación nueva (Etapa 2) - no un selector
+   global, para no afectar controles ya existentes en dashboards/auditoría
+   fuera de alcance de esta etapa. `.nx-shell-chrome` se aplica
+   individualmente a la raíz de Sidebar/MobileTopBar/MobileSidebar. */
+:where(.nx-shell-chrome) :where(button, a, input):focus-visible {
+  outline: var(--nx-focus-ring-width) solid var(--nx-focus-ring-color);
+  outline-offset: var(--nx-focus-ring-offset);
+}
+
+@keyframes nx-pulse {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
 body {
   background: var(--page-plane);
   color: var(--text-primary);

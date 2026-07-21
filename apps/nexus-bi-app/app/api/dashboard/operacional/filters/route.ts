@@ -1,7 +1,10 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { splitOriginLocations, TICKET_ESTADO_ORDER } from "@/lib/dashboard-sql";
+
+export const runtime = "nodejs";
 
 // Alimenta: FilterBar (dropdowns de cliente, tipo de tarea, máquina,
 // estado de ticket, origen de registro) + límites del calendario del Tab
@@ -9,6 +12,9 @@ import { splitOriginLocations, TICKET_ESTADO_ORDER } from "@/lib/dashboard-sql";
 // con la cobertura real; "origenRegistro" es una heurística documentada
 // (ver docs/DASHBOARD_VISUAL_STYLE.md) - no un campo directo del pipeline.
 export async function GET() {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const clientesRows = await runQuery<{ client_name: string }>(`
       SELECT DISTINCT client_name
@@ -25,7 +31,7 @@ export async function GET() {
     `);
 
     const maquinasRows = await runQuery<{ equipo: string }>(`
-      SELECT DISTINCT UNNEST(STRING_SPLIT(equipment_internal_ids, '|')) AS equipo
+      SELECT DISTINCT UNNEST(STRING_TO_ARRAY(equipment_internal_ids, '|')) AS equipo
       FROM marts.fieldbeat_report_dolibarr_operational_view
       WHERE equipment_internal_ids IS NOT NULL AND equipment_internal_ids != ''
       ORDER BY equipo

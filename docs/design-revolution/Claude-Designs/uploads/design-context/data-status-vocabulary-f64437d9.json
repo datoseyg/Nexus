@@ -1,0 +1,42 @@
+{
+  "$schema_note": "Derivado de 06-system-states.md y 05-business-metrics.md. commit=4a3d055, branch=supabase-migration.",
+  "source": "apps/nexus-bi-app/components/ui/StatusBadge.tsx",
+  "domainEnums": {
+    "match_status": {
+      "values": ["MATCHED", "AMBIGUOUS_MATCH", "PLACEHOLDER_VALUE", "NO_MATCH"],
+      "badgeFunction": "matchStatusBadge"
+    },
+    "report_quality_status": {
+      "values": ["OK", "NO_USED_PARTS", "HAS_PLACEHOLDERS", "HAS_UNMATCHED_PARTS", "HAS_AMBIGUOUS_PARTS", "REVIEW_REQUIRED"],
+      "badgeFunction": "reportQualityBadge"
+    },
+    "zendesk_join_status": {
+      "values": ["LINKED_TO_ACCESSIBLE_ZENDESK", "LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK", "NO_TICKET_REPORTED"],
+      "badgeFunction": "zendeskJoinBadge"
+    },
+    "calculation_status": {
+      "values": ["CALCULATED", "CALCULATED_WITH_WARNINGS", "NOT_CALCULABLE"],
+      "badgeFunction": "calculationStatusBadge"
+    }
+  },
+  "confidenceTiers": [
+    { "min": 0, "max": 39, "label": "Insuficiente", "tone": "danger" },
+    { "min": 40, "max": 64, "label": "Baja", "tone": "warning" },
+    { "min": 65, "max": 84, "label": "Media", "tone": "info" },
+    { "min": 85, "max": 100, "label": "Alta", "tone": "success" }
+  ],
+  "systemStates": [
+    { "state": "loading", "evidence": "components/ui/ResponsiveTableShell.tsx:82-83", "runtimeVerified": false, "reason": "transitorio de cliente, no observable via curl" },
+    { "state": "empty", "evidence": "components/HorizontalBarChart.tsx:26-29; ResponsiveTableShell.tsx emptyMessage", "runtimeVerified": true, "example": "GET /api/admin/audit/pipeline-runs -> rows:[], totalRows:0" },
+    { "state": "stale", "evidence": "after-hours businessHoursStatus/holidaysStatus", "runtimeVerified": true, "example": "businessHoursStatus:MISSING, holidaysStatus:MISSING" },
+    { "state": "partial", "evidence": "docs/SCOPE_AND_LIMITATIONS.md; ChartCard.tsx available/unavailableReason", "runtimeVerified": true, "example": "pctConTicketAccesible=7.74%" },
+    { "state": "degraded", "evidence": "docs/SCOPE_AND_LIMITATIONS.md 403 tickets", "runtimeVerified": true, "example": "ticketsForbiddenPending:291" },
+    { "state": "failed", "evidence": "lib/api-error.ts:16-29", "runtimeVerified": true, "example": "400 QUERY_ERROR con schema invalido" },
+    { "state": "unauthorized", "evidence": "lib/auth.ts:17-32", "runtimeVerified": true, "example": "401 UNAUTHORIZED sin token, x5 rutas admin" },
+    { "state": "no-data", "evidence": "ausencia de funcionalidad completa (ej equipment-lifecycle), distinto de empty", "runtimeVerified": true, "example": "find app -iname *lifecycle* sin resultados" },
+    { "state": "success", "evidence": "200 con payload, caso por defecto", "runtimeVerified": true, "example": "~30 rutas de lectura sondeadas, todas 200" },
+    { "state": "needs-review", "evidence": "report_quality_status=REVIEW_REQUIRED; NavBar.tsx badge", "runtimeVerified": true, "example": "reportsReviewRequired:1329" },
+    { "state": "resolved", "evidence": "audit.data_quality_events.resolved (columna); FutureActionButton.tsx (transicion de UI deshabilitada)", "runtimeVerified": "parcial", "note": "columna confirmada con datos reales (>=1 fila); ninguna transicion de UI alcanzable hoy" }
+  ],
+  "auditMethodologyNote": "runtimeVerified=true implica evidencia LOCAL_RUNTIME de esta sesion (GET unicamente, sin mutaciones). Ver 00-audit-baseline.md."
+}

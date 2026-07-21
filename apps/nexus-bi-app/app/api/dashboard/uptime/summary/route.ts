@@ -1,7 +1,10 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { parseDashboardFilters } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: KPIs "Suma de horas que ha tomado cada Tipo de Tarea" +
 // dropdowns de filtro del Tab "Integración Uptime / Downtime".
@@ -22,6 +25,9 @@ const TYPE_BUCKETS: Record<string, string[]> = {
 };
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseDashboardFilters(searchParams);

@@ -20,17 +20,71 @@ npm install
 npm run dev
 ```
 
-Abrir `http://localhost:3000`. También se puede levantar desde la raíz del proyecto con:
-
-```bash
-npm run app:dev
-```
+Abrir `http://localhost:3000`.
 
 ## Esta app es 100% de solo lectura
 
 - Abre `data/warehouse/eyg_nexus.duckdb` en modo `READ_ONLY` - no hay ningún camino de código que escriba en la base.
 - No modifica `data/raw/`, `data/processed/`, `data/marts/`, `data/gold/`, ni `data/curation/`.
 - El Explorador de Tablas no tiene edición de celdas. La Búsqueda no tiene acciones de escritura.
+
+## Desarrollo local de los dashboards que usan Postgres, no DuckDB
+
+`/dashboard/after-hours` (10 endpoints, `app/api/dashboard/after-hours/**`) y `/dashboard/fieldbeat` (`app/api/dashboard/fieldbeat/route.ts`, ETAPA 5) no leen `eyg_nexus.duckdb` -leen Postgres vía `lib/db.ts` (`SUPABASE_DB_URL`). Por defecto esa variable apunta al pooler de Supabase cloud (`.env.local`, no versionado) - para desarrollar sin depender de la nube ni tocar ninguna base compartida:
+
+**1. Preparar un Postgres 16 local desechable** (una sola vez, o cuando quieras empezar de cero):
+
+```bash
+npm run dev:local:setup
+```
+
+Requiere Docker corriendo. Crea (o reutiliza) un único contenedor `nexus_bi_dev_local`, le aplica el esquema (`sql/*.sql`) y escribe `apps/nexus-bi-app/.env.development.local` con la connection string local y `DATABASE_SSL_MODE=disable` (no versionado, `.gitignore` ya lo excluye vía `.env.*.local`). Si ya existía ese archivo, lo respeta moviéndolo a `.env.development.local.previous` en vez de descartarlo.
+
+**2. Levantar Nexus** (sin cambios respecto a lo de arriba):
+
+```bash
+npm run dev
+```
+
+La base queda con el esquema aplicado pero sin datos - el dashboard mostrará KPIs en cero / estados vacíos genuinos (no "no disponible"; eso solo aparece si la conexión falla). Para datos reales, correr desde la **raíz del repo** (no acá).
+
+**Forma oficial (única, funciona igual en Git Bash/PowerShell/cmd.exe)**: `contracts:import`, `holidays:import` y `working-hours:build` leen 3 nombres de variable de entorno *distintos* (`SUPABASE_DB_URL_DIRECT`, `HOLIDAYS_DB_URL`, `WORKING_HOURS_DB_URL` - ver `src/{contracts,holidays,working-hours}/db-client.js`) y cada uno resuelve su `.env` según el `cwd` del proceso, no según dónde vive el script - correrlos con `VAR=valor npm run ...` (sintaxis solo-Bash) o desde `apps/nexus-bi-app/` en vez de la raíz son las dos formas de que fallen con `Falta <VAR> en .env`. `scripts/with-local-pipeline-env.mjs` (raíz del repo) resuelve ambos problemas a la vez: fija los 3 nombres de variable a la MISMA base local (leyendo `.env.working-hours.local`, copiar desde `.env.working-hours.local.example`) y ejecuta el comando en un proceso Node, sin sintaxis de shell:
+
+```bash
+node scripts/with-local-pipeline-env.mjs node src/holidays/import-holidays.js apply --confirm --file=data/config/holidays/CL/2024.json
+node scripts/with-local-pipeline-env.mjs node src/holidays/import-holidays.js publish --confirm --coverage-id=<id>
+node scripts/with-local-pipeline-env.mjs node src/contracts/import-contracts.js --apply --effective-date=YYYY-MM-DD --file=<csv>
+node scripts/with-local-pipeline-env.mjs node src/working-hours/build-working-hours.js apply --confirm
+```
+
+(repetir holidays por cada bundle en `data/config/holidays/**`; usar `dry-run`/`--dry-run` sin `--confirm`/`--apply` para previsualizar sin escribir. Si tu Postgres local no corre en `localhost:55480/nexus_bi_dev_local_test`, editar `.env.working-hours.local` con el puerto real que imprimió `dev:local:setup`).
+
+`/dashboard/fieldbeat` lee `gold.fieldbeat_report_analysis`/`gold.fieldbeat_data_quality`/`gold.client_report_volume_by_period`/`gold.client_parts_consumption`/`gold.equipment_parts_consumption` - datos distintos a los de After-Hours (no dependen de `contracts:import`/`holidays:import`/`working-hours:build`). Para poblarlos contra el mismo Postgres local, desde la **raíz del repo**:
+
+```bash
+npm run db:build
+SUPABASE_DB_URL_DIRECT=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run db:pg:migrate
+```
+
+`db:build` construye/valida el warehouse DuckDB completo (`processed`/`marts`/`gold`, incluidas las 5 tablas de arriba); `db:pg:migrate` sincroniza esas tablas hacia el Postgres local (nunca hacia `nexus-afterhours-realdata2` ni Supabase cloud - confirmar el preflight de SAFETY-1 antes de aceptar que tocó el destino correcto).
+
+**3. Verificar que la API responde:**
+
+```bash
+PORT=<puerto de next dev> npm run smoke
+```
+
+o `curl http://localhost:<puerto>/api/dashboard/after-hours/summary` / `curl http://localhost:<puerto>/api/dashboard/fieldbeat`.
+
+**4. Limpiar** (opcional, cuando ya no lo necesites):
+
+```bash
+npm run dev:local:teardown
+```
+
+Elimina solo el contenedor `nexus_bi_dev_local` - nunca toca Supabase cloud ni ningún otro contenedor Postgres que tengas corriendo.
+
+**Nunca conectar el runtime de esta app contra un Postgres local sin decidir `DATABASE_SSL_MODE` explícitamente** (`lib/db.ts`): sin la variable, el default es `require` incluso en `localhost` (nunca se infiere del hostname). `DATABASE_SSL_MODE=disable` solo se acepta contra `localhost`/`127.0.0.1`/`::1` - contra cualquier otro host, lanza un error claro en vez de aceptarlo en silencio.
 
 ## Si aparece "Base de datos bloqueada"
 

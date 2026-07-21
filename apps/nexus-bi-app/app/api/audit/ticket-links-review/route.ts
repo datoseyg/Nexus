@@ -1,9 +1,12 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { buildAuditMartConditions, createParamPusher, parseAuditFilters } from "@/lib/audit-sql";
 import type { TicketLinkReviewRow } from "@/types/audit";
+
+export const runtime = "nodejs";
 
 // Alimenta: pestaña "Tickets faltantes o restringidos" de
 // /audit/manual-review. Fuente:
@@ -12,6 +15,9 @@ import type { TicketLinkReviewRow } from "@/types/audit";
 // reportes reales - ver el 403 Forbidden documentado en CLAUDE.md §
 // Pendientes conocidos para Fase 2). Ver docs/MANUAL_REVIEW_VIEW.md.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = clampPage(Number(searchParams.get("page")));

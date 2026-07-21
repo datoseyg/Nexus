@@ -1,0 +1,38 @@
+# Dependencias y compilación
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/coverage/
+**/.turbo/
+**/.cache/
+
+# Temporales y logs
+**/tmp/
+**/temp/
+**/*.log
+
+# Bases y datos operacionales
+**/*.duckdb
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/*.parquet
+**/*.csv
+**/*.zip
+
+# Variables y secretos locales
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.local
+
+# Archivos generados
+**/*.map
+**/*.min.js
+
+# Skills genéricos de terceros (no forman parte del pipeline EYG)
+.agents/

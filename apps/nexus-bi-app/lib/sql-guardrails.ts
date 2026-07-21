@@ -1,4 +1,4 @@
-import { runQuery } from "./duckdb";
+import { runQuery } from "./db";
 
 // Identificadores (nombre de tabla/columna) no se pueden parametrizar en
 // DuckDB - solo valores. Cada función acá valida el nombre contra

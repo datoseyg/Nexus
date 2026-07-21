@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <style>doc-page:not(:defined){visibility:hidden}</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" hint-size="100%,100%">
+<doc-page size="letter" margin="0.85in">
+<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;color:#243033;font-size:13px;line-height:1.6;">
+
+<p style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5e6b70;margin:0 0 6px;">Nexus -Handoff de implementación · corrección transversal final</p>
+<h1 style="font-size:22px;font-weight:800;color:#1a2523;margin:0 0 14px;">Preparación para desarrollo -7 vistas</h1>
+
+<div style="border-left:3px solid #b8791c;padding:10px 14px;margin-bottom:18px;background:#fdf3e0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-size:12px;color:#7a4f0a;"><strong>Estado de esta pasada:</strong> se aplicaron correcciones mecánicas a las 7 vistas (íconos, períodos, sidebar, filtros/KPI marcados como diseño deseado donde corresponde). La reconstrucción visual completa de Trabajo fuera de horario (reemplazar bloques vacíos por visualizaciones con datos reales) queda <strong>especificada abajo pero no reconstruida en este archivo</strong> -ver §4.</p>
+</div>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:0 0 10px;">1 · Cambios aplicados en esta pasada</h2>
+<ul style="margin:0 0 18px;padding-left:20px;">
+<li style="margin-bottom:5px;">Períodos fijos "Ene–Dic 2026" → "Todo el historial disponible" en las 7 vistas.</li>
+<li style="margin-bottom:5px;">Íconos de sidebar corregidos: Búsqueda ahora usa lupa, Explorador ahora usa base de datos (estaban invertidos) -7 vistas + tarjetas de Inicio.</li>
+<li style="margin-bottom:5px;">"Sistema funcionando con normalidad" y "Ayuda" eliminados del pie del sidebar -7 vistas (no hay fuente real de estado de sistema ni destino confirmado de ayuda).</li>
+<li style="margin-bottom:5px;">FieldBeat: filtros marcados con nota "Diseño deseado" -el origen de datos actual no los soporta.</li>
+<li style="margin-bottom:5px;">Auditoría: KPI "Registros sin ticket asociado" retirado de la fila de problemas; el dato se muestra ahora en un footnote neutral dentro del bloque "¿En qué estado está la revisión?". KPIs renombrados para no mezclar unidades: reportes vs. repuestos siempre indicados explícitamente.</li>
+<li>Búsqueda: se retiró el selector "Ver estado" de la pantalla de producto. Explorador: se retiraron los botones de demostración Sin registros/Cargando/Error/Filtro sin coincidencias; el conjunto Reportes de terreno y Repuestos ahora muestran filas de ejemplo con entidades reales (clientes, máquinas, categorías de calidad confirmadas) en vez del estado vacío por defecto.</li>
+</ul>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:0 0 10px;">2 · Matriz vista → origen de datos actual</h2>
+<table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:18px;">
+<thead><tr><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Vista</th><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Origen confirmado hoy</th><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Soporta filtros de usuario</th></tr></thead>
+<tbody>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;font-weight:700;">Inicio</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Agregado de los 3 dashboards, sin origen propio</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">No aplica</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;font-weight:700;">Dashboard Operacional</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Endpoint operacional (resumen, filtros, detalle, repuestos)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Sí, 11 filtros confirmados</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;font-weight:700;">Dashboard FieldBeat</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Endpoint FieldBeat (5 consultas fijas a GOLD)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;"><strong style="color:#a03e2c;">No</strong> -sin filtros de usuario hoy</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;font-weight:700;">Trabajo fuera de horario</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Endpoint de horas (resumen + 5 rutas por cliente/período/tipo/técnico/confianza)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Parcial -existen las rutas, filtrado cruzado no confirmado</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;font-weight:700;">Auditoría</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Endpoint de auditoría (resumen + 5 rutas de revisión)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Parcial -filtros de página confirmados, cruce con período no confirmado</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;font-weight:700;">Búsqueda</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Endpoint de búsqueda por palabra clave (existe)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Parcial -búsqueda libre sí, filtros por tipo/cliente/máquina no confirmados</td></tr>
+<tr><td style="padding:6px 7px;font-weight:700;">Explorador</td><td style="padding:6px 7px;">Endpoint de tablas genérico (schema/tabla/página)</td><td style="padding:6px 7px;"><strong style="color:#a03e2c;">No en el vocabulario de esta vista</strong> -el actual es por tabla física, no por conjunto semántico</td></tr>
+</tbody>
+</table>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:18px 0 10px;">3 · Matriz funcionalidad → soportada / requiere frontend / requiere backend</h2>
+<table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:18px;">
+<thead><tr><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Funcionalidad</th><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Estado</th></tr></thead>
+<tbody>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">KPIs y gráficos reales del Dashboard Operacional (estado general, rankings, vinculación)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;"><span style="color:#2f5c2a;font-weight:700;">Soportada</span></td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Filtros de FieldBeat (período/cliente/máquina/tipo/origen/ticket/repuesto)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;"><span style="color:#a03e2c;font-weight:700;">Requiere backend</span> -ampliar el endpoint</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Evolución/rankings/confianza de Horario con valores reales</td><td style="padding:6px 7px;border-bottom:1px solid #eee;"><span style="color:#a03e2c;font-weight:700;">Requiere backend</span> para valores; <span style="color:#8a5a06;font-weight:700;">requiere frontend</span> para el nuevo tratamiento visual (ver §4)</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Búsqueda por tipo de resultado, filtros y agrupación por entidad</td><td style="padding:6px 7px;border-bottom:1px solid #eee;"><span style="color:#a03e2c;font-weight:700;">Requiere backend</span> -el endpoint actual solo hace búsqueda libre</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Explorador con conjuntos semánticos (Reportes/Tickets/Repuestos/Clientes/Máquinas) y columnas traducidas</td><td style="padding:6px 7px;border-bottom:1px solid #eee;"><span style="color:#a03e2c;font-weight:700;">Requiere backend</span> -hoy es por tabla física</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Conteos agregados por conjunto en Explorador (reportes/tickets/máquinas por cliente)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;"><span style="color:#a03e2c;font-weight:700;">Requiere backend</span> -agregación nueva</td></tr>
+<tr><td style="padding:6px 7px;">Enlace de SKU a Dolibarr</td><td style="padding:6px 7px;"><span style="color:#8a5a06;font-weight:700;">Requiere backend</span> -confirmar URL real por producto antes de activar el enlace</td></tr>
+</tbody>
+</table>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:18px 0 10px;">4 · Trabajo fuera de horario -cambio especificado, pendiente de construir</h2>
+<p style="margin:0 0 8px;">Capacidades confirmadas en el contrato (existen las rutas, con conteo de filas): evolución por período (96 filas), ranking por cliente (26), ranking por técnico (19), distribución por tipo de tarea (11), distribución de confianza (4 niveles). Ninguna trae, en la evidencia reunida esta sesión, los valores numéricos por fila.</p>
+<p style="margin:0;"><strong>Especificación del cambio pendiente:</strong> reemplazar el bloque "Información todavía no disponible" de estas 5 secciones por un tratamiento que muestre los ejes reales ya confirmados (nombres de cliente reales, conteo de técnicos) con las barras en un patrón neutro "pendiente de datos" -no oculto, no vacío, pero tampoco con alturas o cifras inventadas -y la etiqueta "Valores pendientes de conexión con la fuente" en science lugar de "no disponible". El banner de horarios/feriados incompletos se mantiene sin cambios. No se ha reconstruido en el archivo por límite de esta pasada; queda como tarea de la próxima iteración.</p>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:18px 0 10px;">5 · Exportación real por pantalla</h2>
+<table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:18px;">
+<thead><tr><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Vista</th><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Disponible hoy</th><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Formato / alcance real</th><th style="text-align:left;padding:6px 7px;background:#f4f7f6;border-bottom:2px solid #dde6e3;">Ampliación requerida</th></tr></thead>
+<tbody>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Dashboard Operacional</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Sí</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">CSV/JSON del lado del cliente, resultado filtrado</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Ninguna</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Dashboard FieldBeat</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">No confirmado</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">-</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Retirar el botón "Descargar informe" hasta confirmar</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Trabajo fuera de horario</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">No confirmado</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">-</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Retirar el botón "Descargar informe" hasta confirmar</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Auditoría</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">No incluido (correctamente, es solo lectura)</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">-</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Ninguna</td></tr>
+<tr><td style="padding:6px 7px;border-bottom:1px solid #eee;">Explorador</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">"Exportar resultados" mostrado</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">No confirmado para conjuntos semánticos nuevos</td><td style="padding:6px 7px;border-bottom:1px solid #eee;">Confirmar antes de construir; si no existe, retirar el botón</td></tr>
+<tr><td style="padding:6px 7px;">Búsqueda / Inicio</td><td style="padding:6px 7px;">No aplica</td><td style="padding:6px 7px;">-</td><td style="padding:6px 7px;">-</td></tr>
+</tbody>
+</table>
+<p style="margin:0 0 18px;font-size:11.5px;color:#8a5a06;">Nota: los botones "Descargar informe" de FieldBeat y Horario, y "Exportar resultados" de Explorador, permanecen visualmente en los archivos actuales; esta tabla documenta que su capacidad real no fue confirmada esta sesión -se recomienda retirarlos o confirmarlos antes de construir.</p>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:18px 0 10px;">6 · Riesgos de seguridad</h2>
+<ul style="margin:0 0 18px;padding-left:20px;">
+<li style="margin-bottom:5px;"><strong>Obligatorio:</strong> no publicar Búsqueda ni Explorador como "internas" únicamente por su posición visual bajo "Herramientas internas". Requieren control de acceso, feature flag o decisión expresa de exposición antes de desplegarse -no se ha diseñado login ni permisos en esta iteración, esto queda registrado como dependencia, no como resuelto.</li>
+<li style="margin-bottom:5px;">Explorador expone potencialmente más granularidad de dato (por registro) que los dashboards agregados; su control de acceso debería ser al menos tan estricto como el de Auditoría.</li>
+<li>Ningún archivo de esta iteración agrega autenticación, sesión ni administración de usuarios -sigue fuera de alcance (D5 del registro de decisiones permanece abierta).</li>
+</ul>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:18px 0 10px;">7 · Componentes compartidos definitivos</h2>
+<p style="margin:0 0 18px;">Sidebar (240px/80px, logo real, iconos SVG consistentes), header contextual, KPI card, chart card con pregunta como título, ranking card, filter bar (accesos rápidos + chips + más filtros), data table (encabezado fijo, orden, búsqueda, densidad, estados vacío/carga/error documentados por separado del producto), detail drawer, empty state ("Información todavía no disponible" + ícono), badges de 4 colores con semántica única (verde=positivo, índigo=informativo/vinculado, ámbar=incompleto/pendiente, rojo=crítico), tipografía ≥12px en toda la interfaz, <code>:focus-visible</code> en controles nativos.</p>
+
+<h2 style="font-size:15px;font-weight:700;color:#1a2523;border-bottom:2px solid #eef1f0;padding-bottom:5px;margin:18px 0 10px;">8 · Diferencias respecto de la iteración anterior</h2>
+<ul style="margin:0;padding-left:20px;">
+<li style="margin-bottom:5px;">Períodos: de una fecha fija sin respaldo a un estado neutro honesto.</li>
+<li style="margin-bottom:5px;">Navegación: íconos de Búsqueda/Explorador corregidos; se retiraron 2 afirmaciones sin fuente ("sistema funcionando con normalidad", "ayuda").</li>
+<li style="margin-bottom:5px;">FieldBeat: los filtros pasan de "implementados" a "diseño deseado, requiere backend", con nota de handoff explícita.</li>
+<li style="margin-bottom:5px;">Auditoría: se retira un KPI que mezclaba "sin ticket" con "defecto de calidad"; los 4 KPIs restantes ahora declaran su unidad (reportes vs. repuestos) explícitamente.</li>
+<li style="margin-bottom:5px;">Búsqueda y Explorador: se retiran los selectores de demostración de estado de la pantalla de producto; Explorador pasa de estado vacío por defecto a 2 conjuntos con filas de ejemplo basadas en entidades reales.</li>
+<li>Trabajo fuera de horario: cambio especificado pero no reconstruido esta pasada (ver §4) -es la única brecha conocida de esta entrega.</li>
+</ul>
+
+</div>
+</doc-page>
+</x-import>
+</x-dc>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/ui/AppShell";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
 export const metadata = {
@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function DashboardOperacionalPage() {
   return (
-    <AppShell wide>
+    <PageContainer wide>
       <DashboardShell />
-    </AppShell>
+    </PageContainer>
   );
 }

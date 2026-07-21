@@ -1,0 +1,31 @@
+-- Seed generado por src/cloud/export-d1-seed.js - NO EDITAR A MANO.
+-- Tabla: gold_after_hours_by_client
+-- Filas: 26
+
+INSERT INTO gold_after_hours_by_client (client_name, client_rut, total_hours, business_hours, after_hours_total_hours, after_hours_rate, tasks_total, tasks_with_after_hours, confidence_score, confidence_label, confidence_factors_summary, valid_rows, invalid_rows, estimated_rows, exact_rows, insufficient_rows) VALUES
+('FUNDACION ARTURO LOPEZ PEREZ', '*******0-8', 1889, 1168.33, 708.97, 0.3753, 869, 372, 79, 'Media', 'Basado en 869 tareas: 350 cálculo exacto, 518 estimado, 1 no calculable. Confianza ponderada por horas: 79 (Media).', 868, 1, 518, 350, 0),
+('UC CHRISTUS - CECA', '**.***.**0-0', 1004.67, 522.43, 449.07, 0.447, 475, 265, 80, 'Media', 'Basado en 475 tareas: 212 cálculo exacto, 262 estimado, 1 no calculable. Confianza ponderada por horas: 80 (Media).', 474, 1, 262, 212, 0),
+('CLINICA ALEMANA DE SANTIAGO', '**.***.**0-9', 1184, 780.78, 375.88, 0.3175, 529, 268, 80, 'Media', 'Basado en 529 tareas: 220 cálculo exacto, 308 estimado, 1 no calculable. Confianza ponderada por horas: 80 (Media).', 528, 1, 308, 220, 0),
+('HOSPITAL CARLOS VAN BUREN (SSVSA)', '**.***.**0-9', 831.58, 460.15, 347.52, 0.4179, 364, 210, 80, 'Media', 'Basado en 364 tareas: 154 cálculo exacto, 209 estimado, 1 no calculable. Confianza ponderada por horas: 80 (Media).', 363, 1, 209, 154, 0),
+('Instituto Nacional del Cáncer (INC)', NULL, 591.75, 393, 188.82, 0.3191, 269, 122, 79, 'Media', 'Basado en 269 tareas: 93 cálculo exacto, 176 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).', 269, 0, 176, 93, 0),
+('UC CHRISTUS - SCA', '**.***.**0-0', 414.78, 284.87, 138.82, 0.3347, 217, 100, 79, 'Media', 'Basado en 217 tareas: 94 cálculo exacto, 123 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).', 217, 0, 123, 94, 0),
+('SERVICIO DE SALUD DE MAGALLANES', '**.***.**1-8', 389, 293.8, 91.85, 0.2361, 153, 68, 80, 'Media', 'Basado en 153 tareas: 61 cálculo exacto, 92 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).', 153, 0, 92, 61, 0),
+('CLÍNICA SANATORIO ALEMÁN (ONCORAD)', '**.***.**0-3', 506.5, 428.43, 58.7, 0.1159, 231, 52, 78, 'Media', 'Basado en 231 tareas: 73 cálculo exacto, 156 estimado, 2 no calculable. Confianza ponderada por horas: 78 (Media).', 229, 2, 156, 73, 0),
+('CLÍNICA LAS CONDES', NULL, 292, 244.32, 47.55, 0.1628, 131, 30, 79, 'Media', 'Basado en 131 tareas: 36 cálculo exacto, 95 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).', 131, 0, 95, 36, 0),
+('ACME', NULL, 130.25, 102.05, 18.03, 0.1385, 67, 15, 72, 'Media', 'Basado en 67 tareas: 4 cálculo exacto, 57 estimado, 6 no calculable. Confianza ponderada por horas: 72 (Media).', 61, 6, 57, 4, 0),
+('RADIO ONCOLOGÍA DEL SUR', '**.***.**0-3', 168.5, 142.2, 14.53, 0.0863, 75, 18, 79, 'Media', 'Basado en 75 tareas: 28 cálculo exacto, 47 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).', 75, 0, 47, 28, 0),
+('EYG MEDICAL SYSTEMS LTDA.', '*******8-8', 55.25, 38.62, 12.65, 0.229, 25, 7, 77, 'Media', 'Basado en 25 tareas: 6 cálculo exacto, 19 estimado, 0 no calculable. Confianza ponderada por horas: 77 (Media).', 25, 0, 19, 6, 0),
+('INRAD', '**.***.**0-9', 282.25, 266.92, 11.95, 0.0423, 137, 16, 80, 'Media', 'Basado en 137 tareas: 64 cálculo exacto, 73 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).', 137, 0, 73, 64, 0),
+('CLÍNICA ALEMANA DE TEMUCO', '**.***.**0-0', 93.75, 90.32, 9.05, 0.0965, 33, 5, 78, 'Media', 'Basado en 33 tareas: 11 cálculo exacto, 22 estimado, 0 no calculable. Confianza ponderada por horas: 78 (Media).', 33, 0, 22, 11, 0),
+('TORRE MÉDICA - RANCAGUA', '**.***.**3-3', 117.42, 111.78, 5.33, 0.0454, 59, 6, 80, 'Media', 'Basado en 59 tareas: 23 cálculo exacto, 36 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).', 59, 0, 36, 23, 0),
+('INSTITUTO DE SALUD PUBLICA (ISP)', '**.***.**0-1', 97, 88.17, 3.12, 0.0321, 29, 3, 81, 'Media', 'Basado en 29 tareas: 17 cálculo exacto, 12 estimado, 0 no calculable. Confianza ponderada por horas: 81 (Media).', 29, 0, 12, 17, 0),
+('Control Dosimetrico Linac HCM', NULL, 4, 0, 3, 0.75, 1, 1, 86, 'Alta', 'Basado en 1 tareas: 1 cálculo exacto, 0 estimado, 0 no calculable. Confianza ponderada por horas: 86 (Alta).', 1, 0, 0, 1, 0),
+('RADIO NUCLEAR', '**.***.**0-8', 124.5, 108.9, 2.72, 0.0218, 64, 7, 80, 'Media', 'Basado en 64 tareas: 27 cálculo exacto, 37 estimado, 0 no calculable. Confianza ponderada por horas: 80 (Media).', 64, 0, 37, 27, 0),
+('Tecnoimagen S.A.', '**.***.**0-6', 4, 1.5, 2, 0.5, 1, 1, 86, 'Alta', 'Basado en 1 tareas: 1 cálculo exacto, 0 estimado, 0 no calculable. Confianza ponderada por horas: 86 (Alta).', 1, 0, 0, 1, 0),
+('No indica', NULL, 7, 3, 2, 0.2857, 3, 1, 85, 'Alta', 'Basado en 3 tareas: 2 cálculo exacto, 1 estimado, 0 no calculable. Confianza ponderada por horas: 85 (Alta).', 3, 0, 1, 2, 0),
+('Mantención Preventiva Anual Linac HCM', NULL, 4, 4.2, 0.83, 0.2083, 1, 1, 86, 'Alta', 'Basado en 1 tareas: 1 cálculo exacto, 0 estimado, 0 no calculable. Confianza ponderada por horas: 86 (Alta).', 1, 0, 0, 1, 0),
+('Test', NULL, 1, 0.53, 0.47, 0.4667, 1, 1, 86, 'Alta', 'Basado en 1 tareas: 1 cálculo exacto, 0 estimado, 0 no calculable. Confianza ponderada por horas: 86 (Alta).', 1, 0, 0, 1, 0),
+('HOSPITAL REGIONAL DE TALCA', '**.***.**1-2', 8, 9, 0, 0, 2, 0, 79, 'Media', 'Basado en 2 tareas: 1 cálculo exacto, 1 estimado, 0 no calculable. Confianza ponderada por horas: 79 (Media).', 2, 0, 1, 1, 0),
+('Mantención Simulador Huestis HCM', NULL, 4, 4, 0, 0, 1, 0, 76, 'Media', 'Basado en 1 tareas: 0 cálculo exacto, 1 estimado, 0 no calculable. Confianza ponderada por horas: 76 (Media).', 1, 0, 1, 0, 0),
+('HOSPITAL EXEQUIEL GONZÁLEZ CORTÉS', '********ó* *******-**-****-**GC', 26, 26, 0, 0, 7, 0, 75, 'Media', 'Basado en 7 tareas: 0 cálculo exacto, 7 estimado, 0 no calculable. Confianza ponderada por horas: 75 (Media).', 7, 0, 7, 0, 0),
+('Hospital Regional de Coyhaique', '*******0-6', 2, 2, 0, 0, 1, 0, 76, 'Media', 'Basado en 1 tareas: 0 cálculo exacto, 1 estimado, 0 no calculable. Confianza ponderada por horas: 76 (Media).', 1, 0, 1, 0, 0);

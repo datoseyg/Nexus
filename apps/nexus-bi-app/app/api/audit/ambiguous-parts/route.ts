@@ -1,14 +1,20 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { buildAuditMartConditions, createParamPusher, parseAuditFilters } from "@/lib/audit-sql";
 import type { AmbiguousPartRow } from "@/types/audit";
 
+export const runtime = "nodejs";
+
 // Alimenta: pestaña "Matches ambiguos" de /audit/manual-review. Fuente:
 // marts.used_parts_dolibarr_match WHERE match_status = 'AMBIGUOUS_MATCH',
 // agrupado por raw_part_identifier - ver docs/MANUAL_REVIEW_VIEW.md.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = clampPage(Number(searchParams.get("page")));

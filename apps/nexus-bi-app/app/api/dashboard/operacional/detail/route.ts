@@ -1,5 +1,6 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/duckdb";
+import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import {
@@ -10,6 +11,8 @@ import {
   parseDashboardFilters
 } from "@/lib/dashboard-filters";
 
+export const runtime = "nodejs";
+
 // Alimenta: "Detalle Operativo" del Tab "Dashboard Operacional".
 // Fuente: marts.fieldbeat_report_dolibarr_operational_view.
 // "Origen" (General/Apoteca) usa la misma heurística documentada del
@@ -17,6 +20,9 @@ import {
 // docs/DASHBOARD_VISUAL_STYLE.md. No es un campo real del pipeline, se
 // deriva y se etiqueta como tal.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseDashboardFilters(searchParams);

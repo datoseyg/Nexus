@@ -1,4 +1,32 @@
 .env
+.env.local
+.env.*.local
 data/raw/
 data/warehouse/
 node_modules/
+
+# Reportes de dry-run de contracts:import (ETAPA 6.5) -pueden contener
+# fechas/estados normalizados de clientes reales; nunca notas/firmas/raw,
+# pero igual se mantienen fuera de git (data/reports/ a secas SÍ se
+# trackea para otros scripts -no tocar ese patrón existente).
+data/reports/contracts/
+
+# Next.js build output (apps/nexus-bi-app)
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Cloudflare local dev cache (apps/nexus-edge-pipeline)
+.wrangler/
+
+# OS/editor noise
+.DS_Store
+*.log
+
+# Fixtures temporales generados por tests contractuales
+test/contracts/.tmp-fixtures/
+
+# Reportes de dry-run de holidays:import (ETAPA 6.6B1) -datos públicos, pero
+# se mantienen fuera de git por el mismo criterio que data/reports/contracts/.
+data/reports/holidays/

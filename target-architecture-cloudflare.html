@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NEXUS -Blueprint Arquitectural v2 (Cloudflare Edge)</title>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#0B1113',
+      primaryColor: '#0F2A28',
+      primaryTextColor: '#CDEEEB',
+      primaryBorderColor: '#5FC9C1',
+      secondaryColor: '#2A2013',
+      secondaryTextColor: '#F1DFB8',
+      secondaryBorderColor: '#D8A54D',
+      tertiaryColor: '#141B1E',
+      tertiaryTextColor: '#E4E7E6',
+      tertiaryBorderColor: '#33403F',
+      lineColor: '#5B7876',
+      textColor: '#E4E7E6',
+      mainBkg: '#141B1E',
+      nodeBorder: '#33403F',
+      clusterBkg: '#0F1517',
+      clusterBorder: '#243130',
+      edgeLabelBackground: '#0B1113',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
+      actorBkg: '#141B1E',
+      actorBorder: '#33403F',
+      actorTextColor: '#E4E7E6',
+      signalColor: '#8FA3A1',
+      signalTextColor: '#E4E7E6',
+      labelBoxBkgColor: '#182022',
+      labelBoxBorderColor: '#33403F',
+      labelTextColor: '#E4E7E6',
+      loopTextColor: '#8FA3A1',
+      noteBkgColor: '#2A2013',
+      noteTextColor: '#F1DFB8',
+      noteBorderColor: '#D8A54D',
+      activationBkgColor: '#182022',
+      activationBorderColor: '#33403F'
+    },
+    flowchart: { curve: 'basis', htmlLabels: true },
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif'
+  });
+</script>
+<style>
+  :root {
+    --bg: #0B1113;
+    --bg-grid: #0E1517;
+    --surface: #131A1C;
+    --surface-2: #182022;
+    --border: #243130;
+    --border-strong: #33403F;
+    --text: #E4E7E6;
+    --text-muted: #8FA3A1;
+    --text-faint: #566765;
+    --accent: #5FC9C1;
+    --accent-soft: #10302D;
+    --accent-strong: #9AE3DC;
+    --accent-2: #D8A54D;
+    --accent-2-soft: #2A2013;
+    --accent-2-strong: #F1CB86;
+    --danger: #D9666B;
+    --danger-soft: #33191B;
+    --ok: #7FB88B;
+    --ok-soft: #16261C;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI Semibold", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", "Consolas", "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { font-size: 16px; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse 900px 500px at 12% -10%, rgba(95,201,193,0.06), transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(143,163,161,0.045) 39px, rgba(143,163,161,0.045) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(143,163,161,0.045) 39px, rgba(143,163,161,0.045) 40px);
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--accent-soft); color: var(--accent-strong); }
+
+  a { color: var(--accent-strong); text-decoration-color: rgba(95, 201, 193, 0.4); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--accent-strong); }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  code, .mono { font-family: var(--font-mono); }
+  code {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.1em 0.42em;
+    font-size: 0.86em;
+    color: var(--accent-strong);
+    white-space: nowrap;
+  }
+
+  .page { max-width: 1120px; margin: 0 auto; padding: 0 28px 120px; }
+  .prose { max-width: 720px; }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 650;
+    color: var(--text);
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- Cover ---------- */
+
+  header.cover { padding: 88px 0 42px; border-bottom: 1px solid var(--border); margin-bottom: 56px; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  h1.title { font-size: clamp(2.1rem, 4.2vw, 2.9rem); line-height: 1.12; margin: 0 0 14px; max-width: 18ch; }
+  h1.title span { color: var(--accent); }
+
+  p.subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 58ch; margin: 0 0 16px; }
+
+  .companion-note {
+    font-size: 0.88rem;
+    color: var(--text-faint);
+    max-width: 58ch;
+    margin: 0 0 36px;
+    padding-left: 14px;
+    border-left: 2px solid var(--border-strong);
+  }
+
+  .companion-note code { white-space: nowrap; }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .meta-cell { background: var(--surface); padding: 16px 18px; }
+  .meta-cell .k { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
+  .meta-cell .v { font-size: 0.94rem; color: var(--text); font-weight: 600; }
+  .meta-cell .v.status-target { color: var(--accent-strong); }
+
+  @media (max-width: 720px) { .meta-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+  /* ---------- TOC ---------- */
+
+  nav.toc { margin: 40px 0 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 20px 24px; }
+  nav.toc .toc-label { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 14px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; }
+  nav.toc li a { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; color: var(--text); text-decoration: none; border-bottom: 1px dashed var(--border); font-size: 0.94rem; }
+  nav.toc li a:hover { color: var(--accent-strong); }
+  nav.toc li a .n { font-family: var(--font-mono); color: var(--text-faint); }
+  @media (max-width: 640px) { nav.toc ol { grid-template-columns: 1fr; } }
+
+  /* ---------- Sections ---------- */
+
+  section.chapter { padding-top: 88px; scroll-margin-top: 24px; }
+  section.chapter:first-of-type { padding-top: 0; }
+  .chapter-head { margin-bottom: 28px; }
+  .chapter-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+  h2.chapter-title { font-size: clamp(1.5rem, 2.6vw, 1.85rem); margin: 0; border-bottom: 1px solid var(--border); padding-bottom: 18px; }
+  h3 { font-size: 1.2rem; margin: 36px 0 12px; }
+
+  p { color: var(--text); }
+  .prose p, .prose li { color: #C7CCCA; }
+  .prose ul, .prose ol { padding-left: 1.3em; }
+  .prose li { margin-bottom: 8px; }
+  .lede { font-size: 1.08rem; color: var(--text); max-width: 68ch; }
+
+  /* ---------- Figure / diagram block ---------- */
+
+  figure.diagram { margin: 32px 0 28px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
+  figure.diagram .fig-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  figure.diagram .fig-head .fig-label { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+  figure.diagram .fig-head .fig-title { font-family: var(--font-display); font-weight: 600; font-size: 0.98rem; color: var(--text); }
+
+  .diagram-scroll {
+    overflow-x: auto;
+    padding: 28px 22px;
+    background: radial-gradient(ellipse at top left, rgba(95,201,193,0.05), transparent 60%), var(--bg-grid);
+  }
+
+  .mermaid { display: flex; justify-content: center; min-width: 560px; }
+
+  figcaption.plain-explainer { padding: 18px 22px 22px; border-top: 1px solid var(--border); background: var(--surface); }
+  figcaption.plain-explainer .pe-label {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent-2-strong); margin-bottom: 8px; border-left: 2px solid var(--accent-2); padding-left: 10px;
+  }
+  figcaption.plain-explainer p { margin: 0; padding-left: 12px; color: var(--text-muted); font-size: 0.95rem; max-width: 78ch; }
+
+  /* ---------- Tables ---------- */
+
+  .table-scroll { overflow-x: auto; margin: 24px 0; border: 1px solid var(--border); border-radius: var(--radius-md); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.9rem; }
+  thead th {
+    text-align: left; background: var(--surface-2); color: var(--text-faint); font-family: var(--font-mono);
+    font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+    padding: 12px 16px; border-bottom: 1px solid var(--border-strong); white-space: nowrap;
+  }
+  tbody td { padding: 13px 16px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(95, 201, 193, 0.035); }
+  td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  .archetype-name { font-weight: 650; color: var(--accent-strong); white-space: nowrap; }
+  .archetype-primitive { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 100px; border: 1px solid var(--border-strong); background: var(--surface-2); white-space: nowrap; }
+
+  /* ---------- ADR-style / status chips ---------- */
+
+  .status-chip { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; border: 1px solid; white-space: nowrap; }
+  .status-target { color: var(--accent-strong); border-color: #24544F; background: var(--accent-soft); }
+  .status-legacy { color: var(--accent-2-strong); border-color: #5A4520; background: var(--accent-2-soft); }
+  .status-critico { color: #F0A3A8; border-color: #5A2B2E; background: var(--danger-soft); }
+  .status-ok { color: var(--ok); border-color: #2E4A38; background: var(--ok-soft); }
+
+  /* ---------- Legend ---------- */
+
+  .legend { display: flex; gap: 24px; flex-wrap: wrap; margin: 20px 0 28px; font-size: 0.86rem; color: var(--text-muted); }
+  .legend .item { display: flex; align-items: center; gap: 8px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .legend .swatch.edge { background: var(--accent); }
+  .legend .swatch.legacy { background: var(--accent-2); }
+
+  /* ---------- Callout ---------- */
+
+  .callout { border: 1px solid var(--border-strong); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); padding: 16px 20px; margin: 24px 0; font-size: 0.94rem; color: var(--text-muted); }
+  .callout strong { color: var(--text); }
+  .callout.warn { border-left-color: var(--danger); }
+
+  /* ---------- Phase list (section 5) ---------- */
+
+  .phase-list { list-style: none; margin: 28px 0; padding: 0; counter-reset: phase; }
+  .phase {
+    position: relative;
+    padding: 22px 24px 22px 74px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    margin-bottom: 14px;
+  }
+  .phase::before {
+    counter-increment: phase;
+    content: counter(phase);
+    position: absolute;
+    left: 22px; top: 22px;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--accent-strong);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem;
+  }
+  .phase h4 { margin: 0 0 8px; font-size: 1.02rem; }
+  .phase p { margin: 0 0 10px; color: #C7CCCA; font-size: 0.94rem; }
+  .phase .phase-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- Code block ---------- */
+
+  .codeblock {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 18px 0;
+  }
+  .codeblock pre { margin: 0; font-family: var(--font-mono); font-size: 0.83rem; line-height: 1.6; color: #C9D6D4; }
+  .codeblock .c-key { color: var(--accent-strong); }
+  .codeblock .c-str { color: var(--accent-2-strong); }
+  .codeblock .c-com { color: var(--text-faint); font-style: normal; }
+
+  /* ---------- Footer ---------- */
+
+  footer { margin-top: 96px; padding-top: 28px; border-top: 1px solid var(--border); color: var(--text-faint); font-size: 0.84rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  footer .mono { font-family: var(--font-mono); }
+
+  @media print { body { background: #fff; color: #111; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="cover">
+    <div class="eyebrow"><span class="dot"></span> Blueprint arquitectural &middot; Estado objetivo</div>
+    <h1 class="title">NEXUS <span>-</span> Topología final en Cloudflare Edge</h1>
+    <p class="subtitle">
+      Diseño de referencia hacia el que evoluciona la plataforma: de un pipeline batch en una sola máquina a
+      un sistema distribuido, reactivo a eventos, desplegado en la red de Cloudflare.
+    </p>
+    <p class="companion-note">
+      Complementa a <code>readme-arquitectural.html</code> (Snapshot v1, estado actual congelado). Este
+      documento no describe lo que existe hoy -describe hacia dónde va, y con qué piezas se construye.
+    </p>
+
+    <div class="meta-grid">
+      <div class="meta-cell"><div class="k">Versión</div><div class="v">Blueprint v2</div></div>
+      <div class="meta-cell"><div class="k">Estado</div><div class="v status-target">Objetivo &middot; diseño de referencia</div></div>
+      <div class="meta-cell"><div class="k">Plataforma</div><div class="v">Cloudflare Workers, R2, D1, Queues</div></div>
+      <div class="meta-cell"><div class="k">Precede a</div><div class="v">Fase 3 &middot; migración de escritura</div></div>
+    </div>
+
+    <nav class="toc">
+      <div class="toc-label">Contenido</div>
+      <ol>
+        <li><a href="#s1"><span>Visión estratégica y arquetipos del edge</span><span class="n">01</span></a></li>
+        <li><a href="#s2"><span>Evolución del patrón medallón</span><span class="n">02</span></a></li>
+        <li><a href="#s3"><span>Topología de componentes y red</span><span class="n">03</span></a></li>
+        <li><a href="#s4"><span>Estado, concurrencia y resiliencia</span><span class="n">04</span></a></li>
+        <li><a href="#s5"><span>Plan de transición y fases</span><span class="n">05</span></a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- 1. VISION ESTRATEGICA Y ARQUETIPOS -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s1">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">01 &middot; Fundamentos</div>
+      <h2 class="chapter-title">Visión estratégica y arquetipos del sistema edge</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        Cloudflare no es "un servidor en otro lado". Es una plataforma de cómputo distribuido: en vez de un
+        único proceso que vive en una máquina y espera peticiones, el trabajo se descompone en piezas
+        pequeñas y sin estado que se ejecutan cerca de donde ocurre el evento que las dispara -y que se
+        comunican entre sí por almacenamiento y mensajería, no por llamadas directas de función.
+      </p>
+      <p>
+        Ese cambio de modelo mental es más importante que cualquier detalle de producto individual. Nexus hoy
+        asume una máquina con disco persistente y procesos que corren de principio a fin. Nexus en el edge
+        asume exactamente lo contrario: nada persiste fuera de un almacenamiento explícito, y ningún paso
+        puede asumir que el paso anterior corrió en el mismo lugar, o siquiera en el mismo minuto.
+      </p>
+      <p>
+        Para razonar sobre esto sin perderse en nombres de producto, conviene pensar cada primitiva de
+        Cloudflare como un arquetipo con un rol fijo -igual que un organismo tiene órganos especializados,
+        no una única célula que hace todo.
+      </p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Arquetipo</th>
+            <th>Primitiva</th>
+            <th>Analogía</th>
+            <th>Rol en Nexus</th>
+            <th>Garantía clave</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="archetype-name">El Archivero</span></td>
+            <td><span class="archetype-primitive">R2</span></td>
+            <td>Bodega de un archivo notarial: todo lo que entra se guarda tal cual, con fecha, y nada se destruye ni se reescribe.</td>
+            <td>Capa RAW, snapshots congelados, exportes de GOLD</td>
+            <td>Consistencia fuerte en escritura y borrado; cero costo de salida (egress)</td>
+          </tr>
+          <tr>
+            <td><span class="archetype-name">El Motor Transaccional</span></td>
+            <td><span class="archetype-primitive">D1</span></td>
+            <td>El libro contable de la sucursal: relacional, consultable con SQL, pensado como una base pequeña por dominio, no una única base gigante.</td>
+            <td>GOLD y MARTS consultables, vistas de auditoría</td>
+            <td>SQLite serverless, arquitectura de escalamiento horizontal por base</td>
+          </tr>
+          <tr>
+            <td><span class="archetype-name">Los Ejecutores Efímeros</span></td>
+            <td><span class="archetype-primitive">Workers</span></td>
+            <td>Un turno de guardia: aparece, hace su tarea puntual, se retira, y no recuerda nada de un turno al siguiente.</td>
+            <td>Normalizadores, resolución de identidad, APIs de lectura</td>
+            <td>Arranque en frío por debajo del milisegundo, despliegue simultáneo en 300+ ciudades</td>
+          </tr>
+          <tr>
+            <td><span class="archetype-name">El Sistema Nervioso</span></td>
+            <td><span class="archetype-primitive">Queues + Workflows</span></td>
+            <td>El sistema nervioso periférico: transporta una señal de un punto a otro de forma confiable, incluso si el músculo del otro extremo falla momentáneamente.</td>
+            <td>Orquestación asíncrona del ETL, reintentos, Dead Letter Queue</td>
+            <td>Entrega garantizada al menos una vez; ejecución durable multi-paso, con estado persistido entre pasos</td>
+          </tr>
+          <tr>
+            <td><span class="archetype-name">El Vigía Temporal</span></td>
+            <td><span class="archetype-primitive">Cron Triggers</span></td>
+            <td>El reloj de fábrica que hace sonar la sirena de cambio de turno, sin que nadie tenga que estar mirando la hora.</td>
+            <td>Disparo periódico de la ingesta desde Zendesk, FieldBeat y Dolibarr</td>
+            <td>Sintaxis cron estándar; no requiere un proceso propio esperando el reloj</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Por qué importa el arquetipo, no solo el nombre:</strong> cuando alguien nuevo se une al proyecto,
+      "¿dónde guardo esto?" se responde más rápido preguntando "¿es un archivo inmutable, una fila consultable,
+      un cómputo puntual, una señal entre pasos, o un disparador de tiempo?" que memorizando qué producto de
+      Cloudflare hace qué.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. EVOLUCION DEL PATRON MEDALLON -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s2">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">02 &middot; Datos</div>
+      <h2 class="chapter-title">La evolución del patrón medallón: de estático a reactivo</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        RAW, PROCESSED, MARTS y GOLD no desaparecen ni cambian de significado. Lo que cambia es la
+        <em>morfología de ejecución</em>: hoy cada capa se materializa cuando un humano corre un comando; en
+        el edge, cada capa se materializa cuando la capa anterior anuncia que tiene datos nuevos.
+      </p>
+      <p>
+        El mecanismo que hace esto posible ya existe en la plataforma sin construir nada a medida:
+        R2 puede emitir un evento cuando se escribe un objeto nuevo (<code>PutObject</code>), ese evento se
+        publica en una Queue, y un Worker consumidor procesa ese mensaje -que es exactamente la forma de un
+        "trigger" de base de datos, pero entre capas de almacenamiento en vez de entre filas de una tabla.
+        El resultado es <em>micro-batching</em>: en vez de un batch gigante disparado a mano una vez al día,
+        cada objeto nuevo dispara su propio mini-batch de procesamiento, casi en el momento en que llega.
+      </p>
+      <p>
+        Esto no convierte a Nexus en un sistema de streaming en tiempo real -sigue siendo fundamentalmente
+        batch, con la misma disciplina de inmutabilidad e idempotencia de la Fase 1 -pero el tamaño del lote
+        pasa de "todo lo acumulado desde la última corrida" a "lo que acaba de llegar", y el disparo pasa de
+        humano a evento.
+      </p>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 01</span>
+        <span class="fig-title">Ciclo de vida del dato impulsado por eventos</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+flowchart LR
+    CRON["Cron Trigger<br/>disparo periodico"] --> ING["Worker de ingesta<br/>Zendesk, FieldBeat, Dolibarr"]
+    ING --> RAW[("R2<br/>capa RAW")]
+
+    RAW -- "evento PutObject" --> QRAW["Queue: raw-events"]
+    QRAW --> NORM["Worker normalizador"]
+    NORM --> PROC[("R2<br/>capa PROCESSED")]
+
+    PROC -- "evento PutObject" --> QPROC["Queue: processed-events"]
+    QPROC --> RESOLV["Worker resolucion de identidad"]
+    RESOLV --> MARTS[("R2<br/>capa MARTS")]
+
+    MARTS -- "evento PutObject" --> QMARTS["Queue: marts-events"]
+    QMARTS --> AGG["Workflow de agregacion GOLD"]
+
+    AGG --> GOLDR[("R2<br/>capa GOLD, export")]
+    AGG --> GOLDD[("D1<br/>capa GOLD, consulta")]
+    GOLDD --> API["Worker API / Pages Functions"]
+
+    classDef store fill:#0F2A28,stroke:#5FC9C1,color:#CDEEEB
+    classDef compute fill:#141B1E,stroke:#33403F,color:#E4E7E6
+    classDef signal fill:#2A2013,stroke:#D8A54D,color:#F1DFB8
+
+    class RAW,PROC,MARTS,GOLDR,GOLDD store
+    class ING,NORM,RESOLV,AGG,API,CRON compute
+    class QRAW,QPROC,QMARTS signal
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          En el modelo actual, alguien tiene que acordarse de correr cada paso en orden. En este diagrama, cada
+          capa avisa sola cuando terminó de escribir algo nuevo, y ese aviso es lo que despierta al siguiente
+          paso -nadie tiene que estar pendiente del reloj salvo el primer disparo de ingesta. Las cajas
+          cilíndricas son almacenamiento (donde el dato vive), las cajas rectangulares son cómputo puntual (que
+          aparece, procesa, y desaparece), y las cajas ámbar son el "cartero" que lleva el aviso de un punto a
+          otro.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. TOPOLOGIA DE COMPONENTES -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s3">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">03 &middot; Despliegue</div>
+      <h2 class="chapter-title">Topología de componentes y red</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        A nivel de despliegue, Nexus queda repartido en tres planos claramente separados: el plano de
+        entrega (DNS, CDN, Pages), el plano de servicio (Workers que responden peticiones de la UI), y el
+        plano de orquestación (todo lo que corre en segundo plano sin que ningún usuario lo espere).
+      </p>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 02</span>
+        <span class="fig-title">Diagrama de contenedores (C4 &middot; Nivel 2)</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+flowchart TB
+    USER(["Analista de negocio<br/>navegador"])
+    DNS["DNS / CDN Cloudflare<br/>edge global, 300+ ciudades"]
+
+    subgraph EDGE["Cuenta Cloudflare"]
+        direction TB
+        PAGES["Cloudflare Pages<br/>Next.js estatico, UI"]
+        API["Workers / Pages Functions<br/>API de solo lectura"]
+        D1DB[("D1<br/>GOLD y MARTS consultables")]
+        R2S[("R2<br/>RAW, PROCESSED, snapshots")]
+
+        subgraph BG["Orquestacion en segundo plano"]
+            direction TB
+            CRONBG["Cron Triggers"]
+            QBG["Queues"]
+            WFBG["Workflows"]
+            DOBG["Durable Objects<br/>locks de pipeline"]
+        end
+    end
+
+    SRC["Zendesk, FieldBeat, Dolibarr<br/>APIs externas"]
+
+    USER --> DNS --> PAGES
+    PAGES --> API
+    API --> D1DB
+    API -.->|"export ocasional"| R2S
+    SRC --> CRONBG
+    CRONBG --> QBG
+    QBG --> WFBG
+    WFBG --> R2S
+    WFBG --> D1DB
+    WFBG -.->|"coordina via"| DOBG
+
+    classDef edgebox fill:#141B1E,stroke:#33403F,color:#E4E7E6
+    classDef store fill:#0F2A28,stroke:#5FC9C1,color:#CDEEEB
+    classDef bg fill:#0F1517,stroke:#243130,color:#8FA3A1
+    classDef ext fill:#2A2013,stroke:#D8A54D,color:#F1DFB8
+
+    class PAGES,API edgebox
+    class D1DB,R2S store
+    class CRONBG,QBG,WFBG,DOBG bg
+    class SRC,DNS ext
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          Este mapa muestra qué pieza de infraestructura atiende cada tipo de tráfico. Cuando un analista abre
+          el dashboard, su navegador solo toca dos cajas: la CDN que le entrega la página, y un Worker que le
+          responde con datos ya calculados desde D1 -un camino corto y rápido. Todo el trabajo pesado (traer
+          datos de los sistemas externos, limpiarlos, cruzarlos) ocurre en un plano completamente separado, en
+          segundo plano, disparado por el reloj o por eventos, sin que el analista tenga que esperarlo nunca.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. ESTADO, CONCURRENCIA Y RESILIENCIA -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s4">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">04 &middot; Resiliencia</div>
+      <h2 class="chapter-title">Manejo de estado, concurrencia y resiliencia</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        Repartir el trabajo en Workers efímeros resuelve el problema de escala, pero abre uno nuevo que el
+        pipeline local nunca tuvo: varios Workers pueden estar consumiendo la misma cola al mismo tiempo, en
+        distintas ciudades, sin coordinación implícita entre ellos.
+      </p>
+
+      <p>
+        <strong>El riesgo concreto.</strong> Si un operador dispara manualmente una reconstrucción de GOLD
+        mientras el Workflow programado del mismo día todavía está corriendo, dos ejecuciones distintas pueden
+        intentar escribir la misma tabla en D1 al mismo tiempo -una condición de carrera clásica, que en el
+        pipeline local simplemente no podía ocurrir porque solo había un proceso corriendo a la vez en una
+        sola máquina.
+      </p>
+
+      <p>
+        <strong>La solución: un Durable Object como semáforo distribuido.</strong> Un Durable Object es la
+        única primitiva de Cloudflare con ejecución de un solo hilo, por instancia -es decir, dos peticiones
+        a la misma instancia nunca corren en paralelo, se atienden en fila. Eso lo vuelve el lugar natural
+        para implementar un lock: antes de arrancar una reconstrucción de GOLD, cada ejecución le pregunta al
+        mismo Durable Object (identificado siempre por el mismo nombre, ej. <code>"gold-build-pipeline"</code>)
+        si puede tomar el candado. Si ya está tomado, la segunda ejecución se rechaza o espera. Un
+        <code>alarm</code> programado libera el candado automáticamente si la ejecución que lo tomó nunca
+        avisó que terminó -para que un crash no deje el pipeline bloqueado para siempre.
+      </p>
+
+      <div class="codeblock"><pre><span class="c-com">// Patron de lock distribuido dentro de un Durable Object</span>
+<span class="c-key">async</span> acquire(timeoutMs = <span class="c-str">5000</span>) {
+  <span class="c-key">if</span> (this.held) <span class="c-key">return</span> <span class="c-str">false</span>;
+  this.held = <span class="c-str">true</span>;
+  <span class="c-key">await</span> this.ctx.storage.setAlarm(Date.now() + timeoutMs);
+  <span class="c-key">return</span> <span class="c-str">true</span>;
+}
+<span class="c-key">async</span> release() { this.held = <span class="c-str">false</span>; <span class="c-key">await</span> this.ctx.storage.deleteAlarm(); }
+<span class="c-key">async</span> alarm() { this.held = <span class="c-str">false</span>; } <span class="c-com">// liberacion automatica si nadie avisa</span></pre></div>
+
+      <p>
+        <strong>El riesgo silencioso: un dato corrupto envenenando GOLD.</strong> Si un Worker normalizador
+        recibe un registro malformado y lo deja pasar a medio transformar, ese error se propaga a MARTS y de
+        ahí a GOLD, contaminando un dashboard entero sin que nadie lo note hasta mucho después. La defensa es
+        que cada mensaje se procese con su propio manejo de error -nunca dejar que una excepción sin capturar
+        tumbe el lote completo -y que, agotados los reintentos, el mensaje se mueva a una Dead Letter Queue en
+        cuarentena en vez de reintentarse para siempre o descartarse en silencio.
+      </p>
+    </div>
+
+    <figure class="diagram">
+      <div class="fig-head">
+        <span class="fig-label">Diagrama 03</span>
+        <span class="fig-title">Manejo de error en normalización y Dead Letter Queue</span>
+      </div>
+      <div class="diagram-scroll">
+<div class="mermaid">
+sequenceDiagram
+    participant Q as Queue processed-events
+    participant W as Worker normalizador
+    participant D as GOLD, D1 y R2
+    participant DLQ as Dead Letter Queue
+
+    Q->>W: entrega lote de mensajes
+    activate W
+    W->>W: procesa mensaje, intenta normalizar
+
+    alt normalizacion exitosa
+        W->>D: escribe fila validada
+        W->>Q: msg.ack()
+    else error de normalizacion, dato corrupto
+        W->>W: catch por mensaje, nunca deja pasar el error crudo
+        W->>Q: msg.retry(delaySeconds)
+        Q->>W: reintenta hasta agotar max_retries
+        alt reintentos agotados
+            Q->>DLQ: mensaje movido automaticamente
+            Note over DLQ: la capa GOLD nunca ve este dato
+        end
+    end
+    deactivate W
+</div>
+      </div>
+      <figcaption class="plain-explainer">
+        <div class="pe-label">En términos simples</div>
+        <p>
+          Cuando un dato llega roto, el sistema no lo fuerza a entrar ni lo tira a la basura de inmediato: lo
+          reintenta unas cuantas veces por si el problema era pasajero, y si sigue fallando lo aparta en una
+          "sala de espera" separada -la Dead Letter Queue -donde alguien puede revisarlo después con calma.
+          Lo importante es lo que nunca pasa: un dato roto jamás llega a contaminar los dashboards finales que
+          ve un analista de negocio.
+        </p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 5. PLAN DE TRANSICION -->
+  <!-- ============================================================ -->
+  <section class="chapter" id="s5">
+    <div class="chapter-head">
+      <div class="chapter-eyebrow">05 &middot; Ejecución</div>
+      <h2 class="chapter-title">Plan de transición y fases de despliegue</h2>
+    </div>
+
+    <div class="prose">
+      <p class="lede">
+        La migración no es un corte de una vez: cada fase agrega una pieza nueva en paralelo a lo que ya
+        funciona, y solo se retira el mecanismo anterior cuando la pieza nueva demostró paridad funcional.
+        Esto es una continuación directa del criterio ya aplicado en el snapshot v1 (<code>NEXT_PUBLIC_DATA_MODE</code>
+        conmutando entre modos sin tocar el local) -no un cambio de filosofía.
+      </p>
+    </div>
+
+    <div class="legend">
+      <span class="item"><span class="swatch edge"></span> Pieza nueva de esta fase</span>
+      <span class="item"><span class="swatch legacy"></span> Se mantiene intacto en paralelo</span>
+    </div>
+
+    <ol class="phase-list">
+      <li class="phase">
+        <h4>Levantar R2 en paralelo al filesystem local</h4>
+        <p>
+          Cada escritura que hoy va a <code>data/raw/</code> y <code>data/gold/</code> se espeja también a un
+          bucket R2, sin apagar ni modificar el pipeline local. El objetivo de esta fase es exclusivamente
+          validar que el objeto que llega a R2 es idéntico byte a byte al archivo local -todavía no hay
+          ningún consumidor leyendo desde R2.
+        </p>
+        <div class="phase-meta">
+          <span class="status-chip status-target">Nuevo: bucket R2 espejo</span>
+          <span class="status-chip status-legacy">Intacto: pipeline fs local completo</span>
+        </div>
+      </li>
+
+      <li class="phase">
+        <h4>Migrar la ingesta a Cron Triggers y Workers</h4>
+        <p>
+          Los tres miners (Zendesk, FieldBeat, Dolibarr) se reescriben como Workers disparados por Cron
+          Triggers, escribiendo directo a R2 en vez de a <code>data/raw/</code>. El operador deja de correr
+          <code>npm run get:all</code> a mano -el reloj lo hace por él, en el edge.
+        </p>
+        <div class="phase-meta">
+          <span class="status-chip status-target">Nuevo: Workers de ingesta + Cron Triggers</span>
+          <span class="status-chip status-legacy">Intacto: normalizadores y capas MARTS/GOLD locales</span>
+        </div>
+      </li>
+
+      <li class="phase">
+        <h4>Orquestar el ETL completo con Queues y Workflows</h4>
+        <p>
+          Se conectan eventos de R2 a Queues, y un Worker/Workflow consumidor por cada transición de capa
+          (RAW&rarr;PROCESSED, PROCESSED&rarr;MARTS, MARTS&rarr;GOLD) -el diagrama 01 de este documento pasa
+          de blueprint a implementación. Se introduce el Durable Object de lock antes de permitir dos
+          ejecuciones de agregación GOLD superpuestas.
+        </p>
+        <div class="phase-meta">
+          <span class="status-chip status-target">Nuevo: Queues, Workflows, Durable Object de lock</span>
+          <span class="status-chip status-legacy">Intacto: DuckDB local sigue siendo la fuente de verdad de la app</span>
+        </div>
+      </li>
+
+      <li class="phase">
+        <h4>Migrar el consumo a D1</h4>
+        <p>
+          Ya iniciado parcialmente: 17 tablas <code>gold_*</code>/<code>marts_*</code> se exportan hoy a D1 y
+          se sirven read-only vía Pages Functions, en paralelo al modo <code>local-duckdb</code>. Esta fase
+          completa esa paridad dashboard por dashboard, y evalúa mover a WebAssembly la lógica de resolución
+          de identidad que hoy corre en Node, para ejecutarla directo dentro del Worker sin dependencias
+          nativas.
+        </p>
+        <div class="phase-meta">
+          <span class="status-chip status-ok">En curso: 17 tablas D1 + Pages Functions</span>
+          <span class="status-chip status-legacy">Intacto: modo local-duckdb como fallback</span>
+        </div>
+      </li>
+
+      <li class="phase">
+        <h4>Retirar el modo local una vez alcanzada paridad completa</h4>
+        <p>
+          Solo cuando cada dashboard fue validado en el edge contra el mismo resultado que el modo local
+          -no antes -se retira <code>local-duckdb</code> como ruta por defecto. Hasta ese punto, el modo
+          local sigue siendo la fuente de verdad y el criterio de aceptación de todas las fases anteriores.
+        </p>
+        <div class="phase-meta">
+          <span class="status-chip status-critico">Pendiente: gate explícito de paridad, no una fecha fija</span>
+        </div>
+      </li>
+    </ol>
+
+    <div class="callout warn">
+      <strong>Criterio de corte, no de calendario:</strong> ninguna fase de esta lista tiene una fecha objetivo
+      implícita. Cada una termina cuando su validación pasa, no cuando pasa el tiempo -mismo criterio que ya
+      rige la migración D1 en curso dentro de este proyecto.
+    </div>
+  </section>
+
+  <footer>
+    <span class="mono">NEXUS &middot; target-architecture-cloudflare.html &middot; blueprint v2</span>
+    <span class="mono">Documento estático, sin dependencias de build</span>
+  </footer>
+
+</div>
+</body>
+</html>

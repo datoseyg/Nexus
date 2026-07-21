@@ -1,0 +1,111 @@
+{
+  "$schema_note": "Derivado de 03-information-architecture.md y 08-screen-evidence-matrix.md. commit=4a3d055, branch=supabase-migration.",
+  "screens": [
+    {
+      "route": "/",
+      "module": "landing",
+      "navLabel": null,
+      "classification": "design ready",
+      "auth": "public",
+      "localRuntimeStatus": 200
+    },
+    {
+      "route": "/dashboard/fieldbeat",
+      "module": "dashboard_fieldbeat",
+      "navLabel": "Dashboard FieldBeat",
+      "classification": "design ready",
+      "auth": "public",
+      "localRuntimeStatus": 200,
+      "apiRoutes": ["/api/dashboard/fieldbeat"]
+    },
+    {
+      "route": "/dashboard/operacional",
+      "module": "dashboard_operacional",
+      "navLabel": "Dashboard Operacional",
+      "tabs": [
+        {
+          "name": "Operacional",
+          "classification": "design ready",
+          "note": "debe transmitir visualmente el alcance limitado (7.74% cobertura), no solo numeros absolutos",
+          "apiRoutes": ["/api/dashboard/operacional/filters", "/api/dashboard/operacional/summary", "/api/dashboard/operacional/parts", "/api/dashboard/operacional/detail"]
+        },
+        {
+          "name": "Uptime/Downtime",
+          "classification": "designable with assumptions",
+          "assumption": "mantener o reforzar el disclaimer 'no es downtime real' (downtimeWarning:true confirmado en runtime)",
+          "apiRoutes": ["/api/dashboard/uptime/summary", "/api/dashboard/uptime/table", "/api/dashboard/uptime/tasks"]
+        }
+      ],
+      "auth": "public",
+      "localRuntimeStatus": 200
+    },
+    {
+      "route": "/dashboard/after-hours",
+      "module": "dashboard_after_hours",
+      "navLabel": "Trabajo Fuera de Horario",
+      "classification": "design ready",
+      "auth": "public",
+      "localRuntimeStatus": 200,
+      "apiRoutes": ["/api/dashboard/after-hours/summary", "/api/dashboard/after-hours/by-client", "/api/dashboard/after-hours/by-period", "/api/dashboard/after-hours/by-task-type", "/api/dashboard/after-hours/by-technician", "/api/dashboard/after-hours/confidence-distribution", "/api/dashboard/after-hours/detail"]
+    },
+    {
+      "route": "/audit/manual-review",
+      "module": "audit_manual_review",
+      "navLabel": "Auditoría",
+      "subsections": [
+        { "name": "read (quality/parts/ambiguous/placeholders/reports/tickets)", "classification": "design ready" },
+        { "name": "actions (all FutureActionButton stubs)", "classification": "blocked by product decision", "decisionRef": "11-product-decision-register.md#D6" }
+      ],
+      "auth": "public",
+      "localRuntimeStatus": 200,
+      "apiRoutes": ["/api/audit/summary", "/api/audit/ambiguous-parts", "/api/audit/parts-review", "/api/audit/placeholders", "/api/audit/reports-review", "/api/audit/ticket-links-review"]
+    },
+    {
+      "route": "/explorer",
+      "module": "explorer",
+      "navLabel": "Explorador",
+      "classification": "not recommended",
+      "reason": "herramienta interna de depuracion generica, sin evidencia de tarea de negocio",
+      "decisionRef": "11-product-decision-register.md#D8",
+      "auth": "public",
+      "localRuntimeStatus": 200,
+      "apiRoutes": ["/api/tables", "/api/tables/[schema]/[table]"]
+    },
+    {
+      "route": "/search",
+      "module": "search",
+      "navLabel": "Búsqueda",
+      "classification": "not recommended",
+      "reason": "mismo razonamiento que /explorer; expone SQL ejecutada al usuario",
+      "decisionRef": "11-product-decision-register.md#D8",
+      "auth": "public",
+      "localRuntimeStatus": 200,
+      "apiRoutes": ["/api/search"]
+    },
+    {
+      "route": "equipment-lifecycle (no existe en esta branch)",
+      "module": "equipment_lifecycle",
+      "navLabel": null,
+      "classification": "blocked by product decision",
+      "reason": "existe completo en cloud-d1-readonly/cloud-smoke-test, ausente en supabase-migration",
+      "decisionRef": "11-product-decision-register.md#D7",
+      "auth": null,
+      "localRuntimeStatus": null
+    },
+    {
+      "route": "/api/admin/** (10 rutas, sin pantalla)",
+      "module": "admin_crud",
+      "navLabel": null,
+      "classification": "blocked by product decision",
+      "reason": "CRUD funcional sin caller en ninguna UI",
+      "decisionRef": "11-product-decision-register.md#D3",
+      "auth": "token:x-nexus-admin-token",
+      "localRuntimeStatus": 200
+    }
+  ],
+  "moduleToScreenGaps": [
+    "ingesta (miners): sin pantalla, CLI unicamente",
+    "normalizacion/resolucion de identidad/marts/QA/GOLD/warehouse/migracion: sin pantalla, CLI unicamente",
+    "automatizacion de stock: sin pantalla ni escritor automatico"
+  ]
+}

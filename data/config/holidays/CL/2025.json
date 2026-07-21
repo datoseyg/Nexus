@@ -1,0 +1,282 @@
+{
+  "schema_version": "holiday-calendar-bundle-v1",
+  "jurisdiction": "CL",
+  "coverage_start": "2025-01-01",
+  "coverage_end_exclusive": "2026-01-01",
+  "sources": [
+    {
+      "source_id": "gob-cl-feriados-2026",
+      "authority": "Gobierno de Chile (gob.cl)",
+      "title": "¿Qué feriados hay en 2026? Revisa cuántos habrá y cuáles son irrenunciables",
+      "url": "https://www.gob.cl/noticias/feriados-2026-revisa-cuantos-habra-y-cuales-son-irrenunciables/",
+      "published_at": "2025-12-19",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 2.977",
+        "Ley 19.973"
+      ]
+    },
+    {
+      "source_id": "bcn-ley-2977",
+      "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
+      "title": "Ley 2.977 (1915) - feriados nacionales, base legal del sistema vigente",
+      "url": "https://www.bcn.cl/leychile/Navegar?idNorma=23639",
+      "published_at": "1915-02-01",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 2.977"
+      ]
+    },
+    {
+      "source_id": "dt-traslado-feriados",
+      "authority": "Dirección del Trabajo (DT)",
+      "title": "¿Cuáles son los días festivos que han sido trasladados a un día lunes?",
+      "url": "https://www.dt.gob.cl/portal/1628/w3-article-60252.html",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 19.668"
+      ]
+    },
+    {
+      "source_id": "bcn-ley-21357",
+      "authority": "Biblioteca del Congreso Nacional (BCN) - LeyChile",
+      "title": "Ley 21.357 - declara feriado el día del solsticio de invierno, Día Nacional de los Pueblos Indígenas",
+      "url": "https://www.bcn.cl/leychile/navegar?idNorma=1161743",
+      "published_at": "2021-06-19",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 21.357"
+      ]
+    },
+    {
+      "source_id": "conadi-pueblos-indigenas",
+      "authority": "CONADI (Corporación Nacional de Desarrollo Indígena)",
+      "title": "Día Nacional de los Pueblos Indígenas en Chile - regla legal: 'el día del solsticio de invierno de cada año en el hemisferio sur'; excepción 2021 explícita (21 de junio)",
+      "url": "http://www.conadi.gob.cl/dianacionalpueblosindigenas",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 21.357"
+      ]
+    },
+    {
+      "source_id": "astro-solstice-utc",
+      "authority": "timeanddate.com (referencia astronómica neutral, no vinculada a feriados de Chile) - usada para APLICAR la regla legal de CONADI/Ley 21.357 (el feriado es 'el día del solsticio'), nunca como fuente del feriado en sí",
+      "title": "June solstice exact UTC times 2021-2025 (referencia astronómica independiente)",
+      "url": "https://www.timeanddate.com/calendar/june-solstice.html",
+      "accessed_at": "2026-07-15",
+      "legal_references": []
+    },
+    {
+      "source_id": "gob-cl-primarias-2025",
+      "authority": "Gobierno de Chile (gob.cl)",
+      "title": "¿Es feriado el día de las Elecciones Primarias Presidenciales 2025? - confirma feriado legal nacional el 29 de junio de 2025, voto voluntario, no irrenunciable",
+      "url": "https://www.gob.cl/noticias/feriado-dia-elecciones-primarias-presidenciales-2025/",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 18.700, Art. 180"
+      ]
+    },
+    {
+      "source_id": "servel-fechas-2025",
+      "authority": "Servicio Electoral de Chile (Servel)",
+      "title": "Fechas clave de las elecciones 2025 en Chile - 16 de noviembre (general) y 14 de diciembre (segunda vuelta presidencial)",
+      "url": "https://www.servel.cl/2025/07/14/fechas-elecciones-2025-chile/",
+      "accessed_at": "2026-07-15",
+      "legal_references": [
+        "Ley 18.700, Art. 180"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "local_date": "2025-01-01",
+      "holiday_name": "Año Nuevo",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-04-18",
+      "holiday_name": "Viernes Santo",
+      "holiday_type": "MOVABLE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2025-04-19",
+      "holiday_name": "Sábado Santo",
+      "holiday_type": "MOVABLE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2025-05-01",
+      "holiday_name": "Día del Trabajo",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-05-21",
+      "holiday_name": "Día de las Glorias Navales",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-06-20",
+      "holiday_name": "Día Nacional de los Pueblos Indígenas",
+      "holiday_type": "MOVABLE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-21357",
+        "conadi-pueblos-indigenas",
+        "astro-solstice-utc"
+      ]
+    },
+    {
+      "local_date": "2025-06-29",
+      "holiday_name": "San Pedro y San Pablo",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "dt-traslado-feriados",
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2025-06-29",
+      "holiday_name": "Primarias Presidenciales (pacto Unidad por Chile; feriado legal nacional pese a ser la única coalición inscrita)",
+      "holiday_type": "ELECTION",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "gob-cl-primarias-2025"
+      ]
+    },
+    {
+      "local_date": "2025-07-16",
+      "holiday_name": "Día de la Virgen del Carmen",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-08-15",
+      "holiday_name": "Asunción de la Virgen",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-09-18",
+      "holiday_name": "Independencia Nacional",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-09-19",
+      "holiday_name": "Día de las Glorias del Ejército",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-10-12",
+      "holiday_name": "Encuentro de Dos Mundos",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "dt-traslado-feriados",
+        "bcn-ley-2977"
+      ]
+    },
+    {
+      "local_date": "2025-10-31",
+      "holiday_name": "Día Nacional de las Iglesias Evangélicas y Protestantes",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-11-01",
+      "holiday_name": "Día de Todos los Santos",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-11-16",
+      "holiday_name": "Elección General (primera vuelta presidencial y parlamentaria) 2025",
+      "holiday_type": "ELECTION",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "servel-fechas-2025"
+      ]
+    },
+    {
+      "local_date": "2025-12-08",
+      "holiday_name": "Inmaculada Concepción",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": false,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    },
+    {
+      "local_date": "2025-12-14",
+      "holiday_name": "Segunda vuelta presidencial 2025",
+      "holiday_type": "ELECTION",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "servel-fechas-2025"
+      ]
+    },
+    {
+      "local_date": "2025-12-25",
+      "holiday_name": "Navidad",
+      "holiday_type": "FIXED_DATE",
+      "is_irrenunciable": true,
+      "source_ids": [
+        "bcn-ley-2977",
+        "gob-cl-feriados-2026"
+      ]
+    }
+  ],
+  "_notes": [
+    "Día Nacional de los Pueblos Indígenas: Regla legal (solsticio) aplicada con instante astronómico real: 2025-06-21 02:42 UTC -> 2025-06-20 22:42 America/Santiago (el instante astronómico cae de madrugada en UTC pero ya es 20-jun en hora de Chile).",
+    "COINCIDENCIA DOCUMENTADA: 2025-06-29 tiene 2 eventos reales distintos -\"San Pedro y San Pablo\" (FIXED_DATE, cae naturalmente en domingo ese año, sin traslado por Ley 19.668 ya que el traslado solo aplica a martes/miércoles/jueves/viernes) y \"Primarias Presidenciales\" (ELECTION, gob.cl confirma feriado legal nacional para esa misma fecha). Ambos son hechos legales reales independientes que coinciden en el calendario -no es un error de datos, source_event_key distinto para cada uno (nombre y tipo distintos)."
+  ]
+}

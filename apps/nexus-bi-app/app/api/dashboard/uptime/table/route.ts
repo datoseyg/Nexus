@@ -1,8 +1,11 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
-import { runQuery } from "@/lib/duckdb";
+import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { parseDashboardFilters } from "@/lib/dashboard-filters";
+
+export const runtime = "nodejs";
 
 // Alimenta: "Tabla Uptime/Downtime por cliente-máquina" (parcial, ver
 // nota) + "Duración registrada por Año-Mes" del Tab "Integración
@@ -14,6 +17,9 @@ import { parseDashboardFilters } from "@/lib/dashboard-filters";
 // feriados, etc.). Se devuelven como `null` y la UI las muestra como
 // "Pendiente de parametrización".
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = clampPage(Number(searchParams.get("page")));
@@ -95,8 +101,8 @@ export async function GET(request: NextRequest) {
     // del dashboard de referencia - ver advertencia arriba).
     const periodRows = await runQuery<{ anio: number; mes: number; horas: number }>(`
       SELECT
-        CAST(STRFTIME(start_time, '%Y') AS INTEGER) AS anio,
-        CAST(STRFTIME(start_time, '%m') AS INTEGER) AS mes,
+        CAST(TO_CHAR(start_time, 'YYYY') AS INTEGER) AS anio,
+        CAST(TO_CHAR(start_time, 'MM') AS INTEGER) AS mes,
         COALESCE(SUM(duration_minutes), 0) / 60.0 AS horas
       FROM processed.fieldbeat_tasks
       WHERE start_time IS NOT NULL
