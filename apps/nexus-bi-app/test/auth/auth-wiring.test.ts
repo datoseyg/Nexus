@@ -32,7 +32,7 @@ test("todos los Route Handlers están protegidos por el mecanismo correcto", asy
   const routes: string[] = [];
   for await (const path of glob("app/api/**/route.ts")) routes.push(path);
 
-  assert.equal(routes.length, 39);
+  assert.equal(routes.length, 42);
 
   for (const path of routes) {
     const contents = await source(path);

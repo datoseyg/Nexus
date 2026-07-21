@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { EygBrand } from "@/components/brand/EygBrand";
 import { HomeNavigationGrid } from "@/components/home/HomeNavigationGrid";
 import { HomeDashboard } from "@/components/home/HomeDashboard";
 import { requireAuthenticatedUser } from "@/lib/auth/authorization";
@@ -72,11 +73,31 @@ export default async function HomePage() {
           className="p-5 sm:p-7"
           style={{ background: "var(--nx-card-bg)", borderBottom: "1px solid var(--nx-border)" }}
         >
-          <PageHeader
-            eyebrow="EyG Medical Systems"
-            title="Bienvenido a Nexus"
-            description="Nexus reúne en un mismo lugar la información de servicio técnico (FieldBeat), tickets de soporte (Zendesk) y repuestos utilizados (Dolibarr), para poder revisar el estado de cada área desde un solo lugar."
-          />
+          {/* Composición propia acá (en vez de un prop `actions` en
+              PageHeader.tsx, ver precedente de SHELL_STYLE arriba: ese
+              archivo se reutiliza "sin editar", el ajuste vive en el
+              consumidor) - texto a la izquierda, logo a la derecha,
+              centrados verticalmente entre sí en desktop/tablet;
+              apilados (logo debajo del texto) en móvil. El fondo blanco
+              propio del asset se funde con --nx-card-bg (blanco/casi
+              blanco) de esta tarjeta, sin contenedor ni borde adicional -
+              a diferencia del contenedor blanco que SÍ hace falta en la
+              sidebar oscura (ver SidebarBrand.tsx). */}
+          <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
+            <div className="min-w-0 flex-1">
+              <PageHeader
+                eyebrow="EyG Medical Systems"
+                title="Bienvenido a Nexus"
+                description="Nexus reúne en un mismo lugar la información de servicio técnico (FieldBeat), tickets de soporte (Zendesk) y repuestos utilizados (Dolibarr), para poder revisar el estado de cada área desde un solo lugar."
+              />
+            </div>
+            <EygBrand
+              variant="full"
+              priority
+              className="h-auto w-[190px] shrink-0 md:w-[220px] lg:w-[260px] xl:w-[290px]"
+              sizes="(min-width: 1280px) 290px, (min-width: 1024px) 260px, (min-width: 768px) 220px, 190px"
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-6 p-5 sm:p-7">

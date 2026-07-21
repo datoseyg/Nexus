@@ -83,3 +83,91 @@ export interface FieldbeatDashboardResponse {
   partsConsumptionByClient: FieldbeatClientPartsRow[];
   topEquipmentByParts: FieldbeatEquipmentPartsRow[];
 }
+
+// ETAPA 6 - contrato de GET /api/dashboard/fieldbeat/filters. Fuente:
+// marts.fieldbeat_report_dolibarr_operational_view + processed.fieldbeat_tasks.created_in
+// (origen real, ver lib/fieldbeat-filters.ts).
+export interface FieldbeatFilterOptions {
+  clientes: string[];
+  tiposTarea: string[];
+  equipos: string[];
+  origenes: string[];
+  dateRange: { min: string | null; max: string | null };
+}
+
+// ETAPA 6 - contrato de GET /api/dashboard/fieldbeat/activity. Todas las
+// secciones que ETAPA 5-V dejó como "no disponible"; ver route.ts y
+// lib/fieldbeat-filters.ts para el detalle de fuente/filtros.
+export interface FieldbeatEvolutionRow {
+  periodo: string;
+  cantidad: number;
+}
+
+export interface FieldbeatTaskTypeRow {
+  task_type: string;
+  cantidad: number;
+}
+
+export interface FieldbeatMostRecentActivity {
+  fecha: string;
+  cliente: string | null;
+  tipoTarea: string | null;
+}
+
+export interface FieldbeatActivityRankingRow {
+  cliente: string;
+  cantidad: number;
+}
+
+export interface FieldbeatEquipmentActivityRow {
+  equipment_internal_id: string;
+  cantidad: number;
+}
+
+export interface FieldbeatCrossSeries {
+  clientes: string[];
+  equipos?: string[];
+  tiposTarea?: string[];
+  series: Array<{ equipo?: string; tipoTarea?: string; data: number[] }>;
+}
+
+export interface FieldbeatActivityResponse {
+  filtersApplied: Record<string, unknown>;
+  totalFiltered: number;
+  evolution: FieldbeatEvolutionRow[];
+  taskTypeDistribution: FieldbeatTaskTypeRow[];
+  mostRecentActivity: FieldbeatMostRecentActivity | null;
+  clientActivity: FieldbeatActivityRankingRow[];
+  equipmentActivity: FieldbeatEquipmentActivityRow[];
+  clientEquipmentCross: FieldbeatCrossSeries;
+  clientTaskTypeCross: FieldbeatCrossSeries;
+}
+
+// ETAPA 6 - contrato de GET /api/dashboard/fieldbeat/detail. Todo campo
+// numérico llega como string decimal (BIGINT de Postgres, sin coercionar
+// en la ruta) - igual convención que FieldbeatDashboardResponse.
+export interface FieldbeatDetailRow {
+  fieldbeat_task_id: string;
+  fecha: string | null;
+  origen: string | null;
+  tecnico: string | null;
+  cliente: string | null;
+  equipo: string | null;
+  tipo_tarea: string | null;
+  ticket: string | null;
+  sku: string | null;
+  cantidad_repuestos: string;
+  estado: string | null;
+  duration_minutes: string | null;
+  // SIEMPRE derivada (fecha + duration_minutes) - nunca un campo medido
+  // real, ver lib/fieldbeat-filters.ts y app/api/dashboard/fieldbeat/detail/route.ts.
+  hora_termino_estimada: string | null;
+}
+
+export interface FieldbeatDetailResponse {
+  rows: FieldbeatDetailRow[];
+  page: number;
+  pageSize: number;
+  totalRows: number;
+  totalPages: number;
+}

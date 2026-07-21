@@ -1,4 +1,4 @@
-import { Brand } from "@/components/ui/Brand";
+import { EygBrand } from "@/components/brand/EygBrand";
 
 interface MobileTopBarProps {
   mobileOpen: boolean;
@@ -31,10 +31,10 @@ export function MobileTopBar({ mobileOpen, onOpenMenu, menuButtonRef, mobileSide
           <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" />
         </svg>
       </button>
-      <Brand />
-      <span className="text-[15px] font-extrabold" style={{ color: "var(--nx-sidebar-text-primary)" }}>
-        Nexus BI
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-white" title="E&G Medical Systems — Nexus BI">
+        <EygBrand variant="mark" className="h-6 w-6" />
       </span>
+      <span className="sr-only">Nexus BI</span>
     </header>
   );
 }
