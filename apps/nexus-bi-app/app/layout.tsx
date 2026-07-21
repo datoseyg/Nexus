@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { requireAuthenticatedUser } from "@/lib/auth/authorization";
 
 export const metadata: Metadata = {
   title: "Nexus BI - EYG",
@@ -16,11 +17,26 @@ export const metadata: Metadata = {
 // pantallas con grillas de varias columnas como el Dashboard Operacional
 // o Auditoría, angosto para el resto) - ver docs/VISUAL_REDESIGN_EYG.md §
 // Responsive.
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  let userLabel: string | null = null;
+  try {
+    userLabel = (await requireAuthenticatedUser()).label;
+  } catch {
+    userLabel = null;
+  }
+
   return (
     <html lang="es">
       <body>
-        <AppShell>{children}</AppShell>
+        <AppShell
+          userLabel={userLabel}
+          features={{
+            audit: process.env.NEXUS_SHOW_AUDIT === "true",
+            explorer: process.env.NEXUS_SHOW_EXPLORER === "true"
+          }}
+        >
+          {children}
+        </AppShell>
       </body>
     </html>
   );

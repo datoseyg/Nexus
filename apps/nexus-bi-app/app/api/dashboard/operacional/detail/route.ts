@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -19,6 +20,9 @@ export const runtime = "nodejs";
 // docs/DASHBOARD_VISUAL_STYLE.md. No es un campo real del pipeline, se
 // deriva y se etiqueta como tal.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseDashboardFilters(searchParams);

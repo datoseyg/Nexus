@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextResponse } from "next/server";
 import { listTables } from "@/lib/sql-guardrails";
 import { handleApiError } from "@/lib/api-error";
@@ -8,6 +9,9 @@ export const runtime = "nodejs";
 // El schema "reports" queda excluido a propósito (está vacío en v1.3,
 // ver docs/SQL_WAREHOUSE.md).
 export async function GET() {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const tables = await listTables();
     return NextResponse.json({ tables });

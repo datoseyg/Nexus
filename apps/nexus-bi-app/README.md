@@ -46,16 +46,18 @@ Requiere Docker corriendo. Crea (o reutiliza) un único contenedor `nexus_bi_dev
 npm run dev
 ```
 
-La base queda con el esquema aplicado pero sin datos - el dashboard mostrará KPIs en cero / estados vacíos genuinos (no "no disponible"; eso solo aparece si la conexión falla). Para datos reales, correr desde la **raíz del repo** (no acá), apuntando al mismo Postgres local que imprimió el paso 1:
+La base queda con el esquema aplicado pero sin datos - el dashboard mostrará KPIs en cero / estados vacíos genuinos (no "no disponible"; eso solo aparece si la conexión falla). Para datos reales, correr desde la **raíz del repo** (no acá).
+
+**Forma oficial (única, funciona igual en Git Bash/PowerShell/cmd.exe)**: `contracts:import`, `holidays:import` y `working-hours:build` leen 3 nombres de variable de entorno *distintos* (`SUPABASE_DB_URL_DIRECT`, `HOLIDAYS_DB_URL`, `WORKING_HOURS_DB_URL` - ver `src/{contracts,holidays,working-hours}/db-client.js`) y cada uno resuelve su `.env` según el `cwd` del proceso, no según dónde vive el script - correrlos con `VAR=valor npm run ...` (sintaxis solo-Bash) o desde `apps/nexus-bi-app/` en vez de la raíz son las dos formas de que fallen con `Falta <VAR> en .env`. `scripts/with-local-pipeline-env.mjs` (raíz del repo) resuelve ambos problemas a la vez: fija los 3 nombres de variable a la MISMA base local (leyendo `.env.working-hours.local`, copiar desde `.env.working-hours.local.example`) y ejecuta el comando en un proceso Node, sin sintaxis de shell:
 
 ```bash
-SUPABASE_DB_URL_DIRECT=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run contracts:import -- --file=<csv> --apply --effective-date=YYYY-MM-DD
-HOLIDAYS_DB_URL=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run holidays:import -- apply --file=<bundle.json> --confirm
-HOLIDAYS_DB_URL=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run holidays:import -- publish --coverage-id=<id> --confirm
-WORKING_HOURS_DB_URL=postgresql://postgres:localtest@localhost:<PUERTO>/nexus_bi_dev_local_test npm run working-hours:build -- apply --confirm
+node scripts/with-local-pipeline-env.mjs node src/holidays/import-holidays.js apply --confirm --file=data/config/holidays/CL/2024.json
+node scripts/with-local-pipeline-env.mjs node src/holidays/import-holidays.js publish --confirm --coverage-id=<id>
+node scripts/with-local-pipeline-env.mjs node src/contracts/import-contracts.js --apply --effective-date=YYYY-MM-DD --file=<csv>
+node scripts/with-local-pipeline-env.mjs node src/working-hours/build-working-hours.js apply --confirm
 ```
 
-(repetir holidays por cada bundle en `data/config/holidays/**`; el puerto exacto lo imprime `dev:local:setup`).
+(repetir holidays por cada bundle en `data/config/holidays/**`; usar `dry-run`/`--dry-run` sin `--confirm`/`--apply` para previsualizar sin escribir. Si tu Postgres local no corre en `localhost:55480/nexus_bi_dev_local_test`, editar `.env.working-hours.local` con el puerto real que imprimió `dev:local:setup`).
 
 `/dashboard/fieldbeat` lee `gold.fieldbeat_report_analysis`/`gold.fieldbeat_data_quality`/`gold.client_report_volume_by_period`/`gold.client_parts_consumption`/`gold.equipment_parts_consumption` - datos distintos a los de After-Hours (no dependen de `contracts:import`/`holidays:import`/`working-hours:build`). Para poblarlos contra el mismo Postgres local, desde la **raíz del repo**:
 

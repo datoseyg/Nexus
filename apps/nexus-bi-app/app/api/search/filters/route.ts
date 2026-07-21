@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -13,6 +14,9 @@ export const runtime = "nodejs";
 // processed.zendesk_tickets). Duplicación sancionada explícitamente por el
 // encargo, no un descuido.
 export async function GET() {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const [clientesRows, tiposTareaRows, maquinasRows, martDateRows, zendeskDateRows] = await Promise.all([
       runQuery<{ client_name: string }>(`

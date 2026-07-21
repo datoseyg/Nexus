@@ -18,6 +18,8 @@ function readStoredCollapsed(): boolean {
 
 interface AppShellProps {
   children: React.ReactNode;
+  userLabel: string | null;
+  features: { audit: boolean; explorer: boolean };
 }
 
 // Orquestador raíz del shell de navegación (montado una sola vez en
@@ -36,8 +38,9 @@ interface AppShellProps {
 // el usuario navega de nuevo antes de que responda, para que una
 // respuesta tardía de una ruta anterior no pise el conteo de la ruta
 // actual.
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, userLabel, features }: AppShellProps) {
   const pathname = usePathname();
+  const publicRoute = pathname === "/login";
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -51,15 +54,17 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || publicRoute) return;
     try {
       window.localStorage.setItem(COLLAPSE_STORAGE_KEY, String(collapsed));
     } catch {
       /* best-effort */
     }
-  }, [collapsed, hydrated]);
+  }, [collapsed, hydrated, publicRoute]);
 
   useEffect(() => {
+    if (publicRoute || !userLabel) return;
+
     const controller = new AbortController();
 
     fetch("/api/audit/summary", { signal: controller.signal })
@@ -71,7 +76,9 @@ export function AppShell({ children }: AppShellProps) {
       });
 
     return () => controller.abort();
-  }, [pathname]);
+  }, [pathname, publicRoute, userLabel]);
+
+  if (publicRoute || !userLabel) return children;
 
   return (
     <>
@@ -80,6 +87,8 @@ export function AppShell({ children }: AppShellProps) {
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed(value => !value)}
           pendingReviewCount={pendingReviewCount}
+          userLabel={userLabel}
+          features={features}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <MobileTopBar
@@ -97,6 +106,8 @@ export function AppShell({ children }: AppShellProps) {
         pendingReviewCount={pendingReviewCount}
         returnFocusRef={menuButtonRef}
         mobileSidebarId={mobileSidebarId}
+        userLabel={userLabel}
+        features={features}
       />
     </>
   );

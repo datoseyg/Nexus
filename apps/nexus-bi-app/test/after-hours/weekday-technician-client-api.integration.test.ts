@@ -11,10 +11,16 @@ import assert from "node:assert/strict";
 import pg from "pg";
 import { NextRequest } from "next/server.js";
 import { assertDisposableTarget, printConnectionPreflight } from "../../../../src/lib/db-safety.js";
+import { setAuthorizationProviderForTests } from "../../lib/auth/authorization.ts";
 
 const TEST_DB_URL = process.env.AFTER_HOURS_TEST_DATABASE_URL;
 const TEST_RUN_ID = process.env.AFTER_HOURS_TEST_RUN_ID;
 const SUITE_ID = "after-hours-weekday-technician-client-test";
+setAuthorizationProviderForTests({
+  async getUser() {
+    return { user: { id: "after-hours-integration", app_metadata: { nexus_role: "gerencia" } }, error: null };
+  }
+});
 // ETAPA 6.6D-V - ver test/after-hours/api.integration.test.ts: este archivo
 // también apunta siempre a un Postgres local desechable, nunca remoto -
 // DATABASE_SSL_MODE=disable es necesario para que lib/db.ts::getPool no
@@ -274,6 +280,7 @@ before(async () => {
 
 afterAll(async () => {
   if (adminPool) await adminPool.end();
+  setAuthorizationProviderForTests(null);
 });
 
 // Filtro que aísla esta suite del resto del universo real de la base

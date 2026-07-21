@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -13,6 +14,9 @@ const REVIEW_REQUIRED_STATUSES = new Set(["HAS_PLACEHOLDERS", "HAS_UNMATCHED_PAR
 // gold.scope_metadata (fila única con métricas de alcance) - ver
 // docs/MANUAL_REVIEW_VIEW.md.
 export async function GET() {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const qualityRows = await runQuery<{
       report_quality_status: string;

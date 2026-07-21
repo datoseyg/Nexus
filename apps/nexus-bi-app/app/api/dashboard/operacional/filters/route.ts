@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -11,6 +12,9 @@ export const runtime = "nodejs";
 // con la cobertura real; "origenRegistro" es una heurística documentada
 // (ver docs/DASHBOARD_VISUAL_STYLE.md) - no un campo directo del pipeline.
 export async function GET() {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const clientesRows = await runQuery<{ client_name: string }>(`
       SELECT DISTINCT client_name

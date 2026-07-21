@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -13,6 +14,9 @@ export const runtime = "nodejs";
 // toPeriod() en src/gold/build-fieldbeat-gold.js. ETAPA 6.6C: fuente
 // marts.fieldbeat_working_hours_analysis_current.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseAfterHoursFilters(searchParams);

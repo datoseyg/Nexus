@@ -175,7 +175,11 @@ export function AfterHoursShell() {
       </div>
 
       <div className="p-4 sm:p-7">
-        <AfterHoursBanner fallbackTasks={summary.data?.fallback_tasks ?? 0} calculableTasks={summary.data?.calculable_tasks ?? 0} />
+        <AfterHoursBanner
+          fallbackTasks={summary.data?.fallback_tasks ?? 0}
+          calculableTasks={summary.data?.calculable_tasks ?? 0}
+          totalTasks={summary.data?.total_tasks ?? 0}
+        />
 
         <div className="mb-4.5">
           <AfterHoursFilters

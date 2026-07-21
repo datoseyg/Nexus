@@ -56,9 +56,20 @@ function containerStatus(name) {
 
 function waitForPostgresReady(name, timeoutMs = 30000) {
   const start = Date.now();
+  let consecutiveReadyChecks = 0;
+  const sleepBuffer = new Int32Array(new SharedArrayBuffer(4));
   while (Date.now() - start < timeoutMs) {
     const result = run("docker", ["exec", name, "pg_isready", "-U", "postgres"]);
-    if (result.status === 0) return true;
+    if (result.status === 0) {
+      consecutiveReadyChecks++;
+      if (consecutiveReadyChecks >= 5) return true;
+    } else {
+      consecutiveReadyChecks = 0;
+    }
+    // La imagen oficial levanta un servidor transitorio durante initdb y
+    // luego lo reinicia. Varias comprobaciones espaciadas evitan aceptar
+    // ese primer pg_isready y abrir el bootstrap durante el shutdown.
+    Atomics.wait(sleepBuffer, 0, 0, 500);
   }
   return false;
 }

@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -13,6 +14,9 @@ export const runtime = "nodejs";
 // SUM/SUM centralizadas en lib/after-hours-metrics.ts (§9/§13).
 // ETAPA 6.6D: autoexcluye su propio filtro `client` (ver by-technician).
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseAfterHoursFilters(searchParams);

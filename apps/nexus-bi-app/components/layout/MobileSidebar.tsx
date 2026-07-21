@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef } from "react";
 import { SidebarBrand } from "@/components/layout/SidebarBrand";
 import { SidebarNavigation } from "@/components/layout/SidebarNavigation";
+import { UserSessionControls } from "@/components/layout/UserSessionControls";
 
 interface MobileSidebarProps {
   open: boolean;
@@ -10,6 +11,8 @@ interface MobileSidebarProps {
   pendingReviewCount: number | null;
   returnFocusRef: React.RefObject<HTMLButtonElement | null>;
   mobileSidebarId: string;
+  userLabel: string;
+  features: { audit: boolean; explorer: boolean };
 }
 
 // Drawer de navegación móvil, accesible. Replica el patrón ya probado en
@@ -20,7 +23,7 @@ interface MobileSidebarProps {
 // diferencia de DetailDrawer, la restauración de foco usa una ref
 // explícita (returnFocusRef, reenviada por AppShell desde el botón
 // hamburguesa de MobileTopBar) en vez de document.activeElement.
-export function MobileSidebar({ open, onClose, pendingReviewCount, returnFocusRef, mobileSidebarId }: MobileSidebarProps) {
+export function MobileSidebar({ open, onClose, pendingReviewCount, returnFocusRef, mobileSidebarId, userLabel, features }: MobileSidebarProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -112,7 +115,10 @@ export function MobileSidebar({ open, onClose, pendingReviewCount, returnFocusRe
           </button>
         </div>
         <div className="flex-1">
-          <SidebarNavigation collapsed={false} pendingReviewCount={pendingReviewCount} onNavigate={onClose} />
+          <SidebarNavigation collapsed={false} pendingReviewCount={pendingReviewCount} onNavigate={onClose} features={features} />
+        </div>
+        <div className="px-2.5 pb-3">
+          <UserSessionControls label={userLabel} />
         </div>
       </div>
     </div>

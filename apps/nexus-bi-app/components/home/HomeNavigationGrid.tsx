@@ -8,6 +8,7 @@ interface NavItem {
   description: string;
   accent: NavAccent;
   icon: React.ReactNode;
+  feature?: "audit";
 }
 
 const ICON_PROPS = {
@@ -71,6 +72,7 @@ const ITEMS: readonly NavItem[] = [
     title: "Auditoría",
     description: "Identifica información incompleta o que requiere revisión.",
     accent: "amber",
+    feature: "audit",
     icon: (
       <svg {...ICON_PROPS}>
         <path d="M12 3.5 19 6.5v5c0 4.5-3 7.7-7 8.9-4-1.2-7-4.4-7-8.9v-5Z" />
@@ -83,7 +85,9 @@ const ITEMS: readonly NavItem[] = [
 // Server Component, sin dependencia de datos - los 4 accesos principales
 // siguen navegables aunque los 4 fetch de HomeDashboard fallen. Cada
 // tarjeta completa es el <Link>, nunca un <div onClick>.
-export function HomeNavigationGrid() {
+export function HomeNavigationGrid({ showAudit }: { showAudit: boolean }) {
+  const visibleItems = ITEMS.filter(item => showAudit || item.feature !== "audit");
+
   return (
     <section>
       <h2
@@ -93,7 +97,7 @@ export function HomeNavigationGrid() {
         Accesos principales
       </h2>
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {ITEMS.map(item => (
+        {visibleItems.map(item => (
           <li key={item.href}>
             <Link
               href={item.href}

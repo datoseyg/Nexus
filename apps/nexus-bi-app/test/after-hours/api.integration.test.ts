@@ -8,12 +8,18 @@ import assert from "node:assert/strict";
 import pg from "pg";
 import { NextRequest } from "next/server.js";
 import { assertDisposableTarget, printConnectionPreflight } from "../../../../src/lib/db-safety.js";
+import { setAuthorizationProviderForTests } from "../../lib/auth/authorization.ts";
 
 // ETAPA SAFETY-1 - ver test/working-hours/ddl.integration.test.js (repo
 // root) para el contexto completo del incidente que motivó este guard.
 const TEST_DB_URL = process.env.AFTER_HOURS_TEST_DATABASE_URL;
 const TEST_RUN_ID = process.env.AFTER_HOURS_TEST_RUN_ID;
 const SUITE_ID = "after-hours-api-test";
+setAuthorizationProviderForTests({
+  async getUser() {
+    return { user: { id: "after-hours-integration", app_metadata: { nexus_role: "gerencia" } }, error: null };
+  }
+});
 // ETAPA 6.6D-V - este archivo siempre apunta a un Postgres local desechable
 // (nunca a un host remoto, por diseño del propio guard SAFETY-1 de arriba)
 // -DATABASE_SSL_MODE=disable es válido y necesario acá para que las rutas
@@ -49,7 +55,10 @@ before(async () => {
 
   // Limpieza + processed.fieldbeat_tasks (la vista parte de acá, LEFT JOIN).
   await adminPool.query(`TRUNCATE marts.fieldbeat_working_hours_equipment_links, marts.fieldbeat_working_hours_analysis_v2, marts.fieldbeat_working_hours_analysis RESTART IDENTITY CASCADE`);
-  await adminPool.query(`DELETE FROM processed.fieldbeat_tasks WHERE fieldbeat_task_id BETWEEN 800001 AND 800005`);
+  // Limpia ambos rangos reservados por las suites after-hours. El runner
+  // ejecuta este archivo primero, así que esto hace repetible la cadena
+  // completa aun cuando una corrida anterior haya dejado 810001-810009.
+  await adminPool.query(`DELETE FROM processed.fieldbeat_tasks WHERE fieldbeat_task_id BETWEEN 800001 AND 810009`);
   for (const [id, client, tech, taskType] of [
     [800001, "Cliente Contractual", "tech1", "PM"],
     [800002, "Cliente Legacy", "tech2", "CM"],
@@ -171,6 +180,7 @@ before(async () => {
 
 afterAll(async () => {
   if (adminPool) await adminPool.end();
+  setAuthorizationProviderForTests(null);
 });
 
 test("summary: poblaciones separan CONTRACTUAL/LEGACY_SCHEDULE/NONE correctamente, NONE nunca es 0", { skip: !TEST_DB_URL }, async () => {

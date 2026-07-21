@@ -1,58 +1,19 @@
-// Smoke test minimo de ETAPA 0 (ver plan de rediseno, docs/design-context/).
-//
-// Que confirma: que cada ruta de producto responde HTTP 200 y contiene un
-// marcador de texto propio ya existente hoy en esa pagina (no un texto del
-// rediseno futuro), y que el HTML recibido no es en realidad una pagina de
-// error de Next.js/React disfrazada de 200.
-//
-// Que NO confirma: no es una prueba de regresion visual. No compara pixeles,
-// layout ni estilos. Solo valida renderizado HTTP y ausencia de errores
-// funcionales basicos.
-//
-// Configuracion: si BASE_URL esta definida, tiene prioridad absoluta sobre
-// PORT. Si no, se usa http://localhost:${PORT ?? 3000}.
 const BASE_URL = process.env.BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
 const TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 5000);
 
-// Marcador textual estable, unico y ya existente hoy en cada pagina, tomado
-// directamente del codigo fuente actual (PageHeader/title visibles o
-// metadata.title). /explorer es un componente "use client" que hace fetch
-// de datos en el navegador (useEffect) y muestra su titulo real recien
-// despues de esa carga - una peticion HTTP pura (sin ejecutar JavaScript,
-// como hace este script) solo ve el HTML inicial servido por el servidor,
-// que en ese caso es el estado de carga ("Cargando tablas..."), no el
-// titulo final. Se usa ese marcador de carga para esa ruta por ser el que
-// realmente esta presente en la respuesta HTTP cruda.
-// /dashboard/fieldbeat (ETAPA 5): aunque también es "use client" con fetch
-// en useEffect, su PageHeader (titulo "Dashboard FieldBeat") es contenido
-// ESTRUCTURAL que se renderiza siempre, sin depender del estado del
-// fetch - por eso ese texto SÍ está presente en el HTML servido por el
-// servidor, sin necesidad de un marcador de carga.
-const ROUTES = [
-  { path: "/", marker: "Resumen general" },
-  { path: "/dashboard/fieldbeat", marker: "Dashboard FieldBeat" },
-  { path: "/dashboard/operacional", marker: "Dashboard Operacional EyG - Nexus BI" },
-  { path: "/dashboard/after-hours", marker: "Trabajo Fuera de Horario" },
-  { path: "/audit/manual-review", marker: "Auditoría y Validación Manual - Nexus BI" },
-  { path: "/explorer", marker: "Cargando tablas…" },
-  { path: "/search", marker: "Búsqueda" }
+const CHECKS = [
+  { path: "/login", kind: "page", status: 200, marker: "Ingresa a NEXUS" },
+  { path: "/", kind: "redirect", status: 307, location: "/login" },
+  { path: "/dashboard/fieldbeat", kind: "redirect", status: 307, location: "/login" },
+  { path: "/api/dashboard/fieldbeat", kind: "api", status: 401, code: "UNAUTHORIZED" },
+  { path: "/api/search", kind: "api", status: 401, code: "UNAUTHORIZED" }
 ];
 
-// Marcadores de pagina de error de Next.js/React que a veces se sirven con
-// status 200 (error boundary del lado del cliente, notFound() mal manejado,
-// etc.) - se buscan sobre el HTML SIN <script>/<style>, para no confundir
-// codigo/CSS con contenido real de error.
 const ERROR_MARKERS = [
   "application error",
   "unhandled runtime error",
-  "this page could not be found",
   "internal server error",
-  "500 - server error",
-  "there was a problem",
-  "no se pudo cargar",
-  "cannot read propert",
-  "is not a function",
-  "unexpected token"
+  "this page could not be found"
 ];
 
 function stripScriptsAndStyles(html) {
@@ -61,67 +22,66 @@ function stripScriptsAndStyles(html) {
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ");
 }
 
-async function checkRoute({ path, marker }) {
-  const url = new URL(path, BASE_URL).toString();
+async function checkRoute(check) {
+  const url = new URL(check.path, BASE_URL);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const startedAt = performance.now();
 
   try {
-    const res = await fetch(url, { signal: controller.signal });
-    const html = await res.text();
+    const response = await fetch(url, { signal: controller.signal, redirect: "manual" });
     const durationMs = Math.round(performance.now() - startedAt);
-    const cleaned = stripScriptsAndStyles(html).toLowerCase();
 
-    if (res.status !== 200) {
-      return { path, status: res.status, durationMs, result: "FAIL", reason: `status HTTP ${res.status} (se esperaba 200)` };
+    if (response.status !== check.status) {
+      return { ...check, durationMs, result: "FAIL", reason: `status ${response.status}; esperado ${check.status}` };
     }
 
-    const foundErrorMarker = ERROR_MARKERS.find(m => cleaned.includes(m));
-    if (foundErrorMarker) {
-      return { path, status: res.status, durationMs, result: "FAIL", reason: `pagina de error detectada con status 200 (marcador: "${foundErrorMarker}")` };
+    if (check.kind === "redirect") {
+      const location = response.headers.get("location");
+      if (!location || new URL(location, url).origin !== url.origin || new URL(location, url).pathname !== check.location) {
+        return { ...check, durationMs, result: "FAIL", reason: `redirect inseguro o inesperado: ${location}` };
+      }
     }
 
-    if (!html.includes(marker)) {
-      return { path, status: res.status, durationMs, result: "FAIL", reason: `marcador esperado no encontrado: "${marker}"` };
+    if (check.kind === "api") {
+      const contentType = response.headers.get("content-type") ?? "";
+      const body = await response.json().catch(() => null);
+      if (!contentType.includes("application/json") || body?.code !== check.code) {
+        return { ...check, durationMs, result: "FAIL", reason: "la API no devolvió el JSON de autorización esperado" };
+      }
     }
 
-    return { path, status: res.status, durationMs, result: "OK", reason: null };
-  } catch (err) {
+    if (check.kind === "page") {
+      const html = await response.text();
+      const cleaned = stripScriptsAndStyles(html).toLowerCase();
+      const errorMarker = ERROR_MARKERS.find(marker => cleaned.includes(marker));
+      if (errorMarker || !html.includes(check.marker)) {
+        return { ...check, durationMs, result: "FAIL", reason: errorMarker ?? `falta marcador ${check.marker}` };
+      }
+    }
+
+    return { ...check, durationMs, result: "OK", reason: null };
+  } catch (error) {
     const durationMs = Math.round(performance.now() - startedAt);
-    const reason = err.name === "AbortError" ? `timeout tras ${TIMEOUT_MS}ms` : `error de red: ${err.message}`;
-    return { path, status: null, durationMs, result: "FAIL", reason };
+    const reason = error?.name === "AbortError" ? `timeout tras ${TIMEOUT_MS}ms` : `error de red: ${error?.message}`;
+    return { ...check, durationMs, result: "FAIL", reason };
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function main() {
-  console.log(`Smoke test contra ${BASE_URL} (timeout ${TIMEOUT_MS}ms por ruta)\n`);
+console.log(`Smoke AUTH-P0 sin sesión contra ${BASE_URL}\n`);
+const results = [];
+for (const check of CHECKS) results.push(await checkRoute(check));
 
-  const results = [];
-  for (const route of ROUTES) {
-    results.push(await checkRoute(route));
-  }
-
-  let failures = 0;
-  for (const r of results) {
-    const line = `[${r.result}] ${r.path.padEnd(28)} status=${String(r.status).padEnd(4)} ${String(r.durationMs).padStart(5)}ms`;
-    if (r.result === "FAIL") {
-      failures += 1;
-      console.log(`${line}  -> ${r.reason}`);
-    } else {
-      console.log(line);
-    }
-  }
-
-  console.log(`\n${results.length - failures}/${results.length} rutas OK`);
-
-  if (failures > 0) {
-    console.error(`\nsmoke test FALLO (${failures} ruta(s) con error).`);
-    process.exit(1);
-  }
-  console.log("\nsmoke test OK.");
+for (const result of results) {
+  console.log(`[${result.result}] ${result.path.padEnd(30)} status=${result.status} ${String(result.durationMs).padStart(5)}ms${result.reason ? ` -> ${result.reason}` : ""}`);
 }
 
-main();
+const failures = results.filter(result => result.result === "FAIL");
+if (failures.length > 0) {
+  console.error(`\nSmoke AUTH-P0 falló: ${failures.length}/${results.length}.`);
+  process.exit(1);
+}
+
+console.log(`\nSmoke AUTH-P0 OK: ${results.length}/${results.length}.`);

@@ -8,6 +8,7 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   auditBadge?: boolean;
+  feature?: "audit" | "explorer";
 }
 
 interface NavSection {
@@ -86,6 +87,7 @@ const SECTIONS: NavSection[] = [
         href: "/audit/manual-review",
         label: "Auditoría",
         auditBadge: true,
+        feature: "audit",
         icon: (
           <svg {...ICON_PROPS}>
             <path d="M12 3.5 19 6.5v5c0 4.5-3 7.7-7 8.9-4-1.2-7-4.4-7-8.9v-5Z" />
@@ -102,6 +104,7 @@ const SECTIONS: NavSection[] = [
       {
         href: "/explorer",
         label: "Explorador",
+        feature: "explorer",
         icon: (
           <svg {...ICON_PROPS}>
             <ellipse cx="12" cy="5.5" rx="7.5" ry="2.8" />
@@ -134,6 +137,7 @@ interface SidebarNavigationProps {
   collapsed: boolean;
   pendingReviewCount: number | null;
   onNavigate?: () => void;
+  features: { audit: boolean; explorer: boolean };
 }
 
 // Lista de navegación compartida por Sidebar (desktop) y MobileSidebar
@@ -142,12 +146,15 @@ interface SidebarNavigationProps {
 // activa - corrige además el patrón frágil de NavBar.tsx (pathname
 // .startsWith(href) sin el separador "/", que marcaba activo p.ej.
 // "/dashboard/operacional-x" al estar en "/dashboard/operacional").
-export function SidebarNavigation({ collapsed, pendingReviewCount, onNavigate }: SidebarNavigationProps) {
+export function SidebarNavigation({ collapsed, pendingReviewCount, onNavigate, features }: SidebarNavigationProps) {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-col gap-4 px-2.5 py-3">
-      {SECTIONS.map(section => (
+      {SECTIONS.map(section => ({
+        ...section,
+        items: section.items.filter(item => !item.feature || features[item.feature])
+      })).filter(section => section.items.length > 0).map(section => (
         <div key={section.label}>
           {!collapsed && (
             <div

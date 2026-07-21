@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -32,6 +33,9 @@ function notFound() {
 }
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const { entity, key } = parseDetailParams(request.nextUrl.searchParams);
 

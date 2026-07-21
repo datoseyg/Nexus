@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -22,6 +23,9 @@ export const runtime = "nodejs";
 // "Pag. PDF" del dashboard de referencia no tiene equivalente -> se omite
 // la columna en vez de mantenerla vacía sin aportar nada.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = clampPage(Number(searchParams.get("page")));

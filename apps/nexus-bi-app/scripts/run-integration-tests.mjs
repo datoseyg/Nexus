@@ -17,6 +17,13 @@
 import { spawn } from "node:child_process";
 import { glob } from "node:fs/promises";
 
+const requiredEnvironment = ["AFTER_HOURS_TEST_DATABASE_URL", "AFTER_HOURS_TEST_RUN_ID"];
+const missingEnvironment = requiredEnvironment.filter(name => !process.env[name]);
+if (missingEnvironment.length > 0) {
+  console.error(`Integración abortada antes de ejecutar: faltan ${missingEnvironment.join(" y ")}. No se aceptan suites omitidas.`);
+  process.exit(1);
+}
+
 const files = [];
 for await (const f of glob("test/after-hours/*.integration.test.ts")) files.push(f);
 files.sort();
@@ -32,7 +39,7 @@ function runOne(file) {
     const child = spawn(
       process.execPath,
       ["--experimental-strip-types", "--experimental-loader=./test/ts-extension-loader.mjs", "--test", file],
-      { stdio: "inherit" }
+      { stdio: "inherit", env: { ...process.env, NODE_ENV: "test" } }
     );
     child.on("exit", code => (code === 0 ? resolve() : reject(new Error(`${file} salió con código ${code}`))));
     child.on("error", reject);

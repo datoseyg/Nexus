@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -36,6 +37,9 @@ const CLIENT_KEY_SQL = "NULLIF(BTRIM(w.client_name), '')";
 // técnico/cliente (ASC) - dos pares con métrica idéntica nunca quedan en
 // un orden dependiente del plan de ejecución de Postgres.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseAfterHoursFilters(searchParams);

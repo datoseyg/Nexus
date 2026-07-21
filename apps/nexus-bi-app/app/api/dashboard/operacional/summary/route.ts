@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -46,6 +47,9 @@ function whereFrom(conditions: string[]): string {
 // Las tablas paginadas (Uso de Repuestos, Detalle Operativo) NO viven acá
 // - ver /api/dashboard/operacional/parts y /detail.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const filters = parseDashboardFilters(request.nextUrl.searchParams);
 

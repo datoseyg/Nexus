@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -24,6 +25,9 @@ const TIER_ORDER = ["Insuficiente", "Baja", "Media", "Alta"];
 // simplemente desaparecían del conteo, ya que GROUP BY agrupaba su NULL
 // aparte y TIER_ORDER.map() nunca leía esa clave).
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseAfterHoursFilters(searchParams);

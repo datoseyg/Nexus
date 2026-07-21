@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery, serializeRows } from "@/lib/db";
 import {
@@ -23,6 +24,9 @@ interface RouteParams {
 // de interpolarlos en cualquier SQL (no se pueden parametrizar
 // identificadores). sortColumn/filterColumn pasan por el mismo chequeo.
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   const { schema, table } = await params;
 
   try {

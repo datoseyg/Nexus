@@ -1,3 +1,4 @@
+import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
@@ -28,6 +29,9 @@ interface WeekdayHourRawRow extends AggregateMetricsRow {
 // Padding: SIEMPRE 168 celdas (7x24) vía padWeekdayHourCells, orden
 // row-major fijo.
 export async function GET(request: NextRequest) {
+  const authError = await requireReadApiAccess();
+  if (authError) return authError;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const filters = parseAfterHoursFilters(searchParams);

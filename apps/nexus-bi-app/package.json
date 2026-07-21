@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "dev:local:setup": "node scripts/setup-local-dev-db.mjs",
@@ -11,11 +14,13 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
-    "test": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --test \"test/after-hours/*.test.ts\" \"test/fieldbeat/*.test.ts\"",
+    "test": "node scripts/run-unit-tests.mjs",
     "test:integration": "node scripts/run-integration-tests.mjs"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.7",
     "@tanstack/react-table": "^8.21.3",
     "chart.js": "^4.5.1",
     "next": "^16.2.10",
@@ -33,5 +38,8 @@
     "@types/react-dom": "^19.2.3",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "postcss": "8.5.16"
   }
 }

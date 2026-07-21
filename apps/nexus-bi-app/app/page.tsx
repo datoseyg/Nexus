@@ -3,9 +3,11 @@ import { PageContainer } from "@/components/ui/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HomeNavigationGrid } from "@/components/home/HomeNavigationGrid";
 import { HomeDashboard } from "@/components/home/HomeDashboard";
+import { requireAuthenticatedUser } from "@/lib/auth/authorization";
+import { redirect } from "next/navigation";
 
 const TOOLS = [
-  { href: "/explorer", title: "Explorador", description: "Consulta libre de las tablas internas del warehouse." },
+  { href: "/explorer", title: "Explorador", description: "Consulta libre de las tablas internas del warehouse.", feature: "explorer" as const },
   { href: "/search", title: "Búsqueda", description: "Búsqueda técnica de reportes por palabras clave." }
 ];
 
@@ -52,7 +54,17 @@ const SHELL_STYLE = {
   "--text-secondary": "#5e6b70"
 } as React.CSSProperties;
 
-export default function HomePage() {
+export default async function HomePage() {
+  try {
+    await requireAuthenticatedUser();
+  } catch {
+    redirect("/login");
+  }
+
+  const showAudit = process.env.NEXUS_SHOW_AUDIT === "true";
+  const showExplorer = process.env.NEXUS_SHOW_EXPLORER === "true";
+  const visibleTools = TOOLS.filter(tool => showExplorer || tool.feature !== "explorer");
+
   return (
     <PageContainer wide>
       <div className="overflow-hidden rounded-[var(--nx-radius-shell)]" style={SHELL_STYLE}>
@@ -68,7 +80,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex flex-col gap-6 p-5 sm:p-7">
-          <HomeDashboard navigationSlot={<HomeNavigationGrid />} />
+          <HomeDashboard navigationSlot={<HomeNavigationGrid showAudit={showAudit} />} />
 
           <section>
             <h2
@@ -78,7 +90,7 @@ export default function HomePage() {
               Herramientas internas
             </h2>
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {TOOLS.map(tool => (
+              {visibleTools.map(tool => (
                 <li key={tool.href}>
                   <Link
                     href={tool.href}
