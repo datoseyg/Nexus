@@ -19,7 +19,7 @@
 import pg from "pg";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { isLikelyDisposableName, describeConnectionTarget, PROTECTED_DATABASE_NAMES, seedDisposableMarker } from "../src/lib/db-safety.js";
+import { isLikelyDisposableName, isSupabaseCloudHost, describeConnectionTarget, PROTECTED_DATABASE_NAMES, seedDisposableMarker } from "../src/lib/db-safety.js";
 
 function parseArgs(argv) {
   const url = argv.find(a => a.startsWith("--url="))?.slice("--url=".length);
@@ -32,7 +32,7 @@ async function main() {
   if (!url) throw new Error("Falta --url=postgresql://...");
 
   const target = describeConnectionTarget(url);
-  if (PROTECTED_DATABASE_NAMES.has(target.database) || target.host.endsWith(".supabase.co")) {
+  if (PROTECTED_DATABASE_NAMES.has(target.database) || isSupabaseCloudHost(target.host)) {
     throw new Error(`ABORT: "${target.database}"@"${target.host}" es un entorno protegido -este script nunca siembra la marca ahí, sin excepción.`);
   }
   if (!isLikelyDisposableName(target.database)) {

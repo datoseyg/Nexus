@@ -1,99 +1,153 @@
-// Manifiesto de ownership -4 categorías que determinan qué puede tocar
-// src/db/migrate-to-supabase.js. Derivado de warehouse-config.js::TABLES
-// (esa lista ES la prueba de "tiene generador DuckDB real") con overrides
-// explícitos encima, en vez de mantener dos listas paralelas que puedan
-// divergir.
-//
-// DUCKDB_SYNC          -tabla real en warehouse-config.js::TABLES, sin
-//                        override -único caso que migrate-to-supabase.js
-//                        puede sincronizar (TRUNCATE+INSERT).
-// POSTGRES_BUILDER      -escrita por un builder Postgres-nativo (Capa B/C de
-//                        ETAPA 6.6, src/contracts/**) -nunca pasa por DuckDB.
-// POSTGRES_TRANSACTIONAL -tablas de config.*/manual_review.*/audit.*/stock.*
-//                        -ya protegidas hoy por el filtro de schema de
-//                        SYNC_SCHEMAS; la entrada acá es documentación /
-//                        defensa en profundidad, no el mecanismo primario.
-// EXTERNAL              -existe físicamente en el .duckdb (o podría
-//                        aparecer ahí) pero NO tiene generador real en esta
-//                        rama -ej. marts.fieldbeat_working_hours_analysis,
-//                        un snapshot congelado horneado una vez
-//                        (docs/TECH_DEBT_UNREPRODUCIBLE_TABLES.md). Debe
-//                        excluirse explícitamente aunque el descubrimiento
-//                        por schema lo encontraría.
+// Contrato central de ownership para migración y validación PostgreSQL.
+// Ningún caller mantiene su propia allowlist: warehouse-config.js::TABLES
+// aporta DUCKDB_SYNC y este módulo registra todas las excepciones/objetos
+// Postgres-native. Un objeto ausente del manifiesto es UNKNOWN (known=false),
+// nunca EXTERNAL implícito: el migrador lo omite y el validador lo diagnostica.
 
 import { TABLES } from "./warehouse-config.js";
 
 export const OWNERSHIP = Object.freeze({
   DUCKDB_SYNC: "DUCKDB_SYNC",
+  EXTERNAL: "EXTERNAL",
   POSTGRES_BUILDER: "POSTGRES_BUILDER",
   POSTGRES_TRANSACTIONAL: "POSTGRES_TRANSACTIONAL",
-  EXTERNAL: "EXTERNAL"
+  VIEW_NOT_APPLICABLE: "VIEW_NOT_APPLICABLE"
 });
 
-function key(schema, table) {
-  return `${schema}.${table}`;
+function key(schema, name) {
+  return `${schema}.${name}`;
 }
 
-// Gana sobre la clasificación derivada de TABLES -único mecanismo para
-// declarar una excepción como el mart legado (existe en el .duckdb por
-// haber sido horneado ahí una vez, pero ningún script de esta rama lo
-// genera ni en DuckDB ni en Postgres).
-const EXPLICIT_OVERRIDES = Object.freeze({
-  [key("marts", "fieldbeat_working_hours_analysis")]: OWNERSHIP.EXTERNAL
-});
-
-// Tablas que NUNCA aparecen en TABLES (Postgres-nativas, sin CSV/DuckDB) -
-// Capa B/C de ETAPA 6.6B0 y config.*/manual_review.* de ETAPA 6.5/6.6.
-const POSTGRES_NATIVE = Object.freeze({
-  [key("marts", "fieldbeat_contract_coverage_segments")]: OWNERSHIP.POSTGRES_BUILDER,
-  [key("marts", "fieldbeat_working_hours_analysis_v2")]: OWNERSHIP.POSTGRES_BUILDER,
-  [key("marts", "fieldbeat_working_hours_equipment_links")]: OWNERSHIP.POSTGRES_BUILDER,
-
-  [key("config", "contract_import_runs")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "contract_source_rows")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "contract_equipment_versions")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "contract_equipment_observations")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "contract_service_schedules")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "contract_service_windows")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "contract_equipment_matches")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "contract_equipment_match_overrides")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "holiday_import_runs")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "holiday_calendar_entries")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("config", "holiday_calendar_coverage")]: OWNERSHIP.POSTGRES_TRANSACTIONAL,
-  [key("manual_review", "contract_data_issues")]: OWNERSHIP.POSTGRES_TRANSACTIONAL
-});
-
-// Nota explícita (no una entrada categorizada): las vistas nunca se
-// sincronizan -migrate-to-supabase.js opera sobre information_schema.tables
-// del catálogo DuckDB adjunto, donde una vista Postgres-nativa como
-// marts.fieldbeat_working_hours_analysis_current nunca existe. No hace
-// falta clasificarla; se documenta acá para que quede registrado por qué.
-export const VIEWS_NOT_APPLICABLE = Object.freeze(["marts.fieldbeat_working_hours_analysis_current", "config.current_holiday_calendar_entries", "config.current_holiday_calendar_coverage"]);
-
-const registeredDuckdbTables = new Set(TABLES.map(t => key(t.schema, t.table)));
-
-/**
- * @param {string} schema
- * @param {string} table
- * @returns {string} uno de OWNERSHIP
- */
-export function getOwnership(schema, table) {
-  const k = key(schema, table);
-  if (k in EXPLICIT_OVERRIDES) return EXPLICIT_OVERRIDES[k];
-  if (registeredDuckdbTables.has(k)) return OWNERSHIP.DUCKDB_SYNC;
-  if (k in POSTGRES_NATIVE) return POSTGRES_NATIVE[k];
-  // No reconocida en ningún inventario -tratada como EXTERNAL (desconocida),
-  // nunca sincronizada por accidente. Preferible a asumir DUCKDB_SYNC por
-  // default.
-  return OWNERSHIP.EXTERNAL;
+function entry(schema, name, ownership, options = {}) {
+  return Object.freeze({
+    key: key(schema, name),
+    schema,
+    name,
+    kind: options.kind ?? "table",
+    ownership,
+    requiredColumns: Object.freeze([...(options.requiredColumns ?? [])])
+  });
 }
 
-/**
- * @param {string} schema
- * @param {string} table
- * @returns {boolean} true si y solo si migrate-to-supabase.js puede
- *   sincronizar esta tabla (TRUNCATE+INSERT) desde el .duckdb
- */
+const DUCKDB_SYNC_ENTRIES = TABLES.map(({ schema, table }) =>
+  entry(schema, table, OWNERSHIP.DUCKDB_SYNC)
+);
+
+// Objetos existentes en el warehouse histórico pero sin generador vigente.
+// La lista explícita evita confundir drift desconocido con deuda conocida.
+const EXTERNAL_ENTRIES = [
+  entry("marts", "equipment_part_lifecycle_events", OWNERSHIP.EXTERNAL),
+  entry("marts", "equipment_part_lifecycle_intervals", OWNERSHIP.EXTERNAL),
+  entry("marts", "fieldbeat_working_hours_analysis", OWNERSHIP.EXTERNAL),
+  entry("gold", "after_hours_by_client", OWNERSHIP.EXTERNAL),
+  entry("gold", "after_hours_by_period", OWNERSHIP.EXTERNAL),
+  entry("gold", "after_hours_by_task_type", OWNERSHIP.EXTERNAL),
+  entry("gold", "after_hours_by_technician", OWNERSHIP.EXTERNAL),
+  entry("gold", "after_hours_work_analysis", OWNERSHIP.EXTERNAL),
+  entry("gold", "equipment_part_lifecycle_by_client", OWNERSHIP.EXTERNAL),
+  entry("gold", "equipment_part_lifecycle_by_machine", OWNERSHIP.EXTERNAL),
+  entry("gold", "equipment_part_lifecycle_by_part", OWNERSHIP.EXTERNAL),
+  entry("gold", "equipment_part_lifecycle_insights", OWNERSHIP.EXTERNAL),
+  entry("gold", "equipment_part_lifecycle_summary", OWNERSHIP.EXTERNAL)
+];
+
+const POSTGRES_BUILDER_ENTRIES = [
+  entry("marts", "fieldbeat_contract_coverage_segments", OWNERSHIP.POSTGRES_BUILDER, {
+    requiredColumns: ["segment_id", "fieldbeat_task_id", "segment_start_utc", "segment_end_utc", "builder_run_id"]
+  }),
+  entry("marts", "fieldbeat_working_hours_analysis_v2", OWNERSHIP.POSTGRES_BUILDER, {
+    requiredColumns: ["working_hours_id", "fieldbeat_task_id", "calculation_status", "data_basis", "builder_run_id"]
+  }),
+  entry("marts", "fieldbeat_working_hours_equipment_links", OWNERSHIP.POSTGRES_BUILDER, {
+    requiredColumns: ["link_id", "working_hours_id", "fieldbeat_equipment_key", "is_primary"]
+  })
+];
+
+const POSTGRES_TRANSACTIONAL_ENTRIES = [
+  entry("audit", "pipeline_runs", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("audit", "data_quality_events", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("audit", "warehouse_sync_state", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("manual_review", "part_aliases", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("manual_review", "ticket_link_overrides", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("manual_review", "contract_data_issues", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("stock", "stock_movements", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_import_runs", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_source_rows", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_equipment_versions", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_equipment_observations", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_service_schedules", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_service_windows", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_equipment_matches", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "contract_equipment_match_overrides", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "holiday_import_runs", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "holiday_calendar_entries", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  entry("config", "holiday_calendar_coverage", OWNERSHIP.POSTGRES_TRANSACTIONAL)
+];
+
+const VIEW_ENTRIES = [
+  entry("marts", "fieldbeat_working_hours_analysis_current", OWNERSHIP.VIEW_NOT_APPLICABLE, { kind: "view" }),
+  entry("config", "current_holiday_calendar_entries", OWNERSHIP.VIEW_NOT_APPLICABLE, { kind: "view" }),
+  entry("config", "current_holiday_calendar_coverage", OWNERSHIP.VIEW_NOT_APPLICABLE, { kind: "view" }),
+  entry("config", "contract_equipment_analysis", OWNERSHIP.VIEW_NOT_APPLICABLE, { kind: "view" }),
+  entry("config", "contract_service_window_analysis", OWNERSHIP.VIEW_NOT_APPLICABLE, { kind: "view" })
+];
+
+const ENTRIES = Object.freeze([
+  ...DUCKDB_SYNC_ENTRIES,
+  ...EXTERNAL_ENTRIES,
+  ...POSTGRES_BUILDER_ENTRIES,
+  ...POSTGRES_TRANSACTIONAL_ENTRIES,
+  ...VIEW_ENTRIES
+]);
+
+export function assertUniqueOwnershipEntries(entries) {
+  const seen = new Set();
+  for (const item of entries) {
+    const identity = `${item.kind}:${item.key}`;
+    if (seen.has(identity)) {
+      throw new Error(`Contrato de ownership duplicado para ${identity}. Cada objeto debe pertenecer a una sola categoría.`);
+    }
+    seen.add(identity);
+  }
+}
+
+assertUniqueOwnershipEntries(ENTRIES);
+
+const ENTRY_BY_KIND_AND_KEY = new Map(
+  ENTRIES.map(item => [`${item.kind}:${item.key}`, item])
+);
+
+export const VIEWS_NOT_APPLICABLE = Object.freeze(
+  VIEW_ENTRIES.map(item => item.key)
+);
+
+export function classifyOwnership(schema, name, kind = "table") {
+  const objectKey = key(schema, name);
+  const knownEntry = ENTRY_BY_KIND_AND_KEY.get(`${kind}:${objectKey}`);
+  if (knownEntry) return { ...knownEntry, known: true };
+
+  return {
+    key: objectKey,
+    schema,
+    name,
+    kind,
+    known: false,
+    ownership: null,
+    requiredColumns: []
+  };
+}
+
+export function listOwnershipEntries(filters = {}) {
+  return ENTRIES
+    .filter(item => !filters.ownership || item.ownership === filters.ownership)
+    .filter(item => !filters.kind || item.kind === filters.kind)
+    .map(item => ({ ...item, requiredColumns: [...item.requiredColumns] }));
+}
+
+export function getOwnership(schema, name, kind = "table") {
+  return classifyOwnership(schema, name, kind).ownership;
+}
+
 export function isDuckdbSync(schema, table) {
-  return getOwnership(schema, table) === OWNERSHIP.DUCKDB_SYNC;
+  return classifyOwnership(schema, table).ownership === OWNERSHIP.DUCKDB_SYNC;
 }

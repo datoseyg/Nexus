@@ -18,7 +18,12 @@ export const PROTECTED_DATABASE_NAMES = new Set([
 
 // Prefijo de host que identifica Supabase cloud -cualquier host que termine
 // así se trata como protegido sin excepción, sin importar el nombre de base.
-const SUPABASE_CLOUD_HOST_SUFFIX = ".supabase.co";
+const SUPABASE_CLOUD_HOST_SUFFIXES = [".supabase.co", ".supabase.com"];
+
+export function isSupabaseCloudHost(host) {
+  const normalizedHost = String(host ?? "").toLowerCase().replace(/\.$/, "");
+  return SUPABASE_CLOUD_HOST_SUFFIXES.some(suffix => normalizedHost.endsWith(suffix));
+}
 
 const MARKER_PATTERN = /^DISPOSABLE_TEST:(.+)$/;
 
@@ -63,7 +68,7 @@ export function evaluateDisposableTarget({
   if (protectedNames.has(databaseName)) {
     return { ok: false, reason: `ABORT: "${databaseName}" está en la lista de entornos protegidos -nunca recibe fixtures, sin excepción` };
   }
-  if (host && host.endsWith(SUPABASE_CLOUD_HOST_SUFFIX)) {
+  if (isSupabaseCloudHost(host)) {
     return { ok: false, reason: `ABORT: host "${host}" es Supabase cloud -nunca recibe fixtures` };
   }
 
@@ -214,7 +219,7 @@ export function assertWriteConfirmed(connectionString, opts = {}) {
   const confirmationEnvVarName = opts.confirmationEnvVarName ?? "CONFIRM_WRITE_TARGET";
   const target = printConnectionPreflight(connectionString, opts);
 
-  if (PROTECTED_DATABASE_NAMES.has(target.database) || target.host.endsWith(SUPABASE_CLOUD_HOST_SUFFIX)) {
+  if (PROTECTED_DATABASE_NAMES.has(target.database) || isSupabaseCloudHost(target.host)) {
     if (!opts.allowProtectedWithDualConfirmation) {
       throw new WriteConfirmationRequiredError(
         `ABORT: "${target.database}"@"${target.host}" es un entorno protegido -escrituras productivas contra este destino no están habilitadas en esta etapa, ninguna confirmación las autoriza.`

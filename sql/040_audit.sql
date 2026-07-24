@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS audit.data_quality_events (
 
 -- Registra el estado de la última sincronización DuckDB -> Postgres.
 -- src/db/migrate-to-supabase.js inserta una fila al terminar
--- (validation_status='PENDING'); src/db/validate-supabase.js, que corre
--- inmediatamente después dentro de `db:pg:build`, hace UPDATE de esa misma
--- fila (por run_id) con el resultado real de sus 4 chequeos.
+-- (validation_status='PENDING'). src/db/validate-supabase.js es read-only y
+-- guarda un reporte local. Solo el comando separado y explícito
+-- `db:pg:record-validation` actualiza esta fila por run_id.
 CREATE TABLE IF NOT EXISTS audit.warehouse_sync_state (
   id bigserial PRIMARY KEY,
   run_id uuid NOT NULL DEFAULT gen_random_uuid(),

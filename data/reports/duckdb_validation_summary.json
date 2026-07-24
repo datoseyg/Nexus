@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-02T04:08:27.491Z",
+  "generated_at": "2026-07-20T23:08:04.756Z",
   "all_match": true,
   "tables": [
     {
@@ -49,6 +49,13 @@
       "csv": "data/processed/fieldbeat/DB_FieldBeat_Task_Equipments.csv",
       "csv_row_count": 3157,
       "sql_row_count": 3157,
+      "status": "MATCH"
+    },
+    {
+      "table": "processed.fieldbeat_report_fields",
+      "csv": "data/processed/fieldbeat/DB_FieldBeat_Report_Fields.csv",
+      "csv_row_count": 66107,
+      "sql_row_count": 66107,
       "status": "MATCH"
     },
     {

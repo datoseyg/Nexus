@@ -91,7 +91,7 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
     await adminPool.query(`
       DO $$ BEGIN
         IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'nexus_app') THEN
-          CREATE ROLE nexus_app WITH LOGIN PASSWORD 'test';
+          CREATE ROLE nexus_app WITH LOGIN PASSWORD '__SET_IN_SUPABASE_DASHBOARD__';
         END IF;
       END $$;
     `);
@@ -266,7 +266,7 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
   });
 
   await t.test("grants: nexus_app solo puede SELECT las vistas, nada más en config/manual_review.contract_data_issues", async () => {
-    const nexusPool = new Pool({ connectionString: TEST_DB_URL.replace(/\/\/[^@]+@/, "//nexus_app:test@") });
+    const nexusPool = new Pool({ connectionString: TEST_DB_URL.replace(/\/\/[^@]+@/, "//nexus_app:__SET_IN_SUPABASE_DASHBOARD__@") });
     try {
       const viewResult = await nexusPool.query("SELECT * FROM config.contract_equipment_analysis LIMIT 1");
       assert.ok(viewResult); // SELECT sobre la vista funciona

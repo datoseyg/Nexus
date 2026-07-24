@@ -30,7 +30,6 @@ before(async () => {
   printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
   adminPool = new Pool({ connectionString: TEST_DB_URL, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
   await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
-
   const r = await adminPool.query(
     `INSERT INTO audit.pipeline_runs (stage, status) VALUES ('working-hours-test', 'SUCCESS') RETURNING run_id`
   );
@@ -773,7 +772,7 @@ test("grants: nexus_app solo puede SELECT la vista de transición, nada más de 
   // Misma contraseña de prueba que test/contracts/db-writer.integration.test.js
   // usa para nexus_app en este Postgres desechable -evita choques si ambas
   // suites corren contra el mismo contenedor en la misma sesión.
-  const nexusUrl = TEST_DB_URL.replace(/\/\/[^:]+:[^@]+@/, "//nexus_app:test@");
+  const nexusUrl = TEST_DB_URL.replace(/\/\/[^:]+:[^@]+@/, "//nexus_app:__SET_IN_SUPABASE_DASHBOARD__@");
   const nexusPool = new Pool({ connectionString: nexusUrl });
   try {
     const viewResult = await nexusPool.query("SELECT * FROM marts.fieldbeat_working_hours_analysis_current LIMIT 1");

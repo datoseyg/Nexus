@@ -4,7 +4,7 @@
 // casos A-G exigidos.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { evaluateDisposableTarget, PROTECTED_DATABASE_NAMES, describeConnectionTarget, isLikelyDisposableName, assertWriteConfirmed, WriteConfirmationRequiredError } from "../../src/lib/db-safety.js";
+import { evaluateDisposableTarget, PROTECTED_DATABASE_NAMES, describeConnectionTarget, isLikelyDisposableName, isSupabaseCloudHost, assertWriteConfirmed, WriteConfirmationRequiredError } from "../../src/lib/db-safety.js";
 
 const BASE_VALID = {
   databaseComment: "DISPOSABLE_TEST:run-abc123",
@@ -175,6 +175,21 @@ test("assertWriteConfirmed: host de Supabase cloud NUNCA se habilita en esta eta
   process.env.CONFIRM_WRITE_TARGET = "db.qieeuaqfuctfntivjekn.supabase.co:5432/postgres";
   assert.throws(() => assertWriteConfirmed("postgresql://u:p@db.qieeuaqfuctfntivjekn.supabase.co:5432/postgres"), WriteConfirmationRequiredError);
   delete process.env.CONFIRM_WRITE_TARGET;
+});
+
+test("assertWriteConfirmed: pooler *.supabase.com también es protegido aunque la base no se llame postgres", () => {
+  process.env.CONFIRM_WRITE_TARGET = "aws-0-test.pooler.supabase.com:6543/nexus";
+  assert.throws(
+    () => assertWriteConfirmed("postgresql://u:p@aws-0-test.pooler.supabase.com:6543/nexus"),
+    WriteConfirmationRequiredError
+  );
+  delete process.env.CONFIRM_WRITE_TARGET;
+});
+
+test("detección Supabase normaliza mayúsculas y punto DNS final", () => {
+  assert.equal(isSupabaseCloudHost("AWS-0-TEST.POOLER.SUPABASE.COM"), true);
+  assert.equal(isSupabaseCloudHost("aws-0-test.pooler.supabase.com."), true);
+  assert.equal(isSupabaseCloudHost("db.project.SUPABASE.CO."), true);
 });
 
 // === Corrección de cierre: migrate-to-supabase.js no debe quedar
