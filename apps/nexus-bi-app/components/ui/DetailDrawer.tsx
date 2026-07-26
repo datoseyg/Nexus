@@ -8,7 +8,14 @@ interface DetailDrawerProps {
   title: string;
   children: React.ReactNode;
   footerNote?: string;
+  /** Ancho del panel (clases Tailwind responsivas) - opcional, default
+   * preserva el ancho original (360-380px) para los consumidores existentes
+   * (AfterHours, Search). Un detalle más rico (ej. FieldBeat, Phase 5)
+   * puede pedir un panel más ancho sin afectar a nadie más. */
+  panelWidthClassName?: string;
 }
+
+const DEFAULT_PANEL_WIDTH_CLASS = "w-full sm:w-[360px] md:w-[380px]";
 
 // Drawer lateral genérico y accesible, replicando el patrón repetido en los
 // 5 drawers de docs/design-revolution/*.dc.html (overlay + panel fijo
@@ -29,7 +36,7 @@ interface DetailDrawerProps {
 // - si `children` no contiene ningún elemento enfocable, el foco queda en
 //   el botón de cierre (comportamiento correcto, pero sin más alternativas
 //   dentro del panel).
-export function DetailDrawer({ open, onClose, title, children, footerNote }: DetailDrawerProps) {
+export function DetailDrawer({ open, onClose, title, children, footerNote, panelWidthClassName }: DetailDrawerProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -106,7 +113,7 @@ export function DetailDrawer({ open, onClose, title, children, footerNote }: Det
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed top-0 right-0 bottom-0 w-full sm:w-[360px] md:w-[380px] overflow-y-auto p-[22px]"
+        className={`fixed top-0 right-0 bottom-0 overflow-y-auto p-[22px] ${panelWidthClassName ?? DEFAULT_PANEL_WIDTH_CLASS}`}
         style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-drawer)", zIndex: "var(--nx-z-drawer)" as unknown as number }}
       >
         <div className="mb-3.5 flex items-start justify-between">

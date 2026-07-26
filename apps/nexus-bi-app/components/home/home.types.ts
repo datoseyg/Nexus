@@ -29,8 +29,17 @@ export interface OperacionalSummaryData {
   };
 }
 
+// Phase 3 reapertura §6 - el viejo GET /api/dashboard/fieldbeat (5
+// agregados GOLD fijos) se eliminó (§11, sin consumidores DENTRO de
+// FieldBeat) pero Inicio SÍ lo seguía llamando para este tile de estado -
+// gap real encontrado en validación de navegador autenticado, no detectado
+// por la búsqueda de consumidores previa (estaba fuera de components/fieldbeat/).
+// Ahora apunta a GET /api/dashboard/fieldbeat/overview (contrato v2) - solo
+// se valida el campo mínimo que Inicio realmente consume (kpi1.denominator,
+// mismo criterio que lib/fieldbeat-tab-empty-predicates.ts::isOverviewEmpty
+// usa para "hay universo cerrado evaluable").
 export interface FieldbeatSummaryData {
-  kpis: Record<string, unknown> | null;
+  kpi1: { denominator: number };
 }
 
 export interface AfterHoursSummaryData {
@@ -69,8 +78,8 @@ export function isOperacionalSummaryData(value: unknown): value is OperacionalSu
 }
 
 export function isFieldbeatSummaryData(value: unknown): value is FieldbeatSummaryData {
-  if (!isRecord(value)) return false;
-  return value.kpis === null || isRecord(value.kpis);
+  if (!isRecord(value) || !isRecord(value.kpi1)) return false;
+  return isNonNegativeSafeInteger(value.kpi1.denominator);
 }
 
 export function isAfterHoursSummaryData(value: unknown): value is AfterHoursSummaryData {

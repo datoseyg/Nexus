@@ -87,7 +87,7 @@ function deriveFieldbeatStatus(source: RemoteData<FieldbeatSummaryData>): HomeAr
   const label = "FieldBeat";
   if (source.status === "loading") return { area: "fieldbeat", label, status: "loading" };
   if (source.status === "error") return { area: "fieldbeat", label, status: "failed" };
-  return { area: "fieldbeat", label, status: source.data.kpis === null ? "empty" : "success" };
+  return { area: "fieldbeat", label, status: source.data.kpi1.denominator === 0 ? "empty" : "success" };
 }
 
 function deriveAfterHoursStatus(source: RemoteData<AfterHoursSummaryData>): HomeAreaStatusOf<"afterHours"> {
@@ -155,7 +155,7 @@ export function HomeDashboard({ navigationSlot }: HomeDashboardProps) {
     "/api/dashboard/operacional/summary",
     isOperacionalSummaryData
   );
-  const fieldbeatState = useRemoteData<FieldbeatSummaryData>("/api/dashboard/fieldbeat", isFieldbeatSummaryData);
+  const fieldbeatState = useRemoteData<FieldbeatSummaryData>("/api/dashboard/fieldbeat/overview", isFieldbeatSummaryData);
   const afterHoursState = useRemoteData<AfterHoursSummaryData>(
     "/api/dashboard/after-hours/summary",
     isAfterHoursSummaryData

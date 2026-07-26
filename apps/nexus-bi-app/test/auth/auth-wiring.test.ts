@@ -32,7 +32,19 @@ test("todos los Route Handlers están protegidos por el mecanismo correcto", asy
   const routes: string[] = [];
   for await (const path of glob("app/api/**/route.ts")) routes.push(path);
 
-  assert.equal(routes.length, 42);
+  // Phase 2 FieldBeat (KPI overview + quality) agrega 2 Route Handlers
+  // nuevos (42 -> 44); Phase 3 agrega crossings (44 -> 45) - los 3
+  // protegidos por requireReadApiAccess (verificado abajo, mismo mecanismo
+  // que el resto). Phase 3 también elimina 2 rutas sin consumidores tras
+  // el rediseño de 4 pestañas (§11): el GOLD fijo /api/dashboard/fieldbeat
+  // y /api/dashboard/fieldbeat/activity (45 -> 43). Phase 4 reemplaza la
+  // bandeja transitoria: elimina /api/dashboard/fieldbeat/detail y agrega
+  // /api/dashboard/fieldbeat/reports + /api/dashboard/fieldbeat/reports/export
+  // (43 -> 44). Phase 5 agrega el detalle maestro
+  // /api/dashboard/fieldbeat/reports/[id] (44 -> 45). Phase 6 agrega
+  // /api/dashboard/fieldbeat/reports/[id]/open (45 -> 46) y
+  // /api/dashboard/fieldbeat/reports/[id]/pdf (46 -> 47).
+  assert.equal(routes.length, 47);
 
   for (const path of routes) {
     const contents = await source(path);

@@ -13,7 +13,13 @@
 // -una por archivo- ejecutadas estrictamente en secuencia (cada proceso
 // hijo termina por completo antes de que arranque el siguiente), sin
 // hardcodear los nombres de archivo -escala automáticamente a cualquier
-// *.integration.test.ts nuevo bajo test/after-hours/.
+// *.integration.test.ts nuevo bajo cualquiera de los directorios listados
+// en INTEGRATION_TEST_DIRS. Phase 2 FieldBeat agregó test/fieldbeat/ acá
+// (antes solo test/after-hours/, pese al comentario original que ya
+// prometía generalidad) - reutiliza las MISMAS variables
+// AFTER_HOURS_TEST_DATABASE_URL/AFTER_HOURS_TEST_RUN_ID que after-hours ya
+// usa (nombre histórico, apunta genéricamente "al Postgres desechable de
+// integración" - renombrarlas queda fuera de alcance).
 import { spawn } from "node:child_process";
 import { glob } from "node:fs/promises";
 
@@ -24,12 +30,16 @@ if (missingEnvironment.length > 0) {
   process.exit(1);
 }
 
+const INTEGRATION_TEST_DIRS = ["test/after-hours", "test/fieldbeat"];
+
 const files = [];
-for await (const f of glob("test/after-hours/*.integration.test.ts")) files.push(f);
+for (const dir of INTEGRATION_TEST_DIRS) {
+  for await (const f of glob(`${dir}/*.integration.test.ts`)) files.push(f);
+}
 files.sort();
 
 if (files.length === 0) {
-  console.error("No se encontró ningún test/after-hours/*.integration.test.ts");
+  console.error(`No se encontró ningún *.integration.test.ts bajo ${INTEGRATION_TEST_DIRS.join(", ")}`);
   process.exit(1);
 }
 
