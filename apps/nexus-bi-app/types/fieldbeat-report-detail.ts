@@ -2,7 +2,14 @@ import type { InconsistencyCode, InconsistencySeverity } from "@/lib/fieldbeat-i
 import type { TeamIdentificationStatus } from "@/lib/fieldbeat-team-identification";
 import type { HistoricalPartMatchStatus } from "@/lib/fieldbeat-parts-history";
 
-export const FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION = "1.0.0";
+// HOTFIX de integridad de datos FieldBeat (post-Phase 6) - 2.0.0: reemplaza
+// FieldbeatUsedPartDetail por FieldbeatPartOccurrence (separa declaración de
+// correspondencia de catálogo, expone rawPartNumber SIEMPRE, nunca lo
+// sustituye por un nombre) y agrega participants/labor (participantes 0..N +
+// resumen de duración real vs. estimada). Bump MAYOR: el shape de `parts`
+// cambia de forma incompatible (campos renombrados/reestructurados) -
+// ningún consumidor debe asumir silenciosamente compatibilidad 1.0.0.
+export const FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION = "2.0.0";
 
 /** Fuente de un ítem de equipo - NUNCA promueve una ambigüedad a match
  * confirmado (ver lib/fieldbeat-equipment-derivation.ts). */
@@ -60,19 +67,113 @@ export interface FieldbeatTicketLink {
   linkMethod: string | null;
 }
 
-export interface FieldbeatUsedPartDetail {
-  usedPartId: string;
-  partName: string | null;
-  rawPartIdentifier: string | null;
-  normalizedPartIdentifier: string | null;
+/** Presencia/declaración en el reporte - SIEMPRE 'DECLARED_IN_REPORT' hoy
+ * (quality.fieldbeat_report_part_occurrences solo materializa líneas
+ * realmente declaradas). 'NOT_DECLARED_IN_REPORT' documentado, rama no
+ * alcanzable hoy - mismo patrón que descriptionConfidentOverride en
+ * lib/fieldbeat-parts-history.ts (se deja en el vocabulario para no
+ * reescribir el contrato después, nunca inferido acá). */
+export type PartDeclarationStatus = "DECLARED_IN_REPORT" | "NOT_DECLARED_IN_REPORT";
+
+export interface FieldbeatPartAttachment {
+  filename: string;
+  /** SIEMPRE false hoy - FieldBeat solo entrega el nombre de archivo de la
+   * foto del repuesto (ver "FOTO DEL REPUESTO UTILIZADO"), nunca los bytes
+   * ni otra metadata, en ninguna capa local del pipeline. */
+  bytesAvailable: boolean;
+}
+
+/** Evidencia de la correspondencia de catálogo - discriminada por `kind`
+ * para que un consumidor nunca lea `candidateProductIds`/`aliasValue` de un
+ * estado al que no corresponden. */
+export type FieldbeatPartMatchEvidence =
+  | { kind: "NONE" }
+  | { kind: "AMBIGUOUS_CANDIDATES"; candidateProductIds: string[] }
+  | { kind: "HISTORICAL_ALIAS"; aliasValue: string; reason: string | null; createdBy: string | null };
+
+/**
+ * Ocurrencia canónica de repuesto (HOTFIX de integridad, sql/088) - fuente
+ * única compartida por FieldBeat/Búsqueda/PDF/CSV (quality.fieldbeat_report_part_occurrences).
+ * Separa PRESENCIA (declarationStatus) de CORRESPONDENCIA DE CATÁLOGO
+ * (catalogMatchStatus) - catalogMatchStatus='NO_MATCH' significa
+ * ÚNICAMENTE "declarado, sin correspondencia validada en Dolibarr", NUNCA
+ * "no existe" ni "no fue declarado". rawName/rawPartNumber viajan SIEMPRE
+ * juntos - rawPartNumber nunca se oculta detrás de rawName ni viceversa.
+ */
+export interface FieldbeatPartOccurrence {
+  lineId: string;
+  fieldbeatTaskId: string;
+  rawName: string | null;
+  /** Número/código de parte tal como se declaró - SIEMPRE visible en la UI, nunca enmascarado por rawName. */
+  rawPartNumber: string | null;
   quantity: number | null;
-  matchStatus: string | null;
-  historicalMatchStatus: HistoricalPartMatchStatus | null;
-  dolibarrProduct: { productId: string; ref: string | null; label: string | null; barcode: string | null } | null;
-  /** Candidatos cuando historicalMatchStatus=AMBIGUOUS_MATCH - nunca promovidos a match. */
-  ambiguousCandidateProductIds: string[];
-  /** Solo presente cuando historicalMatchStatus=HISTORICAL_ALIAS_MATCH Y existe evidencia real en manual_review.part_aliases. */
-  historicalAlias: { aliasValue: string; reason: string | null; createdBy: string | null } | null;
+  sourceLocation: string | null;
+  sourceComment: string | null;
+  attachment: FieldbeatPartAttachment | null;
+  declarationStatus: PartDeclarationStatus;
+  catalogMatchStatus: HistoricalPartMatchStatus;
+  matchedProductId: string | null;
+  matchedSku: string | null;
+  matchEvidence: FieldbeatPartMatchEvidence;
+  /** Explicación en lenguaje llano de catalogMatchStatus - fuente única
+   * (lib/fieldbeat-part-occurrence.ts) para que las 5 superficies (FieldBeat/
+   * Búsqueda/PDF/CSV/drawer) muestren EXACTAMENTE el mismo texto, nunca cada
+   * una reinterpretando el enum por su cuenta. */
+  explanation: string;
+}
+
+/** Roles de participante 0..N (HOTFIX de integridad, sql/088). El
+ * responsable principal NUNCA se duplica como adicional (deduplicación ya
+ * resuelta en quality.fieldbeat_report_participants). */
+export type ParticipantRole = "PRIMARY_ASSIGNEE" | "ADDITIONAL_STRUCTURED" | "ADDITIONAL_FREE_TEXT" | "UNRESOLVED_ADDITIONAL";
+
+/** Cómo se resolvió la identidad de un participante - distingue
+ * explícitamente evidencia automática (RESOLVED_ASSIGNED_TO/RESOLVED_ROSTER_MATCH)
+ * de verificación manual (RESOLVED_CURATED_IDENTITY, ver
+ * manual_review.fieldbeat_engineer_identity_map.verification_method) - un
+ * participante no resoluble NUNCA se descarta (UNRESOLVED_*). */
+export type ParticipantResolutionStatus =
+  | "RESOLVED_ASSIGNED_TO"
+  | "RESOLVED_ROSTER_MATCH"
+  | "RESOLVED_CURATED_IDENTITY"
+  | "UNRESOLVED_FREE_TEXT"
+  | "UNRESOLVED_UNKNOWN_TOKEN";
+
+export interface FieldbeatParticipant {
+  rawName: string;
+  normalizedName: string;
+  role: ParticipantRole;
+  sourceField: string;
+  resolutionStatus: ParticipantResolutionStatus;
+  isPrimary: boolean;
+}
+
+/** Fuente de actualReportDurationMinutes - JAMÁS incluye un tier de
+ * estimación: 'duration'/'duration_minutes' de agenda es siempre una
+ * estimación de agenda (valores preset repetidos, confirmado empíricamente),
+ * nunca una medición real, así que nunca alimenta esta cadena (ver
+ * scheduledEstimateMinutes, campo separado). VALIDATED_WORK_TRANSITION_INTERVAL
+ * documentado, sin evidencia de datos que lo disparen hoy para ningún tipo
+ * de reporte (rama no alcanzable hoy, no se descarta del vocabulario). */
+export type FieldbeatActualDurationSource = "FORM_DECLARED_INTERVAL" | "VALIDATED_WORK_TRANSITION_INTERVAL" | "UNAVAILABLE";
+
+/**
+ * Resumen laboral por reporte (HOTFIX de integridad, sql/088) - separa
+ * COMPLETAMENTE duración real de estimación de agenda. Una estimación
+ * JAMÁS alimenta totalLaborMinutes/horas-persona/participación/
+ * productividad - ausencia de duración real produce `null`, nunca una
+ * estimación disfrazada de dato real.
+ */
+export interface FieldbeatLaborSummary {
+  actualReportDurationMinutes: number | null;
+  actualDurationSource: FieldbeatActualDurationSource;
+  /** SIEMPRE mostrado como estimado/planificación, NUNCA como horas reales/trabajadas/participación. */
+  scheduledEstimateMinutes: number | null;
+  participantCount: number;
+  /** null cuando actualReportDurationMinutes es null - NUNCA se rellena multiplicando la estimación por participantes. */
+  totalLaborMinutes: number | null;
+  /** SIEMPRE false hoy - FieldBeat nunca capta fichaje individual por participante. */
+  individualTimeAvailable: boolean;
 }
 
 export interface FieldbeatInconsistencyDetail {
@@ -118,7 +219,13 @@ export interface FieldbeatReportDetail {
   client: FieldbeatClient | null;
   equipment: FieldbeatEquipmentIdentification;
   tickets: FieldbeatTicketLink[];
-  parts: FieldbeatUsedPartDetail[];
+  parts: FieldbeatPartOccurrence[];
+  /** Participantes 0..N (HOTFIX de integridad) - incluye SIEMPRE al
+   * responsable principal (role=PRIMARY_ASSIGNEE) más 0..N adicionales,
+   * nunca duplicados. `technician` arriba se conserva por compatibilidad
+   * de lectura rápida (mismo valor que el participante PRIMARY_ASSIGNEE). */
+  participants: FieldbeatParticipant[];
+  labor: FieldbeatLaborSummary;
   quality: FieldbeatQualityDetail;
   inconsistencies: FieldbeatInconsistencyDetail[];
   audit: FieldbeatAuditMetadata;

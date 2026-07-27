@@ -241,8 +241,8 @@ export function AfterHoursShell() {
         </div>
         <div className="mb-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
           <AfterHoursRankingCard
-            question="¿Qué técnicos registran más actividad?"
-            subtitle={summary.data ? `${summary.data.distinct_technicians} técnicos identificados` : "Cargando…"}
+            question="¿Qué técnicos responsables registran más actividad?"
+            subtitle={summary.data ? `${summary.data.distinct_technicians} responsables principales identificados` : "Cargando…"}
             rows={byTechnician.data?.rows ?? []}
             status={byTechnician.status}
             error={byTechnician.error}

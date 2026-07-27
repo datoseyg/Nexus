@@ -24,7 +24,13 @@
 import PDFDocument from "pdfkit";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { EQUIPMENT_SOURCE_LABEL, TEAM_IDENTIFICATION_STATUS_LABEL, formatFieldbeatDateTime } from "./fieldbeat-report-labels";
+import {
+  EQUIPMENT_SOURCE_LABEL,
+  TEAM_IDENTIFICATION_STATUS_LABEL,
+  CATALOG_MATCH_STATUS_LABEL,
+  PARTICIPANT_ROLE_LABEL,
+  formatFieldbeatDateTime
+} from "./fieldbeat-report-labels";
 import type { FieldbeatReportDetail } from "@/types/fieldbeat-report-detail";
 
 const PAGE_WIDTH = 595.28; // A4 en puntos
@@ -174,9 +180,39 @@ function drawChronologySection(doc: PDFKit.PDFDocument, detail: FieldbeatReportD
 }
 
 function drawTechnicianClientSection(doc: PDFKit.PDFDocument, detail: FieldbeatReportDetail): void {
-  sectionTitle(doc, "Técnico y cliente");
-  fieldLine(doc, "Técnico", detail.technician?.name ?? "Sin información");
+  sectionTitle(doc, "Responsable principal y cliente");
+  fieldLine(doc, "Responsable principal", detail.technician?.name ?? "Sin información");
   fieldLine(doc, "Cliente", detail.client?.clientName ?? "Sin información");
+}
+
+// HOTFIX de integridad de datos FieldBeat (post-Phase 6) - Participantes
+// 0..N, mismo contenido/orden que el drawer (data.participants ya viene
+// ordenado con el responsable principal primero, ver sortParticipants() en
+// lib/fieldbeat-participants.ts). Un participante no resoluble NUNCA se
+// omite del PDF.
+function drawParticipantsSection(doc: PDFKit.PDFDocument, detail: FieldbeatReportDetail): void {
+  sectionTitle(doc, `Participantes (${detail.participants.length})`);
+  if (detail.participants.length === 0) {
+    paragraph(doc, "Sin participantes registrados.");
+    return;
+  }
+  for (const p of detail.participants) {
+    const suffix = p.isPrimary ? " (principal)" : "";
+    paragraph(doc, `• ${p.rawName}${suffix} — ${PARTICIPANT_ROLE_LABEL[p.role] ?? p.role}`, {
+      color: p.resolutionStatus.startsWith("UNRESOLVED") ? WARNING_COLOR : INK_SECONDARY
+    });
+  }
+}
+
+// Duración real (declarada/transición validada) SEPARADA de la estimación
+// de agenda - NUNCA se sustituyen entre sí, ambas siempre visibles.
+function drawLaborSummarySection(doc: PDFKit.PDFDocument, detail: FieldbeatReportDetail): void {
+  sectionTitle(doc, "Duración e intervención");
+  const { labor } = detail;
+  fieldLine(doc, "Duración real", labor.actualReportDurationMinutes === null ? "Duración real no disponible" : durationLabel(labor.actualReportDurationMinutes));
+  fieldLine(doc, "Duración estimada (agenda)", labor.scheduledEstimateMinutes === null ? "Sin registrar" : `${durationLabel(labor.scheduledEstimateMinutes)} (estimado, no medido)`);
+  fieldLine(doc, "Participantes", String(labor.participantCount));
+  fieldLine(doc, "Minutos-persona", labor.totalLaborMinutes === null ? "Sin datos suficientes" : `${labor.totalLaborMinutes.toLocaleString("es-CL")} min-persona`);
 }
 
 function drawEquipmentSection(doc: PDFKit.PDFDocument, detail: FieldbeatReportDetail): void {
@@ -211,26 +247,38 @@ function drawPartsSection(doc: PDFKit.PDFDocument, detail: FieldbeatReportDetail
     return;
   }
   for (const part of detail.parts) {
-    const name = part.partName ?? part.rawPartIdentifier ?? "Sin descripción";
+    // HOTFIX de integridad de datos: nombre y número de parte SIEMPRE ambos
+    // impresos - el número real NUNCA se oculta detrás del nombre (bug real
+    // que motivó este hotfix: reporte 3453, "CX1551G" nunca aparecía en el PDF).
+    const name = part.rawName ?? "Sin descripción";
     const quantity = part.quantity === null ? "Sin registrar" : String(part.quantity);
     paragraph(doc, `${name} — Cant.: ${quantity}`, { color: INK_PRIMARY, size: 9.5 });
+    paragraph(doc, `N° de parte: ${part.rawPartNumber ?? "Sin número declarado"}`, { size: 9.5 });
 
-    const matchLabel = part.historicalMatchStatus ?? "Sin clasificar";
-    const productLabel = part.dolibarrProduct ? ` · ${part.dolibarrProduct.label ?? part.dolibarrProduct.ref ?? part.dolibarrProduct.productId}` : "";
-    paragraph(doc, `${matchLabel}${productLabel}`);
+    const matchLabel = CATALOG_MATCH_STATUS_LABEL[part.catalogMatchStatus] ?? part.catalogMatchStatus;
+    const skuLabel = part.matchedSku ? ` · ${part.matchedSku}` : "";
+    paragraph(doc, `${matchLabel}${skuLabel}`);
+
+    if (part.sourceLocation || part.sourceComment) {
+      const comment = part.sourceComment ? ` — ${part.sourceComment}` : "";
+      paragraph(doc, `Origen: ${part.sourceLocation ?? "Sin información"}${comment}`);
+    }
 
     // "Equivalencias históricas disponibles solo cuando existe alias
-    // validado" (Phase 5): nunca se imprime un alias aunque
-    // historicalMatchStatus lo sugiera si no hay fila real en
-    // manual_review.part_aliases (ver shapePart() en
-    // lib/fieldbeat-report-detail-queries.ts - historicalAlias ya viene
-    // en null en ese caso).
-    if (part.ambiguousCandidateProductIds.length > 0) {
-      paragraph(doc, `Candidatos (sin confirmar): ${part.ambiguousCandidateProductIds.join(", ")}`, { italic: true, color: WARNING_COLOR });
+    // validado" (Phase 5, preservado en el HOTFIX): matchEvidence.kind
+    // discrimina esto - nunca se imprime un alias sin evidencia real en
+    // manual_review.part_aliases (ver shapePartOccurrence() en
+    // lib/fieldbeat-part-occurrence.ts).
+    if (part.matchEvidence.kind === "AMBIGUOUS_CANDIDATES") {
+      paragraph(doc, `Candidatos (sin confirmar): ${part.matchEvidence.candidateProductIds.join(", ")}`, { italic: true, color: WARNING_COLOR });
     }
-    if (part.historicalAlias) {
-      const reason = part.historicalAlias.reason ? ` (${part.historicalAlias.reason})` : "";
-      paragraph(doc, `Alias histórico: ${part.historicalAlias.aliasValue}${reason}`, { italic: true });
+    if (part.matchEvidence.kind === "HISTORICAL_ALIAS") {
+      const reason = part.matchEvidence.reason ? ` (${part.matchEvidence.reason})` : "";
+      paragraph(doc, `Alias histórico: ${part.matchEvidence.aliasValue}${reason}`, { italic: true });
+    }
+    if (part.attachment) {
+      const availability = part.attachment.bytesAvailable ? "" : " (no disponible en el dataset local)";
+      paragraph(doc, `Adjunto: ${part.attachment.filename}${availability}`, { italic: true });
     }
     doc.moveDown(0.2);
   }
@@ -299,6 +347,8 @@ export async function generateFieldbeatReportPdf(detail: FieldbeatReportDetail):
     drawInconsistenciesSection(doc, detail);
     drawChronologySection(doc, detail);
     drawTechnicianClientSection(doc, detail);
+    drawParticipantsSection(doc, detail);
+    drawLaborSummarySection(doc, detail);
     drawEquipmentSection(doc, detail);
     drawTicketsSection(doc, detail);
     drawPartsSection(doc, detail);

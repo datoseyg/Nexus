@@ -885,7 +885,12 @@ test("reports: CSV export respeta el filtro/vista vigente, escapa fórmulas y no
 
   const text = await res.text();
   const lines = text.trim().split("\r\n");
-  assert.equal(lines[0], "id_reporte,fecha,cliente,tecnico,equipo,tipo_tarea,origen,estado_calidad,severidad_principal,codigo_principal,hallazgos_secundarios,ticket_informado,ticket_accesible");
+  // HOTFIX de integridad de datos FieldBeat (Stage 10) - tecnicos_adicionales
+  // es aditivo, nunca reemplaza a "tecnico" (responsable principal).
+  assert.equal(
+    lines[0],
+    "id_reporte,fecha,cliente,tecnico,tecnicos_adicionales,equipo,tipo_tarea,origen,estado_calidad,severidad_principal,codigo_principal,hallazgos_secundarios,ticket_informado,ticket_accesible"
+  );
   // 20 fixtures + 1 header.
   assert.equal(lines.length, 21);
 });
@@ -967,12 +972,16 @@ test("detalle: ticket informado pero inaccesible (900011) - se distingue de 'sin
   assert.equal(body.quality.ticketAccessible, false);
 });
 
+// HOTFIX de integridad de datos FieldBeat (§ contrato 2.0.0) -
+// historicalMatchStatus -> catalogMatchStatus, dolibarrProduct/
+// ambiguousCandidateProductIds/historicalAlias -> matchEvidence discriminado
+// (ver types/fieldbeat-report-detail.ts, lib/fieldbeat-part-occurrence.ts).
 test("detalle: múltiples líneas de repuesto (900013: MATCHED + NO_MATCH) - grano línea, sin duplicar por el join de tickets/equipos", { skip: !TEST_DB_URL }, async () => {
   asGerencia();
   const { GET } = await import("../../app/api/dashboard/fieldbeat/reports/[id]/route.ts");
   const body = await (await GET(req("/api/dashboard/fieldbeat/reports/900013"), detailReq("900013"))).json();
   assert.equal(body.parts.length, 2);
-  const statuses = body.parts.map((p: { historicalMatchStatus: string }) => p.historicalMatchStatus).sort();
+  const statuses = body.parts.map((p: { catalogMatchStatus: string }) => p.catalogMatchStatus).sort();
   assert.deepEqual(statuses, ["CURRENT_DIRECT_MATCH", "NO_MATCH"]);
 });
 
@@ -981,17 +990,18 @@ test("detalle: alias histórico (900014) - se muestra SOLO porque existe fila re
   const { GET } = await import("../../app/api/dashboard/fieldbeat/reports/[id]/route.ts");
   const body = await (await GET(req("/api/dashboard/fieldbeat/reports/900014"), detailReq("900014"))).json();
   assert.equal(body.parts.length, 1);
-  assert.equal(body.parts[0].historicalMatchStatus, "HISTORICAL_ALIAS_MATCH");
-  assert.equal(body.parts[0].historicalAlias?.aliasValue, "QLTYFIX-HIST-SKU");
+  assert.equal(body.parts[0].catalogMatchStatus, "HISTORICAL_ALIAS_MATCH");
+  assert.equal(body.parts[0].matchEvidence?.kind, "HISTORICAL_ALIAS");
+  assert.equal(body.parts[0].matchEvidence?.aliasValue, "QLTYFIX-HIST-SKU");
 });
 
-test("detalle: repuesto ambiguo (900009) - historicalMatchStatus=AMBIGUOUS_MATCH, nunca promovido a dolibarrProduct confirmado", { skip: !TEST_DB_URL }, async () => {
+test("detalle: repuesto ambiguo (900009) - catalogMatchStatus=AMBIGUOUS_MATCH, nunca promovido a matchedProductId confirmado", { skip: !TEST_DB_URL }, async () => {
   asGerencia();
   const { GET } = await import("../../app/api/dashboard/fieldbeat/reports/[id]/route.ts");
   const body = await (await GET(req("/api/dashboard/fieldbeat/reports/900009"), detailReq("900009"))).json();
   assert.equal(body.parts.length, 1);
-  assert.equal(body.parts[0].historicalMatchStatus, "AMBIGUOUS_MATCH");
-  assert.equal(body.parts[0].dolibarrProduct, null);
+  assert.equal(body.parts[0].catalogMatchStatus, "AMBIGUOUS_MATCH");
+  assert.equal(body.parts[0].matchedProductId, null);
 });
 
 test("detalle: inconsistencia principal (900008) coincide con quality.fieldbeat_report_primary_inconsistency, orden severidad->priority_order", { skip: !TEST_DB_URL }, async () => {

@@ -142,7 +142,17 @@ export function buildReportsFilteredCte({ filters, view, search, sort, direction
           SELECT COALESCE(json_agg(json_build_object('code', ri.code, 'severity', ri.severity) ORDER BY ri.priority_order), '[]'::json)
           FROM quality.fieldbeat_report_inconsistencies ri
           WHERE ri.fieldbeat_task_id = u.fieldbeat_task_id
-        ) AS findings
+        ) AS findings,
+        -- HOTFIX de integridad de datos FieldBeat (Stage 10, columna
+        -- aditiva) - participantes adicionales (nunca el responsable
+        -- principal, ya cubierto por technician_names/u.technician_names).
+        -- Fuente ÚNICA canónica: quality.fieldbeat_report_participants
+        -- (sql/088), nunca reimplementa acá la lógica de resolución.
+        (
+          SELECT COALESCE(json_agg(pp.raw_name ORDER BY pp.raw_name), '[]'::json)
+          FROM quality.fieldbeat_report_participants pp
+          WHERE pp.fieldbeat_task_id = u.fieldbeat_task_id AND pp.is_primary = false
+        ) AS additional_participants
       FROM quality.fieldbeat_report_quality u
       LEFT JOIN quality.fieldbeat_report_primary_inconsistency pi ON pi.fieldbeat_task_id = u.fieldbeat_task_id
       ${whereSql}
@@ -170,6 +180,7 @@ interface ReportsQueryRow {
   primary_code: string | null;
   primary_severity: string | null;
   findings: Array<{ code: string; severity: string }>;
+  additional_participants: string[] | null;
 }
 
 export function shapeReportRow(row: ReportsQueryRow): FieldbeatReportRow {
@@ -177,6 +188,7 @@ export function shapeReportRow(row: ReportsQueryRow): FieldbeatReportRow {
     fieldbeatTaskId: row.fieldbeat_task_id,
     fecha: row.fieldbeat_task_date,
     cliente: row.client_name,
+    // Responsable principal - NUNCA alterado por additionalParticipants.
     tecnico: row.technician_names,
     equipo: row.equipment_internal_ids,
     tipoTarea: row.task_type,
@@ -185,7 +197,10 @@ export function shapeReportRow(row: ReportsQueryRow): FieldbeatReportRow {
     hasTicketReported: row.has_ticket_reported,
     ticketAccessible: row.ticket_accessible,
     primary: row.primary_code && row.primary_severity ? { code: row.primary_code as never, severity: row.primary_severity as never } : null,
-    findings: row.findings as never
+    findings: row.findings as never,
+    // Aditivo (Stage 10) - participantes adicionales (nunca el
+    // responsable principal), fuente quality.fieldbeat_report_participants.
+    additionalParticipants: row.additional_participants ?? []
   };
 }
 

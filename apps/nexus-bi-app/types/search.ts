@@ -98,9 +98,12 @@ export type SearchFiltersResponse = {
   estadosTicket: string[];
 };
 
+// HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) - "reports"
+// eliminado: Search ya NUNCA abre su propio drawer para un reporte, abre
+// directo el canónico (FieldbeatReportDetailDrawer) vía fieldbeatTaskId -
+// ver SearchDashboard.tsx.
 export type SearchDetailResponse =
   | { entity: "clients"; summary: SearchClientResult; recentReports: SearchReportResult[]; machines: SearchMachineResult[]; tickets: SearchTicketResult[] }
   | { entity: "machines"; summary: SearchMachineResult; recentReports: SearchReportResult[] }
-  | { entity: "reports"; summary: SearchReportResult; fields: Array<{ label: string; value: string | number | null }>; parts: SearchPartResult[] }
   | { entity: "tickets"; summary: SearchTicketResult; linkedReports: SearchReportResult[] }
   | { entity: "parts"; summary: SearchPartResult; recentUsages: SearchReportResult[] };

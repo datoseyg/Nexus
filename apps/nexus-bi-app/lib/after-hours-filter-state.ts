@@ -81,7 +81,9 @@ export interface FilterChip {
 export function buildFilterChips(filters: AfterHoursFilterState): FilterChip[] {
   const chips: FilterChip[] = [];
   if (filters.client) chips.push({ id: "client", label: `Cliente: ${filters.client}` });
-  if (filters.technician) chips.push({ id: "technician", label: `Técnico: ${filters.technician}` });
+  // HOTFIX auditoría After-Hours (§5): "responsable" deja explícito que el
+  // filtro acota por assigned_to, nunca por participantes adicionales.
+  if (filters.technician) chips.push({ id: "technician", label: `Técnico responsable: ${filters.technician}` });
   if (filters.taskType) chips.push({ id: "taskType", label: `Tipo de tarea: ${filters.taskType}` });
   if (filters.dataBasis) chips.push({ id: "dataBasis", label: `Base de cálculo: ${getDataBasisLabel(filters.dataBasis).label}` });
   if (filters.confidenceLevel) chips.push({ id: "confidenceLevel", label: `Confianza: ${filters.confidenceLevel}` });

@@ -30,7 +30,10 @@ if (missingEnvironment.length > 0) {
   process.exit(1);
 }
 
-const INTEGRATION_TEST_DIRS = ["test/after-hours", "test/fieldbeat"];
+// HOTFIX de integridad de datos FieldBeat (Stage 9) - test/search/ agregado
+// para cubrir la corrección real de identidad de repuestos en Búsqueda
+// (lib/search-sql.ts, ver test/search/search-parts-identity.integration.test.ts).
+const INTEGRATION_TEST_DIRS = ["test/after-hours", "test/fieldbeat", "test/search"];
 
 const files = [];
 for (const dir of INTEGRATION_TEST_DIRS) {

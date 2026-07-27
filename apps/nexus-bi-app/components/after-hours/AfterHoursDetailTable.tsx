@@ -121,6 +121,27 @@ export function AfterHoursDetailTable({
                     </td>
                     <td className="px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }}>
                       {row.assigned_to ?? "-"}
+                      {/* HOTFIX auditoría After-Hours (§5): esta columna siempre
+                          fue el responsable principal (assigned_to) únicamente -
+                          nunca reparte horas por participante (ver
+                          quality.fieldbeat_report_labor_summary, sql/088). El
+                          indicador "+N" es solo informativo: declara que el
+                          reporte tiene participantes adicionales sin implicar
+                          que las horas de esta fila les pertenecen a ellos. */}
+                      {row.participant_count !== null && row.participant_count > 1 && (
+                        // WCAG SC 1.3.1 - `title` solo no es perceivable de forma
+                        // confiable (lectores de pantalla/táctil no lo exponen
+                        // consistentemente) - aria-label repite el mismo texto,
+                        // nunca depende únicamente del hover del mouse.
+                        <span
+                          className="ml-1 text-[11px]"
+                          style={{ color: "var(--nx-text-muted)" }}
+                          title={`Reporte con ${row.participant_count} participantes (responsable principal + adicionales) - las horas de esta fila son de cobertura contractual del reporte, no se reparten por persona`}
+                          aria-label={`Reporte con ${row.participant_count} participantes (responsable principal más adicionales) - las horas de esta fila son de cobertura contractual del reporte, no se reparten por persona`}
+                        >
+                          +{row.participant_count - 1}
+                        </span>
+                      )}
                     </td>
                     <td className="max-w-[220px] truncate px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }} title={row.client_name ?? ""}>
                       {row.client_name ?? "-"}

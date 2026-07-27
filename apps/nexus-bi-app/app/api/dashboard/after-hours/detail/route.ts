@@ -36,6 +36,17 @@ export const runtime = "nodejs";
 // no es terminal - eso ya lo resuelve la vista/Capa C (bicondicional real,
 // sql/081: start_time_utc IS NULL <=> reason terminal), esta ruta solo lee
 // el resultado, nunca recalcula la condición.
+//
+// HOTFIX de integridad de datos FieldBeat (auditoría After-Hours, §5 del
+// plan): `assigned_to` es y siempre fue el único responsable principal -
+// esta vista/pipeline (sql/082) nunca leyó "NOMBRE DEL INGENIERO ADICIONAL",
+// así que no puede (ni debe) repartir/multiplicar sus minutos de cobertura
+// contractual entre participantes (eso rompería la reconciliación contra el
+// mart de contratos, que se mide por tarea, no por persona). `participant_count`
+// se agrega acá como campo ADITIVO e INFORMATIVO (fuente única:
+// quality.fieldbeat_report_labor_summary, sql/088) para que la fila deje de
+// implicar silenciosamente que assigned_to es la única persona que trabajó
+// la tarea - nunca altera duration_hours/business_hours/after_hours.
 
 const ALLOWED_SORT_COLUMNS: Record<string, string> = {
   start_time: "w.start_time_local",
@@ -65,6 +76,10 @@ export async function GET(request: NextRequest) {
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const baseFrom = `FROM ${AFTER_HOURS_VIEW} w ${whereClause}`;
+    // JOIN aditivo únicamente para la fila detallada (participant_count,
+    // §5 del hotfix) - baseFrom se preserva sin cambios para el COUNT(*), que
+    // no necesita el join (1:1 por fieldbeat_task_id, no altera totalRows).
+    const rowsFrom = `FROM ${AFTER_HOURS_VIEW} w LEFT JOIN quality.fieldbeat_report_labor_summary ls ON ls.fieldbeat_task_id = w.fieldbeat_task_id ${whereClause}`;
 
     const countRows = await runQuery<{ n: string }>(`SELECT COUNT(*) AS n ${baseFrom}`, pusher.params);
     const totalRows = Number(countRows[0]?.n ?? 0);
@@ -107,6 +122,7 @@ export async function GET(request: NextRequest) {
       contract_resolution_label: string | null;
       confidence_model_version: string | null;
       primary_equipment_key: string | null;
+      participant_count: string | null;
     }>(
       `
         SELECT
@@ -139,8 +155,9 @@ export async function GET(request: NextRequest) {
           w.contract_resolution_confidence,
           w.contract_resolution_label,
           w.confidence_model_version,
-          w.primary_equipment_key
-        ${baseFrom}
+          w.primary_equipment_key,
+          ls.participant_count
+        ${rowsFrom}
         ORDER BY ${sortColumn} ${sortDir} NULLS LAST
         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}
       `,
@@ -179,7 +196,12 @@ export async function GET(request: NextRequest) {
         contract_resolution_confidence: row.contract_resolution_confidence !== null ? Number(row.contract_resolution_confidence) : null,
         contract_resolution_label: row.contract_resolution_label,
         confidence_model_version: row.confidence_model_version,
-        primary_equipment_key: row.primary_equipment_key
+        primary_equipment_key: row.primary_equipment_key,
+        // Aditivo (auditoría After-Hours §5) - informativo, nunca altera
+        // duration_hours/business_hours/after_hours (ver comentario de
+        // cabecera del archivo). NULL solo si assigned_to está vacío (la
+        // vista de participantes no genera fila sin un responsable principal).
+        participant_count: row.participant_count !== null ? Number(row.participant_count) : null
       };
     });
 

@@ -39,9 +39,18 @@ function orderedSqlFilesForTest(): string[] {
 
 function runBootstrap(url: string): { status: number | null; stdout: string; stderr: string } {
   const sqlFiles = orderedSqlFilesForTest();
+  // HOTFIX de integridad de datos FieldBeat (Stage 9) - --run-id=TEST_RUN_ID
+  // preserva el run_id vigente de la sesión completa de
+  // run-integration-tests-fresh.mjs al reaplicar sql/*.sql acá - sin esto,
+  // bootstrap-disposable-postgres.mjs generaba un run_id NUEVO en cada
+  // llamada y reescribía silenciosamente el COMMENT ON DATABASE, invalidando
+  // assertDisposableTarget() para CUALQUIER suite que corriera después de
+  // ésta en el mismo run-integration-tests.mjs (defecto real, expuesto al
+  // agregar test/search/ - antes invisible porque esta era la última suite
+  // en orden alfabético).
   const result = spawnSync(
     process.execPath,
-    ["scripts/bootstrap-disposable-postgres.mjs", `--url=${url}`, ...sqlFiles.map(f => `--sql=${f}`)],
+    ["scripts/bootstrap-disposable-postgres.mjs", `--url=${url}`, `--run-id=${TEST_RUN_ID}`, ...sqlFiles.map(f => `--sql=${f}`)],
     { cwd: REPO_ROOT, encoding: "utf8" }
   );
   return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
@@ -101,7 +110,11 @@ test("aplicar sql/*.sql (todos, orden dinámico) dos veces seguidas sobre la mis
   assert.equal(afterAliasCount.rows[0].n, beforeAliasCount.rows[0].n, "la fila transaccional sembrada a mano nunca debe duplicarse ni desaparecer");
   assert.equal(afterAliasCount.rows[0].n, "1", "exactamente 1 fila, nunca 0 ni 2+");
   assert.equal(afterGrants.rows[0].n, beforeGrants.rows[0].n, "los grants de quality deben ser idénticos tras reaplicar");
-  assert.equal(afterGrants.rows[0].n, "8", "las 8 vistas de quality deben seguir con SELECT para nexus_app");
+  // HOTFIX de integridad de datos (sql/088): agrega 5 vistas nuevas a
+  // quality (fieldbeat_engineer_roster, fieldbeat_report_additional_field_tokens,
+  // fieldbeat_report_participants, fieldbeat_report_labor_summary,
+  // fieldbeat_report_part_occurrences) - 8 -> 13.
+  assert.equal(afterGrants.rows[0].n, "13", "las 13 vistas de quality deben seguir con SELECT para nexus_app");
 
   // quality debe seguir siendo ejecutable de punta a punta tras la segunda aplicación.
   const queryable = await adminPool.query(`SELECT quality.is_terminal_task_state('FINISHED') AS ok`);

@@ -29,7 +29,17 @@ export function AfterHoursKpiSection({ summary }: AfterHoursKpiSectionProps) {
         <AfterHoursKpiTile label="Tareas analizadas" value={formatInt(summary.total_tasks)} />
         <AfterHoursKpiTile label="Tareas fuera de horario" value={formatInt(summary.kpis.tasksWithAfterHours.value)} />
         <AfterHoursKpiTile label="Horas fuera de horario" value={formatHours(summary.kpis.afterHoursHours.value)} />
-        <AfterHoursKpiTile label="Técnicos involucrados" value={formatInt(summary.distinct_technicians)} accentColor="var(--nx-accent-indigo)" />
+        <AfterHoursKpiTile
+          label="Técnicos involucrados"
+          value={formatInt(summary.distinct_technicians)}
+          accentColor="var(--nx-accent-indigo)"
+          // HOTFIX auditoría After-Hours (§5) - este conteo es
+          // COUNT(DISTINCT assigned_to): responsable principal únicamente,
+          // nunca participantes adicionales (ver sql/082, la vista nunca lee
+          // "NOMBRE DEL INGENIERO ADICIONAL"). El hint evita que se lea como
+          // "todas las personas que trabajaron después de hora".
+          hint="Responsable principal por tarea (assigned_to)"
+        />
         <AfterHoursKpiTile label="Clientes involucrados" value={formatInt(summary.distinct_clients)} accentColor="var(--nx-accent-purple)" />
         <AfterHoursKpiTile
           label="Nivel general de confianza"

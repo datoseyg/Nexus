@@ -14,10 +14,19 @@ import { KNOWN_REPORT_QUALITY_STATUSES, type KnownReportQualityStatus } from "@/
 
 export type TicketStatusFilter = "accessible" | "missing_or_restricted" | "none";
 export type PartStatusFilter = "fully_traceable" | "contains_placeholder" | "contains_no_match" | "contains_ambiguous";
+// HOTFIX de integridad de datos FieldBeat (Stage 7) - distingue
+// explícitamente a quién busca el filtro `technician`: 'primary' = SOLO el
+// responsable principal (technician_names, comportamiento histórico
+// intacto); 'additional' = SOLO participantes adicionales
+// (quality.fieldbeat_report_participants, is_primary=false); 'any'
+// (default) = cualquiera de los dos. Nunca se limita silenciosamente a
+// 'primary' sin que el consumidor lo pida explícitamente.
+export type TechnicianRoleFilter = "primary" | "additional" | "any";
 
 const VALID_ORIGENES: readonly FieldbeatOrigen[] = ["APK", "WEB"];
 const VALID_TICKET_STATUSES: readonly TicketStatusFilter[] = ["accessible", "missing_or_restricted", "none"];
 const VALID_PART_STATUSES: readonly PartStatusFilter[] = ["fully_traceable", "contains_placeholder", "contains_no_match", "contains_ambiguous"];
+const VALID_TECHNICIAN_ROLES: readonly TechnicianRoleFilter[] = ["primary", "additional", "any"];
 const VALID_SEVERITIES: readonly InconsistencySeverity[] = ["Alta", "Media", "Baja", "Advertencia"];
 const VALID_INCONSISTENCY_CODES: readonly InconsistencyCode[] = INCONSISTENCY_TAXONOMY.map(d => d.code);
 
@@ -28,6 +37,7 @@ export interface FieldbeatQualityFilters {
   dateFrom?: string;
   dateTo?: string;
   technician?: string;
+  technicianRole?: TechnicianRoleFilter;
   client?: string;
   equipment?: string;
   taskType?: string;
@@ -90,6 +100,7 @@ export function parseFieldbeatQualityFilters(searchParams: URLSearchParams): Par
     dateFrom,
     dateTo,
     technician: normalizeFreeText(searchParams.get("technician"), "technician", errors),
+    technicianRole: normalizeEnum(searchParams.get("technicianRole"), "technicianRole", VALID_TECHNICIAN_ROLES, errors),
     client: normalizeFreeText(searchParams.get("client"), "client", errors),
     equipment: normalizeFreeText(searchParams.get("equipment"), "equipment", errors),
     taskType: normalizeFreeText(searchParams.get("taskType"), "taskType", errors),
@@ -118,7 +129,30 @@ export function buildFieldbeatQualityConditions(filters: FieldbeatQualityFilters
 
   if (filters.dateFrom) conditions.push(`${col(alias, "fieldbeat_task_date")} >= ${pusher.push(filters.dateFrom)}::date`);
   if (filters.dateTo) conditions.push(`${col(alias, "fieldbeat_task_date")} < (${pusher.push(filters.dateTo)}::date + INTERVAL '1 day')`);
-  if (filters.technician) conditions.push(`${col(alias, "technician_names")} ILIKE ${pusher.push(`%${filters.technician}%`)}`);
+  if (filters.technician) {
+    const technician = filters.technician;
+    const role = filters.technicianRole ?? "any";
+    // 'primary': EXACTAMENTE la condición histórica (technician_names,
+    // derivado únicamente de assigned_to) - comportamiento nunca alterado
+    // para no romper consumidores existentes que no piden explícitamente
+    // considerar participantes adicionales.
+    const primaryCondition = () => `${col(alias, "technician_names")} ILIKE ${pusher.push(`%${technician}%`)}`;
+    // 'additional': SOLO participantes no-principales (quality.fieldbeat_report_participants,
+    // is_primary=false) - busca por nombre crudo Y normalizado (cubre tanto
+    // texto libre no resuelto, ej. "Alexis Acevedo", como estructurados
+    // resueltos contra el roster). Funciones (nunca strings precomputados):
+    // cada rama empuja SOLO los parámetros que realmente usa - empujar
+    // ambas incondicionalmente desalinea pusher.params con los placeholders
+    // $N que terminan apareciendo en el SQL de la rama elegida.
+    const additionalCondition = () => `${col(alias, "fieldbeat_task_id")} IN (
+      SELECT fieldbeat_task_id FROM quality.fieldbeat_report_participants
+      WHERE is_primary = false AND (raw_name ILIKE ${pusher.push(`%${technician}%`)} OR normalized_name ILIKE ${pusher.push(`%${technician.toUpperCase()}%`)})
+    )`;
+
+    if (role === "primary") conditions.push(primaryCondition());
+    else if (role === "additional") conditions.push(additionalCondition());
+    else conditions.push(`(${primaryCondition()} OR ${additionalCondition()})`);
+  }
   if (filters.client) conditions.push(`${col(alias, "client_name")} = ${pusher.push(filters.client)}`);
   if (filters.equipment) conditions.push(`${col(alias, "equipment_internal_ids")} ILIKE ${pusher.push(`%${filters.equipment}%`)}`);
   if (filters.taskType) conditions.push(`${col(alias, "task_type")} = ${pusher.push(filters.taskType)}`);

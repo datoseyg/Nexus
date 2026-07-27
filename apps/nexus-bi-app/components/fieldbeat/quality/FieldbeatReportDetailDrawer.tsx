@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { triggerBlobDownload } from "@/lib/csv-export";
-import { buildFieldbeatQueryString, type FieldbeatUrlState } from "@/lib/fieldbeat-tabs-url-state";
 import { FieldbeatReportDetailContent } from "./FieldbeatReportDetailContent";
 
 const PANEL_WIDTH_CLASS = "w-full sm:w-[600px] lg:w-[720px]";
@@ -16,7 +15,6 @@ export const FIELDBEAT_REPORTS_FOCUS_FALLBACK_ID = "fieldbeat-reports-focus-fall
 
 interface FieldbeatReportDetailDrawerProps {
   reportId: string | null;
-  urlState: FieldbeatUrlState;
   onClose: () => void;
 }
 
@@ -29,7 +27,7 @@ interface FieldbeatReportDetailDrawerProps {
 // efecto interno vuelve a correr, cancela el fetch anterior y pasa a
 // status="refreshing" (que este componente trata igual que "loading") -
 // nunca queda expuesto el contenido del reporte anterior bajo el ID nuevo.
-export function FieldbeatReportDetailDrawer({ reportId, urlState, onClose }: FieldbeatReportDetailDrawerProps) {
+export function FieldbeatReportDetailDrawer({ reportId, onClose }: FieldbeatReportDetailDrawerProps) {
   const open = reportId !== null;
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   // false por defecto (nunca asumir disponibilidad) hasta que
@@ -87,10 +85,16 @@ export function FieldbeatReportDetailDrawer({ reportId, urlState, onClose }: Fie
     document.getElementById(FIELDBEAT_REPORTS_FOCUS_FALLBACK_ID)?.focus();
   }, [open]);
 
+  // HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) - SIEMPRE
+  // el enlace permanente estable, independiente de quién abrió este drawer
+  // (pestaña Reportes con sus propios filtros, u otra superficie como
+  // Búsqueda) - nunca arrastra token/fleet/estado de origen ni los filtros
+  // vigentes de quien lo abrió. Cambiar de reporte con el drawer abierto
+  // reconstruye este enlace con el reportId nuevo automáticamente (closure
+  // sobre el prop actual, sin estado propio que puje quedar desactualizado).
   async function handleCopyLink() {
-    if (typeof window === "undefined") return;
-    const qs = buildFieldbeatQueryString(urlState);
-    const url = `${window.location.origin}${window.location.pathname}${qs ? `?${qs}` : ""}`;
+    if (typeof window === "undefined" || !reportId) return;
+    const url = `${window.location.origin}/dashboard/fieldbeat?tab=reports&report=${reportId}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopyStatus("copied");

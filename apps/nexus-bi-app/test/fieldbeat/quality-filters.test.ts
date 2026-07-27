@@ -14,6 +14,7 @@ test("sin parámetros: filtros vacíos, sin errores", () => {
     dateFrom: undefined,
     dateTo: undefined,
     technician: undefined,
+    technicianRole: undefined,
     client: undefined,
     equipment: undefined,
     taskType: undefined,
@@ -24,6 +25,21 @@ test("sin parámetros: filtros vacíos, sin errores", () => {
     inconsistencyCode: undefined,
     severity: undefined
   });
+});
+
+// HOTFIX de integridad de datos FieldBeat (§ propagación de participantes,
+// Stage 7) - technicianRole distingue explícitamente "responsable
+// principal" de "cualquier participante", nunca un filtro de técnico que
+// silenciosamente se limita al principal sin comunicarlo.
+test("technicianRole: acepta primary/additional/any, valor desconocido se rechaza", () => {
+  for (const role of ["primary", "additional", "any"] as const) {
+    const ok = parseFieldbeatQualityFilters(sp({ technicianRole: role }));
+    assert.equal(ok.filters.technicianRole, role);
+    assert.deepEqual(ok.errors, []);
+  }
+  const bad = parseFieldbeatQualityFilters(sp({ technicianRole: "bogus" }));
+  assert.equal(bad.filters.technicianRole, undefined);
+  assert.equal(bad.errors.length, 1);
 });
 
 test("fechas válidas se aceptan tal cual", () => {
@@ -109,6 +125,56 @@ test("buildFieldbeatQualityConditions: severity e inconsistencyCode generan subq
   assert.equal(conditions.length, 2);
   assert.match(conditions.join(" "), /fieldbeat_report_primary_inconsistency/);
   assert.match(conditions.join(" "), /fieldbeat_report_inconsistencies/);
+});
+
+// Caso de regresión 3453: Manuel Reyes (responsable principal, assigned_to)
+// vs. Alexis Acevedo (adicional vía "OTROS (COMENTE)") - technicianRole
+// debe distinguirlos explícitamente, nunca colapsar el filtro a "solo
+// principal" sin que el consumidor lo pida.
+// Regresión real (encontrada por la prueba de integración, no por una
+// unitaria - por eso ahora se verifica explícitamente acá): pusher.params
+// debe tener EXACTAMENTE tantos elementos como placeholders $N aparecen en
+// el SQL producido - empujar un parámetro para una rama no usada (ej.
+// 'additional' cuando role='primary') deja pusher.params desalineado del
+// SQL real, y Postgres rechaza el bind ("supplies N parameters, but
+// prepared statement requires M").
+function countPlaceholders(sql: string): number {
+  const matches = sql.match(/\$\d+/g) ?? [];
+  return new Set(matches).size;
+}
+
+test("buildFieldbeatQualityConditions: technician con technicianRole='primary' (o sin especificar) preserva EXACTAMENTE la condición histórica sobre technician_names", () => {
+  const pusher = createParamPusher();
+  const conditions = buildFieldbeatQualityConditions({ technician: "Manuel Reyes", technicianRole: "primary" }, "q", pusher);
+  assert.equal(conditions.length, 1);
+  assert.match(conditions[0], /q\.technician_names ILIKE/);
+  assert.doesNotMatch(conditions[0], /fieldbeat_report_participants/, "'primary' nunca debe considerar participantes adicionales");
+  assert.equal(pusher.params.length, countPlaceholders(conditions.join(" ")), "pusher.params nunca debe traer más/menos elementos que placeholders $N reales - romperia el bind real de Postgres");
+});
+
+test("buildFieldbeatQualityConditions: technician con technicianRole='additional' consulta SOLO quality.fieldbeat_report_participants (is_primary=false), nunca technician_names", () => {
+  const pusher = createParamPusher();
+  const conditions = buildFieldbeatQualityConditions({ technician: "Alexis Acevedo", technicianRole: "additional" }, "q", pusher);
+  assert.equal(conditions.length, 1);
+  assert.match(conditions[0], /fieldbeat_report_participants/);
+  assert.match(conditions[0], /is_primary\s*=\s*false/);
+  assert.doesNotMatch(conditions[0], /technician_names/, "'additional' nunca debe caer de vuelta al responsable principal");
+  assert.equal(pusher.params.length, countPlaceholders(conditions.join(" ")));
+});
+
+test("buildFieldbeatQualityConditions: technician con technicianRole='any' (o default) combina AMBAS condiciones - encuentra tanto al principal como a un adicional", () => {
+  const pusher = createParamPusher();
+  const conditions = buildFieldbeatQualityConditions({ technician: "Manuel Reyes" }, "q", pusher);
+  assert.equal(conditions.length, 1);
+  assert.match(conditions[0], /q\.technician_names ILIKE/);
+  assert.match(conditions[0], /fieldbeat_report_participants/, "default (sin technicianRole) debe ser 'any', considera también participantes adicionales");
+  assert.equal(pusher.params.length, countPlaceholders(conditions.join(" ")));
+});
+
+test("buildFieldbeatQualityConditions: sin filtro technician, technicianRole solo no genera ninguna condición", () => {
+  const pusher = createParamPusher();
+  const conditions = buildFieldbeatQualityConditions({ technicianRole: "additional" }, "q", pusher);
+  assert.deepEqual(conditions, []);
 });
 
 test("buildFieldbeatQualityConditions: múltiples filtros combinados no colisionan en la numeración de parámetros", () => {

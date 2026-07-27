@@ -209,8 +209,12 @@ export function AfterHoursFilters({
         )
       }
     >
-      <select aria-label="Técnico" value={filters.technician ?? ""} onChange={e => set("technician", e.target.value || undefined)} style={selectStyle(!!filters.technician)}>
-        <option value="">Técnico: Todos {technicianOptions ? `(${technicianKeys.length})` : ""}</option>
+      {/* HOTFIX auditoría After-Hours (§5): filtra por responsable principal
+          (assigned_to) - este pipeline nunca tuvo participantes adicionales,
+          el aria-label lo deja explícito para no implicar "cualquiera que
+          haya trabajado la tarea". */}
+      <select aria-label="Técnico responsable" value={filters.technician ?? ""} onChange={e => set("technician", e.target.value || undefined)} style={selectStyle(!!filters.technician)}>
+        <option value="">Técnico responsable: Todos {technicianOptions ? `(${technicianKeys.length})` : ""}</option>
         {technicianKeys.map(t => (
           <option key={t} value={t}>
             {t}

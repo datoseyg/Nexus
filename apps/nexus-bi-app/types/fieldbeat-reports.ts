@@ -26,6 +26,10 @@ export interface FieldbeatReportRow {
   ticketAccessible: boolean | null;
   primary: FieldbeatReportFinding | null;
   findings: FieldbeatReportFinding[];
+  /** Aditivo (HOTFIX de integridad de datos FieldBeat, Stage 10) -
+   * participantes adicionales (nunca el responsable principal, ya cubierto
+   * por `tecnico`) - fuente quality.fieldbeat_report_participants (sql/088). */
+  additionalParticipants: string[];
 }
 
 export interface FieldbeatReportsResponse {

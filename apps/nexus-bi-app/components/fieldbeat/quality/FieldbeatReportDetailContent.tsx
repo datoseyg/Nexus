@@ -3,7 +3,14 @@
 import { useEffect } from "react";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { useAfterHoursSection } from "@/lib/use-after-hours-section";
-import { EQUIPMENT_SOURCE_LABEL, TEAM_IDENTIFICATION_STATUS_LABEL, formatFieldbeatDateTime } from "@/lib/fieldbeat-report-labels";
+import {
+  EQUIPMENT_SOURCE_LABEL,
+  TEAM_IDENTIFICATION_STATUS_LABEL,
+  CATALOG_MATCH_STATUS_LABEL,
+  PARTICIPANT_ROLE_LABEL,
+  PARTICIPANT_RESOLUTION_STATUS_LABEL,
+  formatFieldbeatDateTime
+} from "@/lib/fieldbeat-report-labels";
 import type { FieldbeatReportDetail } from "@/types/fieldbeat-report-detail";
 
 function isReportDetailEmpty(): boolean {
@@ -223,11 +230,69 @@ export function FieldbeatReportDetailContent({ reportId, onMeta }: FieldbeatRepo
         )}
       </Section>
 
-      {/* 5. Técnico y cliente */}
-      <Section title="Técnico y cliente">
+      {/* 5. Responsable principal y cliente */}
+      <Section title="Responsable principal y cliente">
         <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-          <Field label="Técnico" value={data.technician?.name ?? "Sin información"} />
+          <Field label="Responsable principal" value={data.technician?.name ?? "Sin información"} />
           <Field label="Cliente" value={data.client?.clientName ?? "Sin información"} />
+        </dl>
+      </Section>
+
+      {/* 5b. Participantes (HOTFIX de integridad de datos, sql/088) - 0..N,
+          incluye SIEMPRE al responsable principal primero; un participante
+          no resoluble NUNCA se oculta - aparece con su rol/estado explícitos. */}
+      <Section title={`Participantes (${data.participants.length})`}>
+        {data.participants.length === 0 ? (
+          <p className="text-[13px]" style={{ color: "var(--nx-text-secondary)" }}>
+            Sin participantes registrados.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {data.participants.map((p, i) => (
+              <li
+                key={`${p.role}-${p.rawName}-${i}`}
+                className="flex items-center justify-between rounded-[var(--nx-radius-chip)] border px-2.5 py-1.5"
+                style={{ borderColor: "var(--nx-border)" }}
+              >
+                <span className="text-[13px]" style={{ color: "var(--nx-text-primary)" }}>
+                  {p.rawName}
+                  {p.isPrimary && (
+                    <span className="ml-1.5 text-[11px] font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
+                      (principal)
+                    </span>
+                  )}
+                </span>
+                <span
+                  className="text-[11.5px]"
+                  style={{ color: p.resolutionStatus.startsWith("UNRESOLVED") ? "var(--nx-warning-fg, #8a5a00)" : "var(--nx-text-secondary)" }}
+                  title={PARTICIPANT_RESOLUTION_STATUS_LABEL[p.resolutionStatus] ?? p.resolutionStatus}
+                >
+                  {PARTICIPANT_ROLE_LABEL[p.role] ?? p.role}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      {/* 5c. Duración e intervención (HOTFIX de integridad de datos) - real
+          (declarada/transición validada) SEPARADA de la estimación de
+          agenda, NUNCA una sustituye a la otra ni se mezclan en horas-persona. */}
+      <Section title="Duración e intervención">
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+          <Field
+            label="Duración real"
+            value={data.labor.actualReportDurationMinutes === null ? "Duración real no disponible" : `${data.labor.actualReportDurationMinutes.toLocaleString("es-CL")} min`}
+          />
+          <Field
+            label="Duración estimada (agenda)"
+            value={data.labor.scheduledEstimateMinutes === null ? "Sin registrar" : `${data.labor.scheduledEstimateMinutes.toLocaleString("es-CL")} min (estimado, no medido)`}
+          />
+          <Field label="Participantes" value={data.labor.participantCount.toLocaleString("es-CL")} />
+          <Field
+            label="Minutos-persona"
+            value={data.labor.totalLaborMinutes === null ? "Sin datos suficientes" : `${data.labor.totalLaborMinutes.toLocaleString("es-CL")} min-persona`}
+          />
         </dl>
       </Section>
 
@@ -292,28 +357,46 @@ export function FieldbeatReportDetailContent({ reportId, onMeta }: FieldbeatRepo
         ) : (
           <ul className="flex flex-col gap-2">
             {data.parts.map(p => (
-              <li key={p.usedPartId} className="rounded-[var(--nx-radius-card)] border p-2.5" style={{ borderColor: "var(--nx-border)" }}>
+              <li key={p.lineId} className="rounded-[var(--nx-radius-card)] border p-2.5" style={{ borderColor: "var(--nx-border)" }}>
                 <div className="flex items-center justify-between">
+                  {/* HOTFIX de integridad de datos: rawName y rawPartNumber
+                      SIEMPRE ambos visibles - el número de parte real NUNCA
+                      se oculta detrás del nombre (bug real que motivó este
+                      hotfix: reporte 3453, "CX1551G" nunca aparecía). */}
                   <span className="text-[13px] font-semibold" style={{ color: "var(--nx-text-primary)" }}>
-                    {p.partName ?? p.rawPartIdentifier ?? "Sin descripción"}
+                    {p.rawName ?? "Sin descripción"}
                   </span>
                   <span className="text-[11.5px]" style={{ color: "var(--nx-text-secondary)" }}>
                     Cant.: {p.quantity === null ? "Sin registrar" : p.quantity}
                   </span>
                 </div>
-                <p className="text-[12px]" style={{ color: "var(--nx-text-secondary)" }}>
-                  {p.historicalMatchStatus ?? "Sin clasificar"}
-                  {p.dolibarrProduct && ` · ${p.dolibarrProduct.label ?? p.dolibarrProduct.ref ?? p.dolibarrProduct.productId}`}
+                <p className="text-[12px] font-mono" style={{ color: "var(--nx-text-secondary)" }}>
+                  N° de parte: {p.rawPartNumber ?? "Sin número declarado"}
                 </p>
-                {p.ambiguousCandidateProductIds.length > 0 && (
-                  <p className="text-[11.5px] italic" style={{ color: "var(--nx-warning-fg, #8a5a00)" }}>
-                    Candidatos (sin confirmar): {p.ambiguousCandidateProductIds.join(", ")}
+                <p className="text-[12px]" style={{ color: "var(--nx-text-secondary)" }} title={p.explanation}>
+                  {CATALOG_MATCH_STATUS_LABEL[p.catalogMatchStatus] ?? p.catalogMatchStatus}
+                  {p.matchedSku && ` · ${p.matchedSku}`}
+                </p>
+                {(p.sourceLocation || p.sourceComment) && (
+                  <p className="text-[11.5px]" style={{ color: "var(--nx-text-secondary)" }}>
+                    Origen: {p.sourceLocation ?? "Sin información"}
+                    {p.sourceComment && ` — ${p.sourceComment}`}
                   </p>
                 )}
-                {p.historicalAlias && (
+                {p.matchEvidence.kind === "AMBIGUOUS_CANDIDATES" && (
+                  <p className="text-[11.5px] italic" style={{ color: "var(--nx-warning-fg, #8a5a00)" }}>
+                    Candidatos (sin confirmar): {p.matchEvidence.candidateProductIds.join(", ")}
+                  </p>
+                )}
+                {p.matchEvidence.kind === "HISTORICAL_ALIAS" && (
                   <p className="text-[11.5px] italic" style={{ color: "var(--nx-text-secondary)" }}>
-                    Alias histórico: {p.historicalAlias.aliasValue}
-                    {p.historicalAlias.reason && ` (${p.historicalAlias.reason})`}
+                    Alias histórico: {p.matchEvidence.aliasValue}
+                    {p.matchEvidence.reason && ` (${p.matchEvidence.reason})`}
+                  </p>
+                )}
+                {p.attachment && (
+                  <p className="text-[11.5px] italic" style={{ color: "var(--nx-text-secondary)" }}>
+                    Adjunto: {p.attachment.filename} {!p.attachment.bytesAvailable && "(no disponible en el dataset local)"}
                   </p>
                 )}
               </li>

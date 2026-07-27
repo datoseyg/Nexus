@@ -438,3 +438,22 @@ test("compatibilidad: los campos históricos del contrato (§3) siguen presentes
     assert.ok(field in row, `campo histórico ausente: ${field}`);
   }
 });
+
+// HOTFIX de integridad de datos FieldBeat (auditoría After-Hours, §5 del
+// plan) - `assigned_to`/`w.assigned_to` es y siempre fue el ÚNICO
+// responsable principal (nunca participantes adicionales, ver sql/082: la
+// vista nunca lee "NOMBRE DEL INGENIERO ADICIONAL"). participant_count es un
+// campo ADITIVO e INFORMATIVO tomado de quality.fieldbeat_report_labor_summary
+// (sql/088) - nunca reparte/multiplica minutos de cobertura por
+// participante (eso corrompería la reconciliación de horas contractuales
+// contra el mart de contratos). Fixtures 800001-800005 no declaran
+// "NOMBRE DEL INGENIERO ADICIONAL", así que cada una tiene exactamente 1
+// participante (el responsable principal).
+test("detail: participant_count aditivo (quality.fieldbeat_report_labor_summary) - nunca altera duration_hours/business_hours", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/detail/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/detail", { pageSize: "20" }));
+  const body = await res.json();
+  const row = body.rows.find((r: { fieldbeat_task_id: number }) => r.fieldbeat_task_id === 800001);
+  assert.equal(row.participant_count, 1, "sin adicionales declarados en el fixture, solo el responsable principal cuenta");
+  assert.equal(row.duration_hours, 1, "participant_count nunca debe alterar la hora de cobertura ya calculada");
+});

@@ -161,7 +161,7 @@ function FieldbeatQualityShellInner() {
         </div>
       </div>
 
-      <FieldbeatReportDetailDrawer reportId={urlState.selectedReportId} urlState={urlState} onClose={() => pushState({ selectedReportId: null })} />
+      <FieldbeatReportDetailDrawer reportId={urlState.selectedReportId} onClose={() => pushState({ selectedReportId: null })} />
     </div>
   );
 }

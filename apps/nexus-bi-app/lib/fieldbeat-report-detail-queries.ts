@@ -7,14 +7,14 @@
 // fieldbeat-reports-queries.ts) - nunca un JOIN plano que multiplique
 // equipos × tickets × repuestos.
 import { INCONSISTENCY_TAXONOMY, type InconsistencyCode, type InconsistencySeverity } from "./fieldbeat-inconsistency-taxonomy";
-import type { HistoricalPartMatchStatus } from "./fieldbeat-parts-history";
 import { deriveEquipmentItems } from "./fieldbeat-equipment-derivation";
+import { shapePartOccurrence, type RawPartOccurrenceRow } from "./fieldbeat-part-occurrence";
+import { shapeLaborSummary, shapeParticipant, sortParticipants, type RawLaborSummaryRow, type RawParticipantRow } from "./fieldbeat-participants";
 import {
   FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION,
   type FieldbeatInconsistencyDetail,
   type FieldbeatReportDetail,
-  type FieldbeatTicketLink,
-  type FieldbeatUsedPartDetail
+  type FieldbeatTicketLink
 } from "@/types/fieldbeat-report-detail";
 
 const ID_PATTERN = /^[1-9]\d*$/;
@@ -83,39 +83,67 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
         WHERE b.fieldbeat_task_id = q.fieldbeat_task_id
       ) AS tickets,
       (
+        -- HOTFIX de integridad de datos FieldBeat (§ contrato 2.0.0) - fuente
+        -- ÚNICA compartida por FieldBeat/Búsqueda/PDF/CSV (sql/088), nunca
+        -- reimplementa acá la lógica de correspondencia de catálogo.
         SELECT COALESCE(json_agg(json_build_object(
-          'used_part_id', m.used_part_id,
-          'part_name', m.part_name,
-          'raw_part_identifier', m.raw_part_identifier,
-          'normalized_part_identifier', m.normalized_part_identifier,
-          'quantity', p.quantity,
-          'match_status', m.match_status,
-          'historical_match_status', hpm.historical_match_status,
-          'dolibarr_product_id', dp.dolibarr_product_id::text,
-          'dolibarr_ref', dp.ref,
-          'dolibarr_label', dp.label,
-          'dolibarr_barcode', dp.barcode::text,
-          'candidate_dolibarr_product_ids', m.candidate_dolibarr_product_ids,
-          'alias_value', alias.alias_value,
-          'alias_reason', alias.reason,
-          'alias_created_by', alias.created_by
-        ) ORDER BY m.used_part_id), '[]'::json)
-        FROM marts.used_parts_dolibarr_match m
-        LEFT JOIN processed.fieldbeat_used_parts p ON p.used_part_id = m.used_part_id
-        LEFT JOIN quality.fieldbeat_used_part_match hpm ON hpm.used_part_id = m.used_part_id
-        LEFT JOIN processed.dolibarr_products dp ON dp.dolibarr_product_id = COALESCE(m.dolibarr_product_id, hpm.alias_resolved_dolibarr_product_id)
-        LEFT JOIN LATERAL (
-          SELECT pa.alias_value, pa.reason, pa.created_by
-          FROM manual_review.part_aliases pa
-          WHERE pa.active = true
-            AND (
-              (pa.alias_type = 'RAW' AND lower(pa.alias_value) = lower(coalesce(m.raw_part_identifier, '')))
-              OR (pa.alias_type = 'NORMALIZED' AND lower(pa.alias_value) = lower(coalesce(m.normalized_part_identifier, '')))
-            )
-          LIMIT 1
-        ) alias ON true
-        WHERE m.fieldbeat_task_id = q.fieldbeat_task_id
+          'used_part_id', o.used_part_id,
+          'fieldbeat_task_id', o.fieldbeat_task_id::text,
+          'part_name', o.part_name,
+          'raw_part_identifier', o.raw_part_identifier,
+          'normalized_part_identifier', o.normalized_part_identifier,
+          'quantity', o.quantity,
+          'origin_location', o.origin_location,
+          'origin_comment', o.origin_comment,
+          'photo_ref', o.photo_ref,
+          'declaration_status', o.declaration_status,
+          'catalog_match_status', o.catalog_match_status,
+          'matched_product_id', o.matched_product_id::text,
+          'matched_sku', o.matched_sku,
+          'matched_label', o.matched_label,
+          'matched_barcode', o.matched_barcode::text,
+          'candidate_dolibarr_product_ids', o.candidate_dolibarr_product_ids,
+          'match_method', o.match_method,
+          'alias_value', o.alias_value,
+          'alias_reason', o.alias_reason,
+          'alias_created_by', o.alias_created_by
+        ) ORDER BY o.used_part_id), '[]'::json)
+        FROM quality.fieldbeat_report_part_occurrences o
+        WHERE o.fieldbeat_task_id = q.fieldbeat_task_id
       ) AS parts,
+      (
+        -- Participantes 0..N (HOTFIX de integridad, sql/088) - responsable
+        -- principal SIEMPRE incluido (is_primary=true), nunca duplicado como
+        -- adicional; un participante no resoluble nunca se descarta.
+        SELECT COALESCE(json_agg(json_build_object(
+          'fieldbeat_task_id', pt.fieldbeat_task_id::text,
+          'raw_name', pt.raw_name,
+          'normalized_name', pt.normalized_name,
+          'role', pt.role,
+          'source_field', pt.source_field,
+          'resolution_status', pt.resolution_status,
+          'is_primary', pt.is_primary
+        )), '[]'::json)
+        FROM quality.fieldbeat_report_participants pt
+        WHERE pt.fieldbeat_task_id = q.fieldbeat_task_id
+      ) AS participants,
+      (
+        -- Resumen laboral (HOTFIX de integridad, sql/088) - duración real
+        -- (declarada o transición validada) SEPARADA de la estimación de
+        -- agenda; 1 fila por reporte siempre que exista un responsable
+        -- principal (ver primary_assignee en quality.fieldbeat_report_participants).
+        SELECT json_build_object(
+          'fieldbeat_task_id', ls.fieldbeat_task_id::text,
+          'actual_report_duration_minutes', ls.actual_report_duration_minutes,
+          'actual_duration_source', ls.actual_duration_source,
+          'scheduled_estimate_minutes', ls.scheduled_estimate_minutes,
+          'participant_count', ls.participant_count,
+          'total_labor_minutes', ls.total_labor_minutes,
+          'individual_time_available', ls.individual_time_available
+        )
+        FROM quality.fieldbeat_report_labor_summary ls
+        WHERE ls.fieldbeat_task_id = q.fieldbeat_task_id
+      ) AS labor,
       (
         SELECT COALESCE(json_agg(json_build_object(
           'code', ri.code, 'severity', ri.severity, 'priority_order', ri.priority_order
@@ -140,24 +168,6 @@ interface RawTicketRow {
   status: string | null;
   priority: string | null;
   link_method: string | null;
-}
-
-interface RawPartRow {
-  used_part_id: string;
-  part_name: string | null;
-  raw_part_identifier: string | null;
-  normalized_part_identifier: string | null;
-  quantity: string | number | null;
-  match_status: string | null;
-  historical_match_status: HistoricalPartMatchStatus | null;
-  dolibarr_product_id: string | null;
-  dolibarr_ref: string | null;
-  dolibarr_label: string | null;
-  dolibarr_barcode: string | null;
-  candidate_dolibarr_product_ids: string | null;
-  alias_value: string | null;
-  alias_reason: string | null;
-  alias_created_by: string | null;
 }
 
 interface RawInconsistencyRow {
@@ -198,37 +208,15 @@ export interface ReportDetailQueryRow {
   ticket_accessible: boolean | null;
   ticket_missing_or_restricted: boolean;
   tickets: RawTicketRow[];
-  parts: RawPartRow[];
+  parts: RawPartOccurrenceRow[];
+  participants: RawParticipantRow[];
+  labor: RawLaborSummaryRow | null;
   inconsistencies: RawInconsistencyRow[];
   primary_code: InconsistencyCode | null;
 }
 
 function shapeTicket(t: RawTicketRow): FieldbeatTicketLink {
   return { zendeskTicketId: t.zendesk_ticket_id, subject: t.subject, status: t.status, priority: t.priority, linkMethod: t.link_method };
-}
-
-function shapePart(p: RawPartRow): FieldbeatUsedPartDetail {
-  const isAmbiguous = p.historical_match_status === "AMBIGUOUS_MATCH";
-  const isHistoricalAlias = p.historical_match_status === "HISTORICAL_ALIAS_MATCH";
-  return {
-    usedPartId: p.used_part_id,
-    partName: p.part_name,
-    rawPartIdentifier: p.raw_part_identifier,
-    normalizedPartIdentifier: p.normalized_part_identifier,
-    quantity: p.quantity === null || p.quantity === undefined ? null : Number(p.quantity),
-    matchStatus: p.match_status,
-    historicalMatchStatus: p.historical_match_status,
-    dolibarrProduct: p.dolibarr_product_id
-      ? { productId: p.dolibarr_product_id, ref: p.dolibarr_ref, label: p.dolibarr_label, barcode: p.dolibarr_barcode }
-      : null,
-    // Nunca promueve una ambigüedad a match - candidatos solo se listan
-    // cuando el status ES AMBIGUOUS_MATCH, nunca como "el" match.
-    ambiguousCandidateProductIds: isAmbiguous && p.candidate_dolibarr_product_ids ? p.candidate_dolibarr_product_ids.split("|").filter(Boolean) : [],
-    // "Equivalencias históricas disponibles solo cuando existe alias
-    // validado" - sin fila real en manual_review.part_aliases, nunca se
-    // muestra un alias aunque historical_match_status lo sugiera.
-    historicalAlias: isHistoricalAlias && p.alias_value ? { aliasValue: p.alias_value, reason: p.alias_reason, createdBy: p.alias_created_by } : null
-  };
 }
 
 function shapeInconsistency(f: RawInconsistencyRow, primaryCode: InconsistencyCode | null): FieldbeatInconsistencyDetail {
@@ -283,7 +271,16 @@ export function shapeReportDetail(row: ReportDetailQueryRow, fieldbeatOpenAvaila
     client: row.has_client && row.client_key && row.client_name ? { clientKey: row.client_key, clientName: row.client_name } : null,
     equipment: { status: row.team_identification_status, items: equipment },
     tickets: (row.tickets ?? []).map(shapeTicket),
-    parts: (row.parts ?? []).map(shapePart),
+    parts: (row.parts ?? []).map(shapePartOccurrence),
+    // Responsable principal SIEMPRE primero (sortParticipants) - nunca
+    // depende del orden crudo devuelto por json_agg.
+    participants: sortParticipants((row.participants ?? []).map(shapeParticipant)),
+    // row.labor solo sería null si el reporte no tiene fila en
+    // processed.fieldbeat_tasks (no debería ocurrir - quality.fieldbeat_report_quality
+    // ya exige esa fila) - se maneja de forma defensiva, nunca con un crash.
+    labor: row.labor
+      ? shapeLaborSummary(row.labor)
+      : { actualReportDurationMinutes: null, actualDurationSource: "UNAVAILABLE", scheduledEstimateMinutes: null, participantCount: 0, totalLaborMinutes: null, individualTimeAvailable: false },
     quality: {
       structurallyComplete: row.structurally_complete,
       minimumFieldsComplete: row.minimum_fields_complete,

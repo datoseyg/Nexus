@@ -121,7 +121,8 @@ test("shapeReportRow: primary solo existe cuando code Y severity están presente
     ticket_accessible: null,
     primary_code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY",
     primary_severity: "Alta",
-    findings: [{ code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY", severity: "Alta" }]
+    findings: [{ code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY", severity: "Alta" }],
+    additional_participants: []
   });
   assert.deepEqual(withPrimary.primary, { code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY", severity: "Alta" });
 
@@ -138,10 +139,64 @@ test("shapeReportRow: primary solo existe cuando code Y severity están presente
     ticket_accessible: null,
     primary_code: null,
     primary_severity: null,
-    findings: []
+    findings: [],
+    additional_participants: []
   });
   assert.equal(clean.primary, null);
   assert.deepEqual(clean.findings, []);
+});
+
+// HOTFIX de integridad de datos FieldBeat (Stage 10 - columna aditiva) -
+// `additionalParticipants` nunca reemplaza `tecnico` (responsable
+// principal, sin cambios) - es aditiva, refleja quality.fieldbeat_report_participants
+// con is_primary=false. Caso 3453: Manuel Reyes sigue en `tecnico`, Alexis
+// Acevedo aparece en `additionalParticipants`.
+test("shapeReportRow: additionalParticipants es aditivo, nunca reemplaza a tecnico (responsable principal)", () => {
+  const row = shapeReportRow({
+    fieldbeat_task_id: "3453",
+    fieldbeat_task_date: "2026-01-05",
+    client_name: "Cliente X",
+    technician_names: "Manuel Reyes",
+    equipment_internal_ids: "EQ-1",
+    task_type: "CORRECTIVA PROGRAMADA",
+    origen: "APK",
+    report_quality_status: "OK",
+    has_ticket_reported: false,
+    ticket_accessible: null,
+    primary_code: null,
+    primary_severity: null,
+    findings: [],
+    additional_participants: ["Alexis Acevedo"]
+  });
+  assert.equal(row.tecnico, "Manuel Reyes", "el responsable principal nunca se altera por la columna aditiva");
+  assert.deepEqual(row.additionalParticipants, ["Alexis Acevedo"]);
+});
+
+test("shapeReportRow: sin participantes adicionales, additionalParticipants es [] (nunca null)", () => {
+  const row = shapeReportRow({
+    fieldbeat_task_id: "900001",
+    fieldbeat_task_date: "2026-03-10",
+    client_name: "ACME",
+    technician_names: "Juan",
+    equipment_internal_ids: "EQ-1",
+    task_type: "PM",
+    origen: "APK",
+    report_quality_status: "OK",
+    has_ticket_reported: false,
+    ticket_accessible: null,
+    primary_code: null,
+    primary_severity: null,
+    findings: [],
+    additional_participants: null
+  });
+  assert.deepEqual(row.additionalParticipants, []);
+});
+
+test("buildReportsFilteredCte: incluye additional_participants vía subquery contra quality.fieldbeat_report_participants (is_primary=false), fuente canónica única", () => {
+  const { cteSql } = buildReportsFilteredCte(BASE_OPTIONS);
+  assert.match(cteSql, /quality\.fieldbeat_report_participants/);
+  assert.match(cteSql, /is_primary\s*=\s*false/);
+  assert.match(cteSql, /additional_participants/);
 });
 
 test("isExportOverLimit: exactamente MAX_EXPORT_ROWS es aceptable, MAX_EXPORT_ROWS+1 se rechaza", () => {

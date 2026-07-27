@@ -158,6 +158,15 @@ export interface AfterHoursDetailRow extends AfterHoursContractualFields {
   confidence_score: number | null;
   confidence_label: string | null;
   confidence_factors: string | null;
+  // Aditivo (auditoría After-Hours, hotfix de integridad FieldBeat §5) -
+  // informativo, fuente quality.fieldbeat_report_labor_summary (sql/088).
+  // assigned_to sigue siendo el único responsable principal en todas las
+  // columnas de horas de esta fila (duration_hours/business_hours/
+  // after_hours/etc.) - este campo NUNCA reparte ni multiplica esas horas
+  // por participante, solo declara cuántos participantes tiene el reporte
+  // para que la fila deje de implicar silenciosamente que assigned_to es
+  // la única persona que trabajó la tarea.
+  participant_count: number | null;
 }
 
 export interface AfterHoursByDimensionRow extends AfterHoursPopulationCounts {

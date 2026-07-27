@@ -56,7 +56,13 @@ export function AfterHoursDrawer({ row, onClose }: AfterHoursDrawerProps) {
 
       <div className="border-t pt-2" style={{ borderColor: "var(--nx-border)" }}>
         <Field label="Fecha" value={dateStr ?? "—"} />
-        <Field label="Técnico" value={row.assigned_to ?? "—"} />
+        <Field label="Técnico responsable" value={row.assigned_to ?? "—"} />
+        {/* HOTFIX auditoría After-Hours (§5): informativo, nunca reparte las
+            horas de abajo por participante - fuente
+            quality.fieldbeat_report_labor_summary (sql/088). */}
+        {row.participant_count !== null && row.participant_count > 1 && (
+          <Field label="Participantes del reporte" value={`${row.participant_count} (responsable + ${row.participant_count - 1} adicional${row.participant_count - 1 > 1 ? "es" : ""})`} />
+        )}
         <Field label="Cliente" value={row.client_name ?? "—"} />
         <Field label="Equipo" value={row.equipment_internal_ids ?? "—"} />
         <Field label="Tipo de tarea" value={row.task_type ?? "—"} />

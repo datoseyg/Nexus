@@ -23,6 +23,10 @@ const CSV_COLUMNS: Array<{ header: string; pick: (row: FieldbeatReportRow) => un
   { header: "fecha", pick: r => r.fecha },
   { header: "cliente", pick: r => r.cliente },
   { header: "tecnico", pick: r => r.tecnico },
+  // Aditiva (HOTFIX de integridad de datos, Stage 10) - NUNCA reemplaza a
+  // "tecnico" (responsable principal); participantes adicionales
+  // (quality.fieldbeat_report_participants, is_primary=false).
+  { header: "tecnicos_adicionales", pick: r => r.additionalParticipants.join("; ") },
   { header: "equipo", pick: r => r.equipo },
   { header: "tipo_tarea", pick: r => r.tipoTarea },
   { header: "origen", pick: r => r.origen },
