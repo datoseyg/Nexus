@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { QueryDisclosure } from "@/components/QueryDisclosure";
+import { SearchQueryExplanationPanel } from "./SearchQueryExplanationPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { SearchForm } from "./SearchForm";
@@ -350,7 +350,7 @@ export function SearchDashboard() {
             </div>
           )}
 
-          {searchState.data.queries && searchState.data.queries.length > 0 && <QueryDisclosure queries={searchState.data.queries} />}
+          {searchState.data.queryExplanation && <SearchQueryExplanationPanel explanation={searchState.data.queryExplanation} />}
         </>
       )}
 

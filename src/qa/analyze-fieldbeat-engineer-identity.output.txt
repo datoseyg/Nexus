@@ -1,0 +1,50 @@
+Snapshot analizado: data/raw/fieldbeat/all_tasks_latest.json, extracted_at=2026-07-01T16:07:21.256Z, total tareas=3747
+Roster (union historica, primeros 2 tokens, sin "OTROS"): 20 nombres distintos
+ALEJANDRO CORBEA | ALEXIS ECHEVERRIA | ANDREE DIAZ | CARLOS CARRASQUEL | DIXON JIMENEZ | EDUARDO BECKER | GONZALO H. LOPEZ | GONZALO LOPEZ | JAIME BUSTAMANTE | JORGE ACUÑA | JOSE ECHEVERRIA | MANUEL CABALLERO | MANUEL REYES | MAURICIO ABREU | RAFAEL GUAPACHE | ROBERTO AGUILA | RUBEN CAMMALLERI | SEBASTIAN CARCAMO | SEBASTIAN SALICE | VICTOR ARENAS
+Usernames con al menos 1 firma: 19
+
+=== ACEPTADOS (17) - mayoria inequivoca (primeros 2 tokens) + coincide con roster ===
+  acorbea -> "ALEJANDRO CORBEA"  (369/384 ocurrencias de sign.worker.name)
+  adiaz -> "ANDREE DIAZ"  (51/89 ocurrencias de sign.worker.name)
+  aecheverria -> "ALEXIS ECHEVERRIA"  (164/165 ocurrencias de sign.worker.name)
+  ccarrasquel -> "CARLOS CARRASQUEL"  (449/454 ocurrencias de sign.worker.name)
+  ebecker -> "EDUARDO BECKER"  (213/216 ocurrencias de sign.worker.name)
+  glopez -> "GONZALO LOPEZ"  (68/71 ocurrencias de sign.worker.name)
+  jacuna -> "JORGE ACUNA"  (2/3 ocurrencias de sign.worker.name)
+  jbustamante -> "JAIME BUSTAMANTE"  (50/50 ocurrencias de sign.worker.name)
+  jecheverria -> "JOSE ECHEVERRIA"  (370/372 ocurrencias de sign.worker.name)
+  mabreu -> "MAURICIO ABREU"  (211/219 ocurrencias de sign.worker.name)
+  mcaballero -> "MANUEL CABALLERO"  (1/1 ocurrencias de sign.worker.name)
+  mreyes -> "MANUEL REYES"  (232/236 ocurrencias de sign.worker.name)
+  rcammalleri -> "RUBEN CAMMALLERI"  (240/247 ocurrencias de sign.worker.name)
+  rguapache -> "RAFAEL GUAPACHE"  (388/391 ocurrencias de sign.worker.name)
+  scarcamo -> "SEBASTIAN CARCAMO"  (99/134 ocurrencias de sign.worker.name)
+  ssalice -> "SEBASTIAN SALICE"  (95/95 ocurrencias de sign.worker.name)
+  varenas -> "VICTOR ARENAS"  (50/51 ocurrencias de sign.worker.name)
+
+=== RECHAZADOS (2) - ambiguo o sin coincidencia de roster, quedan sin mapping ===
+  raguila: top="ING. ROBERTO" (85/129), candidato principal no esta en el roster
+  rsaez: top="ROCIO SAEZ" (1/1), candidato principal no esta en el roster
+
+=== SQL a copiar ESTATICAMENTE en sql/088 (INSERT ... ON CONFLICT DO NOTHING) ===
+INSERT INTO manual_review.fieldbeat_engineer_identity_map
+  (source_type, source_value_normalized, canonical_person_key, canonical_display_name, verification_method, confidence, reason, evidence, created_by)
+VALUES
+  ('ASSIGNED_TO_USERNAME', 'acorbea', 'acorbea', 'ALEJANDRO CORBEA', 'AUTO_EVIDENCED', 'HIGH', '369/384 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'ALEJANDRO CORBEA=307, ALEJANDRO CORBEA SILVESTRE=62, NOMBRE TRABAJADOR=4, SEBASTIAN CARCAMO=1, ALVARP RUIZ=1, ALEJANDRI CORBEA=1, JHONALBERT APONTE=1, TERESA RESQUIN=1, ALEJANDRO CORBES=1, CRISTIAN MALDONADO=1, CRISTIAN MALSONADO=1, S=1, TRABAJADOR=1, NOMBRE INGENIERO DE SERVICIO=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'adiaz', 'adiaz', 'ANDREE DIAZ', 'AUTO_EVIDENCED', 'HIGH', '51/89 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'ANDREE DIAZ=51, ANDREE DIAZ.=28, TAMARA SALAZAR=4, SERGIO CHEUQUEL QF=1, DANIELA LUCERO=1, ANDFEE DIAZ=1, IRENE MONTERO=1, ANDREE. DIAZ=1, PATRICIA BENAVIDES=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'aecheverria', 'aecheverria', 'ALEXIS ECHEVERRIA', 'AUTO_EVIDENCED', 'HIGH', '164/165 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'ALEXIS ECHEVERRIA=164, ALEXI ECHEVERRIA=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'ccarrasquel', 'ccarrasquel', 'CARLOS CARRASQUEL', 'AUTO_EVIDENCED', 'HIGH', '449/454 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'CARLOS CARRASQUEL=449, CC=1, BCJ=1, CARLOS CARRASQUEEL=1, RODOLFO ESTEBAN MUNOZ CENA=1, CARLOS CARRRASQUEL=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'ebecker', 'ebecker', 'EDUARDO BECKER', 'AUTO_EVIDENCED', 'HIGH', '213/216 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'EDUARDO BECKER TRONCOSO=208, EDUARDO BECKER T=2, EDUARDO BECKER TRINCOSO=2, EDUARDO BECKER=1, EDUARDO BECKERTRONCOSO=1, EDUARDOBECKER TRONCOSO=1, 11794994-K=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'glopez', 'glopez', 'GONZALO LOPEZ', 'AUTO_EVIDENCED', 'HIGH', '68/71 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'GONZALO LOPEZ=24, GONZALO LOPEZ CORDERO=22, GONZALO LOPEZ C=18, GONZALO LOPEZ C.=4, GONZALO=1, RAFAEL GUAPACHE=1, FRANKLYN REGGIO=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'jacuna', 'jacuna', 'JORGE ACUÑA', 'AUTO_EVIDENCED', 'HIGH', '2/3 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'JORGE ACUNA=2, RIXY PLATA=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'jbustamante', 'jbustamante', 'JAIME BUSTAMANTE', 'AUTO_EVIDENCED', 'HIGH', '50/50 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'JAIME BUSTAMANTE P=41, JAIME BUSTAMANTE P.=8, JAIME BUSTAMANTE=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'jecheverria', 'jecheverria', 'JOSE ECHEVERRIA', 'AUTO_EVIDENCED', 'HIGH', '370/372 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'JOSE ECHEVERRIA=370, JECHEVERRIA=1, MANUEL REYES=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'mabreu', 'mabreu', 'MAURICIO ABREU', 'AUTO_EVIDENCED', 'HIGH', '211/219 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'MAURICIO ABREU=211, 259382602=2, PRUEBA DE FORMATO=1, ERROR DE CREACION DEL REPORTE FAVOR NO CONSIDERAR.=1, ANDRES PEREZ=1, TOMAS ALVEAR=1, MAURICIO ABRUE=1, CVM=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'mcaballero', 'mcaballero', 'MANUEL CABALLERO', 'AUTO_EVIDENCED', 'HIGH', '1/1 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'MANUEL CABALLERO PARDO=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'mreyes', 'mreyes', 'MANUEL REYES', 'AUTO_EVIDENCED', 'HIGH', '232/236 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'MANUEL REYES I=110, MANUEL REYES=101, MANUEL REYES IRRAZAVAL=16, MANUEL REYES I.=5, MANUEL REYES.=1, REYES=1, REYES MANUEL=1, GHH=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'rcammalleri', 'rcammalleri', 'RUBEN CAMMALLERI', 'AUTO_EVIDENCED', 'HIGH', '240/247 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'RUBEN CAMMALLERI=240, RUBEN C=3, NOMBRE TRABAJADOR=2, GONZALO LOPEZ=1, 26123155-7=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'rguapache', 'rguapache', 'RAFAEL GUAPACHE', 'AUTO_EVIDENCED', 'HIGH', '388/391 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'RAFAEL GUAPACHE=388, RAFAEL GUPACHE=1, FLASH GORDON=1, XHN GU=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'scarcamo', 'scarcamo', 'SEBASTIAN CARCAMO', 'AUTO_EVIDENCED', 'HIGH', '99/134 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'SEBASTIAN CARCAMO=99, SC=16, S.C.=5, S. CARCAMO=4, .=2, SEBASTIAN / RUBEN=1, S.CARCAMO.=1, SRA K.=1, SC / RC=1, RAFAEL / SEBASTIAN=1, RAFAEL GUAPACHE=1, SEBASTOAN CARCAMO=1, SEBA=1', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'ssalice', 'ssalice', 'SEBASTIAN SALICE', 'AUTO_EVIDENCED', 'HIGH', '95/95 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'SEBASTIAN SALICE=95', 'migration-088-evidence-seed'),
+  ('ASSIGNED_TO_USERNAME', 'varenas', 'varenas', 'VICTOR ARENAS', 'AUTO_EVIDENCED', 'HIGH', '50/51 ocurrencias de sign.worker.name normalizan (primeros 2 tokens: nombre + primer apellido) a este nombre; coincide con el roster de NOMBRE DEL INGENIERO ADICIONAL', 'VICTOR ARENAS=50, HERNAN BARRIGA=1', 'migration-088-evidence-seed')
+ON CONFLICT (source_type, source_value_normalized) DO NOTHING;

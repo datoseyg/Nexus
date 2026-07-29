@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { StatusBadge, matchStatusBadge } from "@/components/ui/StatusBadge";
-import { FutureActionButton } from "./FutureActionButton";
+import { PartAliasCorrectionDrawer } from "./PartAliasCorrectionDrawer";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, PartsReviewRow } from "@/types/audit";
 
 interface PartsReviewSectionProps {
   clientes: string[];
   maquinas: string[];
+  /** Rol de la sesión actual - determina si el botón de corrección está
+   * activo (administracion, capacidad correction:part-alias) o simplemente
+   * no se ofrece (gerencia, solo lectura). La autorización real sigue
+   * siendo server-side (requireCapability + rol de conexión PostgreSQL) -
+   * esto es solo reflejo de permisos en la UI, nunca su único control. */
+  role: "gerencia" | "administracion";
 }
 
 const MATCH_STATUS_OPTIONS = ["NO_MATCH", "AMBIGUOUS_MATCH", "PLACEHOLDER_VALUE", "MATCHED"];
@@ -22,17 +28,19 @@ function toQuery(params: Record<string, string | undefined>): string {
 
 // Pestaña "Repuestos por revisar" - ver docs/MANUAL_REVIEW_VIEW.md § A.
 // Criterio: needs_manual_review = true OR match_status IN (NO_MATCH,
-// AMBIGUOUS_MATCH, PLACEHOLDER_VALUE). Solo lectura + acción sugerida por
-// fila; los botones de acción están deshabilitados (ver
-// FutureActionButton) hasta que exista el Centro de Correcciones.
-export function PartsReviewSection({ clientes, maquinas }: PartsReviewSectionProps) {
+// AMBIGUOUS_MATCH, PLACEHOLDER_VALUE). "Resolver" ya escribe de forma
+// gobernada (correction:part-alias, PartAliasCorrectionDrawer) - conectado
+// desde la Familia 1 de Gate B.
+export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSectionProps) {
   const [filters, setFilters] = useState<AuditFilterValues & { matchStatus?: string }>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<PartsReviewRow> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [correctionRow, setCorrectionRow] = useState<PartsReviewRow | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  useEffect(() => {
+  function refetch() {
     setLoading(true);
     setError(null);
     const query = toQuery({ page: String(page), pageSize: "20", ...filters });
@@ -44,7 +52,9 @@ export function PartsReviewSection({ clientes, maquinas }: PartsReviewSectionPro
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, [filters, page]);
+  }
+
+  useEffect(refetch, [filters, page]);
 
   function handleChange(key: keyof AuditFilterValues, value: string) {
     setFilters(prev => ({ ...prev, [key]: value || undefined }));
@@ -150,7 +160,29 @@ export function PartsReviewSection({ clientes, maquinas }: PartsReviewSectionPro
                   <td>
                     <div className="flex items-center gap-2">
                       <span style={{ color: "var(--text-secondary)" }}>{row.suggested_action}</span>
-                      <FutureActionButton label="Resolver" />
+                      {role === "administracion" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCorrectionRow(row);
+                            setDrawerOpen(true);
+                          }}
+                          className="rounded-full border px-2.5 py-1 text-xs font-medium"
+                          style={{ borderColor: "var(--eyg-green-dark)", color: "var(--eyg-green-dark)" }}
+                        >
+                          Resolver
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          title="Requiere rol Administración"
+                          className="cursor-not-allowed rounded-full border px-2.5 py-1 text-xs font-medium"
+                          style={{ borderColor: "var(--eyg-border)", color: "var(--text-muted)", background: "#f2f5f4" }}
+                        >
+                          Resolver
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -159,6 +191,13 @@ export function PartsReviewSection({ clientes, maquinas }: PartsReviewSectionPro
           </tbody>
         </table>
       </ResponsiveTableShell>
+
+      <PartAliasCorrectionDrawer
+        open={drawerOpen}
+        row={correctionRow}
+        onClose={() => setDrawerOpen(false)}
+        onApplied={refetch}
+      />
     </div>
   );
 }

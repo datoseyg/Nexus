@@ -32,28 +32,53 @@ test("todos los Route Handlers están protegidos por el mecanismo correcto", asy
   const routes: string[] = [];
   for await (const path of glob("app/api/**/route.ts")) routes.push(path);
 
-  // Phase 2 FieldBeat (KPI overview + quality) agrega 2 Route Handlers
-  // nuevos (42 -> 44); Phase 3 agrega crossings (44 -> 45) - los 3
-  // protegidos por requireReadApiAccess (verificado abajo, mismo mecanismo
-  // que el resto). Phase 3 también elimina 2 rutas sin consumidores tras
-  // el rediseño de 4 pestañas (§11): el GOLD fijo /api/dashboard/fieldbeat
-  // y /api/dashboard/fieldbeat/activity (45 -> 43). Phase 4 reemplaza la
-  // bandeja transitoria: elimina /api/dashboard/fieldbeat/detail y agrega
-  // /api/dashboard/fieldbeat/reports + /api/dashboard/fieldbeat/reports/export
-  // (43 -> 44). Phase 5 agrega el detalle maestro
-  // /api/dashboard/fieldbeat/reports/[id] (44 -> 45). Phase 6 agrega
-  // /api/dashboard/fieldbeat/reports/[id]/open (45 -> 46) y
-  // /api/dashboard/fieldbeat/reports/[id]/pdf (46 -> 47).
-  assert.equal(routes.length, 47);
+  // Historial de conteo hasta Phase 6: ver git blame de esta línea para el
+  // detalle 42->47 (FieldBeat KPI/quality/crossings/reports/detalle/open/pdf).
+  // Gate B (Familias 1-9) agregó 29 Route Handlers nuevos (47 -> 76): rutas
+  // de comando (correction:part-alias/ticket-link/technician-identity/
+  // equipment-identification/reverse, issues start-review/dismiss/reopen,
+  // review-cases + membership/assign/comment/redact/close/reopen, restricted
+  // reads, exports de Auditoría/Explorador) + rutas de lectura nuevas
+  // (issues/review-cases listado y detalle, history, kpis, corrections,
+  // rules, evaluation-runs) - ninguna reemplaza una ruta existente.
+  assert.equal(routes.length, 76);
 
   for (const path of routes) {
     const contents = await source(path);
     const normalizedPath = path.replaceAll("\\", "/");
     if (normalizedPath.includes("app/api/admin/")) {
-      assert.match(contents, /requireAdminToken/, path);
+      // Gate B (Familia 9/B19): un endpoint retirado (410 ENDPOINT_RETIRED
+      // incondicional para todos) está protegido por rechazo universal, no
+      // por un chequeo de token - no necesita requireAdminToken. Cualquier
+      // otra ruta admin (incluido su propio GET de inspección histórica, si
+      // lo tiene) sigue exigiendo el token.
+      const isRetiredStub = /ENDPOINT_RETIRED/.test(contents);
+      if (!isRetiredStub) {
+        assert.match(contents, /requireAdminToken/, path);
+      }
     } else {
-      assert.match(contents, /requireReadApiAccess/, path);
-      assert.match(contents, /if \(authError\) return authError;/, path);
+      // Gate B (Familias 1-8) agregó 2 mecanismos nuevos de sesión junto al
+      // original requireReadApiAccess: requireCapability (comandos de
+      // gobierno, verifica una capacidad nombrada contra
+      // governance.role_capabilities) y requireAuthenticatedUser (rutas que
+      // necesitan el objeto de usuario completo, ej. para registrar quién
+      // exportó). Los tres son mecanismos de sesión reales - nunca el token
+      // admin legado ni ausencia de chequeo.
+      const usesReadApiAccess = /requireReadApiAccess/.test(contents);
+      const usesCapability = /requireCapability/.test(contents);
+      const usesAuthenticatedUser = /requireAuthenticatedUser/.test(contents);
+      assert.ok(
+        usesReadApiAccess || usesCapability || usesAuthenticatedUser,
+        `${path}: debe usar requireReadApiAccess, requireCapability o requireAuthenticatedUser`
+      );
+      if (usesReadApiAccess) {
+        assert.match(contents, /if \(authError\) return authError;/, path);
+      } else {
+        // requireCapability/requireAuthenticatedUser señalan 401/403 vía
+        // NexusAuthorizationError (capturado explícitamente), nunca un
+        // authError de retorno temprano.
+        assert.match(contents, /NexusAuthorizationError/, path);
+      }
     }
   }
 });

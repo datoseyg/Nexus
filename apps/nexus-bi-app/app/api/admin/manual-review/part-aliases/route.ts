@@ -4,7 +4,6 @@ import { handleApiError } from "@/lib/api-error";
 import { requireAdminToken } from "@/lib/auth";
 import { quoteQualifiedAdminTable } from "@/lib/admin-guardrails";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
-import { logManualReviewAction } from "@/lib/admin-audit-log";
 
 export const runtime = "nodejs";
 
@@ -41,44 +40,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const authError = requireAdminToken(request);
-  if (authError) return authError;
-
-  try {
-    const body = await request.json();
-    const { alias_value, alias_type, dolibarr_product_id, dolibarr_ref, reason, created_by } = body ?? {};
-
-    if (!alias_value || !alias_type || dolibarr_product_id === undefined) {
-      return NextResponse.json(
-        { error: "Faltan campos requeridos: alias_value, alias_type, dolibarr_product_id", code: "VALIDATION_ERROR" },
-        { status: 400 }
-      );
-    }
-
-    if (!["RAW", "NORMALIZED"].includes(alias_type)) {
-      return NextResponse.json(
-        { error: "alias_type debe ser RAW o NORMALIZED", code: "VALIDATION_ERROR" },
-        { status: 400 }
-      );
-    }
-
-    const rows = await runQuery(
-      `INSERT INTO ${TABLE} (alias_value, alias_type, dolibarr_product_id, dolibarr_ref, reason, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [alias_value, alias_type, dolibarr_product_id, dolibarr_ref ?? null, reason ?? null, created_by ?? null]
-    );
-
-    const created = serializeRows(rows)[0];
-    await logManualReviewAction({
-      entityId: `part_aliases:${created.id}`,
-      issueType: "CREATED",
-      details: created
-    });
-
-    return NextResponse.json({ row: created }, { status: 201 });
-  } catch (error) {
-    return handleApiError(error);
-  }
+// Gate B (B19) - retirado: fn_apply_part_alias (sql/090) + POST
+// /api/audit/corrections/part-alias ya cubren este comando de forma
+// gobernada (actor derivado de sesión, versión/idempotencia, event log,
+// verificación posterior) - confirmado sin consumidores reales de este
+// endpoint legacy (Gate A). Escritura vía token compartido deshabilitada en
+// el mismo cambio que activó la función nueva (nunca ambos caminos de
+// escritura activos a la vez) - GET se conserva para inspección histórica.
+export async function POST() {
+  return NextResponse.json(
+    {
+      error: "Este endpoint ya no acepta escrituras - usa POST /api/audit/corrections/part-alias (sesión + capacidad correction:part-alias).",
+      code: "ENDPOINT_RETIRED"
+    },
+    { status: 410 }
+  );
 }

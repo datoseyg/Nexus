@@ -46,7 +46,8 @@
     "holidays:import": "node src/holidays/import-holidays.js",
     "holidays:test": "node scripts/run-test-suite.mjs test/holidays unit",
     "holidays:test:integration": "node scripts/run-test-suite.mjs test/holidays integration",
-    "pipeline:local:env": "node scripts/with-local-pipeline-env.mjs"
+    "pipeline:local:env": "node scripts/with-local-pipeline-env.mjs",
+    "after-hours:import-all": "node scripts/import-after-hours-pipeline.mjs"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",

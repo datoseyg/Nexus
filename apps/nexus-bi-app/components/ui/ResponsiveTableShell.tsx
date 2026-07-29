@@ -48,7 +48,7 @@ export function ResponsiveTableShell({
         <div className={styles.titleGroup}>
           <span className={styles.title}>{title}</span>
           {typeof count === "number" && (
-            <span className={styles.count}>
+            <span className={styles.count} role="status" aria-live="polite">
               {count.toLocaleString("es-CL")} {countLabel}
             </span>
           )}

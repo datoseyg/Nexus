@@ -57,6 +57,11 @@ export interface FieldbeatClient {
 export interface FieldbeatEquipmentIdentification {
   status: TeamIdentificationStatus;
   items: FieldbeatEquipmentItem[];
+  /** Valor crudo del que se derivaron los candidatos (equipment_internal_ids,
+   * pipe-delimited) - expuesto SOLO para que Administración pueda corregir la
+   * identificación de equipo (Gate B, Familia 5, correction:equipment-identification)
+   * contra el mismo valor que originó la ambigüedad, nunca inventado. */
+  rawEquipmentReference: string | null;
 }
 
 export interface FieldbeatTicketLink {

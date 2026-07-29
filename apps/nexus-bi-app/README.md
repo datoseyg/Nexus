@@ -107,7 +107,7 @@ Ver `docs/PRODUCT_APP_ARCHITECTURE.md` § "Qué queda fuera de Fase 1" para el d
 |---|---|---|
 | Dashboard Operacional FieldBeat | `/dashboard/fieldbeat` | `GET /api/dashboard/fieldbeat` |
 | Dashboard Operacional (estilo Proyecto 7) | `/dashboard/operacional` | ver tabla dedicada abajo |
-| Explorador de Tablas | `/explorer` | `GET /api/tables`, `GET /api/tables/[schema]/[table]` |
+| Explorador (semántico, por entidad de negocio) | `/explorer` | `GET /api/explorer/[entity]`, `GET /api/explorer/detail` |
 | Búsqueda / Lupa | `/search` | `GET /api/search?q=...` |
 
 ## Dashboard Operacional (`/dashboard/operacional`)

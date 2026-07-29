@@ -114,7 +114,10 @@ export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionP
                 <td>
                   <div className="flex items-center gap-2">
                     <span style={{ color: "var(--text-secondary)" }}>Marcar como placeholder válido o crear regla de exclusión</span>
-                    <FutureActionButton label="Confirmar" />
+                    <FutureActionButton
+                      label="Confirmar"
+                      reason="No existe un comando de gobierno para 'marcar placeholder válido' ni un editor de reglas (Gate A: nunca un editor SQL de reglas) - fuera del catálogo de comandos diseñado."
+                    />
                   </div>
                 </td>
               </tr>

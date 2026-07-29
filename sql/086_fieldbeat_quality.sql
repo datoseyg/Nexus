@@ -174,17 +174,32 @@ GROUP BY fieldbeat_task_id;
 --    "informado pero inaccesible" = linked_zendesk_ticket_id no vacío pero
 --    0 filas en el bridge.
 -- ============================================================================
+-- effective_zendesk_join_status (Gate B, gobernanza de auditoría): corrige
+-- el mismo "Riesgo 1" ya conocido para alias de repuesto (más abajo,
+-- quality.fieldbeat_used_part_match) - manual_review.ticket_link_overrides
+-- existía desde el principio pero ninguna vista quality.* lo aplicaba en
+-- vivo, así que una corrección de vínculo de ticket nunca podía reflejarse
+-- en una reevaluación de calidad. Columna nueva al FINAL del SELECT (misma
+-- convención documentada arriba - CREATE OR REPLACE VIEW nunca puede quitar
+-- columnas existentes) - nunca una vista paralela.
 CREATE OR REPLACE VIEW quality.fieldbeat_ticket_linkage AS
 SELECT
   v.fieldbeat_task_id,
   (v.linked_zendesk_ticket_id IS NOT NULL AND v.linked_zendesk_ticket_id <> '') AS has_ticket_reported,
-  COALESCE(b.accessible_ticket_count, 0) AS accessible_ticket_count
+  COALESCE(b.accessible_ticket_count, 0) AS accessible_ticket_count,
+  CASE
+    WHEN o.override_type = 'CONFIRMED_NO_TICKET' THEN 'OVERRIDE_CONFIRMED_NO_TICKET'
+    WHEN o.override_type = 'CORRECTED' THEN 'OVERRIDE_LINKED_TO_ACCESSIBLE_ZENDESK'
+    WHEN o.override_type = 'DUPLICATE' THEN 'OVERRIDE_DUPLICATE'
+    ELSE v.zendesk_join_status
+  END AS effective_zendesk_join_status
 FROM marts.fieldbeat_report_dolibarr_operational_view v
 LEFT JOIN (
   SELECT fieldbeat_task_id, COUNT(*) AS accessible_ticket_count
   FROM marts.ticket_fieldbeat_report_detail
   GROUP BY fieldbeat_task_id
-) b ON b.fieldbeat_task_id = v.fieldbeat_task_id;
+) b ON b.fieldbeat_task_id = v.fieldbeat_task_id
+LEFT JOIN manual_review.ticket_link_overrides o ON o.fieldbeat_task_id = v.fieldbeat_task_id;
 
 -- ============================================================================
 -- 7. Vista maestra por reporte - une estado/tiempo/equipo/tickets/repuestos.

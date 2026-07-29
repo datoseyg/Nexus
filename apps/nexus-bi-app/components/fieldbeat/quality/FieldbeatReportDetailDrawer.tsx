@@ -16,6 +16,9 @@ export const FIELDBEAT_REPORTS_FOCUS_FALLBACK_ID = "fieldbeat-reports-focus-fall
 interface FieldbeatReportDetailDrawerProps {
   reportId: string | null;
   onClose: () => void;
+  /** Opcional (Gate B, Familia 5) - solo Explorador lo pasa hoy. Ver el
+   * mismo comentario en FieldbeatReportDetailContent.tsx. */
+  role?: "gerencia" | "administracion";
 }
 
 // Drawer de detalle maestro (Phase 5) - reutiliza components/ui/DetailDrawer.tsx
@@ -27,7 +30,7 @@ interface FieldbeatReportDetailDrawerProps {
 // efecto interno vuelve a correr, cancela el fetch anterior y pasa a
 // status="refreshing" (que este componente trata igual que "loading") -
 // nunca queda expuesto el contenido del reporte anterior bajo el ID nuevo.
-export function FieldbeatReportDetailDrawer({ reportId, onClose }: FieldbeatReportDetailDrawerProps) {
+export function FieldbeatReportDetailDrawer({ reportId, onClose, role }: FieldbeatReportDetailDrawerProps) {
   const open = reportId !== null;
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   // false por defecto (nunca asumir disponibilidad) hasta que
@@ -188,6 +191,7 @@ export function FieldbeatReportDetailDrawer({ reportId, onClose }: FieldbeatRepo
         <FieldbeatReportDetailContent
           reportId={reportId}
           onMeta={meta => setOpenAvailable(meta?.fieldbeatOpenAvailable ?? false)}
+          role={role}
         />
       )}
     </DetailDrawer>

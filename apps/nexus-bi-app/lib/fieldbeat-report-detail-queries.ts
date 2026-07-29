@@ -269,7 +269,7 @@ export function shapeReportDetail(row: ReportDetailQueryRow, fieldbeatOpenAvaila
     },
     technician: row.has_technician && row.technician_names ? { name: row.technician_names } : null,
     client: row.has_client && row.client_key && row.client_name ? { clientKey: row.client_key, clientName: row.client_name } : null,
-    equipment: { status: row.team_identification_status, items: equipment },
+    equipment: { status: row.team_identification_status, items: equipment, rawEquipmentReference: row.equipment_internal_ids },
     tickets: (row.tickets ?? []).map(shapeTicket),
     parts: (row.parts ?? []).map(shapePartOccurrence),
     // Responsable principal SIEMPRE primero (sortParticipants) - nunca

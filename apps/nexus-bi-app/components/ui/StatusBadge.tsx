@@ -83,6 +83,55 @@ export function zendeskJoinBadge(status: string | null | undefined): { label: st
   }
 }
 
+// governance.issues.status (Gate B, B1) - estados persistentes del ciclo de
+// vida de incidencias.
+export function issueStatusBadge(status: string | null | undefined): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "OPEN":
+      return { label: "Abierta", tone: "danger" };
+    case "IN_REVIEW":
+      return { label: "En revisión", tone: "warning" };
+    case "RESOLVED":
+      return { label: "Resuelta", tone: "success" };
+    case "DISMISSED":
+      return { label: "Descartada", tone: "neutral" };
+    default:
+      return { label: status ?? "-", tone: "neutral" };
+  }
+}
+
+// governance.issues.severity (Gate B, B1/B41).
+export function severityBadge(severity: string | null | undefined): { label: string; tone: StatusTone } {
+  switch (severity) {
+    case "HIGH":
+      return { label: "Alta", tone: "danger" };
+    case "MEDIUM":
+      return { label: "Media", tone: "warning" };
+    case "LOW":
+      return { label: "Baja", tone: "info" };
+    case "WARNING":
+      return { label: "Advertencia", tone: "warning" };
+    default:
+      return { label: severity ?? "-", tone: "neutral" };
+  }
+}
+
+// governance.review_cases.status (Gate B, B4).
+export function reviewCaseStatusBadge(status: string | null | undefined): { label: string; tone: StatusTone } {
+  switch (status) {
+    case "OPEN":
+      return { label: "Abierto", tone: "info" };
+    case "IN_REVIEW":
+      return { label: "En revisión", tone: "warning" };
+    case "RESOLVED":
+      return { label: "Resuelto", tone: "success" };
+    case "DISMISSED":
+      return { label: "Descartado", tone: "neutral" };
+    default:
+      return { label: status ?? "-", tone: "neutral" };
+  }
+}
+
 // calculation_status de marts.fieldbeat_working_hours_analysis - ver
 // docs/CALCULATION_CONFIDENCE_MODEL.md.
 export function calculationStatusBadge(status: string | null | undefined): { label: string; tone: StatusTone } {

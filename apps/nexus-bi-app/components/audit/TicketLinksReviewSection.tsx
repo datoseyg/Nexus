@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { StatusBadge, reportQualityBadge } from "@/components/ui/StatusBadge";
-import { FutureActionButton } from "./FutureActionButton";
+import { TicketLinkCorrectionDrawer } from "./TicketLinkCorrectionDrawer";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, TicketLinkReviewRow } from "@/types/audit";
 
 interface TicketLinksReviewSectionProps {
   clientes: string[];
   maquinas: string[];
+  role: "gerencia" | "administracion";
 }
 
 function toQuery(params: Record<string, string | undefined>): string {
@@ -25,14 +26,16 @@ function toQuery(params: Record<string, string | undefined>): string {
 // reportes reales). No confundir con los 291 tickets 403 - esos son
 // tickets Zendesk sin acceso por token; estos son reportes FieldBeat cuyo
 // ticket vinculado no está entre los 628 tickets minados.
-export function TicketLinksReviewSection({ clientes, maquinas }: TicketLinksReviewSectionProps) {
+export function TicketLinksReviewSection({ clientes, maquinas, role }: TicketLinksReviewSectionProps) {
   const [filters, setFilters] = useState<AuditFilterValues>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<TicketLinkReviewRow> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [correctionRow, setCorrectionRow] = useState<TicketLinkReviewRow | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  useEffect(() => {
+  function refetch() {
     setLoading(true);
     setError(null);
     const query = toQuery({ page: String(page), pageSize: "20", ...filters });
@@ -44,7 +47,9 @@ export function TicketLinksReviewSection({ clientes, maquinas }: TicketLinksRevi
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, [filters, page]);
+  }
+
+  useEffect(refetch, [filters, page]);
 
   return (
     <div>
@@ -125,7 +130,29 @@ export function TicketLinksReviewSection({ clientes, maquinas }: TicketLinksRevi
                     <StatusBadge label={quality.label} tone={quality.tone} />
                   </td>
                   <td>
-                    <FutureActionButton label="Corregir ticket" />
+                    {role === "administracion" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCorrectionRow(row);
+                          setDrawerOpen(true);
+                        }}
+                        className="rounded-full border px-2.5 py-1 text-xs font-medium"
+                        style={{ borderColor: "var(--eyg-green-dark)", color: "var(--eyg-green-dark)" }}
+                      >
+                        Corregir ticket
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        title="Requiere rol Administración"
+                        className="cursor-not-allowed rounded-full border px-2.5 py-1 text-xs font-medium"
+                        style={{ borderColor: "var(--eyg-border)", color: "var(--text-muted)", background: "#f2f5f4" }}
+                      >
+                        Corregir ticket
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -133,6 +160,13 @@ export function TicketLinksReviewSection({ clientes, maquinas }: TicketLinksRevi
           </tbody>
         </table>
       </ResponsiveTableShell>
+
+      <TicketLinkCorrectionDrawer
+        open={drawerOpen}
+        row={correctionRow}
+        onClose={() => setDrawerOpen(false)}
+        onApplied={refetch}
+      />
     </div>
   );
 }

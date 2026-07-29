@@ -78,6 +78,19 @@ export interface SearchPagination {
   totalPages: number;
 }
 
+// Gate B (B24/21.12) - "SQL ejecutada" retirado de la experiencia productiva
+// para ambos roles (decisión cerrada de Gate A). Reemplazado por una
+// explicación en lenguaje de negocio: qué entidades se consultaron, qué
+// filtros aplicaron, cómo se relacionan los resultados, y qué límites tiene
+// la vista - NUNCA schema/tabla/columna/join/SQL, ni siquiera en una capacidad
+// técnica separada (se retira, no se restringe).
+export interface SearchQueryExplanation {
+  entitiesSearched: string[];
+  filtersApplied: Array<{ label: string; value: string }>;
+  resultRelation: string;
+  resultLimits: string[];
+}
+
 export interface SearchResponse {
   /** Consulta EFECTIVA (post recorte/tokenización) - nunca el q crudo. */
   query: string;
@@ -87,7 +100,7 @@ export interface SearchResponse {
   pagination: SearchPagination | null;
   queryAdjusted: boolean;
   queryAdjustmentReasons: QueryAdjustmentReason[];
-  queries?: Array<{ label: string; sql: string }>;
+  queryExplanation: SearchQueryExplanation;
 }
 
 export type SearchFiltersResponse = {

@@ -145,7 +145,10 @@ export function ReportsReviewSection({ clientes, maquinas }: ReportsReviewSectio
                     <StatusBadge label={join.label} tone={join.tone} />
                   </td>
                   <td>
-                    <FutureActionButton label="Marcar revisado" />
+                    <FutureActionButton
+                      label="Marcar revisado"
+                      reason="No existe un comando de gobierno para 'marcar reporte revisado' - fuera del catálogo de comandos diseñado (Gate B B8). Usa la Bandeja de incidencias para revisar/descartar los problemas concretos de este reporte."
+                    />
                   </td>
                 </tr>
               );

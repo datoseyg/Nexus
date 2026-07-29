@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
-import { FutureActionButton } from "./FutureActionButton";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
+import { PartAliasCorrectionDrawer } from "./PartAliasCorrectionDrawer";
 import type { AmbiguousPartRow, PaginatedResponse } from "@/types/audit";
 
 interface AmbiguousPartsSectionProps {
   clientes: string[];
   maquinas: string[];
+  /** Ver PartsReviewSection.tsx - misma capacidad (correction:part-alias),
+   * misma razón para reflejar el rol acá en vez de asumirlo. */
+  role: "gerencia" | "administracion";
 }
 
 function toQuery(params: Record<string, string | undefined>): string {
@@ -20,14 +23,16 @@ function toQuery(params: Record<string, string | undefined>): string {
 // Pestaña "Matches ambiguos" - ver docs/MANUAL_REVIEW_VIEW.md § B.
 // Fuente: marts.used_parts_dolibarr_match WHERE match_status =
 // 'AMBIGUOUS_MATCH', agrupado por identificador crudo.
-export function AmbiguousPartsSection({ clientes, maquinas }: AmbiguousPartsSectionProps) {
+export function AmbiguousPartsSection({ clientes, maquinas, role }: AmbiguousPartsSectionProps) {
   const [filters, setFilters] = useState<AuditFilterValues>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<AmbiguousPartRow> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [correctionRow, setCorrectionRow] = useState<AmbiguousPartRow | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  useEffect(() => {
+  function refetch() {
     setLoading(true);
     setError(null);
     const query = toQuery({ page: String(page), pageSize: "20", ...filters });
@@ -39,7 +44,9 @@ export function AmbiguousPartsSection({ clientes, maquinas }: AmbiguousPartsSect
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, [filters, page]);
+  }
+
+  useEffect(refetch, [filters, page]);
 
   return (
     <div>
@@ -112,7 +119,29 @@ export function AmbiguousPartsSection({ clientes, maquinas }: AmbiguousPartsSect
                 <td>
                   <div className="flex items-center gap-2">
                     <span style={{ color: "var(--text-secondary)" }}>Elegir producto candidato correcto</span>
-                    <FutureActionButton label="Elegir candidato" />
+                    {role === "administracion" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCorrectionRow(row);
+                          setDrawerOpen(true);
+                        }}
+                        className="rounded-full border px-2.5 py-1 text-xs font-medium"
+                        style={{ borderColor: "var(--eyg-green-dark)", color: "var(--eyg-green-dark)" }}
+                      >
+                        Resolver
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        title="Requiere rol Administración"
+                        className="cursor-not-allowed rounded-full border px-2.5 py-1 text-xs font-medium"
+                        style={{ borderColor: "var(--eyg-border)", color: "var(--text-muted)", background: "#f2f5f4" }}
+                      >
+                        Resolver
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -120,6 +149,8 @@ export function AmbiguousPartsSection({ clientes, maquinas }: AmbiguousPartsSect
           </tbody>
         </table>
       </ResponsiveTableShell>
+
+      <PartAliasCorrectionDrawer open={drawerOpen} row={correctionRow} onClose={() => setDrawerOpen(false)} onApplied={refetch} />
     </div>
   );
 }
