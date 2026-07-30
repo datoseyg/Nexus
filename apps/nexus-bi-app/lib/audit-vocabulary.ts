@@ -177,3 +177,91 @@ export function evaluationScopeModeLabel(code: string | null | undefined): strin
 export function evaluationTriggeredByLabel(code: string | null | undefined): string {
   return labelOrRaw(EVALUATION_TRIGGERED_BY_LABELS, code);
 }
+
+// Hallazgo + recomendación de negocio por regla (governance.issues.rule_code) -
+// único lugar de traducción, reutilizado por Bandeja/Resumen/exportaciones
+// (nunca una traducción distinta por pantalla, corrección de negocio
+// "mismo issue, mismo nombre en toda la app"). rule_code es un catálogo
+// cerrado (governance.rule_definitions, sql/089) - un código no mapeado cae
+// al título/descripción ya provistos por el backend (rule_title), nunca se
+// inventa una recomendación para una regla desconocida.
+export interface IssueRecommendation {
+  finding: string;
+  recommendation: string;
+  actionLabel: string;
+}
+
+const ISSUE_RECOMMENDATIONS: Record<string, IssueRecommendation> = {
+  PART_NO_MATCH: {
+    finding: "No se identificó un producto",
+    recommendation: "Buscar el producto correcto en el catálogo Dolibarr.",
+    actionLabel: "Resolver"
+  },
+  PART_AMBIGUOUS_MATCH: {
+    finding: "Hay varias coincidencias posibles",
+    recommendation: "Elegir el producto correcto entre los candidatos sugeridos.",
+    actionLabel: "Revisar opciones"
+  },
+  PART_PLACEHOLDER_VALUE: {
+    finding: "Valor genérico o incompleto",
+    recommendation: 'Confirmar si corresponde a "sin repuesto" o elegir el producto correcto.',
+    actionLabel: "Confirmar"
+  },
+  REPORT_QUALITY_DEGRADED: {
+    finding: "Información incompleta en el reporte",
+    recommendation: "Revisar el reporte y completar la información faltante.",
+    actionLabel: "Revisar reporte"
+  },
+  TICKET_LINK_RESTRICTED_OR_MISSING: {
+    finding: "Ticket faltante o no disponible",
+    recommendation: "Confirmar si existe un ticket asociado o registrar que no corresponde.",
+    actionLabel: "Resolver"
+  }
+};
+
+export function issueRecommendation(ruleCode: string | null | undefined, fallbackTitle?: string | null): IssueRecommendation {
+  if (ruleCode && ISSUE_RECOMMENDATIONS[ruleCode]) return ISSUE_RECOMMENDATIONS[ruleCode];
+  return {
+    finding: fallbackTitle ?? "Incidencia detectada",
+    recommendation: "Revisar el detalle para conocer la corrección disponible.",
+    actionLabel: "Revisar"
+  };
+}
+
+// Hallazgo/recomendación de negocio por match_status
+// (marts.used_parts_dolibarr_match.match_status - "Repuestos por revisar" y
+// sus sub-pestañas de Correcciones leen esta vista, no governance.issues
+// directamente, así que usan su propio vocabulario aquí en vez de
+// issueRecommendation). Mismas 4 categorías reales del pipeline - ver
+// matchStatusBadge en components/ui/StatusBadge.tsx (tono visual); estas
+// funciones dan el texto largo de hallazgo/recomendación para la tabla de
+// decisión, nunca el código crudo.
+export function matchStatusFinding(status: string | null | undefined): string {
+  switch (status) {
+    case "NO_MATCH":
+      return "No se identificó un producto";
+    case "AMBIGUOUS_MATCH":
+      return "Hay varias coincidencias posibles";
+    case "PLACEHOLDER_VALUE":
+      return "Valor genérico o incompleto";
+    case "MATCHED":
+      return "Producto identificado";
+    default:
+      return status ?? "-";
+  }
+}
+
+export function matchStatusRecommendation(status: string | null | undefined): { text: string; actionLabel: string } {
+  switch (status) {
+    case "NO_MATCH":
+      return { text: "Buscar el producto correcto en el catálogo Dolibarr.", actionLabel: "Resolver" };
+    case "AMBIGUOUS_MATCH":
+      return { text: "Elegir el producto correcto entre los candidatos sugeridos.", actionLabel: "Revisar opciones" };
+    case "PLACEHOLDER_VALUE":
+      return { text: 'Confirmar si corresponde a "sin repuesto" o elegir el producto correcto.', actionLabel: "Confirmar" };
+    case "MATCHED":
+      return { text: "Validar que la coincidencia sugerida sea correcta.", actionLabel: "Validar" };
+    default:
+      return { text: "Revisar el detalle para más información.", actionLabel: "Revisar" };
+  }
+}

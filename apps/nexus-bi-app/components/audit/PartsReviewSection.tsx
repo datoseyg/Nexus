@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { StatusBadge, matchStatusBadge } from "@/components/ui/StatusBadge";
+import { matchStatusFinding, matchStatusRecommendation } from "@/lib/audit-vocabulary";
 import { PartAliasCorrectionDrawer } from "./PartAliasCorrectionDrawer";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, PartsReviewRow } from "@/types/audit";
@@ -26,11 +27,55 @@ function toQuery(params: Record<string, string | undefined>): string {
   return search.toString();
 }
 
+function contextLine(row: PartsReviewRow): string {
+  const parts = [row.equipment_internal_ids, row.fieldbeat_task_id ? `Reporte ${row.fieldbeat_task_id}` : null, row.fieldbeat_task_date?.slice(0, 10)].filter(Boolean);
+  return parts.join(" · ") || "-";
+}
+
+// Botón de acción de la fila - abre el drawer de corrección gobernada
+// (correction:part-alias) para roles con capacidad; en modo lectura muestra
+// el mismo texto de acción, deshabilitado con el motivo. El label del botón
+// es contextual a la recomendación real (Resolver/Revisar opciones/
+// Confirmar/Validar) - nunca "Resolver" genérico para las cuatro
+// situaciones distintas (sección 5/6 de la corrección de negocio).
+function RowAction({ actionLabel, canAct, onOpen }: { actionLabel: string; canAct: boolean; onOpen: () => void }) {
+  if (!canAct) {
+    return (
+      <button
+        type="button"
+        disabled
+        title="Requiere rol Administración"
+        className="w-full cursor-not-allowed whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold sm:w-auto"
+        style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", background: "var(--nx-page-bg)" }}
+      >
+        {actionLabel}
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="w-full whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-white sm:w-auto"
+      style={{ background: "var(--nx-accent-indigo)" }}
+    >
+      {actionLabel}
+    </button>
+  );
+}
+
 // Pestaña "Repuestos por revisar" - ver docs/MANUAL_REVIEW_VIEW.md § A.
 // Criterio: needs_manual_review = true OR match_status IN (NO_MATCH,
 // AMBIGUOUS_MATCH, PLACEHOLDER_VALUE). "Resolver" ya escribe de forma
 // gobernada (correction:part-alias, PartAliasCorrectionDrawer) - conectado
 // desde la Familia 1 de Gate B.
+//
+// Composición orientada a decisión (corrección de negocio): la tabla nunca
+// intenta mostrar las 12 columnas técnicas crudas (método/confianza/
+// candidatos/ref. Dolibarr) como si fueran de igual importancia que la
+// recomendación - esas viven en el drawer (PartAliasCorrectionDrawer). Las
+// 6 columnas visibles responden directamente qué ocurrió, dónde, qué hacer,
+// cuál es el estado y cómo actuar.
 export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSectionProps) {
   const [filters, setFilters] = useState<AuditFilterValues & { matchStatus?: string }>({});
   const [page, setPage] = useState(1);
@@ -62,7 +107,7 @@ export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSect
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-3">
       <AuditFilterBar
         clientes={clientes}
         maquinas={maquinas}
@@ -74,19 +119,22 @@ export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSect
         }}
         searchPlaceholder="Buscar identificador o nombre de repuesto…"
         extra={
-          <select
-            className="rounded border px-2 py-1.5 text-sm"
-            style={{ borderColor: "var(--eyg-border)", background: "var(--eyg-card)", color: "var(--text-primary)" }}
-            value={filters.matchStatus ?? ""}
-            onChange={event => setFilters(prev => ({ ...prev, matchStatus: event.target.value || undefined }))}
-          >
-            <option value="">Match status (todos)</option>
-            {MATCH_STATUS_OPTIONS.map(s => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1 text-xs">
+            <span style={{ color: "var(--nx-text-secondary)" }}>Tipo de problema</span>
+            <select
+              className="rounded border px-2 py-1.5 text-sm"
+              style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)", color: "var(--nx-text-primary)" }}
+              value={filters.matchStatus ?? ""}
+              onChange={event => setFilters(prev => ({ ...prev, matchStatus: event.target.value || undefined }))}
+            >
+              <option value="">Todos</option>
+              {MATCH_STATUS_OPTIONS.map(s => (
+                <option key={s} value={s}>
+                  {matchStatusFinding(s)}
+                </option>
+              ))}
+            </select>
+          </label>
         }
       />
 
@@ -97,14 +145,13 @@ export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSect
         error={error}
         empty={!loading && !error && (data?.rows.length ?? 0) === 0}
         emptyMessage="Sin repuestos pendientes de revisión para este filtro."
-        maxHeight={480}
         footer={
           data && (
             <>
               <span>
                 Página {data.page} de {data.totalPages}
               </span>
-              <button type="button" onClick={() => setPage(p => p - 1)} disabled={page <= 1} className="rounded border px-2" style={{ borderColor: "var(--eyg-border)" }}>
+              <button type="button" onClick={() => setPage(p => p - 1)} disabled={page <= 1} className="rounded border px-2" style={{ borderColor: "var(--nx-border)" }}>
                 ‹
               </button>
               <button
@@ -112,7 +159,7 @@ export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSect
                 onClick={() => setPage(p => p + 1)}
                 disabled={page >= data.totalPages}
                 className="rounded border px-2"
-                style={{ borderColor: "var(--eyg-border)" }}
+                style={{ borderColor: "var(--nx-border)" }}
               >
                 ›
               </button>
@@ -120,84 +167,103 @@ export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSect
           )
         }
       >
-        <table>
+        {/* Tabla - escritorio/tablet. 6 columnas de decisión (nunca las 12
+            técnicas crudas) para que quepan sin scroll horizontal a
+            1366x768 y la recomendación/acción queden siempre visibles. */}
+        <table className="hidden w-full text-sm md:table">
           <thead>
             <tr>
-              <th>Tarea</th>
-              <th>Fecha</th>
-              <th>Cliente</th>
-              <th>Máquina</th>
-              <th>Identificador crudo</th>
-              <th>Nombre repuesto</th>
-              <th>Cant.</th>
-              <th>Match</th>
-              <th>Método</th>
-              <th>Confianza</th>
-              <th>Candidatos</th>
-              <th>Ref. Dolibarr</th>
-              <th>Acción sugerida</th>
+              <th className="text-left">Repuesto declarado</th>
+              <th className="text-left">Contexto</th>
+              <th className="text-left">Hallazgo</th>
+              <th className="text-left">Recomendación</th>
+              <th className="text-left">Estado</th>
+              <th className="text-left">Acción</th>
             </tr>
           </thead>
           <tbody>
             {data?.rows.map(row => {
-              const badge = matchStatusBadge(row.match_status);
+              const findingTone = matchStatusBadge(row.match_status).tone;
+              const rec = matchStatusRecommendation(row.match_status);
               return (
                 <tr key={row.used_part_id}>
-                  <td>{row.fieldbeat_task_id}</td>
-                  <td>{row.fieldbeat_task_date?.slice(0, 10) ?? "-"}</td>
-                  <td title={row.client_name ?? ""}>{row.client_name ?? "-"}</td>
-                  <td title={row.equipment_internal_ids ?? ""}>{row.equipment_internal_ids ?? "-"}</td>
-                  <td title={row.raw_part_identifier ?? ""}>{row.raw_part_identifier ?? "-"}</td>
-                  <td title={row.part_name ?? ""}>{row.part_name ?? "-"}</td>
-                  <td>{row.quantity ?? "-"}</td>
-                  <td>
-                    <StatusBadge label={badge.label} tone={badge.tone} />
-                  </td>
-                  <td>{row.match_method ?? "-"}</td>
-                  <td>{row.match_confidence ?? "-"}</td>
-                  <td title={row.candidate_dolibarr_product_ids ?? ""}>{row.candidate_dolibarr_product_ids ?? "-"}</td>
-                  <td>{row.dolibarr_ref ?? "-"}</td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <span style={{ color: "var(--text-secondary)" }}>{row.suggested_action}</span>
-                      {role === "administracion" ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCorrectionRow(row);
-                            setDrawerOpen(true);
-                          }}
-                          className="rounded-full border px-2.5 py-1 text-xs font-medium"
-                          style={{ borderColor: "var(--eyg-green-dark)", color: "var(--eyg-green-dark)" }}
-                        >
-                          Resolver
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          title="Requiere rol Administración"
-                          className="cursor-not-allowed rounded-full border px-2.5 py-1 text-xs font-medium"
-                          style={{ borderColor: "var(--eyg-border)", color: "var(--text-muted)", background: "#f2f5f4" }}
-                        >
-                          Resolver
-                        </button>
-                      )}
+                  <td style={{ whiteSpace: "normal" }}>
+                    <div style={{ color: "var(--nx-text-primary)" }}>{row.part_name ?? row.raw_part_identifier ?? "N/A"}</div>
+                    <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                      {row.raw_part_identifier ?? "-"}
+                      {row.quantity ? ` · cant. ${row.quantity}` : ""}
                     </div>
+                  </td>
+                  <td style={{ whiteSpace: "normal" }}>
+                    <div style={{ color: "var(--nx-text-primary)" }}>{row.client_name ?? "-"}</div>
+                    <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                      {contextLine(row)}
+                    </div>
+                  </td>
+                  <td>
+                    <StatusBadge label={matchStatusFinding(row.match_status)} tone={findingTone} size="sm" />
+                  </td>
+                  <td style={{ whiteSpace: "normal", color: "var(--nx-text-primary)" }}>{rec.text}</td>
+                  <td>
+                    <StatusBadge label="Pendiente" tone="warning" size="sm" />
+                  </td>
+                  <td>
+                    <RowAction
+                      actionLabel={rec.actionLabel}
+                      canAct={role === "administracion"}
+                      onOpen={() => {
+                        setCorrectionRow(row);
+                        setDrawerOpen(true);
+                      }}
+                    />
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+
+        {/* Tarjetas - vista real en mobile (< md). */}
+        <div className="flex flex-col gap-2.5 md:hidden">
+          {data?.rows.map(row => {
+            const findingTone = matchStatusBadge(row.match_status).tone;
+            const rec = matchStatusRecommendation(row.match_status);
+            return (
+              <div key={row.used_part_id} className="flex flex-col gap-2 rounded-[var(--nx-radius-card)] border p-3" style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)" }}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-semibold" style={{ color: "var(--nx-text-primary)" }}>
+                      {row.part_name ?? row.raw_part_identifier ?? "N/A"}
+                    </div>
+                    <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                      {row.raw_part_identifier ?? "-"}
+                      {row.quantity ? ` · cant. ${row.quantity}` : ""}
+                    </div>
+                  </div>
+                  <StatusBadge label="Pendiente" tone="warning" size="sm" />
+                </div>
+                <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                  {row.client_name ?? "-"} · {contextLine(row)}
+                </div>
+                <StatusBadge label={matchStatusFinding(row.match_status)} tone={findingTone} size="sm" />
+                <div className="text-sm" style={{ color: "var(--nx-text-primary)" }}>
+                  {rec.text}
+                </div>
+                <RowAction
+                  actionLabel={rec.actionLabel}
+                  canAct={role === "administracion"}
+                  onOpen={() => {
+                    setCorrectionRow(row);
+                    setDrawerOpen(true);
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
       </ResponsiveTableShell>
 
-      <PartAliasCorrectionDrawer
-        open={drawerOpen}
-        row={correctionRow}
-        onClose={() => setDrawerOpen(false)}
-        onApplied={refetch}
-      />
+      <PartAliasCorrectionDrawer open={drawerOpen} row={correctionRow} onClose={() => setDrawerOpen(false)} onApplied={refetch} />
     </div>
   );
 }

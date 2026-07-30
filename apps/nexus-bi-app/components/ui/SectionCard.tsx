@@ -14,21 +14,21 @@ export function SectionCard({ title, description, actions, children, padded = tr
   return (
     <section
       className="rounded-xl border min-w-0"
-      style={{ borderColor: "var(--eyg-border)", background: "var(--eyg-card)", boxShadow: "0 1px 3px rgba(36,48,51,0.07)" }}
+      style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }}
     >
       {(title || actions) && (
         <div
           className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"
-          style={{ borderColor: "var(--eyg-border)" }}
+          style={{ borderColor: "var(--nx-border)" }}
         >
           <div className="min-w-0">
             {title && (
-              <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              <h2 className="text-sm font-semibold" style={{ color: "var(--nx-text-primary)" }}>
                 {title}
               </h2>
             )}
             {description && (
-              <p className="mt-0.5 text-xs" style={{ color: "var(--text-muted)" }}>
+              <p className="mt-0.5 text-xs" style={{ color: "var(--nx-text-secondary)" }}>
                 {description}
               </p>
             )}

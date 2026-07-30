@@ -21,15 +21,15 @@ export function EmptyState({ message, hint, title, description, icon }: EmptySta
   return (
     <div className="flex flex-col items-center gap-1 px-6 py-10 text-center">
       {icon && (
-        <div className="mb-1" style={{ color: "var(--nx-text-muted, var(--text-muted))" }}>
+        <div className="mb-1" style={{ color: "var(--nx-text-muted)" }}>
           {icon}
         </div>
       )}
-      <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+      <p className="text-sm font-medium" style={{ color: "var(--nx-text-secondary)" }}>
         {resolvedTitle}
       </p>
       {resolvedDescription && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <p className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
           {resolvedDescription}
         </p>
       )}

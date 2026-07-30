@@ -25,7 +25,7 @@ export function QualitySummarySection() {
   }, []);
 
   if (error) return <ErrorBanner message={error} />;
-  if (!data) return <p style={{ color: "var(--text-muted)" }}>Cargando resumen de calidad…</p>;
+  if (!data) return <p style={{ color: "var(--nx-text-secondary)" }}>Cargando resumen de calidad…</p>;
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,10 +40,10 @@ export function QualitySummarySection() {
 
       <SectionCard title="Repuestos Dolibarr" description="Universo report-céntrico completo (marts.used_parts_dolibarr_match)">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <MetricCard label="Matched" value={data.partsMatched} tone="success" />
-          <MetricCard label="Sin match" value={data.partsUnmatched} tone="danger" />
-          <MetricCard label="Ambiguos" value={data.partsAmbiguous} tone="warning" />
-          <MetricCard label="Placeholders" value={data.partsPlaceholder} />
+          <MetricCard label="Producto identificado" value={data.partsMatched} tone="success" />
+          <MetricCard label="Sin producto identificado" value={data.partsUnmatched} tone="danger" />
+          <MetricCard label="Varias coincidencias posibles" value={data.partsAmbiguous} tone="warning" />
+          <MetricCard label="Valor genérico o incompleto" value={data.partsPlaceholder} />
         </div>
       </SectionCard>
 

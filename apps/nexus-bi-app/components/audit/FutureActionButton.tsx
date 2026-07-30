@@ -20,7 +20,7 @@ export function FutureActionButton({ label, reason = "Sin comando de gobierno di
       disabled
       title={reason}
       className="cursor-not-allowed rounded-full border px-2.5 py-1 text-xs font-medium"
-      style={{ borderColor: "var(--eyg-border)", color: "var(--text-muted)", background: "#f2f5f4" }}
+      style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", background: "var(--nx-page-bg)" }}
     >
       {label}
     </button>

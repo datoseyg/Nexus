@@ -6,6 +6,8 @@ import { MAX_EXPORT_ROWS } from "@/lib/fieldbeat-reports-queries";
 import { fetchIssuesBandeja } from "@/lib/audit-governance-sql";
 import { runGovernanceQuery } from "@/lib/governance-db";
 import { BANDEJA_HAS_CASE_VALUES, BANDEJA_VERIFICATION_VALUES, enumVal } from "@/lib/audit-bandeja-url-state";
+import { entityTypeLabel, issueRecommendation } from "@/lib/audit-vocabulary";
+import { severityBadge, issueStatusBadge } from "@/components/ui/StatusBadge";
 
 export const runtime = "nodejs";
 
@@ -16,17 +18,30 @@ export const runtime = "nodejs";
 // (lib/csv-export.ts), sin payloads crudos ni columnas fuera del allowlist
 // de la Bandeja. Gerencia puede exportar sin permisos de escritura general
 // (B76: fn_record_export_completed está otorgada también a nexus_app_read).
-const CSV_COLUMNS: Array<{ header: string; key: string }> = [
-  { header: "id", key: "id" },
-  { header: "regla", key: "rule_title" },
-  { header: "severidad", key: "severity" },
-  { header: "estado", key: "status" },
-  { header: "tipo_entidad", key: "entity_type" },
-  { header: "clave_entidad", key: "entity_key" },
-  { header: "primera_deteccion", key: "first_seen_at" },
-  { header: "ultima_deteccion", key: "last_seen_at" },
-  { header: "detectada_actualmente", key: "is_currently_detected" },
-  { header: "caso_activo", key: "active_review_case_id" }
+//
+// Sección 16 de la corrección de negocio de Auditoría: columnas y VALORES
+// de negocio, nunca códigos crudos (rule_code/entity_key técnico/enum sin
+// traducir) - `render` traduce cada valor con el mismo vocabulario que usa
+// la UI (audit-vocabulary.ts/StatusBadge.tsx), para que la exportación
+// diga exactamente lo mismo que la pantalla.
+type IssueExportRow = Awaited<ReturnType<typeof fetchIssuesBandeja>>["rows"][number];
+
+function str(value: unknown): string | null {
+  return value == null ? null : String(value);
+}
+
+const CSV_COLUMNS: Array<{ header: string; render: (row: IssueExportRow) => unknown }> = [
+  { header: "id", render: row => row.id },
+  { header: "tipo_de_incidencia", render: row => row.rule_title },
+  { header: "recomendacion", render: row => issueRecommendation(str(row.rule_code), str(row.rule_title)).recommendation },
+  { header: "prioridad", render: row => severityBadge(str(row.severity)).label },
+  { header: "estado", render: row => issueStatusBadge(str(row.status)).label },
+  { header: "tipo_de_registro_afectado", render: row => entityTypeLabel(str(row.entity_type)) },
+  { header: "registro_afectado", render: row => row.entity_key },
+  { header: "primera_deteccion", render: row => row.first_seen_at },
+  { header: "fecha_de_deteccion", render: row => row.last_seen_at },
+  { header: "detectada_actualmente", render: row => (row.is_currently_detected ? "Sí" : "No") },
+  { header: "caso_activo", render: row => row.active_review_case_id ?? "" }
 ];
 
 export async function GET(request: NextRequest) {
@@ -71,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     const lines = [
       CSV_COLUMNS.map(c => escapeCsvCell(c.header)).join(","),
-      ...rows.map(row => CSV_COLUMNS.map(c => escapeCsvCell(row[c.key])).join(","))
+      ...rows.map(row => CSV_COLUMNS.map(c => escapeCsvCell(c.render(row))).join(","))
     ];
 
     await runGovernanceQuery(

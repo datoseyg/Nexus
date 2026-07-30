@@ -7,7 +7,7 @@ import { FilterBar } from "@/components/ui/FilterBar";
 import { StatusBadge, issueStatusBadge, severityBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { ExplorerDetailDrawer } from "@/components/explorer/ExplorerDetailDrawer";
 import { triggerBlobDownload } from "@/lib/csv-export";
-import { ENTITY_TYPE_LABELS, entityTypeLabel, verificationProcessingStatusLabel, verificationOutcomeLabel } from "@/lib/audit-vocabulary";
+import { ENTITY_TYPE_LABELS, entityTypeLabel, verificationProcessingStatusLabel, verificationOutcomeLabel, issueRecommendation } from "@/lib/audit-vocabulary";
 import {
   BANDEJA_STATUS_VALUES,
   BANDEJA_SEVERITY_VALUES,
@@ -374,7 +374,6 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
         error={error}
         empty={!loading && !error && (data?.rows.length ?? 0) === 0}
         emptyMessage={hasActiveBandejaFilters(filters) ? "Sin incidencias para este filtro." : "Sin incidencias registradas."}
-        maxHeight={520}
         footer={
           data && (
             <>
@@ -403,60 +402,58 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
           )
         }
       >
-        {/* Tabla - solo escritorio/tablet ancho. En mobile una tabla de 7
-            columnas se vuelve ilegible incluso con scroll horizontal (QA
-            visual previo: solo 2 columnas visibles) - la alternativa de
-            tarjetas de abajo es la vista real en mobile, no un fallback
-            degradado. */}
+        {/* Tabla - solo escritorio/tablet ancho. Columnas consolidadas
+            (incidencia+entidad, contexto+caso, recomendación siempre
+            visible) para que quepan sin scroll horizontal a 1366x768 y la
+            acción quede siempre a la vista - la alternativa de tarjetas de
+            abajo es la vista real en mobile, no un fallback degradado. */}
         <table className="hidden w-full text-sm md:table">
           <thead>
             <tr>
-              <th className="text-left">Regla</th>
-              <th className="text-left">Severidad</th>
+              <th className="text-left">Incidencia</th>
+              <th className="text-left">Contexto</th>
+              <th className="text-left">Prioridad</th>
               <th className="text-left">Estado</th>
-              <th className="text-left">Entidad</th>
-              <th className="text-left">Verificación</th>
-              <th className="text-left">Última detección</th>
-              <th className="text-left">Caso activo</th>
-              <th className="text-left"></th>
+              <th className="text-left">Recomendación</th>
+              <th className="text-left">Acción</th>
             </tr>
           </thead>
           <tbody>
             {data?.rows.map(row => {
               const vBadge = verificationBadge(row);
+              const rec = issueRecommendation(row.rule_code, row.rule_title);
               return (
-                <tr
-                  key={row.id}
-                  onClick={() => setSelectedIssueId(row.id)}
-                  style={{ cursor: "pointer" }}
-                  tabIndex={0}
-                  onKeyDown={event => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      setSelectedIssueId(row.id);
-                    }
-                  }}
-                >
-                  <td>{row.rule_title}</td>
+                <tr key={row.id}>
+                  <td style={{ whiteSpace: "normal" }}>
+                    <div style={{ color: "var(--nx-text-primary)" }}>{row.rule_title}</div>
+                    <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                      {entityTypeLabel(row.entity_type)}: {row.entity_key}
+                    </div>
+                  </td>
+                  <td className="text-xs" style={{ whiteSpace: "normal", color: "var(--nx-text-secondary)" }}>
+                    {row.last_seen_at ? `Detectado ${new Date(row.last_seen_at).toLocaleDateString("es-CL")}` : "-"}
+                    {row.active_review_case_id ? ` · Caso #${row.active_review_case_id}` : ""}
+                  </td>
                   <td>
                     <StatusBadge {...severityBadge(row.severity)} size="sm" />
                   </td>
                   <td>
-                    <StatusBadge {...issueStatusBadge(row.status)} size="sm" />
+                    <div className="flex flex-col gap-1">
+                      <StatusBadge {...issueStatusBadge(row.status)} size="sm" />
+                      {vBadge && <StatusBadge {...vBadge} size="sm" />}
+                    </div>
                   </td>
+                  <td style={{ whiteSpace: "normal", color: "var(--nx-text-primary)" }}>{rec.recommendation}</td>
                   <td>
-                    {entityTypeLabel(row.entity_type)}: {row.entity_key}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIssueId(row.id)}
+                      className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+                      style={{ background: "var(--nx-accent-indigo)" }}
+                    >
+                      {rec.actionLabel}
+                    </button>
                   </td>
-                  <td>{vBadge ? <StatusBadge {...vBadge} size="sm" /> : <span style={{ color: "var(--nx-text-secondary)" }}>-</span>}</td>
-                  <td>{row.last_seen_at ? new Date(row.last_seen_at).toLocaleString("es-CL") : "-"}</td>
-                  <td>
-                    {row.active_review_case_id ? (
-                      <span style={{ color: "var(--nx-text-secondary)" }}>Caso #{row.active_review_case_id}</span>
-                    ) : (
-                      <span style={{ color: "var(--nx-text-secondary)" }}>-</span>
-                    )}
-                  </td>
-                  <td style={{ color: "var(--nx-accent-indigo)" }}>Ver detalle ›</td>
                 </tr>
               );
             })}
@@ -467,14 +464,9 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
         <div className="flex flex-col gap-2.5 md:hidden">
           {data?.rows.map(row => {
             const vBadge = verificationBadge(row);
+            const rec = issueRecommendation(row.rule_code, row.rule_title);
             return (
-              <button
-                key={row.id}
-                type="button"
-                onClick={() => setSelectedIssueId(row.id)}
-                className="flex flex-col gap-2 rounded-[var(--nx-radius-card)] border p-3 text-left"
-                style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)" }}
-              >
+              <div key={row.id} className="flex flex-col gap-2 rounded-[var(--nx-radius-card)] border p-3" style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)" }}>
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-sm font-semibold" style={{ color: "var(--nx-text-primary)" }}>
                     {row.rule_title}
@@ -488,11 +480,20 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
                 </div>
                 <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
                   {entityTypeLabel(row.entity_type)}: {row.entity_key}
+                  {row.last_seen_at ? ` · Detectado ${new Date(row.last_seen_at).toLocaleDateString("es-CL")}` : ""}
                 </div>
-                <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
-                  Última detección: {row.last_seen_at ? new Date(row.last_seen_at).toLocaleString("es-CL") : "-"}
+                <div className="text-sm" style={{ color: "var(--nx-text-primary)" }}>
+                  {rec.recommendation}
                 </div>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIssueId(row.id)}
+                  className="w-full rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+                  style={{ background: "var(--nx-accent-indigo)" }}
+                >
+                  {rec.actionLabel}
+                </button>
+              </div>
             );
           })}
         </div>

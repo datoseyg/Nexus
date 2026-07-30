@@ -12,12 +12,12 @@ interface SearchQueryExplanationPanelProps {
 // existe una versión "técnica" de esto en ningún lado del producto.
 export function SearchQueryExplanationPanel({ explanation }: SearchQueryExplanationPanelProps) {
   return (
-    <details className="rounded-lg border p-3" style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}>
-      <summary className="cursor-pointer text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+    <details className="rounded-lg border p-3" style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)" }}>
+      <summary className="cursor-pointer text-sm font-medium" style={{ color: "var(--nx-text-secondary)" }}>
         Cómo se buscó esto
       </summary>
 
-      <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
+      <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: "var(--nx-text-primary)" }}>
         <p>
           Se buscó en: <strong>{explanation.entitiesSearched.join(", ")}</strong>.
         </p>
@@ -35,7 +35,7 @@ export function SearchQueryExplanationPanel({ explanation }: SearchQueryExplanat
         )}
         <p>{explanation.resultRelation}</p>
         {explanation.resultLimits.map(limit => (
-          <p key={limit} style={{ color: "var(--text-muted)" }}>
+          <p key={limit} style={{ color: "var(--nx-text-secondary)" }}>
             {limit}
           </p>
         ))}

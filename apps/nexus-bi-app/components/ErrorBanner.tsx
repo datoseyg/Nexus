@@ -10,15 +10,15 @@ export function ErrorBanner({ message, code }: ErrorBannerProps) {
     <div
       className="rounded-lg border p-4 text-sm"
       style={{
-        borderColor: "var(--status-critical)",
-        background: "var(--surface-1)",
-        color: "var(--text-primary)"
+        borderColor: "var(--nx-danger-fg, #c0392b)",
+        background: "var(--nx-card-bg)",
+        color: "var(--nx-text-primary)"
       }}
     >
-      <p className="font-semibold" style={{ color: "var(--status-critical)" }}>
+      <p className="font-semibold" style={{ color: "var(--nx-danger-fg, #c0392b)" }}>
         {code === "DB_LOCKED" ? "Base de datos bloqueada" : code === "DB_NOT_FOUND" ? "Base de datos no encontrada" : "Error"}
       </p>
-      <p className="mt-1" style={{ color: "var(--text-secondary)" }}>
+      <p className="mt-1" style={{ color: "var(--nx-text-secondary)" }}>
         {message}
       </p>
     </div>

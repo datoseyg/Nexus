@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MiniBarTableCell } from "@/components/dashboard/MiniBarTableCell";
 import { FutureActionButton } from "./FutureActionButton";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
@@ -64,21 +65,20 @@ export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionP
       />
 
       <ResponsiveTableShell
-        title="Placeholders / valores no informativos"
+        title="Valores incompletos"
         count={data?.totalRows}
         countLabel="valores distintos"
         loading={loading}
         error={error}
         empty={!loading && !error && (data?.rows.length ?? 0) === 0}
-        emptyMessage="Sin placeholders para este filtro."
-        maxHeight={480}
+        emptyMessage="Sin valores incompletos para este filtro."
         footer={
           data && (
             <>
               <span>
                 Página {data.page} de {data.totalPages}
               </span>
-              <button type="button" onClick={() => setPage(p => p - 1)} disabled={page <= 1} className="rounded border px-2" style={{ borderColor: "var(--eyg-border)" }}>
+              <button type="button" onClick={() => setPage(p => p - 1)} disabled={page <= 1} className="rounded border px-2" style={{ borderColor: "var(--nx-border)" }}>
                 ‹
               </button>
               <button
@@ -86,7 +86,7 @@ export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionP
                 onClick={() => setPage(p => p + 1)}
                 disabled={page >= data.totalPages}
                 className="rounded border px-2"
-                style={{ borderColor: "var(--eyg-border)" }}
+                style={{ borderColor: "var(--nx-border)" }}
               >
                 ›
               </button>
@@ -97,28 +97,34 @@ export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionP
         <table>
           <thead>
             <tr>
-              <th>Valor crudo</th>
-              <th>Ejemplo de nombre de repuesto</th>
-              <th>Ocurrencias</th>
-              <th>Acción sugerida</th>
+              <th>Valor declarado</th>
+              <th>Hallazgo</th>
+              <th>Frecuencia</th>
+              <th>Recomendación</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>
             {data?.rows.map(row => (
               <tr key={row.raw_part_identifier}>
-                <td title={row.raw_part_identifier}>{row.raw_part_identifier}</td>
-                <td title={row.part_name_sample ?? ""}>{row.part_name_sample ?? "-"}</td>
+                <td style={{ whiteSpace: "normal" }}>
+                  <div style={{ color: "var(--nx-text-primary)" }}>{row.part_name_sample ?? row.raw_part_identifier}</div>
+                  <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                    {row.raw_part_identifier}
+                  </div>
+                </td>
+                <td>
+                  <StatusBadge label="Valor genérico o incompleto" tone="neutral" size="sm" />
+                </td>
                 <td>
                   <MiniBarTableCell value={row.occurrences} max={maxOccurrences} />
                 </td>
+                <td style={{ whiteSpace: "normal", color: "var(--nx-text-primary)" }}>Confirmar si corresponde a un repuesto real o registrarlo como valor sin repuesto.</td>
                 <td>
-                  <div className="flex items-center gap-2">
-                    <span style={{ color: "var(--text-secondary)" }}>Marcar como placeholder válido o crear regla de exclusión</span>
-                    <FutureActionButton
-                      label="Confirmar"
-                      reason="No existe un comando de gobierno para 'marcar placeholder válido' ni un editor de reglas (Gate A: nunca un editor SQL de reglas) - fuera del catálogo de comandos diseñado."
-                    />
-                  </div>
+                  <FutureActionButton
+                    label="Confirmar"
+                    reason="Aún no existe un comando de gobierno para confirmar un valor genérico agrupado - cada ocurrencia se resuelve individualmente desde 'Repuestos sin identificar'."
+                  />
                 </td>
               </tr>
             ))}

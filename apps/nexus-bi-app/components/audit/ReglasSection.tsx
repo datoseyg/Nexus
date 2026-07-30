@@ -52,39 +52,47 @@ export function ReglasSection() {
       error={error}
       empty={!loading && !error && (rows?.length ?? 0) === 0}
       emptyMessage="Sin reglas registradas."
-      maxHeight={520}
     >
+      {/* 4 columnas (no 7) para caber sin scroll horizontal a 1366px -
+          severidad/universo afectado se agrupan como badges bajo una sola
+          columna, y estado/última evaluación/incidencias abiertas se
+          combinan bajo "Estado". La descripción envuelve en varias líneas
+          en vez de truncar con elipsis (sección 10: "no truncar la
+          descripción si hay espacio vertical disponible"). */}
       <table className="hidden w-full text-sm md:table">
         <thead>
           <tr>
             <th className="text-left">Regla</th>
             <th className="text-left">Descripción</th>
-            <th className="text-left">Severidad</th>
-            <th className="text-left">Entidad</th>
+            <th className="text-left">Alcance</th>
             <th className="text-left">Estado</th>
-            <th className="text-left">Última evaluación</th>
-            <th className="text-left">Incidencias abiertas</th>
           </tr>
         </thead>
         <tbody>
           {rows?.map(row => (
             <tr key={row.rule_code}>
-              <td>
+              <td style={{ whiteSpace: "normal", maxWidth: 220 }}>
                 <div style={{ color: "var(--nx-text-primary)" }}>{row.title}</div>
                 <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
                   {row.rule_code} · v{row.active_rule_version}
                 </div>
               </td>
-              <td title={row.description}>{row.description}</td>
+              <td style={{ whiteSpace: "normal", maxWidth: 420 }}>{row.description}</td>
               <td>
-                <StatusBadge {...severityBadge(row.default_severity)} size="sm" />
+                <div className="flex flex-col gap-1">
+                  <StatusBadge {...severityBadge(row.default_severity)} size="sm" />
+                  <StatusBadge label={entityTypeLabel(row.entity_type)} tone="neutral" size="sm" />
+                </div>
               </td>
-              <td>{entityTypeLabel(row.entity_type)}</td>
-              <td>
+              <td style={{ whiteSpace: "normal" }}>
                 <StatusBadge label={row.is_active ? "Activa" : "Inactiva"} tone={row.is_active ? "success" : "neutral"} size="sm" />
+                <div className="mt-1 text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                  {row.open_issue_count} incidencia{row.open_issue_count === "1" ? "" : "s"} abierta{row.open_issue_count === "1" ? "" : "s"}
+                </div>
+                <div className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                  {row.last_evaluated_at ? `Evaluada ${new Date(row.last_evaluated_at).toLocaleDateString("es-CL")}` : "Nunca evaluada"}
+                </div>
               </td>
-              <td>{row.last_evaluated_at ? new Date(row.last_evaluated_at).toLocaleString("es-CL") : "Nunca evaluada"}</td>
-              <td>{row.open_issue_count}</td>
             </tr>
           ))}
         </tbody>

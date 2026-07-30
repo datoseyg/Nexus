@@ -20,12 +20,12 @@ interface CorreccionesSectionProps {
 type SubTab = "aplicar-parts" | "aplicar-ambiguous" | "aplicar-placeholders" | "aplicar-reports" | "aplicar-tickets" | "historial";
 
 const SUB_TABS: Array<{ key: SubTab; label: string }> = [
-  { key: "aplicar-parts", label: "Repuestos por revisar" },
-  { key: "aplicar-ambiguous", label: "Matches ambiguos" },
-  { key: "aplicar-placeholders", label: "Placeholders" },
-  { key: "aplicar-reports", label: "Reportes con revisión requerida" },
-  { key: "aplicar-tickets", label: "Tickets faltantes o restringidos" },
-  { key: "historial", label: "Historial de versiones" }
+  { key: "aplicar-parts", label: "Repuestos sin identificar" },
+  { key: "aplicar-ambiguous", label: "Coincidencias que requieren decisión" },
+  { key: "aplicar-placeholders", label: "Valores incompletos" },
+  { key: "aplicar-reports", label: "Reportes con información pendiente" },
+  { key: "aplicar-tickets", label: "Tickets sin vincular" },
+  { key: "historial", label: "Historial de correcciones" }
 ];
 
 const CORRECTION_TYPE_OPTIONS = ["part-alias", "technician-identity", "ticket-link", "equipment-identification"];
@@ -165,7 +165,6 @@ function VersionsHistory() {
         error={error}
         empty={!loading && !error && (data?.rows.length ?? 0) === 0}
         emptyMessage="Sin correcciones registradas para este filtro."
-        maxHeight={480}
         footer={
           data && (
             <>
