@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { glob } from "node:fs/promises";
 
-const directories = ["test/after-hours", "test/audit", "test/auth", "test/fieldbeat"];
+const directories = ["test/after-hours", "test/audit", "test/auth", "test/explorer", "test/fieldbeat"];
 const files = [];
 
 for (const directory of directories) {

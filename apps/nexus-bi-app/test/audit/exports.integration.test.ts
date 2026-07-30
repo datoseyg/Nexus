@@ -192,10 +192,14 @@ test("GET /api/explorer/[entity]/export - integración (entidad issues)", { skip
     const text = await response.text();
     // entity_key no está en listColumns de "issues" (B21 - allowlist propio
     // de la tabla en pantalla, no expone la clave de entidad cruda) - se
-    // verifica el header real y que el universo incluye al menos el fixture
-    // (rule_code + entity_type coinciden, aunque no de forma única).
-    assert.ok(text.startsWith("Regla,Severidad,Estado,Entidad,"));
-    assert.ok(text.includes("PART_NO_MATCH"));
+    // verifica el header real y que el universo incluye al menos el fixture,
+    // identificado por su TÍTULO de negocio (governance.rule_definitions.title,
+    // "Repuesto sin coincidencia" para PART_NO_MATCH v1) - nunca por el
+    // rule_code crudo, que es exactamente lo que esta exportación no debe
+    // mostrar (corrección de negocio de Auditoría, sección 16/17).
+    assert.ok(text.startsWith("Regla,Severidad,Estado,Entidad afectada,"));
+    assert.ok(text.includes("Repuesto sin coincidencia"));
+    assert.ok(!text.includes("PART_NO_MATCH"), "el código crudo de la regla nunca debe aparecer en la exportación de negocio");
 
     const events = await adminPool.query(
       `SELECT after_state FROM governance.command_events WHERE event_type = 'EXPORT_COMPLETED' AND actor_user_id = $1 ORDER BY id DESC LIMIT 1`,

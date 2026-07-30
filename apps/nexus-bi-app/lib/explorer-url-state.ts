@@ -29,6 +29,12 @@ export interface ExplorerUrlState {
   page: number;
   q: string;
   filters: ExplorerFilters;
+  /** Clave del detalle abierto (canónica de la entidad activa) - vive en la
+   * URL, nunca solo en useState local, para que "Ver equipo"/"Ver cliente"
+   * desde OTRA entidad (ej. el detalle de un Contrato) navegue reemplazando
+   * el contenido vía URL canónica en vez de apilar un segundo drawer sobre
+   * el primero (un solo `key` a la vez, igual que un solo drawer a la vez). */
+  key?: string;
 }
 
 /** Un valor de entidad inválido o ausente siempre resuelve a la entidad
@@ -43,7 +49,8 @@ export function readExplorerUrlState(params: URLSearchParams): ExplorerUrlState 
     const v = params.get(key)?.trim();
     if (v) filters[key] = v;
   }
-  return { entity, page, q, filters };
+  const key = params.get("key")?.trim() || undefined;
+  return { entity, page, q, filters, key };
 }
 
 /** Nunca escribe page=1/q vacío/filtros vacíos en la URL (son los defaults). */
@@ -56,6 +63,7 @@ export function buildExplorerQueryString(state: ExplorerUrlState): string {
     const v = state.filters[key];
     if (v) params.set(key, v);
   }
+  if (state.key) params.set("key", state.key);
   return params.toString();
 }
 

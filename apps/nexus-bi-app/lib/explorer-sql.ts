@@ -417,21 +417,64 @@ export async function fetchIssueDetail(id: string) {
 // la práctica" pero sin garantía de unicidad exacta) - un cliente sin match
 // simplemente muestra conteos en 0, nunca un error.
 // =============================================================================
-const CLIENTS_FILTER_COLUMNS = ["c.client_name", "c.city"];
+// Identidad de negocio de Cliente (corrección de duplicados, ver hallazgo
+// real confirmado por lectura directa de processed.fieldbeat_clients): la
+// tabla fuente tiene MÚLTIPLES filas físicas (client_key distinto) para el
+// mismo cliente real - típicamente una con `rut` capturado y otra con
+// `rut` NULL, a veces con la misma dirección repetida, a veces con
+// dirección NULL en la fila incompleta. `rut` NUNCA es la clave canónica:
+// se confirmó un caso real donde dos clientes de nombre distinto (ACME y
+// HOSPITAL CARLOS VAN BUREN (SSVSA)) comparten el mismo valor de `rut` en
+// esta base, y otro caso (EYG MEDICAL SYSTEMS LTDA.) donde el mismo RUT real
+// aparece formateado de 2 formas distintas ("76.089.058-8"/"76089058-8") -
+// agrupar por rut normalizado habría fusionado clientes distintos en el
+// primer caso y seguido separando el mismo cliente en el segundo. La clave
+// canónica real y estable en esta fuente es el nombre normalizado
+// (UPPER(TRIM(client_name))) - confirmado exhaustivamente: agrupando por
+// este valor, las 43 filas físicas colapsan a exactamente 26 clientes
+// reales (26 = COUNT(DISTINCT client_name) ya observado), sin fusionar
+// ningún par de nombres genuinamente distintos (ej. "UC CHRISTUS - CECA" y
+// "UC CHRISTUS - SCA" siguen siendo 2 filas, comparten rut pero tienen
+// nombre distinto - se conservan separadas a propósito).
+//
+// Ubicaciones reales (no filas físicas): `location_count` cuenta
+// direcciones DISTINTAS no nulas (GREATEST(...,1) porque un cliente sin
+// ninguna dirección capturada sigue siendo 1 ubicación, no 0) - una fila
+// duplicada con la MISMA dirección (el caso más común) o con dirección NULL
+// (fila incompleta) nunca cuenta como una sede adicional; solo direcciones
+// realmente distintas (ej. ACME Santiago vs ACME Rancagua) lo hacen.
+const CLIENTS_CANONICAL_CTE = `
+  WITH canonical_clients AS (
+    SELECT
+      UPPER(TRIM(c.client_name)) AS canonical_client_key,
+      (ARRAY_AGG(c.client_name ORDER BY (c.address_raw IS NULL), c.client_key))[1] AS client_name,
+      (ARRAY_AGG(c.city ORDER BY (c.address_raw IS NULL), c.client_key))[1] AS city,
+      (ARRAY_AGG(c.commune ORDER BY (c.address_raw IS NULL), c.client_key))[1] AS commune,
+      (ARRAY_AGG(c.country ORDER BY (c.address_raw IS NULL), c.client_key))[1] AS country,
+      (ARRAY_AGG(c.address_raw ORDER BY (c.address_raw IS NULL), c.client_key))[1] AS address_raw,
+      GREATEST(COUNT(DISTINCT c.address_raw) FILTER (WHERE c.address_raw IS NOT NULL), 1) AS location_count
+    FROM processed.fieldbeat_clients c
+    GROUP BY UPPER(TRIM(c.client_name))
+  )
+`;
+const CLIENTS_FILTER_COLUMNS = ["canonical_clients.client_name", "canonical_clients.city"];
 
 export function buildClientsListQuery(pusher: ParamPusher, limit: number, offset: number, filter?: string): SqlQuery {
   const cond = ilikeConditions(pusher, filter, CLIENTS_FILTER_COLUMNS);
   const sql = `
+    ${CLIENTS_CANONICAL_CTE}
     SELECT
-      c.client_key, c.client_name, c.city, c.commune, c.country,
+      canonical_clients.canonical_client_key AS client_key,
+      canonical_clients.client_name, canonical_clients.city, canonical_clients.commune, canonical_clients.country,
+      canonical_clients.location_count,
       COALESCE(g.fieldbeat_report_count, 0) AS report_count,
       COALESCE(g.total_tickets, 0) AS ticket_count,
       (SELECT ARRAY_AGG(r.fieldbeat_task_id::text) FROM marts.fieldbeat_report_dolibarr_operational_view r
-        WHERE r.client_name = c.client_name) AS report_task_ids
-    FROM processed.fieldbeat_clients c
-    LEFT JOIN gold.client_service_profile g ON g.client_name = c.client_name
+        WHERE UPPER(TRIM(r.client_name)) = canonical_clients.canonical_client_key) AS report_task_ids
+    FROM canonical_clients
+    LEFT JOIN gold.client_service_profile g ON UPPER(TRIM(g.client_name)) = canonical_clients.canonical_client_key
     ${cond ? `WHERE ${cond}` : ""}
-    ORDER BY report_count DESC, c.client_name ASC
+    ORDER BY report_count DESC, canonical_clients.client_name ASC
     LIMIT ${limit} OFFSET ${offset}
   `;
   return { sql, params: pusher.params };
@@ -440,70 +483,289 @@ export function buildClientsListQuery(pusher: ParamPusher, limit: number, offset
 export async function countClientsTotal(filter?: string): Promise<number> {
   const pusher = createParamPusher();
   const cond = ilikeConditions(pusher, filter, CLIENTS_FILTER_COLUMNS);
-  const rows = await runQuery<{ n: string }>(`SELECT COUNT(*) AS n FROM processed.fieldbeat_clients c ${cond ? `WHERE ${cond}` : ""}`, pusher.params);
+  const rows = await runQuery<{ n: string }>(
+    `${CLIENTS_CANONICAL_CTE} SELECT COUNT(*) AS n FROM canonical_clients ${cond ? `WHERE ${cond}` : ""}`,
+    pusher.params
+  );
   return Number(rows[0]?.n ?? 0);
 }
 
+// Identidad canónica de Equipo (duplicación real confirmada leyendo
+// directamente processed.fieldbeat_equipments - 85 filas físicas para
+// exactamente 58 equipos reales). Dos causas distintas, ambas confirmadas
+// con datos reales, ninguna resoluble agrupando solo por el identificador
+// visible (internal_id):
+//  1. equipment_key = FIELDBEAT_EQUIPMENT|<uuid>|<internal_id> depende de
+//     equipment_uuid (el "id" que FieldBeat adjunta al equipo DENTRO de cada
+//     reporte) - ese uuid es inestable entre ocurrencias del MISMO equipo
+//     físico: a veces ausente (cadena vacía), a veces un uuid real, a veces
+//     literalmente el propio internal_id repetido como "id" (dato de origen,
+//     no de esta app). Confirmado: "Linac-152171" tiene equipment_key
+//     ".../0f2acfc5-.../Linac-152171" en casi todas sus ocurrencias, pero
+//     ".../<vacío>/Linac-152171" en al menos una - dos filas físicas para un
+//     solo equipo real, sin relación con mayúsculas/minúsculas.
+//  2. internal_id tiene variantes de mayúsculas/minúsculas para el MISMO
+//     equipo (confirmado: "LINAC-153038" vs "Linac-153038").
+// Además, e.client_key hereda la MISMA fragmentación ya corregida para
+// Clientes (fila con rut / fila sin rut, ver CLIENTS_CANONICAL_CTE) -
+// agrupar solo por (client_key crudo, internal_id normalizado) NO alcanza
+// (quedan 72 grupos, no 58). La identidad real y estable reutiliza
+// canonical_clients (arriba) en vez de reinventar la canonicalización de
+// cliente acá: (nombre de cliente CANÓNICO, internal_id normalizado) -
+// confirmado exhaustivamente que agrupando así, las 85 filas físicas
+// colapsan a exactamente 58 equipos reales (mismo número que arroja
+// COUNT(DISTINCT UPPER(TRIM(internal_id))) sobre el export previo, sin
+// depender de client_key) - sin fusionar equipos de clientes distintos,
+// porque el nombre de cliente sigue formando parte de la clave.
+// source_equipment_keys (todas las filas físicas que colapsaron acá) es lo
+// que permite luego unir contra config.contract_equipment_analysis.
+// fieldbeat_equipment_key sin importar CUÁL de las filas físicas haya sido
+// la que el matcher de contratos efectivamente enlazó.
+const EQUIPMENT_CANONICAL_CTE = `${CLIENTS_CANONICAL_CTE},
+  canonical_equipment AS (
+    SELECT
+      COALESCE(cc.canonical_client_key, e.client_key) AS client_key,
+      COALESCE(cc.client_name, e.client_key) AS client_name,
+      UPPER(TRIM(e.internal_id)) AS internal_id,
+      COALESCE(cc.canonical_client_key, e.client_key) || '::' || UPPER(TRIM(e.internal_id)) AS equipment_key,
+      (ARRAY_AGG(e.equipment_type) FILTER (WHERE e.equipment_type IS NOT NULL))[1] AS equipment_type,
+      ARRAY_AGG(DISTINCT e.equipment_key) AS source_equipment_keys
+    FROM processed.fieldbeat_equipments e
+    LEFT JOIN processed.fieldbeat_clients c ON c.client_key = e.client_key
+    LEFT JOIN canonical_clients cc ON cc.canonical_client_key = UPPER(TRIM(c.client_name))
+    GROUP BY 1, 2, 3
+  )
+`;
+
+// Candidatos de contrato para un equipo canónico - agrega TODOS los
+// contratos vigentes (is_current) cuyo fieldbeat_equipment_key coincida con
+// CUALQUIERA de las filas físicas que colapsaron en este equipo (nunca solo
+// la primera/última). En los datos reales de hoy nunca hay más de 1 modelo
+// distinto por equipo canónico (verificado), pero la agregación nunca elige
+// uno arbitrariamente vía MAX/MIN/primera fila: si alguna vez hubiera 2+
+// contratos en desacuerdo, ambos valores viajan juntos (join " / " en el
+// formateador de columna, ver explorer-entity-config.ts) en vez de que uno
+// oculte al otro.
+const EQUIPMENT_CONTRACT_CANDIDATES_LATERAL = `
+  LEFT JOIN LATERAL (
+    SELECT
+      ARRAY_AGG(DISTINCT ca.equipment_model) AS equipment_models,
+      ARRAY_AGG(DISTINCT ca.serial_number) FILTER (WHERE ca.serial_number IS NOT NULL) AS serial_numbers,
+      ARRAY_AGG(DISTINCT ca.contract_status_code) AS contract_status_codes,
+      ARRAY_AGG(DISTINCT ca.warranty_end_date) FILTER (WHERE ca.warranty_end_date IS NOT NULL) AS warranty_end_dates,
+      ARRAY_AGG(DISTINCT ca.match_status) AS match_statuses,
+      ARRAY_AGG(DISTINCT ca.equipment_key) AS contract_keys,
+      COUNT(DISTINCT ca.equipment_key) AS contract_count,
+      -- Mantenimiento preventivo (Q Mant Prev x Año) - ver preventiveMaintenanceLabel
+      -- en lib/contracts-vocabulary.ts: la ÚNICA cifra contractual real con
+      -- unidad/periodo propios en la fuente (no existe un campo de "horas
+      -- contractuales"). Min/max/rule viajan juntos por fila (nunca mezclados
+      -- entre equipos distintos) para que el cliente pueda listarlos sin sumar
+      -- unidades incompatibles.
+      ARRAY_AGG(DISTINCT ca.preventive_maintenance_min) AS preventive_maintenance_mins,
+      ARRAY_AGG(DISTINCT ca.preventive_maintenance_max) AS preventive_maintenance_maxs,
+      ARRAY_AGG(DISTINCT ca.preventive_maintenance_rule) FILTER (WHERE ca.preventive_maintenance_rule IS NOT NULL) AS preventive_maintenance_rules
+    FROM config.contract_equipment_analysis ca
+    WHERE ca.is_current = true AND ca.fieldbeat_equipment_key = ANY(canonical_equipment.source_equipment_keys)
+  ) contract ON true
+`;
+
+// Resolución de modelo (nunca MAX/MIN/primera fila): RESOLVED cuando los
+// contratos vigentes vinculados concuerdan en exactamente 1 modelo (el caso
+// real de hoy, siempre - verificado, 0 conflictos en los datos actuales),
+// AMBIGUOUS cuando hay 2+ modelos distintos (model queda NULL a propósito -
+// la UI muestra "Modelo por confirmar" en vez de elegir uno), UNKNOWN cuando
+// no hay ningún contrato vigente vinculado. equipment_models (el arreglo
+// completo) sigue disponible aparte para mostrar los candidatos + procedencia
+// en el detalle, nunca se pierde aunque el campo `model` quede en NULL.
+const EQUIPMENT_MODEL_RESOLUTION_COLUMNS = `
+  CASE WHEN COALESCE(array_length(contract.equipment_models, 1), 0) = 1 THEN contract.equipment_models[1] ELSE NULL END AS model,
+  CASE
+    WHEN COALESCE(array_length(contract.equipment_models, 1), 0) = 0 THEN 'UNKNOWN'
+    WHEN array_length(contract.equipment_models, 1) = 1 THEN 'RESOLVED'
+    ELSE 'AMBIGUOUS'
+  END AS model_resolution_status
+`;
+
+// Detalle de Cliente - el `clientKey` recibido es ahora la clave canónica
+// (UPPER(TRIM(client_name)), ver CLIENTS_CANONICAL_CTE), no un client_key
+// físico exacto. Un cliente real puede tener VARIAS filas físicas en
+// processed.fieldbeat_clients (client_key distinto) - se resuelven todas
+// primero (nunca se asume una sola), y esas claves físicas son las que se
+// usan para el FK real de equipment.client_key (processed.fieldbeat_equipments
+// referencia el client_key físico de origen, no el nombre canónico - un
+// equipo asociado a la fila "sin rut" de un cliente no debe desaparecer del
+// detalle solo porque ahora navegamos por nombre).
 export async function fetchClientDetail(clientKey: string) {
-  const summaryRows = await runQuery<Record<string, unknown>>(
-    `SELECT c.client_key, c.client_name, c.city, c.commune, c.country, c.address_raw,
-            COALESCE(g.total_tickets, 0) AS ticket_count,
-            COALESCE(g.used_parts_count, 0) AS used_parts_count
-     FROM processed.fieldbeat_clients c
-     LEFT JOIN gold.client_service_profile g ON g.client_name = c.client_name
-     WHERE c.client_key = $1`,
-    [clientKey]
-  );
-  if (summaryRows.length === 0) return null;
-  const clientName = summaryRows[0].client_name as string;
-  // report_count se cuenta en vivo contra marts (no desde gold.client_service_profile,
-  // que puede quedar desactualizado frente a la carga más reciente - confirmado real
-  // durante la corrección de fidelidad visual: la misma inconsistencia se corrigió
-  // en buildClientsListQuery/enrichWithActiveIssueCounts, MISMA base acá para que
-  // listado y detalle muestren siempre el mismo número).
-  const [equipmentRows, reportRows, reportCountRows] = await Promise.all([
+  const canonicalKey = clientKey.toUpperCase().trim();
+
+  const [physicalRows, goldRows] = await Promise.all([
     runQuery<Record<string, unknown>>(
-      `SELECT equipment_key, internal_id, equipment_type FROM processed.fieldbeat_equipments WHERE client_key = $1 ORDER BY internal_id LIMIT 20`,
-      [clientKey]
+      `SELECT client_key, client_name, city, commune, country, address_raw
+       FROM processed.fieldbeat_clients
+       WHERE UPPER(TRIM(client_name)) = $1
+       ORDER BY (address_raw IS NULL), client_key`,
+      [canonicalKey]
+    ),
+    runQuery<Record<string, unknown>>(
+      `SELECT COALESCE(total_tickets, 0) AS ticket_count, COALESCE(used_parts_count, 0) AS used_parts_count
+       FROM gold.client_service_profile WHERE UPPER(TRIM(client_name)) = $1`,
+      [canonicalKey]
+    )
+  ]);
+  if (physicalRows.length === 0) return null;
+
+  // Ya ordenado arriba para que la primera fila sea la de dirección real
+  // cuando exista (misma regla que CLIENTS_CANONICAL_CTE) - representante
+  // determinista para los campos de un solo valor (ciudad/comuna/país).
+  const representative = physicalRows[0];
+  const physicalKeys = physicalRows.map(row => row.client_key as string);
+  const distinctAddresses = Array.from(new Set(physicalRows.map(row => row.address_raw).filter((value): value is string => Boolean(value))));
+
+  // report_count se cuenta en vivo contra marts (no desde
+  // gold.client_service_profile, que puede quedar desactualizado frente a la
+  // carga más reciente - misma corrección ya aplicada en buildClientsListQuery/
+  // enrichWithActiveIssueCounts, MISMA base acá para que listado y detalle
+  // muestren siempre el mismo número) - agrupado por nombre canónico, nunca
+  // por una sola fila física, para no perder reportes que solo coincidan con
+  // la variante "sin rut" del cliente.
+  const [equipmentRows, reportRows, reportCountRows] = await Promise.all([
+    // Reutiliza EQUIPMENT_CANONICAL_CTE (misma identidad que el listado/
+    // detalle de Equipos) - nunca vuelve a leer processed.fieldbeat_equipments
+    // directo acá, o el "Equipos" de este cliente mostraría los mismos
+    // duplicados de mayúsculas/uuid inestable que ya se corrigieron ahí.
+    // Modelo/serie llegan por la MISMA cadena de identidad ya validada
+    // (equipment_key canónico -> source_equipment_keys -> match_status
+    // MATCHED de config.contract_equipment_analysis, EQUIPMENT_CONTRACT_
+    // CANDIDATES_LATERAL) - nunca por nombre de cliente: confirmado que
+    // config.contract_equipment_analysis.client_name_canonical usa una
+    // convención de nombres completamente distinta a processed.
+    // fieldbeat_clients.client_name (ninguna fila calza por UPPER(TRIM())),
+    // así que un join directo por nombre de cliente fusionaría u omitiría
+    // clientes arbitrariamente - el vínculo real y ya verificado es el de
+    // equipo, no el de cliente.
+    runQuery<Record<string, unknown>>(
+      `${EQUIPMENT_CANONICAL_CTE}
+       SELECT canonical_equipment.equipment_key, canonical_equipment.internal_id, canonical_equipment.equipment_type,
+              ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS},
+              contract.equipment_models, contract.serial_numbers, contract.contract_status_codes, contract.match_statuses,
+              contract.preventive_maintenance_mins, contract.preventive_maintenance_maxs, contract.preventive_maintenance_rules,
+              COALESCE((
+                SELECT SUM(g.fieldbeat_report_count) FROM gold.equipment_service_profile g
+                WHERE UPPER(TRIM(g.equipment_internal_id)) = canonical_equipment.internal_id
+              ), 0) AS report_count,
+              (SELECT ARRAY_AGG(DISTINCT r.fieldbeat_task_id::text)
+                 FROM marts.fieldbeat_report_dolibarr_operational_view r,
+                      LATERAL UNNEST(STRING_TO_ARRAY(r.equipment_internal_ids, '|')) equipo
+                 WHERE UPPER(TRIM(equipo)) = canonical_equipment.internal_id) AS report_task_ids
+       FROM canonical_equipment
+       ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+       WHERE canonical_equipment.client_key = $1
+       ORDER BY canonical_equipment.internal_id LIMIT 20`,
+      [canonicalKey]
     ),
     runQuery<Record<string, unknown>>(
       `SELECT fieldbeat_task_id, fieldbeat_task_date, task_type, linked_zendesk_ticket_id
-       FROM marts.fieldbeat_report_dolibarr_operational_view WHERE client_name = $1
+       FROM marts.fieldbeat_report_dolibarr_operational_view WHERE UPPER(TRIM(client_name)) = $1
        ORDER BY fieldbeat_task_date DESC LIMIT 15`,
-      [clientName]
+      [canonicalKey]
     ),
-    runQuery<{ n: string }>(`SELECT COUNT(*) AS n FROM marts.fieldbeat_report_dolibarr_operational_view WHERE client_name = $1`, [clientName])
+    runQuery<{ n: string }>(`SELECT COUNT(*) AS n FROM marts.fieldbeat_report_dolibarr_operational_view WHERE UPPER(TRIM(client_name)) = $1`, [canonicalKey])
   ]);
-  const summary = { ...serializeRows(summaryRows)[0], report_count: Number(reportCountRows[0]?.n ?? 0) };
+
+  const summary = {
+    client_key: canonicalKey,
+    client_name: representative.client_name,
+    city: representative.city,
+    commune: representative.commune,
+    country: representative.country,
+    address_raw: representative.address_raw,
+    location_count: Math.max(distinctAddresses.length, 1),
+    report_count: Number(reportCountRows[0]?.n ?? 0),
+    ticket_count: Number(goldRows[0]?.ticket_count ?? 0),
+    used_parts_count: Number(goldRows[0]?.used_parts_count ?? 0)
+  };
+
+  // Solo se expone una sección "Ubicaciones" cuando hay más de una dirección
+  // real distinta (sedes genuinas, ej. ACME Santiago/Rancagua) - nunca para
+  // el caso común de una fila duplicada con la misma dirección o con
+  // dirección NULL, que no es una sede adicional.
+  const locations =
+    distinctAddresses.length > 1
+      ? Array.from(new Map(physicalRows.filter(row => row.address_raw).map(row => [row.address_raw as string, row])).values())
+      : [];
+
+  // Mismo enriquecimiento de "Incidencias activas" que el listado de Equipos
+  // (enrichWithActiveIssueCounts ya sabe resolverlo vía report_task_ids para
+  // entity="equipment") - nunca una cuenta de incidencias reinventada acá.
+  const equipmentRelated = await enrichWithActiveIssueCounts("equipment", serializeRows(equipmentRows));
+
+  // "Contratos y cobertura" (sección 9) - deriva de la MISMA fila de equipo
+  // ya traída arriba (contract_status_codes/match_statuses/preventive_maintenance_*),
+  // nunca una consulta paralela ni un join por nombre de cliente. Cada
+  // "contrato" acá ES la cobertura de un equipo (ver evidencia de grano junto
+  // a CONTRACTS_FILTER_COLUMNS) - se lista uno por equipo, nunca se resume en
+  // un solo "tipo de contrato" ni se suman horas/frecuencias entre equipos
+  // distintos.
+  const contractsCoverage = equipmentRelated.filter(row => Array.isArray(row.contract_status_codes) && row.contract_status_codes.length > 0);
+
+  const summaryWithContracts = { ...summary, contract_equipment_count: contractsCoverage.length };
+
   return {
-    summary,
-    related: { equipment: serializeRows(equipmentRows), recentReports: serializeRows(reportRows) }
+    summary: summaryWithContracts,
+    related: {
+      equipment: equipmentRelated,
+      contractsCoverage,
+      recentReports: serializeRows(reportRows),
+      ...(locations.length > 1 ? { locations: serializeRows(locations) } : {})
+    }
   };
 }
 
 // =============================================================================
-// Equipos - processed.fieldbeat_equipments (fuente estructurada real, B20).
-// Modelo/serie NO viven acá - se unen desde config.contract_equipment_analysis
-// (fieldbeat_equipment_key/fieldbeat_internal_id) solo en el detalle, nunca
-// en el listado (evita un JOIN caro por fila y mantiene el listado a
-// columnas propias de la entidad).
+// Equipos - identidad canónica vía EQUIPMENT_CANONICAL_CTE (arriba, define
+// canonical_equipment y reutiliza canonical_clients - ver el comentario ahí
+// para el hallazgo real de duplicación). Modelo/serie/estado de contrato se
+// agregan desde config.contract_equipment_analysis vía
+// EQUIPMENT_CONTRACT_CANDIDATES_LATERAL - EN EL LISTADO TAMBIÉN (a diferencia
+// del diseño original, que lo omitía por costo): el modelo real es
+// información de negocio de primer nivel (nunca solo "Tipo: LINAC" cuando
+// existe un modelo real, ver EXPLORER_ENTITY_CONFIG.equipment), y la entidad
+// tiene ~60 filas reales - el LATERAL de contratos por fila es costo
+// despreciable a esta escala.
 // =============================================================================
-const EQUIPMENT_FILTER_COLUMNS = ["e.internal_id", "c.client_name", "e.equipment_type"];
+const EQUIPMENT_FILTER_COLUMNS = ["canonical_equipment.internal_id", "canonical_equipment.client_name", "canonical_equipment.equipment_type"];
 
 export function buildEquipmentListQuery(pusher: ParamPusher, limit: number, offset: number, filter?: string): SqlQuery {
   const cond = ilikeConditions(pusher, filter, EQUIPMENT_FILTER_COLUMNS);
   const sql = `
-    SELECT e.equipment_key, e.internal_id, e.equipment_type, c.client_name,
-           COALESCE(g.fieldbeat_report_count, 0) AS report_count,
+    ${EQUIPMENT_CANONICAL_CTE}
+    SELECT canonical_equipment.equipment_key, canonical_equipment.internal_id, canonical_equipment.equipment_type,
+           canonical_equipment.client_name,
+           ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS},
+           contract.contract_status_codes,
+           contract.match_statuses,
+           contract.serial_numbers,
+           contract.preventive_maintenance_mins,
+           contract.preventive_maintenance_maxs,
+           contract.preventive_maintenance_rules,
+           -- SUM en vez de JOIN directo: gold.equipment_service_profile agrupa por
+           -- internal_id CRUDO (misma inestabilidad de mayúsculas que el bug de
+           -- arriba), así que puede tener más de una fila por equipo canónico -
+           -- un LEFT JOIN plano multiplicaría de nuevo la fila; sumar sus conteos
+           -- vía subconsulta escalar da el total real sin ese riesgo.
+           COALESCE((
+             SELECT SUM(g.fieldbeat_report_count) FROM gold.equipment_service_profile g
+             WHERE UPPER(TRIM(g.equipment_internal_id)) = canonical_equipment.internal_id
+           ), 0) AS report_count,
            (SELECT ARRAY_AGG(DISTINCT r.fieldbeat_task_id::text)
               FROM marts.fieldbeat_report_dolibarr_operational_view r,
                    LATERAL UNNEST(STRING_TO_ARRAY(r.equipment_internal_ids, '|')) equipo
-              WHERE UPPER(TRIM(equipo)) = UPPER(TRIM(e.internal_id))) AS report_task_ids
-    FROM processed.fieldbeat_equipments e
-    LEFT JOIN processed.fieldbeat_clients c ON c.client_key = e.client_key
-    LEFT JOIN gold.equipment_service_profile g ON g.equipment_internal_id = e.internal_id
+              WHERE UPPER(TRIM(equipo)) = canonical_equipment.internal_id) AS report_task_ids
+    FROM canonical_equipment
+    ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
     ${cond ? `WHERE ${cond}` : ""}
-    ORDER BY report_count DESC, e.internal_id ASC
+    ORDER BY report_count DESC, canonical_equipment.internal_id ASC
     LIMIT ${limit} OFFSET ${offset}
   `;
   return { sql, params: pusher.params };
@@ -513,7 +775,7 @@ export async function countEquipmentTotal(filter?: string): Promise<number> {
   const pusher = createParamPusher();
   const cond = ilikeConditions(pusher, filter, EQUIPMENT_FILTER_COLUMNS);
   const rows = await runQuery<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM processed.fieldbeat_equipments e LEFT JOIN processed.fieldbeat_clients c ON c.client_key = e.client_key ${cond ? `WHERE ${cond}` : ""}`,
+    `${EQUIPMENT_CANONICAL_CTE} SELECT COUNT(*) AS n FROM canonical_equipment ${cond ? `WHERE ${cond}` : ""}`,
     pusher.params
   );
   return Number(rows[0]?.n ?? 0);
@@ -521,12 +783,16 @@ export async function countEquipmentTotal(filter?: string): Promise<number> {
 
 export async function fetchEquipmentDetail(equipmentKey: string) {
   const summaryRows = await runQuery<Record<string, unknown>>(
-    `SELECT e.equipment_key, e.internal_id, e.equipment_type, c.client_name,
-            ca.equipment_model, ca.serial_number, ca.contract_status_code, ca.warranty_end_date
-     FROM processed.fieldbeat_equipments e
-     LEFT JOIN processed.fieldbeat_clients c ON c.client_key = e.client_key
-     LEFT JOIN config.contract_equipment_analysis ca ON ca.fieldbeat_equipment_key = e.equipment_key AND ca.is_current = true
-     WHERE e.equipment_key = $1`,
+    `${EQUIPMENT_CANONICAL_CTE}
+     SELECT canonical_equipment.equipment_key, canonical_equipment.internal_id, canonical_equipment.equipment_type,
+            canonical_equipment.client_name, canonical_equipment.client_key, canonical_equipment.source_equipment_keys,
+            ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS},
+            contract.equipment_models, contract.serial_numbers, contract.contract_status_codes,
+            contract.warranty_end_dates, contract.match_statuses, contract.contract_keys, contract.contract_count,
+            contract.preventive_maintenance_mins, contract.preventive_maintenance_maxs, contract.preventive_maintenance_rules
+     FROM canonical_equipment
+     ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+     WHERE canonical_equipment.equipment_key = $1`,
     [equipmentKey]
   );
   if (summaryRows.length === 0) return null;
@@ -655,7 +921,7 @@ export async function fetchTechnicianDetail(normalizedName: string) {
 // confirmado que la columna existe y por eso se excluye explícitamente en
 // vez de dejarlo implícito). price (venta) solo en detalle, nunca en listado.
 // =============================================================================
-const PRODUCTS_FILTER_COLUMNS = ["ref", "label"];
+const PRODUCTS_FILTER_COLUMNS = ["ref", "label", "dolibarr_product_id::text"];
 
 export function buildProductsListQuery(pusher: ParamPusher, limit: number, offset: number, filter?: string): SqlQuery {
   const cond = ilikeConditions(pusher, filter, PRODUCTS_FILTER_COLUMNS);
@@ -703,6 +969,22 @@ export async function fetchProductDetail(ref: string) {
 // sql/070_config.sql) - las tablas base de config.* siguen REVOKE'd, nunca
 // se tocan directo. Listado acotado a is_current=true (la versión vigente
 // por equipo, B20 - el historial de versiones queda para el detalle).
+//
+// Grano real confirmado por evidencia (no asumido): config.
+// contract_equipment_versions.equipment_key (src/contracts/equipment-key.js,
+// SN:<serie> o PROV:<hash de cliente+sede+modelo>) tiene un UNIQUE(equipment_key,
+// valid_from) y NINGUNA fila apunta a un identificador de "contrato maestro"
+// distinto - no existe una tabla de encabezado de contrato, ni una columna
+// "N° Contrato" en el CSV origen (src/contracts/field-map.js, layout
+// posicional completo leído: Cliente/Abreviación/Equipo/S-N/Año Instalación/
+// Estado Contrato/SPA/Lun-Vie/Sab-Dom/Soporte/Horarios/HW Refresh/UpDates/
+// UpGrades/Situación Repuestos/Q Mant Prev x Año/Notas - sin columna de
+// número de contrato). El grano real y evidenciado es "una fila = la
+// cobertura contractual de UN equipo específico" - por eso
+// canonicalContractKey = equipment_key (el de contratos, namespace propio,
+// distinto del equipment_key canónico de FieldBeat) y "Contrato" =
+// "ContractEquipmentCoverage" son la MISMA cosa hoy en este dominio (no se
+// inventa una entidad Contrato separada sin evidencia que la respalde).
 // =============================================================================
 const CONTRACTS_FILTER_COLUMNS = ["client_name_canonical", "equipment_model", "serial_number"];
 
@@ -710,7 +992,8 @@ export function buildContractsListQuery(pusher: ParamPusher, limit: number, offs
   const cond = ilikeConditions(pusher, filter, CONTRACTS_FILTER_COLUMNS);
   const sql = `
     SELECT equipment_key, client_name_canonical, site_abbreviation, equipment_model, serial_number,
-           contract_status_code, spa_tier_code, weekday_service, weekend_service, warranty_end_date, match_status
+           contract_status_code, spa_tier_code, weekday_service, weekend_service, warranty_end_date, match_status,
+           preventive_maintenance_min, preventive_maintenance_max, preventive_maintenance_rule
     FROM config.contract_equipment_analysis
     WHERE is_current = true
     ${cond ? `AND (${cond})` : ""}
@@ -732,24 +1015,55 @@ export async function countContractsTotal(filter?: string): Promise<number> {
 
 export async function fetchContractDetail(equipmentKey: string) {
   const summaryRows = await runQuery<Record<string, unknown>>(
-    `SELECT equipment_key, client_name_canonical, site_abbreviation, equipment_model, serial_number,
-            installation_month, installation_date_precision, contract_status_code, spa_tier_code,
-            weekday_service, weekend_service, support_mode_code, parts_coverage_code, hw_refresh_code,
-            updates_code, upgrades_code, preventive_maintenance_min, preventive_maintenance_max,
-            preventive_maintenance_rule, warranty_end_date, valid_from, valid_to, is_current,
-            match_status, match_method, fieldbeat_equipment_key, fieldbeat_internal_id
-     FROM config.contract_equipment_analysis WHERE equipment_key = $1 AND is_current = true`,
+    `${EQUIPMENT_CANONICAL_CTE}
+     SELECT ca.equipment_key, ca.client_name_canonical, ca.site_abbreviation, ca.equipment_model, ca.serial_number,
+            ca.installation_month, ca.installation_date_precision, ca.contract_status_code, ca.spa_tier_code,
+            ca.weekday_service, ca.weekend_service, ca.support_mode_code, ca.parts_coverage_code, ca.hw_refresh_code,
+            ca.updates_code, ca.upgrades_code, ca.preventive_maintenance_min, ca.preventive_maintenance_max,
+            ca.preventive_maintenance_rule, ca.warranty_end_date, ca.valid_from, ca.valid_to, ca.is_current,
+            ca.match_status, ca.match_method, ca.fieldbeat_equipment_key, ca.fieldbeat_internal_id,
+            -- Equipo canónico de FieldBeat al que este contrato quedó vinculado
+            -- (subconsulta correlacionada, nunca ANY sobre una lista traída
+            -- aparte) - solo no-NULL cuando match_status = MATCHED, ver
+            -- EQUIPMENT_CANONICAL_CTE arriba para por qué se busca dentro de
+            -- source_equipment_keys y no por igualdad exacta de equipment_key.
+            (SELECT ce.equipment_key FROM canonical_equipment ce WHERE ca.fieldbeat_equipment_key = ANY(ce.source_equipment_keys)) AS linked_equipment_key
+     FROM config.contract_equipment_analysis ca
+     WHERE ca.equipment_key = $1 AND ca.is_current = true`,
     [equipmentKey]
   );
   if (summaryRows.length === 0) return null;
-  const historyRows = await runQuery<Record<string, unknown>>(
-    `SELECT contract_version_id, valid_from, valid_to, contract_status_code, spa_tier_code
-     FROM config.contract_equipment_analysis WHERE equipment_key = $1 ORDER BY valid_from DESC LIMIT 10`,
-    [equipmentKey]
-  );
+  const linkedEquipmentKey = summaryRows[0].linked_equipment_key as string | null;
+
+  const [historyRows, coveredEquipmentRows] = await Promise.all([
+    runQuery<Record<string, unknown>>(
+      `SELECT contract_version_id, valid_from, valid_to, contract_status_code, spa_tier_code
+       FROM config.contract_equipment_analysis WHERE equipment_key = $1 ORDER BY valid_from DESC LIMIT 10`,
+      [equipmentKey]
+    ),
+    // "Equipos cubiertos" (sección 10) - en el grano real de hoy (ver
+    // comentario arriba de CONTRACTS_FILTER_COLUMNS) es siempre 0 o 1 fila
+    // (un contrato cubre exactamente el equipo con el que quedó vinculado),
+    // pero se modela como lista para no asumir 1:1 si el dominio alguna vez
+    // agrega una identidad de contrato-maestro real. Reutiliza la MISMA
+    // identidad canónica de Equipos (nunca una consulta paralela).
+    linkedEquipmentKey
+      ? runQuery<Record<string, unknown>>(
+          `${EQUIPMENT_CANONICAL_CTE}
+           SELECT canonical_equipment.equipment_key, canonical_equipment.internal_id,
+                  ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS},
+                  contract.serial_numbers, contract.match_statuses
+           FROM canonical_equipment
+           ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+           WHERE canonical_equipment.equipment_key = $1`,
+          [linkedEquipmentKey]
+        )
+      : Promise.resolve([])
+  ]);
+
   return {
     summary: serializeRows(summaryRows)[0],
-    related: { versionHistory: serializeRows(historyRows) }
+    related: { versionHistory: serializeRows(historyRows), coveredEquipment: serializeRows(coveredEquipmentRows) }
   };
 }
 

@@ -178,6 +178,38 @@ export function evaluationTriggeredByLabel(code: string | null | undefined): str
   return labelOrRaw(EVALUATION_TRIGGERED_BY_LABELS, code);
 }
 
+// governance.issues.severity/status - MISMO texto que severityBadge/
+// issueStatusBadge en components/ui/StatusBadge.tsx (solo la etiqueta, sin
+// el tono de color que ese componente agrega para la UI). Se duplica acá
+// como funciones puras en vez de importar StatusBadge.tsx desde código
+// server-only (rutas API como app/api/audit/issues/export/route.ts) - un
+// .tsx con JSX real no puede importarse desde la suite de tests unitarios
+// (node --experimental-strip-types no transforma JSX, ver
+// test/ts-extension-loader.mjs), y una ruta de servidor no debería depender
+// de un componente de UI de todos modos. Si el texto cambia en un lugar,
+// debe cambiar en el otro.
+export const SEVERITY_LABELS: Record<string, string> = {
+  HIGH: "Alta",
+  MEDIUM: "Media",
+  LOW: "Baja",
+  WARNING: "Advertencia"
+};
+
+export const ISSUE_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Abierta",
+  IN_REVIEW: "En revisión",
+  RESOLVED: "Resuelta",
+  DISMISSED: "Descartada"
+};
+
+export function severityLabel(code: string | null | undefined): string {
+  return labelOrRaw(SEVERITY_LABELS, code);
+}
+
+export function issueStatusLabel(code: string | null | undefined): string {
+  return labelOrRaw(ISSUE_STATUS_LABELS, code);
+}
+
 // Hallazgo + recomendación de negocio por regla (governance.issues.rule_code) -
 // único lugar de traducción, reutilizado por Bandeja/Resumen/exportaciones
 // (nunca una traducción distinta por pantalla, corrección de negocio

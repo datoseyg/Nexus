@@ -32,13 +32,19 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { entity, page, q, filters } = readExplorerUrlState(searchParams);
+  const { entity, page, q, filters, key: urlKey } = readExplorerUrlState(searchParams);
   const config = EXPLORER_ENTITY_CONFIG[entity];
 
   const [data, setData] = useState<ExplorerListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // La clave del detalle abierto vive en la URL (ver lib/explorer-url-state.ts)
+  // - nunca solo en useState local, para que un link "Ver equipo"/"Ver
+  // cliente" desde el detalle de OTRA entidad navegue reemplazando el
+  // contenido (URL canónica), en vez de apilar un segundo drawer sobre el
+  // primero. reportDrawerId (Reportes, usesExternalDrawer) sigue local: ese
+  // drawer nunca se enlaza desde otra entidad hoy.
+  const selectedKey = config.usesExternalDrawer ? null : (urlKey ?? null);
   const [reportDrawerId, setReportDrawerId] = useState<string | null>(null);
   const [technicianCorrectionTarget, setTechnicianCorrectionTarget] = useState<{ normalizedName: string; displayName: string | null } | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -68,8 +74,8 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, q]);
 
-  function pushState(patch: Partial<{ entity: ExplorerEntity; page: number; q: string; filters: ExplorerFilters }>) {
-    const next = { entity, page, q, filters, ...patch };
+  function pushState(patch: Partial<{ entity: ExplorerEntity; page: number; q: string; filters: ExplorerFilters; key: string | undefined }>) {
+    const next = { entity, page, q, filters, key: urlKey, ...patch };
     const qs = buildExplorerQueryString(next);
     router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
@@ -80,9 +86,18 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
     // de la entidad ANTERIOR con vida - un click posterior podía reabrir
     // ExplorerDetailDrawer con la entidad nueva pero la clave vieja (B22:
     // ningún drawer debe sobrevivir a un cambio de universo de navegación).
-    setSelectedKey(null);
     setReportDrawerId(null);
-    pushState({ entity: next, page: 1, q: "", filters: {} });
+    pushState({ entity: next, page: 1, q: "", filters: {}, key: undefined });
+  }
+
+  // Navegación cruzada entre entidades ("Ver equipo"/"Ver cliente"/"Ver
+  // contrato" desde el detalle de OTRA entidad, ej. Contrato -> Equipo) -
+  // SIEMPRE vía URL canónica (cambia entity+key juntos), nunca apilando un
+  // segundo drawer sobre el que ya está abierto.
+  function navigateToDetail(nextEntity: ExplorerEntity, nextKey: string) {
+    setData(null);
+    setReportDrawerId(null);
+    pushState({ entity: nextEntity, page: 1, q: "", filters: {}, key: nextKey });
   }
 
   function handleFilterChange(key: keyof ExplorerFilters, value: string) {
@@ -161,7 +176,7 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
     if (config.usesExternalDrawer) {
       setReportDrawerId(key);
     } else {
-      setSelectedKey(key);
+      pushState({ key });
     }
   }
 
@@ -342,12 +357,13 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
           entity={selectedKey ? entity : null}
           entityKey={selectedKey}
           role={role}
-          onClose={() => setSelectedKey(null)}
+          onClose={() => pushState({ key: undefined })}
           onChanged={refetch}
+          onNavigate={navigateToDetail}
           resolveIdentityAction={
             entity === "technicians" && role === "administracion"
               ? (summary: Record<string, unknown>) => {
-                  setSelectedKey(null);
+                  pushState({ key: undefined });
                   setTechnicianCorrectionTarget({
                     normalizedName: String(summary.normalized_name),
                     displayName: (summary.display_name as string | null) ?? null

@@ -6,8 +6,7 @@ import { MAX_EXPORT_ROWS } from "@/lib/fieldbeat-reports-queries";
 import { fetchIssuesBandeja } from "@/lib/audit-governance-sql";
 import { runGovernanceQuery } from "@/lib/governance-db";
 import { BANDEJA_HAS_CASE_VALUES, BANDEJA_VERIFICATION_VALUES, enumVal } from "@/lib/audit-bandeja-url-state";
-import { entityTypeLabel, issueRecommendation } from "@/lib/audit-vocabulary";
-import { severityBadge, issueStatusBadge } from "@/components/ui/StatusBadge";
+import { entityTypeLabel, issueRecommendation, severityLabel, issueStatusLabel } from "@/lib/audit-vocabulary";
 
 export const runtime = "nodejs";
 
@@ -34,8 +33,8 @@ const CSV_COLUMNS: Array<{ header: string; render: (row: IssueExportRow) => unkn
   { header: "id", render: row => row.id },
   { header: "tipo_de_incidencia", render: row => row.rule_title },
   { header: "recomendacion", render: row => issueRecommendation(str(row.rule_code), str(row.rule_title)).recommendation },
-  { header: "prioridad", render: row => severityBadge(str(row.severity)).label },
-  { header: "estado", render: row => issueStatusBadge(str(row.status)).label },
+  { header: "prioridad", render: row => severityLabel(str(row.severity)) },
+  { header: "estado", render: row => issueStatusLabel(str(row.status)) },
   { header: "tipo_de_registro_afectado", render: row => entityTypeLabel(str(row.entity_type)) },
   { header: "registro_afectado", render: row => row.entity_key },
   { header: "primera_deteccion", render: row => row.first_seen_at },

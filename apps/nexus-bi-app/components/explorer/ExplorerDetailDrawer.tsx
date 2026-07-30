@@ -16,6 +16,10 @@ interface ExplorerDetailDrawerProps {
    * ciclo de vida de incidencia) - el caller decide si eso implica refrescar
    * el listado exterior. */
   onChanged?: () => void;
+  /** Navega al detalle canónico de OTRA entidad ("Ver equipo"/"Ver cliente"),
+   * reemplazando el contenido de este mismo drawer vía la URL del Explorador
+   * (ExplorerShell.navigateToDetail) - nunca apila un segundo drawer. */
+  onNavigate?: (entity: ExplorerEntity, key: string) => void;
   /** Acción de corrección específica de una entidad (hoy solo "Resolver
    * identidad" para Técnicos, gateada a administracion por el caller) -
    * recibe el summary ya cargado, nunca inventa una acción genérica para
@@ -28,7 +32,7 @@ interface ExplorerDetailDrawerProps {
 // Reportes usa su propio drawer canónico (FieldbeatReportDetailDrawer,
 // montado aparte en ExplorerShell) - este componente nunca se abre para esa
 // entidad (B22: nunca un segundo detalle de reporte).
-export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChanged, resolveIdentityAction }: ExplorerDetailDrawerProps) {
+export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChanged, onNavigate, resolveIdentityAction }: ExplorerDetailDrawerProps) {
   const open = entity !== null && entityKey !== null;
   const [data, setData] = useState<ExplorerDetailResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -78,15 +82,37 @@ export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChang
           )}
 
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            {config.detailFields.map(field => (
-              <div key={field.key}>
-                <dt className="text-xs font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
-                  {field.header}
-                </dt>
-                <dd style={{ color: "var(--nx-text-primary)" }}>{formatCell(field, summary)}</dd>
-              </div>
-            ))}
+            {config.detailFields
+              .filter(field => !field.technical)
+              .map(field => (
+                <div key={field.key}>
+                  <dt className="text-xs font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
+                    {field.header}
+                  </dt>
+                  <dd style={{ color: "var(--nx-text-primary)" }}>{formatCell(field, summary)}</dd>
+                </div>
+              ))}
           </dl>
+
+          {config.detailFields.some(field => field.technical) && (
+            <details>
+              <summary className="cursor-pointer text-xs font-semibold" style={{ color: "var(--nx-accent-indigo)" }}>
+                Detalles técnicos
+              </summary>
+              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {config.detailFields
+                  .filter(field => field.technical)
+                  .map(field => (
+                    <div key={field.key}>
+                      <dt className="text-xs font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
+                        {field.header}
+                      </dt>
+                      <dd style={{ color: "var(--nx-text-primary)" }}>{formatCell(field, summary)}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </details>
+          )}
 
           {resolveIdentityAction && (
             <div>
@@ -109,6 +135,28 @@ export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChang
             >
               Abrir en Bandeja de Auditoría →
             </Link>
+          )}
+
+          {entity === "equipment" && typeof summary.client_key === "string" && onNavigate && (
+            <button
+              type="button"
+              onClick={() => onNavigate("clients", summary.client_key as string)}
+              className="self-start text-sm font-semibold"
+              style={{ color: "var(--nx-accent-indigo)" }}
+            >
+              Ver cliente →
+            </button>
+          )}
+
+          {entity === "contracts" && typeof summary.linked_equipment_key === "string" && onNavigate && (
+            <button
+              type="button"
+              onClick={() => onNavigate("equipment", summary.linked_equipment_key as string)}
+              className="self-start text-sm font-semibold"
+              style={{ color: "var(--nx-accent-indigo)" }}
+            >
+              Ver equipo →
+            </button>
           )}
 
           {entity === "issues" && role === "administracion" && (
@@ -143,6 +191,7 @@ export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChang
                           {col.header}
                         </th>
                       ))}
+                      {section.rowLink && <th className="text-left" style={{ color: "var(--nx-text-secondary)" }} />}
                     </tr>
                   </thead>
                   <tbody>
@@ -153,6 +202,20 @@ export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChang
                             {formatCell(col, row)}
                           </td>
                         ))}
+                        {section.rowLink && (
+                          <td>
+                            {onNavigate && typeof row[section.rowLink.keyField] === "string" && (
+                              <button
+                                type="button"
+                                onClick={() => onNavigate(section.rowLink!.entity, row[section.rowLink!.keyField] as string)}
+                                className="whitespace-nowrap text-xs font-semibold"
+                                style={{ color: "var(--nx-accent-indigo)" }}
+                              >
+                                {section.rowLink.label ?? "Ver →"}
+                              </button>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
