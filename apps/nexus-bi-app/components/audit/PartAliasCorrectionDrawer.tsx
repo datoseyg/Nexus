@@ -172,7 +172,12 @@ function ProductPicker({ candidateIds, onSelect }: { candidateIds: string[]; onS
 // (governance-verification-worker.mjs). Esta UI solo confirma "corrección
 // registrada", nunca "problema resuelto".
 export function PartAliasCorrectionDrawer({ open, row, onClose, onApplied }: PartAliasCorrectionDrawerProps) {
-  const [aliasType, setAliasType] = useState<AliasType>("RAW");
+  // Default NORMALIZED ("También escrituras equivalentes"): el valor de este
+  // drawer SIEMPRE es un identificador de repuesto (raw_part_identifier) -
+  // normalizarlo (mayúsculas/espacios/puntuación) es seguro por defecto. El
+  // usuario puede acotar a "Solo esta escritura exacta" (RAW) si de verdad lo
+  // necesita.
+  const [aliasType, setAliasType] = useState<AliasType>("NORMALIZED");
   const [aliasValue, setAliasValue] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [reason, setReason] = useState("");
@@ -196,7 +201,7 @@ export function PartAliasCorrectionDrawer({ open, row, onClose, onApplied }: Par
   // ver el mensaje de éxito antes de que el formulario se limpie).
   useEffect(() => {
     if (!open) return;
-    setAliasType("RAW");
+    setAliasType("NORMALIZED");
     setAliasValue(row?.raw_part_identifier ?? "");
     setSelectedProduct(null);
     setReason("");
@@ -279,20 +284,42 @@ export function PartAliasCorrectionDrawer({ open, row, onClose, onApplied }: Par
             <div style={{ color: "var(--nx-text-primary)" }}>{row.raw_part_identifier ?? "-"}</div>
           </div>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
-              Tipo de alias
-            </span>
-            <select
-              value={aliasType}
-              onChange={event => setAliasType(event.target.value as AliasType)}
-              className="rounded border px-2 py-1.5"
-              style={{ borderColor: "var(--nx-border)" }}
-            >
-              <option value="RAW">RAW (código crudo exacto)</option>
-              <option value="NORMALIZED">NORMALIZED (código normalizado)</option>
-            </select>
-          </label>
+          {/* "Alcance de la corrección" - RAW/NORMALIZED son valores
+              canónicos internos (governance.correction_versions.payload),
+              NUNCA vocabulario de usuario: nunca se muestran esos nombres,
+              el enum, "match key" ni el concepto de normalización técnica -
+              solo lenguaje de negocio sobre QUÉ escrituras cubre la
+              corrección. */}
+          <fieldset className="flex flex-col gap-1.5 text-sm">
+            <legend className="mb-0.5 font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
+              Alcance de la corrección
+            </legend>
+            <label className="flex cursor-pointer items-start gap-2 rounded border px-2.5 py-2" style={{ borderColor: aliasType === "RAW" ? "var(--nx-accent-indigo)" : "var(--nx-border)" }}>
+              <input type="radio" name="aliasType" className="mt-0.5" checked={aliasType === "RAW"} onChange={() => setAliasType("RAW")} />
+              <span>
+                <span className="block font-semibold" style={{ color: "var(--nx-text-primary)" }}>
+                  Solo esta escritura exacta
+                </span>
+                <span className="block text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                  La corrección se aplicará únicamente cuando aparezca exactamente este valor.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2 rounded border px-2.5 py-2" style={{ borderColor: aliasType === "NORMALIZED" ? "var(--nx-accent-indigo)" : "var(--nx-border)" }}>
+              <input type="radio" name="aliasType" className="mt-0.5" checked={aliasType === "NORMALIZED"} onChange={() => setAliasType("NORMALIZED")} />
+              <span>
+                <span className="block font-semibold" style={{ color: "var(--nx-text-primary)" }}>
+                  También escrituras equivalentes
+                </span>
+                <span className="block text-xs" style={{ color: "var(--nx-text-secondary)" }}>
+                  La corrección también se aplicará a variantes de mayúsculas, espacios y signos de puntuación.
+                </span>
+                <span className="mt-1 block text-xs italic" style={{ color: "var(--nx-text-secondary)" }}>
+                  Ej.: &quot;cx 1551-g&quot;, &quot;CX1551G&quot; y &quot;cx1551g&quot; se tratarán como el mismo identificador.
+                </span>
+              </span>
+            </label>
+          </fieldset>
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-semibold" style={{ color: "var(--nx-text-secondary)" }}>

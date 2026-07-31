@@ -19,6 +19,14 @@ import {
   type BandejaUrlFilters
 } from "@/lib/audit-bandeja-url-state";
 
+// Bug real (revisión visual, 2026-07-30): la Bandeja no distinguía
+// "actualmente detectada" de "status histórico" - una incidencia
+// reclasificada (ej. NO_PART_USED) permanece status='OPEN' para siempre
+// aunque la regla ya no la detecte (ver comentario en BandejaFilters.detection,
+// lib/audit-governance-sql.ts). Por defecto la Bandeja ahora solo muestra lo
+// vigente; este toggle es la única forma explícita de ver también lo
+// histórico/desaparecido desde acá.
+
 interface IssuesBandejaSectionProps {
   role: "gerencia" | "administracion";
 }
@@ -136,6 +144,7 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
     if (filters.entityType) params.set("entityType", filters.entityType);
     if (filters.hasCase) params.set("hasCase", filters.hasCase);
     if (filters.verification) params.set("verification", filters.verification);
+    if (filters.detection) params.set("detection", filters.detection);
     if (filters.q) params.set("q", filters.q);
     return params;
   }
@@ -182,7 +191,7 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
       .finally(() => setLoading(false));
   }
 
-  useEffect(refetch, [filters.status, filters.severity, filters.ruleCode, filters.entityType, filters.hasCase, filters.verification, filters.q, page]);
+  useEffect(refetch, [filters.status, filters.severity, filters.ruleCode, filters.entityType, filters.hasCase, filters.verification, filters.detection, filters.q, page]);
 
   const activeFilterChips: Array<{ key: keyof BandejaUrlFilters; label: string }> = [];
   if (filters.status) activeFilterChips.push({ key: "status", label: `Estado: ${issueStatusBadge(filters.status).label}` });
@@ -194,6 +203,7 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
   if (filters.entityType) activeFilterChips.push({ key: "entityType", label: `Entidad: ${entityTypeLabel(filters.entityType)}` });
   if (filters.hasCase) activeFilterChips.push({ key: "hasCase", label: filters.hasCase === "yes" ? "Con caso asignado" : "Sin caso asignado" });
   if (filters.verification) activeFilterChips.push({ key: "verification", label: VERIFICATION_FILTER_LABELS[filters.verification] ?? filters.verification });
+  if (filters.detection === "all") activeFilterChips.push({ key: "detection", label: "Incluye incidencias ya no vigentes" });
   if (filters.q) activeFilterChips.push({ key: "q", label: `Búsqueda: "${filters.q}"` });
 
   return (
@@ -217,6 +227,20 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
                 {issueStatusBadge(option).label}
               </button>
             ))}
+            <button
+              type="button"
+              aria-pressed={filters.detection === "all"}
+              onClick={() => setFilter("detection", filters.detection === "all" ? "" : "all")}
+              title="Por defecto la Bandeja solo muestra incidencias que la regla sigue detectando ahora - activa esto para ver también las que ya no se detectan (ej. reclasificadas)."
+              className="rounded-full border px-3 py-1 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{
+                borderColor: filters.detection === "all" ? "var(--nx-accent-indigo)" : "var(--nx-border)",
+                color: filters.detection === "all" ? "var(--nx-accent-indigo)" : "var(--nx-text-secondary)",
+                outlineColor: "var(--nx-focus-ring-color)"
+              }}
+            >
+              Incluir ya no vigentes
+            </button>
           </>
         }
         actions={

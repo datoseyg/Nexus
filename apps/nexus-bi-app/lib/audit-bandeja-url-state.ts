@@ -16,6 +16,13 @@ export type BandejaHasCaseValue = (typeof BANDEJA_HAS_CASE_VALUES)[number];
 export const BANDEJA_VERIFICATION_VALUES = ["pending", "still_detected", "passed", "dead_letter", "none"] as const;
 export type BandejaVerificationValue = (typeof BANDEJA_VERIFICATION_VALUES)[number];
 
+// "current" (default implícito cuando ausente) = solo lo actualmente
+// detectado por la regla; "all" = incluye también lo histórico/desaparecido
+// (status persistente sin relación con is_currently_detected, ver
+// BandejaFilters.detection en lib/audit-governance-sql.ts).
+export const BANDEJA_DETECTION_VALUES = ["current", "all"] as const;
+export type BandejaDetectionValue = (typeof BANDEJA_DETECTION_VALUES)[number];
+
 export interface BandejaUrlFilters {
   status?: BandejaStatusValue;
   severity?: BandejaSeverityValue;
@@ -23,6 +30,7 @@ export interface BandejaUrlFilters {
   entityType?: string;
   hasCase?: BandejaHasCaseValue;
   verification?: BandejaVerificationValue;
+  detection?: BandejaDetectionValue;
   q?: string;
 }
 
@@ -53,6 +61,7 @@ export function readBandejaUrlState(params: URLSearchParams): BandejaUrlState {
       entityType: str(params, "entityType"),
       hasCase: enumVal(params, "hasCase", BANDEJA_HAS_CASE_VALUES),
       verification: enumVal(params, "verification", BANDEJA_VERIFICATION_VALUES),
+      detection: enumVal(params, "detection", BANDEJA_DETECTION_VALUES),
       q: str(params, "q")
     },
     page: Math.max(1, Number(params.get("page")) || 1)
@@ -70,6 +79,7 @@ export function buildBandejaQueryString(state: BandejaUrlState): string {
   if (f.entityType) params.set("entityType", f.entityType);
   if (f.hasCase) params.set("hasCase", f.hasCase);
   if (f.verification) params.set("verification", f.verification);
+  if (f.detection) params.set("detection", f.detection);
   if (f.q) params.set("q", f.q);
   if (state.page > 1) params.set("page", String(state.page));
   return params.toString();

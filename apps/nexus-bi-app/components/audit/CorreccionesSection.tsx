@@ -71,11 +71,23 @@ const OBJECT_KEY_LABELS: Record<string, string> = {
   identityMapId: "Identidad #"
 };
 
+// aliasType es un enum canónico interno (RAW/NORMALIZED, governance.
+// correction_versions.payload) - NUNCA se muestra tal cual, ni siquiera acá
+// en el historial de solo lectura (mismo lenguaje de negocio que el
+// "Alcance de la corrección" del drawer, PartAliasCorrectionDrawer.tsx).
+const ALIAS_TYPE_VALUE_LABELS: Record<string, string> = {
+  RAW: "Solo esta escritura exacta",
+  NORMALIZED: "También escrituras equivalentes"
+};
+
 function formatCompactObject(value: Record<string, unknown> | null | undefined): string {
   if (!value || Object.keys(value).length === 0) return "-";
   return Object.entries(value)
     .filter(([, v]) => v !== null && v !== undefined)
-    .map(([key, v]) => `${OBJECT_KEY_LABELS[key] ?? key}: ${String(v)}`)
+    .map(([key, v]) => {
+      const displayValue = key === "aliasType" ? (ALIAS_TYPE_VALUE_LABELS[String(v)] ?? String(v)) : String(v);
+      return `${OBJECT_KEY_LABELS[key] ?? key}: ${displayValue}`;
+    })
     .join(", ");
 }
 

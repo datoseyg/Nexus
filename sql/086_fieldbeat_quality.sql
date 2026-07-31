@@ -151,6 +151,19 @@ LEFT JOIN LATERAL (
 -- ============================================================================
 -- 5. Resumen de trazabilidad por reporte (grano reporte, nunca mezclado con
 --    el grano línea - ver KPI4). Espejo de isFullyTraceableReport().
+--
+--    no_part_used_declarations/el valor 'NO_PART_USED' en fully_traceable
+--    (sql/098_part_no_usage_classification.sql) viven en ESTA definición, no
+--    en 098 - un CREATE OR REPLACE VIEW posterior no puede quitar una
+--    columna que una reaplicación completa de sql/000-098 ya dejó en el
+--    estado final (Postgres rechaza "cannot drop columns from view" si 086
+--    reintenta recrear la vista con menos columnas de las que ya tiene tras
+--    098 haberla ejecutado una vez) - confirmado con
+--    test/fieldbeat/sql-migration-idempotency.integration.test.ts. La
+--    columna no depende de quality.classify_part_declaration (que 098 define
+--    después) - es solo un COUNT(*) FILTER sobre historical_match_status,
+--    que simplemente nunca vale 'NO_PART_USED' hasta que 098 actualice
+--    quality.fieldbeat_used_part_match más abajo en el orden de archivos.
 -- ============================================================================
 CREATE OR REPLACE VIEW quality.fieldbeat_report_parts_summary AS
 SELECT
@@ -162,7 +175,8 @@ SELECT
   COUNT(*) FILTER (WHERE historical_match_status = 'AMBIGUOUS_MATCH') AS ambiguous,
   COUNT(*) FILTER (WHERE historical_match_status = 'PLACEHOLDER_VALUE') AS placeholders,
   COUNT(*) FILTER (WHERE historical_match_status = 'NO_MATCH') AS no_match,
-  bool_and(historical_match_status IN ('CURRENT_DIRECT_MATCH', 'HISTORICAL_ALIAS_MATCH', 'DESCRIPTION_CONFIDENT_MATCH')) AS fully_traceable
+  bool_and(historical_match_status IN ('CURRENT_DIRECT_MATCH', 'HISTORICAL_ALIAS_MATCH', 'DESCRIPTION_CONFIDENT_MATCH', 'NO_PART_USED')) AS fully_traceable,
+  COUNT(*) FILTER (WHERE historical_match_status = 'NO_PART_USED') AS no_part_used_declarations
 FROM quality.fieldbeat_used_part_match
 GROUP BY fieldbeat_task_id;
 

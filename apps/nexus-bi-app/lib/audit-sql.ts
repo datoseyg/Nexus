@@ -47,7 +47,10 @@ export function buildAuditMartConditions(filters: AuditFilters, alias: string, p
 const ACTION_SUGGESTIONS: Record<string, string> = {
   PLACEHOLDER_VALUE: "Marcar como placeholder válido o crear regla de exclusión",
   NO_MATCH: "Buscar producto Dolibarr y crear alias",
-  AMBIGUOUS_MATCH: "Elegir producto candidato correcto"
+  AMBIGUOUS_MATCH: "Elegir producto candidato correcto",
+  // Clasificación automática (quality.classify_part_declaration, sql/098) -
+  // declaración válida de ausencia de repuesto, nunca requiere acción humana.
+  NO_PART_USED: "Sin repuesto utilizado"
 };
 
 // Acción sugerida por fila - ver PARTE 4.A del pedido original y

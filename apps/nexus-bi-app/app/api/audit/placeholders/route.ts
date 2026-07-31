@@ -15,6 +15,12 @@ export const runtime = "nodejs";
 // mayúsculas/espacios del mismo valor basura (ej. "N/A" vs "n/a") - ver
 // docs/MANUAL_REVIEW_VIEW.md. Objetivo: detectar los valores basura más
 // frecuentes (N/A, NO HAY, S/N, --, etc.), no inventar una lista fija.
+//
+// EXCLUYE declaraciones válidas de "sin repuesto" (N/A, no aplica, NC...) vía
+// quality.classify_part_declaration (sql/098) - esta pestaña es para
+// PLACEHOLDERS REALES que requieren revisión (ej. "sin numero"/"S/N", que
+// hablan de número de serie ausente, no de ausencia de repuesto), nunca para
+// declaraciones válidas de cero repuestos.
 export async function GET(request: NextRequest) {
   const authError = await requireReadApiAccess();
   if (authError) return authError;
@@ -26,7 +32,10 @@ export async function GET(request: NextRequest) {
     const filters = parseAuditFilters(searchParams);
 
     const pusher = createParamPusher();
-    const conditions = [`m.match_status = 'PLACEHOLDER_VALUE'`, ...buildAuditMartConditions(filters, "r", pusher)];
+    const conditions = [
+      `quality.classify_part_declaration(m.raw_part_identifier, m.match_status, p.quantity) = 'PLACEHOLDER_VALUE'`,
+      ...buildAuditMartConditions(filters, "r", pusher)
+    ];
 
     if (filters.q) {
       const placeholder = pusher.push(`%${filters.q}%`);
@@ -35,6 +44,7 @@ export async function GET(request: NextRequest) {
 
     const baseFrom = `
       FROM marts.used_parts_dolibarr_match m
+      LEFT JOIN processed.fieldbeat_used_parts p ON m.used_part_id = p.used_part_id
       LEFT JOIN marts.fieldbeat_report_dolibarr_operational_view r ON m.fieldbeat_task_id = r.fieldbeat_task_id
       WHERE ${conditions.join(" AND ")}
     `;

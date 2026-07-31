@@ -5,7 +5,7 @@ import { escapeCsvCell } from "@/lib/csv-export";
 import { MAX_EXPORT_ROWS } from "@/lib/fieldbeat-reports-queries";
 import { fetchIssuesBandeja } from "@/lib/audit-governance-sql";
 import { runGovernanceQuery } from "@/lib/governance-db";
-import { BANDEJA_HAS_CASE_VALUES, BANDEJA_VERIFICATION_VALUES, enumVal } from "@/lib/audit-bandeja-url-state";
+import { BANDEJA_HAS_CASE_VALUES, BANDEJA_VERIFICATION_VALUES, BANDEJA_DETECTION_VALUES, enumVal } from "@/lib/audit-bandeja-url-state";
 import { entityTypeLabel, issueRecommendation, severityLabel, issueStatusLabel } from "@/lib/audit-vocabulary";
 
 export const runtime = "nodejs";
@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
       entityType: searchParams.get("entityType") ?? undefined,
       hasCase: enumVal(searchParams, "hasCase", BANDEJA_HAS_CASE_VALUES),
       verification: enumVal(searchParams, "verification", BANDEJA_VERIFICATION_VALUES),
+      detection: enumVal(searchParams, "detection", BANDEJA_DETECTION_VALUES),
       q: searchParams.get("q") ?? undefined
     };
 

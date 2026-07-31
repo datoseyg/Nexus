@@ -53,12 +53,17 @@ function ilikeConditions(pusher: ParamPusher, filter: string | undefined, column
 // ambos en una sola sentencia rompería ese límite de permisos entre roles
 // PostgreSQL. Se agrupa por entity_key y se fusiona en memoria con las filas
 // ya traídas por runQuery.
+// "Activas" = is_currently_detected=true ADEMÁS de status (bug real
+// encontrado en revisión visual, 2026-07-30): status por sí solo nunca baja
+// cuando una regla deja de detectar una entidad sin una corrección humana
+// que dispare verificación (ej. reclasificación NO_PART_USED) - sin este
+// filtro, "Incidencias activas" contaba issues que la regla ya no detecta.
 export async function fetchActiveIssueCountsByKey(entityType: string | null, entityKeys: string[]): Promise<Map<string, number>> {
   if (entityKeys.length === 0) return new Map();
   const rows = await runGovernanceQuery<{ entity_key: string; n: string }>(
     "app_read",
     `SELECT entity_key, COUNT(*) AS n FROM governance.issues
-     WHERE ($1::text IS NULL OR entity_type = $1) AND entity_key = ANY($2) AND status IN ('OPEN','IN_REVIEW')
+     WHERE ($1::text IS NULL OR entity_type = $1) AND entity_key = ANY($2) AND is_currently_detected = true AND status IN ('OPEN','IN_REVIEW')
      GROUP BY entity_key`,
     [entityType, entityKeys]
   );
@@ -74,7 +79,7 @@ export async function fetchActiveIssueCountsByOccurrence(entityType: string, occ
   const rows = await runGovernanceQuery<{ occurrence_key: string; n: string }>(
     "app_read",
     `SELECT occurrence_key, COUNT(*) AS n FROM governance.issues
-     WHERE entity_type = $1 AND occurrence_key = ANY($2) AND status IN ('OPEN','IN_REVIEW')
+     WHERE entity_type = $1 AND occurrence_key = ANY($2) AND is_currently_detected = true AND status IN ('OPEN','IN_REVIEW')
      GROUP BY occurrence_key`,
     [entityType, occurrenceKeys]
   );
@@ -321,6 +326,11 @@ export interface IssuesExplorerFilters {
   severity?: string;
   status?: string;
   entityType?: string;
+  // Mismo criterio que BandejaFilters.detection (lib/audit-governance-sql.ts)
+  // - default = solo lo actualmente detectado, "all" para incluir lo
+  // histórico/desaparecido. Bug real: sin esto, "Incidencias" en Explorador
+  // mostraba issues que la regla ya no detecta como si fueran vigentes.
+  detection?: "current" | "all";
 }
 
 export async function fetchIssuesList(
@@ -331,6 +341,9 @@ export async function fetchIssuesList(
 ): Promise<{ rows: Record<string, unknown>[]; total: number }> {
   const params: unknown[] = [];
   const conditions: string[] = [];
+  if (extra?.detection !== "all") {
+    conditions.push(`i.is_currently_detected = true`);
+  }
   if (filter) {
     params.push(`%${filter}%`);
     conditions.push(`(i.entity_key ILIKE $${params.length} OR rd.title ILIKE $${params.length})`);

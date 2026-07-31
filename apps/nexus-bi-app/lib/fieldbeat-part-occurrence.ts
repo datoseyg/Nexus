@@ -41,7 +41,11 @@ const CATALOG_MATCH_EXPLANATION: Record<HistoricalPartMatchStatus, string> = {
   DESCRIPTION_CONFIDENT_MATCH: "Corresponde a un producto Dolibarr vía una correspondencia de descripción verificada manualmente.",
   AMBIGUOUS_MATCH: "Declarado en el reporte, con más de un producto candidato en el catálogo - ninguno se asume como el correcto.",
   PLACEHOLDER_VALUE: "Declarado en el reporte con un valor placeholder (no es un número de parte real).",
-  NO_MATCH: "Declarado en el reporte, sin correspondencia validada en el catálogo Dolibarr - esto no significa que el repuesto no exista."
+  NO_MATCH: "Declarado en el reporte, sin correspondencia validada en el catálogo Dolibarr - esto no significa que el repuesto no exista.",
+  // Declaración válida de ausencia de repuesto (N/A, no aplica, NC...) -
+  // quality.classify_part_declaration (sql/098/086) - nunca requiere
+  // revisión ni corrección de catálogo.
+  NO_PART_USED: "El reporte declaró explícitamente que no se utilizó repuesto - no requiere corrección ni corresponde a un producto del catálogo."
 };
 
 function shapeAttachment(photoRef: string | null): FieldbeatPartAttachment | null {

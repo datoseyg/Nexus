@@ -76,3 +76,17 @@ test("isFullyTraceableReport: una sola línea NO_MATCH invalida todo el reporte"
 test("isFullyTraceableReport: reporte sin líneas de repuesto no es trazable (no aplica un universo vacío)", () => {
   assert.equal(isFullyTraceableReport([]), false);
 });
+
+// Decisión de dominio (sql/098): NO_PART_USED es una declaración válida de
+// cero repuestos, nunca "pendiente de resolver" - un reporte cuyas líneas
+// son solo matches reales y/o declaraciones válidas de ausencia de
+// repuesto es completamente trazable.
+test("isFullyTraceableReport: NO_PART_USED cuenta como trazable, solo o mezclado con matches reales", () => {
+  assert.equal(isFullyTraceableReport(["NO_PART_USED"]), true);
+  assert.equal(isFullyTraceableReport(["CURRENT_DIRECT_MATCH", "NO_PART_USED"]), true);
+});
+
+test("isFullyTraceableReport: NO_PART_USED nunca enmascara una línea PLACEHOLDER_VALUE/NO_MATCH real en el mismo reporte", () => {
+  assert.equal(isFullyTraceableReport(["NO_PART_USED", "PLACEHOLDER_VALUE"]), false);
+  assert.equal(isFullyTraceableReport(["NO_PART_USED", "NO_MATCH"]), false);
+});

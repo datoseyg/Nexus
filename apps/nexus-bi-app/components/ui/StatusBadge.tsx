@@ -46,6 +46,8 @@ export function matchStatusBadge(status: string | null | undefined): { label: st
       return { label: "Placeholder", tone: "neutral" };
     case "NO_MATCH":
       return { label: "Sin match", tone: "danger" };
+    case "NO_PART_USED":
+      return { label: "Sin repuesto utilizado", tone: "neutral" };
     default:
       return { label: status ?? "-", tone: "neutral" };
   }

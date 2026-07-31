@@ -42,7 +42,11 @@ export const CATALOG_MATCH_STATUS_LABEL: Record<string, string> = {
   DESCRIPTION_CONFIDENT_MATCH: "Correspondencia de descripción verificada",
   AMBIGUOUS_MATCH: "Candidatos ambiguos (sin confirmar)",
   PLACEHOLDER_VALUE: "Valor placeholder (no es un número de parte real)",
-  NO_MATCH: "Sin correspondencia validada en catálogo"
+  NO_MATCH: "Sin correspondencia validada en catálogo",
+  // Declaración válida de ausencia de repuesto (N/A, no aplica, NC...) -
+  // quality.classify_part_declaration (sql/098/086) - nunca un placeholder
+  // que requiera revisión, nunca el enum crudo visible.
+  NO_PART_USED: "Sin repuesto utilizado"
 };
 
 export const PARTICIPANT_ROLE_LABEL: Record<string, string> = {

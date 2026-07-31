@@ -113,8 +113,11 @@ test("aplicar sql/*.sql (todos, orden dinámico) dos veces seguidas sobre la mis
   // HOTFIX de integridad de datos (sql/088): agrega 5 vistas nuevas a
   // quality (fieldbeat_engineer_roster, fieldbeat_report_additional_field_tokens,
   // fieldbeat_report_participants, fieldbeat_report_labor_summary,
-  // fieldbeat_report_part_occurrences) - 8 -> 13.
-  assert.equal(afterGrants.rows[0].n, "13", "las 13 vistas de quality deben seguir con SELECT para nexus_app");
+  // fieldbeat_report_part_occurrences) - 8 -> 13. sql/098 (clasificación
+  // NO_PART_USED) agrega la tabla quality.part_no_usage_markers, que hereda
+  // SELECT para nexus_app vía el mismo ALTER DEFAULT PRIVILEGES de sql/086
+  // (nunca un GRANT manual duplicado) - 13 -> 14.
+  assert.equal(afterGrants.rows[0].n, "14", "las 14 relaciones (vistas + part_no_usage_markers) de quality deben seguir con SELECT para nexus_app");
 
   // quality debe seguir siendo ejecutable de punta a punta tras la segunda aplicación.
   const queryable = await adminPool.query(`SELECT quality.is_terminal_task_state('FINISHED') AS ok`);

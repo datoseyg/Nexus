@@ -26,6 +26,18 @@ export interface BandejaFilters {
   hasCase?: "yes" | "no";
   verification?: "pending" | "still_detected" | "passed" | "dead_letter" | "none";
   q?: string;
+  // Bug real encontrado en revisión visual (2026-07-30): la Bandeja filtraba
+  // solo por `status` (OPEN/IN_REVIEW/...), un campo de ciclo de vida
+  // persistente que NUNCA se toca cuando una regla simplemente deja de
+  // detectar una entidad (ver governance._publish_rule_evaluation - marca
+  // is_currently_detected=false/disappeared_at, nunca status). Resultado: una
+  // incidencia reclasificada como NO_PART_USED (o cualquier otra que
+  // desapareciera sin una corrección humana que la resuelva vía el outbox de
+  // verificación) permanecía en status='OPEN' para siempre, visible en la
+  // bandeja activa como si siguiera pendiente. Default = solo lo
+  // efectivamente detectado ahora ("current"); "all" es la única forma
+  // explícita de ver también lo histórico/desaparecido desde acá.
+  detection?: "current" | "all";
 }
 
 // Condiciones estáticas (sin parámetro) - solo alcanzables si el caller ya
@@ -65,6 +77,14 @@ export async function fetchIssuesBandeja(
   const conditions: string[] = [];
   const params: unknown[] = [];
 
+  // Default = solo lo actualmente detectado por la regla (nunca solo
+  // status, ver comentario en BandejaFilters.detection más arriba).
+  // "all" es la única forma de incluir lo históricamente detectado/
+  // desaparecido en esta lista - explícito, nunca el comportamiento
+  // implícito por defecto.
+  if (filters.detection !== "all") {
+    conditions.push(`i.is_currently_detected = true`);
+  }
   if (filters.status) {
     params.push(filters.status);
     conditions.push(`i.status = $${params.length}`);
@@ -269,22 +289,30 @@ export async function fetchGovernanceKpis(): Promise<{
   recentCorrections: Record<string, unknown>[];
   dailyDetections: Record<string, unknown>[];
 }> {
+  // bySeverity/byRule/byEntityType representan "trabajo abierto ahora" - filtran
+  // is_currently_detected=true ADEMÁS de status (bug real, ver comentario en
+  // BandejaFilters.detection): status por sí solo nunca baja cuando una regla
+  // deja de detectar una entidad sin una corrección humana que dispare
+  // verificación (ej. la reclasificación NO_PART_USED) - esas incidencias
+  // seguían contando como "abiertas" en los KPI aunque la regla ya no las
+  // detectara. byStatus es la única excepción deliberada: es la distribución
+  // completa del campo de ciclo de vida, incluye TODO a propósito.
   const [byStatus, bySeverity, byRule, byEntityType, verification, recentCorrections, dailyDetections] = await Promise.all([
     runGovernanceQuery<Record<string, unknown>>("app_read", `SELECT status, count(*) AS n FROM governance.issues GROUP BY status ORDER BY status`),
     runGovernanceQuery<Record<string, unknown>>(
       "app_read",
-      `SELECT severity, count(*) AS n FROM governance.issues WHERE status IN ('OPEN','IN_REVIEW') GROUP BY severity ORDER BY severity`
+      `SELECT severity, count(*) AS n FROM governance.issues WHERE is_currently_detected = true AND status IN ('OPEN','IN_REVIEW') GROUP BY severity ORDER BY severity`
     ),
     runGovernanceQuery<Record<string, unknown>>(
       "app_read",
       `SELECT i.rule_code, coalesce(max(rd.title), i.rule_code) AS rule_title, count(*) AS n
        FROM governance.issues i
        LEFT JOIN governance.rule_definitions rd ON rd.rule_code = i.rule_code AND rd.rule_version = i.last_evaluated_rule_version
-       WHERE i.status IN ('OPEN','IN_REVIEW') GROUP BY i.rule_code ORDER BY n DESC`
+       WHERE i.is_currently_detected = true AND i.status IN ('OPEN','IN_REVIEW') GROUP BY i.rule_code ORDER BY n DESC`
     ),
     runGovernanceQuery<Record<string, unknown>>(
       "app_read",
-      `SELECT entity_type, count(*) AS n FROM governance.issues WHERE status IN ('OPEN','IN_REVIEW') GROUP BY entity_type ORDER BY n DESC`
+      `SELECT entity_type, count(*) AS n FROM governance.issues WHERE is_currently_detected = true AND status IN ('OPEN','IN_REVIEW') GROUP BY entity_type ORDER BY n DESC`
     ),
     runGovernanceQuery<Record<string, unknown>>(
       "app_read",
@@ -371,7 +399,7 @@ export async function fetchRulesList(): Promise<Record<string, unknown>[]> {
     "app_read",
     `SELECT rr.rule_code, rr.active_rule_version, rr.is_active, rd.entity_type, rd.title, rd.description,
             rd.default_severity, rd.created_at AS rule_defined_at, rd.retired_at,
-            (SELECT count(*) FROM governance.issues i WHERE i.rule_code = rr.rule_code AND i.status IN ('OPEN','IN_REVIEW')) AS open_issue_count,
+            (SELECT count(*) FROM governance.issues i WHERE i.rule_code = rr.rule_code AND i.is_currently_detected = true AND i.status IN ('OPEN','IN_REVIEW')) AS open_issue_count,
             (SELECT max(rer.finished_at) FROM governance.rule_evaluation_run_items rei
                JOIN governance.rule_evaluation_runs rer ON rer.evaluation_run_id = rei.evaluation_run_id
              WHERE rei.rule_code = rr.rule_code AND rei.status = 'SUCCEEDED') AS last_evaluated_at

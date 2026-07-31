@@ -278,6 +278,12 @@ export function matchStatusFinding(status: string | null | undefined): string {
       return "Valor genérico o incompleto";
     case "MATCHED":
       return "Producto identificado";
+    // Declaración válida de ausencia de repuesto (N/A, no aplica, NC, sin
+    // repuesto...), NUNCA un placeholder que requiera revisión - ver
+    // quality.classify_part_declaration (sql/098). El texto original queda
+    // como evidencia (raw_part_identifier), nunca se pierde.
+    case "NO_PART_USED":
+      return "Sin repuesto utilizado";
     default:
       return status ?? "-";
   }
@@ -293,6 +299,11 @@ export function matchStatusRecommendation(status: string | null | undefined): { 
       return { text: 'Confirmar si corresponde a "sin repuesto" o elegir el producto correcto.', actionLabel: "Confirmar" };
     case "MATCHED":
       return { text: "Validar que la coincidencia sugerida sea correcta.", actionLabel: "Validar" };
+    // Nunca accionable - ni alias, ni selección de producto, ni confirmación
+    // manual (clasificación automática de una regla determinista, sección 10
+    // de la corrección de negocio).
+    case "NO_PART_USED":
+      return { text: "El reporte declaró que no se utilizó repuesto.", actionLabel: "Sin repuesto utilizado" };
     default:
       return { text: "Revisar el detalle para más información.", actionLabel: "Revisar" };
   }

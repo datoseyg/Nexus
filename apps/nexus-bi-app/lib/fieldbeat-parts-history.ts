@@ -29,7 +29,12 @@ export type HistoricalPartMatchStatus =
   | "DESCRIPTION_CONFIDENT_MATCH"
   | "AMBIGUOUS_MATCH"
   | "PLACEHOLDER_VALUE"
-  | "NO_MATCH";
+  | "NO_MATCH"
+  // Declaración válida de ausencia de repuesto (N/A, no aplica, NC...) -
+  // quality.classify_part_declaration (sql/098/086). Nunca inferida acá en
+  // TS - viene tal cual de quality.fieldbeat_used_part_match.historical_match_status
+  // (SQL), que es la única fuente de verdad para esta reclasificación.
+  | "NO_PART_USED";
 
 export interface PartAlias {
   aliasValue: string;
@@ -103,15 +108,19 @@ export function classifyHistoricalPartMatch(input: PartMatchClassificationInput)
 /**
  * Un reporte es completamente trazable solo cuando TODAS sus líneas
  * resuelven a un match real (directo, histórico o de descripción
- * confiable) - una sola línea NO_MATCH/AMBIGUOUS_MATCH/PLACEHOLDER_VALUE
- * basta para que el reporte completo no sea trazable (Gate B §2.5).
+ * confiable) o son una declaración válida de ausencia de repuesto - una
+ * sola línea NO_MATCH/AMBIGUOUS_MATCH/PLACEHOLDER_VALUE basta para que el
+ * reporte completo no sea trazable (Gate B §2.5). Mismo criterio que
+ * quality.fieldbeat_report_parts_summary.fully_traceable (sql/086/098) -
+ * NO_PART_USED nunca es "pendiente de resolver".
  */
 export function isFullyTraceableReport(lineStatuses: readonly HistoricalPartMatchStatus[]): boolean {
   if (lineStatuses.length === 0) return false;
   const traceable: ReadonlySet<HistoricalPartMatchStatus> = new Set([
     "CURRENT_DIRECT_MATCH",
     "HISTORICAL_ALIAS_MATCH",
-    "DESCRIPTION_CONFIDENT_MATCH"
+    "DESCRIPTION_CONFIDENT_MATCH",
+    "NO_PART_USED"
   ]);
   return lineStatuses.every(status => traceable.has(status));
 }
