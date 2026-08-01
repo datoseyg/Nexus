@@ -18,6 +18,8 @@ export async function mineDolibarrProducts() {
 
   let page = 0;
   let total = 0;
+  let pagesFetched = 0;
+  let endedNaturally = false;
 
   while (page < MAX_PAGES) {
     const url =
@@ -39,14 +41,24 @@ export async function mineDolibarrProducts() {
     );
 
     total += products.length;
+    pagesFetched++;
 
-    if (products.length < LIMIT) break;
+    if (products.length < LIMIT) {
+      endedNaturally = true;
+      break;
+    }
 
     page++;
   }
 
+  const truncatedByPageLimit = !endedNaturally;
+
   console.log(`Dolibarr finalizado. Productos descargados: ${total}`);
-  return total;
+  if (truncatedByPageLimit) {
+    console.log(`ADVERTENCIA: se alcanzó MAX_PAGES=${MAX_PAGES} con la última página aún llena - descarga incompleta.`);
+  }
+
+  return { total, pagesFetched, truncatedByPageLimit };
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {

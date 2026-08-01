@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FieldbeatReportDetailDrawer } from "@/components/fieldbeat/quality/FieldbeatReportDetailDrawer";
 import { ExplorerDetailDrawer } from "./ExplorerDetailDrawer";
@@ -13,11 +13,14 @@ import { ExplorerTableFooter } from "./ExplorerTableFooter";
 import { EXPLORER_ENTITY_CONFIG, formatCell } from "@/lib/explorer-entity-config";
 import { triggerBlobDownload } from "@/lib/csv-export";
 import { readExplorerUrlState, buildExplorerQueryString, hasActiveExplorerFilters, type ExplorerFilters } from "@/lib/explorer-url-state";
+import type { ExplorerFilterOption } from "@/lib/explorer-filters-config";
 import type { TableDensity } from "@/components/ui/ResponsiveTableShell";
 import type { ExplorerEntity, ExplorerListResponse } from "@/types/explorer";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface ExplorerShellProps {
   role: "gerencia" | "administracion";
+  capabilities: string[];
 }
 
 // Explorador semántico (Gate B, B13/B20-B23) - navegación por entidad de
@@ -28,7 +31,7 @@ interface ExplorerShellProps {
 // densidad), tabla clara sin scroll interno dominante, footer con
 // paginación real. Entidad/página/búsqueda/filtros viven en la URL (mismo
 // idioma que AuditManualReviewShell/lib/audit-bandeja-url-state.ts).
-export function ExplorerShell({ role }: ExplorerShellProps) {
+export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -51,7 +54,7 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
   const [exportError, setExportError] = useState<string | null>(null);
   const [qDraft, setQDraft] = useState(q);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [clientes, setClientes] = useState<string[]>([]);
+  const [dynamicOptions, setDynamicOptions] = useState<Record<string, ExplorerFilterOption[]>>({});
 
   // Columnas visibles/densidad - preferencia de sesión, no de URL (sección 7:
   // "persistir razonablemente durante la sesión"), por entidad, y nunca
@@ -62,12 +65,27 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
   const hiddenColumns = hiddenColumnsByEntity[entity] ?? new Set<string>();
   const visibleColumns = config.listColumns.filter(c => !hiddenColumns.has(c.key));
 
+  // Facets (sección 14: "carga únicamente las facets de la entidad activa,
+  // nunca las 9 entidades al montar el Explorador") - antes pegaba
+  // incondicionalmente a /api/dashboard/operacional/filters (endpoint
+  // compartido del Dashboard, 7 queries no relacionadas) solo para leer
+  // `.clientes`, sin importar la entidad activa ni si esa entidad siquiera
+  // tenía un filtro de cliente. Ahora re-consulta solo cuando cambia la
+  // entidad, scoped a lo que esa entidad realmente declara.
   useEffect(() => {
-    fetch("/api/dashboard/operacional/filters")
+    let cancelled = false;
+    fetch(`/api/explorer/${entity}/facets`)
       .then(res => res.json())
-      .then(body => setClientes(body.clientes ?? []))
-      .catch(() => setClientes([]));
-  }, []);
+      .then((body: { facets?: Record<string, ExplorerFilterOption[]> }) => {
+        if (!cancelled) setDynamicOptions(body.facets ?? {});
+      })
+      .catch(() => {
+        if (!cancelled) setDynamicOptions({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [entity]);
 
   useEffect(() => {
     setQDraft(q);
@@ -169,10 +187,25 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
       .finally(() => setLoading(false));
   }
 
-  useEffect(refetch, [entity, page, q, filters.client, filters.taskType, filters.dateFrom, filters.dateTo, filters.severity, filters.status, filters.entityType]);
+  // Dependencia serializada (nunca listar cada filtro a mano, sección 14) -
+  // buildFetchParams() ya es genérico sobre TODOS los filtros declarados;
+  // esta era la única dependencia hardcodeada del Explorador - listar cada
+  // clave nueva acá manualmente rompería silenciosamente el refetch de
+  // cualquier filtro agregado después sin tocar esta línea.
+  const filtersKey = JSON.stringify(filters);
+  useEffect(refetch, [entity, page, q, filtersKey]);
+
+  function getRowKey(row: Record<string, unknown>): string {
+    return String(row[config.detailKeyColumn]);
+  }
+
+  function isRowSelected(row: Record<string, unknown>): boolean {
+    const key = getRowKey(row);
+    return config.usesExternalDrawer ? reportDrawerId === key : selectedKey === key;
+  }
 
   function handleRowClick(row: Record<string, unknown>) {
-    const key = String(row[config.detailKeyColumn]);
+    const key = getRowKey(row);
     if (config.usesExternalDrawer) {
       setReportDrawerId(key);
     } else {
@@ -180,7 +213,6 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
     }
   }
 
-  const dynamicOptions = useMemo(() => ({ clientes, taskTypes: data?.facets?.taskTypes ?? [] }), [clientes, data?.facets?.taskTypes]);
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   return (
@@ -289,51 +321,70 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {data?.rows.map((row, idx) => (
-                      <tr
-                        key={idx}
-                        onClick={() => handleRowClick(row)}
-                        className="cursor-pointer border-t transition-colors hover:bg-[var(--nx-page-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
-                        style={{ borderColor: "var(--nx-border)", outlineColor: "var(--nx-focus-ring-color)" }}
-                        tabIndex={0}
-                        onKeyDown={event => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            handleRowClick(row);
-                          }
-                        }}
-                      >
-                        {visibleColumns.map(col => (
-                          <td key={col.key} className={density === "compact" ? "px-3 py-1.5" : "px-4 py-2.5"} style={{ color: "var(--nx-text-primary)" }}>
-                            {formatCell(col, row)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
+                    {data?.rows.map(row => {
+                      const selected = isRowSelected(row);
+                      return (
+                        <tr
+                          key={getRowKey(row)}
+                          onClick={() => handleRowClick(row)}
+                          aria-selected={selected}
+                          data-selected={selected || undefined}
+                          className="cursor-pointer border-t transition-colors hover:bg-[var(--nx-page-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+                          style={{
+                            borderColor: "var(--nx-border)",
+                            outlineColor: "var(--nx-focus-ring-color)",
+                            ...(selected
+                              ? { background: "var(--nx-row-selected-bg)", boxShadow: "inset 3px 0 0 var(--nx-row-selected-border)" }
+                              : undefined)
+                          }}
+                          tabIndex={0}
+                          onKeyDown={event => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              handleRowClick(row);
+                            }
+                          }}
+                        >
+                          {visibleColumns.map(col => (
+                            <td key={col.key} className={density === "compact" ? "px-3 py-1.5" : "px-4 py-2.5"} style={{ color: "var(--nx-text-primary)" }}>
+                              {formatCell(col, row)}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
 
               {/* Tarjetas - vista real en mobile (< md). */}
               <div className="flex flex-col gap-2.5 p-3 md:hidden">
-                {data?.rows.map((row, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleRowClick(row)}
-                    className="flex flex-col gap-1 rounded-[var(--nx-radius-card)] border p-3 text-left"
-                    style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)" }}
-                  >
-                    {visibleColumns.map((col, colIdx) => (
-                      <div key={col.key} className="flex items-baseline justify-between gap-2 text-xs">
-                        <span style={{ color: "var(--nx-text-secondary)" }}>{col.header}</span>
-                        <span className={colIdx === 0 ? "text-sm font-semibold" : ""} style={{ color: "var(--nx-text-primary)" }}>
-                          {formatCell(col, row)}
-                        </span>
-                      </div>
-                    ))}
-                  </button>
-                ))}
+                {data?.rows.map(row => {
+                  const selected = isRowSelected(row);
+                  return (
+                    <button
+                      key={getRowKey(row)}
+                      type="button"
+                      onClick={() => handleRowClick(row)}
+                      aria-pressed={selected}
+                      data-selected={selected || undefined}
+                      className="flex flex-col gap-1 rounded-[var(--nx-radius-card)] border p-3 text-left"
+                      style={{
+                        borderColor: selected ? "var(--nx-row-selected-border)" : "var(--nx-border)",
+                        background: selected ? "var(--nx-row-selected-bg)" : "var(--nx-card-bg)"
+                      }}
+                    >
+                      {visibleColumns.map((col, colIdx) => (
+                        <div key={col.key} className="flex items-baseline justify-between gap-2 text-xs">
+                          <span style={{ color: "var(--nx-text-secondary)" }}>{col.header}</span>
+                          <span className={colIdx === 0 ? "text-sm font-semibold" : ""} style={{ color: "var(--nx-text-primary)" }}>
+                            {formatCell(col, row)}
+                          </span>
+                        </div>
+                      ))}
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
@@ -351,17 +402,18 @@ export function ExplorerShell({ role }: ExplorerShellProps) {
       </div>
 
       {config.usesExternalDrawer ? (
-        <FieldbeatReportDetailDrawer reportId={reportDrawerId} onClose={() => setReportDrawerId(null)} role={role} />
+        <FieldbeatReportDetailDrawer reportId={reportDrawerId} onClose={() => setReportDrawerId(null)} role={role} capabilities={capabilities} />
       ) : (
         <ExplorerDetailDrawer
           entity={selectedKey ? entity : null}
           entityKey={selectedKey}
           role={role}
+          capabilities={capabilities}
           onClose={() => pushState({ key: undefined })}
           onChanged={refetch}
           onNavigate={navigateToDetail}
           resolveIdentityAction={
-            entity === "technicians" && role === "administracion"
+            entity === "technicians" && hasCapability(capabilities, "correction:technician-identity")
               ? (summary: Record<string, unknown>) => {
                   pushState({ key: undefined });
                   setTechnicianCorrectionTarget({

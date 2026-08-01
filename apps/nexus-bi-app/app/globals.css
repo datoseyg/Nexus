@@ -110,6 +110,13 @@
   --nx-heat-4: rgba(74, 85, 212, 0.66);
   --nx-heat-5: rgba(74, 85, 212, 0.88);
 
+  /* Fila seleccionada (Explorador) - distinta del hover (que reutiliza
+     --nx-page-bg): tinte de acento + borde izquierdo sólido, para que la
+     señal nunca dependa solo del color y se distinga del hover incluso al
+     pasar el mouse sobre una fila ya seleccionada. */
+  --nx-row-selected-bg: var(--nx-heat-2);
+  --nx-row-selected-border: var(--nx-accent-indigo);
+
   /* Semánticos - triple fondo/borde/texto solo donde está evidenciado en
      los mockups (warning, en los banners "Diseño deseado"/"Análisis
      estimado"); los demás solo aportan el color de texto/ícono evidenciado,

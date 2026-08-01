@@ -20,6 +20,7 @@ interface AppShellProps {
   children: React.ReactNode;
   userLabel: string | null;
   features: { audit: boolean; explorer: boolean };
+  capabilities: string[];
 }
 
 // Orquestador raíz del shell de navegación (montado una sola vez en
@@ -38,7 +39,7 @@ interface AppShellProps {
 // el usuario navega de nuevo antes de que responda, para que una
 // respuesta tardía de una ruta anterior no pise el conteo de la ruta
 // actual.
-export function AppShell({ children, userLabel, features }: AppShellProps) {
+export function AppShell({ children, userLabel, features, capabilities }: AppShellProps) {
   const pathname = usePathname();
   const publicRoute = pathname === "/login";
   const [collapsed, setCollapsed] = useState(false);
@@ -89,6 +90,7 @@ export function AppShell({ children, userLabel, features }: AppShellProps) {
           pendingReviewCount={pendingReviewCount}
           userLabel={userLabel}
           features={features}
+          capabilities={capabilities}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <MobileTopBar

@@ -19,6 +19,9 @@ interface FieldbeatReportDetailDrawerProps {
   /** Opcional (Gate B, Familia 5) - solo Explorador lo pasa hoy. Ver el
    * mismo comentario en FieldbeatReportDetailContent.tsx. */
   role?: "gerencia" | "administracion";
+  /** Idem role - solo Explorador lo pasa hoy (único caller con acceso al
+   * usuario autenticado en este árbol). */
+  capabilities?: string[];
 }
 
 // Drawer de detalle maestro (Phase 5) - reutiliza components/ui/DetailDrawer.tsx
@@ -30,7 +33,7 @@ interface FieldbeatReportDetailDrawerProps {
 // efecto interno vuelve a correr, cancela el fetch anterior y pasa a
 // status="refreshing" (que este componente trata igual que "loading") -
 // nunca queda expuesto el contenido del reporte anterior bajo el ID nuevo.
-export function FieldbeatReportDetailDrawer({ reportId, onClose, role }: FieldbeatReportDetailDrawerProps) {
+export function FieldbeatReportDetailDrawer({ reportId, onClose, role, capabilities }: FieldbeatReportDetailDrawerProps) {
   const open = reportId !== null;
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   // false por defecto (nunca asumir disponibilidad) hasta que
@@ -192,6 +195,7 @@ export function FieldbeatReportDetailDrawer({ reportId, onClose, role }: Fieldbe
           reportId={reportId}
           onMeta={meta => setOpenAvailable(meta?.fieldbeatOpenAvailable ?? false)}
           role={role}
+          capabilities={capabilities}
         />
       )}
     </DetailDrawer>

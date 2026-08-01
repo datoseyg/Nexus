@@ -54,12 +54,12 @@ function scopeLabel(row: RunRow): string {
 }
 
 // Gate B - Familia 8: pestaña "Fuentes y pipeline" - estado del evaluador de
-// reglas (governance.rule_evaluation_runs). Nunca un botón de "actualizar"
-// falso: el mecanismo de actualización de datos desde FieldBeat/Zendesk/
-// Dolibarr (Sección 23 del diseño) sigue fuera de alcance de este tramo -
-// el banner de abajo lo dice explícitamente, en vez de dejarlo implícito en
-// la ausencia de un botón (honestidad de estado, docs/design-context/09
-// "estado del dato siempre visible").
+// reglas (governance.rule_evaluation_runs), solo lectura. El mecanismo real
+// de actualización de datos desde FieldBeat/Zendesk/Dolibarr (NEXUS V3,
+// pipeline.refresh_runs) vive en la sidebar (DataRefreshControl, junto a
+// UserSessionControls) - no se duplica acá; el banner de abajo solo orienta
+// hacia dónde está (honestidad de estado, docs/design-context/09 "estado
+// del dato siempre visible").
 export function FuentesPipelineSection() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<RunsResponse | null>(null);
@@ -94,8 +94,9 @@ export function FuentesPipelineSection() {
       </div>
 
       <div className="rounded-[var(--nx-radius-card)] p-3.5 text-xs" style={{ background: "var(--nx-warning-bg)", border: "1px solid var(--nx-warning-border)", color: "var(--nx-warning-fg)" }}>
-        Esta vista muestra las corridas del evaluador de reglas sobre los datos ya cargados - no existe todavía un mecanismo para solicitar una actualización de
-        datos desde FieldBeat, Zendesk o Dolibarr en esta pantalla. Ningún botón de esta vista dispara una extracción nueva.
+        Esta vista muestra las corridas del evaluador de reglas sobre los datos ya cargados - ningún botón de esta pantalla dispara una
+        extracción nueva. Para solicitar una actualización manual de datos desde FieldBeat, Zendesk o Dolibarr, usá el control &quot;Datos&quot;
+        en el menú lateral.
       </div>
 
       <ResponsiveTableShell

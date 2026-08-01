@@ -4,8 +4,12 @@
 // calidad asociada en v1 -> verification="NOT_APPLICABLE", nunca crea
 // verification_request; solo se puede revertir la versión VIGENTE de un
 // target; la reversión nunca borra el historial (correction_versions
-// conserva ambas filas, la original queda superseded_by); Gerencia 403 en
-// ambos comandos.
+// conserva ambas filas, la original queda superseded_by); gerencia y
+// administracion tienen exactamente las mismas capacidades en ambos
+// comandos (sql/100_role_capabilities_unification.sql) - gerencia usa su
+// propio fixture (GERENCIA_FIELDBEAT_TASK_ID) para no interferir con
+// firstCorrectionVersionId, que los casos de administracion más abajo
+// asumen intacto hasta su propio turno.
 import { test, before, after as afterAll } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
@@ -41,6 +45,8 @@ let adminPool: pg.Pool;
 
 const FIELDBEAT_TASK_ID = 975401;
 const RAW_EQUIPMENT_REFERENCE = "equipment-test-raw-975401";
+const GERENCIA_FIELDBEAT_TASK_ID = 975402;
+const GERENCIA_RAW_EQUIPMENT_REFERENCE = "equipment-test-raw-975402";
 const ADMIN_ACTOR_ID = "77777777-7777-7777-7777-777777777777";
 
 function req(path: string, init?: ConstructorParameters<typeof NextRequest>[1]): NextRequest {
@@ -72,16 +78,16 @@ before(async () => {
   adminPool = new Pool({ connectionString: TEST_DB_URL, ssl: false, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
   await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
 
-  await adminPool.query(`DELETE FROM manual_review.equipment_identification_overrides WHERE fieldbeat_task_id = $1`, [FIELDBEAT_TASK_ID]);
+  await adminPool.query(`DELETE FROM manual_review.equipment_identification_overrides WHERE fieldbeat_task_id = ANY($1)`, [[FIELDBEAT_TASK_ID, GERENCIA_FIELDBEAT_TASK_ID]]);
   // correction_targets.current_correction_version_id -> correction_versions.id:
   // borrar correction_targets ANTES de correction_versions, nunca al revés.
   await adminPool.query(
-    `DELETE FROM governance.correction_targets WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = $1`,
-    [String(FIELDBEAT_TASK_ID)]
+    `DELETE FROM governance.correction_targets WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = ANY($1)`,
+    [[String(FIELDBEAT_TASK_ID), String(GERENCIA_FIELDBEAT_TASK_ID)]]
   );
   await adminPool.query(
-    `DELETE FROM governance.correction_versions WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = $1`,
-    [String(FIELDBEAT_TASK_ID)]
+    `DELETE FROM governance.correction_versions WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = ANY($1)`,
+    [[String(FIELDBEAT_TASK_ID), String(GERENCIA_FIELDBEAT_TASK_ID)]]
   );
 });
 
@@ -104,38 +110,51 @@ afterAll(async () => {
        )`,
     [ADMIN_ACTOR_ID, String(FIELDBEAT_TASK_ID)]
   );
-  await adminPool.query(`DELETE FROM manual_review.equipment_identification_overrides WHERE fieldbeat_task_id = $1`, [FIELDBEAT_TASK_ID]);
+  await adminPool.query(`DELETE FROM manual_review.equipment_identification_overrides WHERE fieldbeat_task_id = ANY($1)`, [[FIELDBEAT_TASK_ID, GERENCIA_FIELDBEAT_TASK_ID]]);
   // Mismo orden que en before(): correction_targets antes que correction_versions.
   await adminPool.query(
-    `DELETE FROM governance.correction_targets WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = $1`,
-    [String(FIELDBEAT_TASK_ID)]
+    `DELETE FROM governance.correction_targets WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = ANY($1)`,
+    [[String(FIELDBEAT_TASK_ID), String(GERENCIA_FIELDBEAT_TASK_ID)]]
   );
   await adminPool.query(
-    `DELETE FROM governance.correction_versions WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = $1`,
-    [String(FIELDBEAT_TASK_ID)]
+    `DELETE FROM governance.correction_versions WHERE target_type = 'EQUIPMENT_IDENTIFICATION' AND target_key->>'fieldbeatTaskId' = ANY($1)`,
+    [[String(FIELDBEAT_TASK_ID), String(GERENCIA_FIELDBEAT_TASK_ID)]]
   );
   await adminPool.query(`DELETE FROM governance.idempotency_keys WHERE idempotency_key LIKE 'eq-test-%' OR idempotency_key LIKE 'rev-test-%'`);
-  await adminPool.query(`DELETE FROM governance.command_attempts WHERE command_type IN ('correction:equipment-identification','correction:reverse') AND actor_user_id = $1`, [ADMIN_ACTOR_ID]);
+  await adminPool.query(`DELETE FROM governance.command_attempts WHERE command_type IN ('correction:equipment-identification','correction:reverse') AND actor_user_id IN ($1, $2)`, [
+    ADMIN_ACTOR_ID,
+    "88888888-8888-8888-8888-888888888888"
+  ]);
 
   await adminPool.end();
   setAuthorizationProviderForTests(null);
 });
 
 let firstCorrectionVersionId: number;
+let gerenciaCorrectionVersionId: number;
 
 test("POST /api/audit/corrections/equipment-identification - integración", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/corrections/equipment-identification/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede aplicar la corrección - 200 APPLIED (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/corrections/equipment-identification", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "eq-test-gerencia" },
-        body: JSON.stringify({ fieldbeatTaskId: FIELDBEAT_TASK_ID, correctedEquipmentInternalId: "EQ-900", reason: "x" })
+        body: JSON.stringify({
+          fieldbeatTaskId: GERENCIA_FIELDBEAT_TASK_ID,
+          rawEquipmentReference: GERENCIA_RAW_EQUIPMENT_REFERENCE,
+          correctedEquipmentInternalId: "EQ-900",
+          reason: "gerencia ahora tiene correction:equipment-identification"
+        })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.result, "APPLIED");
+    assert.ok(body.correctionVersionId);
+    gerenciaCorrectionVersionId = body.correctionVersionId;
   });
 
   await t.test("rechaza sin correctedEquipmentInternalId (400 VALIDATION_ERROR)", async () => {
@@ -244,16 +263,23 @@ test("POST /api/audit/corrections/equipment-identification - integración", { sk
 test("POST /api/audit/corrections/reverse - integración (genérica)", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/corrections/reverse/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede revertir - 200 APPLIED (capacidades unificadas, sql/100)", async () => {
+    // Revierte gerenciaCorrectionVersionId (creada por gerencia en el bloque
+    // equipment-identification, arriba) - nunca firstCorrectionVersionId,
+    // que el caso "revierte la corrección vigente" de administracion más
+    // abajo todavía necesita intacto.
     asGerencia();
     const response = await POST(
       req("/api/audit/corrections/reverse", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "rev-test-gerencia" },
-        body: JSON.stringify({ correctionVersionId: firstCorrectionVersionId, reason: "x" })
+        body: JSON.stringify({ correctionVersionId: gerenciaCorrectionVersionId, reason: "gerencia ahora tiene correction:reverse" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.result, "APPLIED");
+    assert.notEqual(body.correctionVersionId, gerenciaCorrectionVersionId);
   });
 
   await t.test("rechaza sin razón (400 REASON_REQUIRED)", async () => {

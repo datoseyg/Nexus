@@ -11,18 +11,109 @@ export const DEFAULT_EXPLORER_ENTITY: ExplorerEntity = "reports";
 
 // Claves de filtro reales conocidas - cada entidad solo lee/renderiza las
 // suyas (ver lib/explorer-filters-config.ts), pero se declaran juntas acá
-// para que la URL tenga una forma fija y predecible entre entidades.
+// para que la URL tenga una forma fija y predecible entre entidades. Varias
+// claves se REUTILIZAN entre entidades cuando el concepto de negocio es
+// literalmente el mismo (ej. "client" en reports/equipment/parts/contracts,
+// "hasActiveIssues" en las 5 entidades que lo soportan, "matchStatus" con
+// vocabularios distintos según la entidad activa) - nunca una clave nueva
+// para el mismo concepto repetido.
 export interface ExplorerFilters {
+  // Reportes (existente) + reutilizado por Equipos/Repuestos/Contratos.
   client?: string;
   taskType?: string;
   dateFrom?: string;
   dateTo?: string;
+  // Incidencias (existente).
   severity?: string;
   status?: string;
   entityType?: string;
+  detection?: string;
+  ruleCode?: string;
+  verification?: string;
+  // Clientes.
+  city?: string;
+  commune?: string;
+  hasEquipment?: string;
+  // Compartido: Clientes/Equipos ("con/sin reportes"), Tickets ("con/sin
+  // reporte FieldBeat").
+  hasReports?: string;
+  // Cross-cutting: Clientes/Equipos/Reportes/Tickets/Repuestos.
+  hasActiveIssues?: string;
+  // Equipos.
+  equipmentType?: string;
+  model?: string;
+  linkStatus?: string;
+  // Compartido: Equipos/Contratos (mismo vocabulario de 8 valores).
+  contractStatus?: string;
+  // Compartido: Equipos/Contratos (3 valores) y Repuestos (5 valores
+  // distintos) - el vocabulario real lo decide la entidad activa.
+  matchStatus?: string;
+  // Técnicos.
+  verified?: string;
+  hasPrimaryReports?: string;
+  hasParticipantReports?: string;
+  // Reportes.
+  equipment?: string;
+  technician?: string;
+  hasTicket?: string;
+  hasParts?: string;
+  qualityStatus?: string;
+  // Tickets.
+  ticketStatus?: string;
+  // Repuestos.
+  hasDolibarrProduct?: string;
+  // Productos.
+  saleStatus?: string;
+  purchaseStatus?: string;
+  hasUsageInReports?: string;
+  // Contratos.
+  spaTier?: string;
+  serviceWeekday?: string;
+  serviceWeekend?: string;
+  partsCoverage?: string;
+  warrantyStatus?: string;
 }
 
-export const EXPLORER_FILTER_KEYS: Array<keyof ExplorerFilters> = ["client", "taskType", "dateFrom", "dateTo", "severity", "status", "entityType"];
+export const EXPLORER_FILTER_KEYS: Array<keyof ExplorerFilters> = [
+  "client",
+  "taskType",
+  "dateFrom",
+  "dateTo",
+  "severity",
+  "status",
+  "entityType",
+  "detection",
+  "ruleCode",
+  "verification",
+  "city",
+  "commune",
+  "hasEquipment",
+  "hasReports",
+  "hasActiveIssues",
+  "equipmentType",
+  "model",
+  "linkStatus",
+  "contractStatus",
+  "matchStatus",
+  "verified",
+  "hasPrimaryReports",
+  "hasParticipantReports",
+  "equipment",
+  "technician",
+  "hasTicket",
+  "hasParts",
+  "qualityStatus",
+  "ticketStatus",
+  "hasDolibarrProduct",
+  "saleStatus",
+  "purchaseStatus",
+  "hasUsageInReports",
+  "spaTier",
+  "serviceWeekday",
+  "serviceWeekend",
+  "partsCoverage",
+  "warrantyStatus"
+];
 
 export interface ExplorerUrlState {
   entity: ExplorerEntity;
@@ -33,7 +124,8 @@ export interface ExplorerUrlState {
    * URL, nunca solo en useState local, para que "Ver equipo"/"Ver cliente"
    * desde OTRA entidad (ej. el detalle de un Contrato) navegue reemplazando
    * el contenido vía URL canónica en vez de apilar un segundo drawer sobre
-   * el primero (un solo `key` a la vez, igual que un solo drawer a la vez). */
+   * el primero. reportDrawerId (Reportes, usesExternalDrawer) sigue local: ese
+   * drawer nunca se enlaza desde otra entidad hoy. */
   key?: string;
 }
 

@@ -65,7 +65,9 @@ const GOVERNANCE_ROLES = [
   { role: "nexus_app_corrections", envVar: "GOVERNANCE_APP_CORRECTIONS_DB_URL" },
   { role: "nexus_audit_restricted_read", envVar: "GOVERNANCE_AUDIT_RESTRICTED_READ_DB_URL" },
   { role: "nexus_rule_evaluator", envVar: "GOVERNANCE_RULE_EVALUATOR_DB_URL" },
-  { role: "nexus_command_attempt_logger", envVar: "GOVERNANCE_COMMAND_ATTEMPT_LOGGER_DB_URL" }
+  { role: "nexus_command_attempt_logger", envVar: "GOVERNANCE_COMMAND_ATTEMPT_LOGGER_DB_URL" },
+  { role: "nexus_pipeline_requester", envVar: "GOVERNANCE_PIPELINE_REQUESTER_DB_URL" },
+  { role: "nexus_pipeline_worker", envVar: "GOVERNANCE_PIPELINE_WORKER_DB_URL" }
 ];
 
 function generatePassword() {

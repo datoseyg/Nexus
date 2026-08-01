@@ -29,6 +29,7 @@ import {
 
 interface IssuesBandejaSectionProps {
   role: "gerencia" | "administracion";
+  capabilities: string[];
 }
 
 interface IssueRow {
@@ -89,7 +90,7 @@ function verificationBadge(row: IssueRow): { label: string; tone: StatusTone } |
 // drawer canónico de Incidencias del Explorador (ExplorerDetailDrawer, ya
 // incluye IssueLifecycleActions) - nunca un segundo drawer de incidencia
 // (B22: un solo drawer por entidad en todo el producto).
-export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
+export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectionProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -527,6 +528,7 @@ export function IssuesBandejaSection({ role }: IssuesBandejaSectionProps) {
         entity={selectedIssueId ? "issues" : null}
         entityKey={selectedIssueId}
         role={role}
+        capabilities={capabilities}
         onClose={() => setSelectedIssueId(null)}
         onChanged={refetch}
       />

@@ -33,4 +33,18 @@ export async function requireCapability(
   return user;
 }
 
+// Server-only: resuelve el set de capacidades de un rol para que una página
+// lo pase una sola vez hacia abajo (prop `capabilities: string[]`) en vez de
+// que cada componente cliente decida por su cuenta con `role === "..."`. Ver
+// hasCapability en ./capabilities-shared.ts para el lado cliente-seguro.
+export async function fetchCapabilitiesForRole(role: NexusRole): Promise<string[]> {
+  const rows = await runGovernanceQuery<{ capability: string }>(
+    "app_read",
+    "SELECT capability FROM governance.role_capabilities WHERE role = $1",
+    [role]
+  );
+
+  return rows.map(row => row.capability);
+}
+
 export { NexusAuthorizationError };

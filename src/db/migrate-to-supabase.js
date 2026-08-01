@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
 import { classifyOwnership, isDuckdbSync } from "./ownership-manifest.js";
-import { assertWriteConfirmed, buildWriteConfirmationToken, describeConnectionTarget } from "../lib/db-safety.js";
+import { assertWriteConfirmed, assertKnownSupabaseProject, buildWriteConfirmationToken, describeConnectionTarget } from "../lib/db-safety.js";
 
 
 function quoteIdentifier(identifier) {
@@ -212,7 +212,7 @@ async function syncRawJson(connection) {
   return { migrated, failed };
 }
 
-export async function migrateToSupabase() {
+export async function migrateToSupabase({ expectedProjectRefEnvVar } = {}) {
   console.log("=== Migrando DuckDB -> Supabase Postgres ===");
 
   // ETAPA SAFETY-1 (Policy D, corregida en el cierre) - este script SIEMPRE
@@ -231,6 +231,19 @@ export async function migrateToSupabase() {
     environment: process.env.NODE_ENV ?? "development",
     allowProtectedWithDualConfirmation: true
   });
+
+  // NEXUS V3 - guard V2/V3 (src/lib/db-safety.js::assertKnownSupabaseProject)
+  // compuesto directo en el único punto de escritura real hacia Supabase,
+  // para que TODO caller lo herede automáticamente (igual que ya heredan
+  // assertWriteConfirmed arriba) - nunca un chequeo aparte que cada caller
+  // nuevo tiene que acordarse de agregar. Opt-in vía parámetro (no
+  // incondicional): la invocación CLI histórica de este script
+  // (`npm run db:pg:migrate`, sin argumentos) sigue funcionando exactamente
+  // igual que siempre para Nexus V2 -solo scripts/pipeline/run-data-refresh.mjs
+  // pasa expectedProjectRefEnvVar='SUPABASE_PROJECT_REF_V3'.
+  if (expectedProjectRefEnvVar) {
+    assertKnownSupabaseProject(connectionString, { expectedProjectRefEnvVar });
+  }
 
   const loadRaw = process.env.LOAD_RAW === "true";
   console.log(`LOAD_RAW=${loadRaw} (default: false -ver riesgo de presupuesto de espacio en el plan de migración)`);

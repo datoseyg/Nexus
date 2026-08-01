@@ -83,10 +83,15 @@ export interface ExplorerListResponse<TRow = Record<string, unknown>> {
   pageSize: number;
   totalRows: number;
   totalPages: number;
-  /** Opciones reales para los <select> de la tarjeta de filtros (sección 6) -
-   * solo la entidad "reports" las trae hoy (tipos de tarea distintos ya
-   * observados); nunca un enum adivinado. */
-  facets?: { taskTypes?: string[] };
+}
+
+/** Respuesta de GET /api/explorer/[entity]/facets - opciones reales para los
+ * <select> de la tarjeta de filtros (sección 6), scoped a la entidad activa
+ * (nunca las 9 entidades cargadas de una). Única fuente de estas opciones -
+ * el listado paginado (ExplorerListResponse) nunca vuelve a incluirlas. */
+export interface ExplorerFacetsResponse {
+  entity: ExplorerEntity;
+  facets: Record<string, Array<{ value: string; label: string }>>;
 }
 
 export interface ExplorerDetailResponse<TSummary = unknown> {

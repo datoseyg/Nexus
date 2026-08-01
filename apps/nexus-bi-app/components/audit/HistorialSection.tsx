@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { RestrictedReadReveal } from "./RestrictedReadReveal";
 import { eventTypeLabel, commandTypeLabel } from "@/lib/audit-vocabulary";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface HistorialSectionProps {
   role: "gerencia" | "administracion";
+  capabilities: string[];
 }
 
 interface HistoryRow {
@@ -66,7 +68,8 @@ function eventDotColor(eventType: string): string {
 // (fn_read_restricted_event_state) y, cuando el evento referencia
 // evidencia, también la evidencia restringida (fn_read_restricted_evidence)
 // - ambas con razón obligatoria y auditadas.
-export function HistorialSection({ role }: HistorialSectionProps) {
+export function HistorialSection({ capabilities }: HistorialSectionProps) {
+  const canViewRestricted = hasCapability(capabilities, "audit:evidence-restricted");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -147,7 +150,7 @@ export function HistorialSection({ role }: HistorialSectionProps) {
                   {row.reason}
                 </p>
               )}
-              {role === "administracion" && (
+              {canViewRestricted && (
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <RestrictedReadReveal kind="event-state" objectId={Number(row.id)} label="Ver estado restringido" />
                   {row.evidence_id && <RestrictedReadReveal kind="evidence" objectId={Number(row.evidence_id)} label="Ver evidencia restringida" />}

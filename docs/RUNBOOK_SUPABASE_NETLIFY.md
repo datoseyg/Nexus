@@ -2,6 +2,8 @@
 
 Estado de este documento: rebaselinado contra el repositorio el 2026-07-20. Esta etapa es exclusivamente local y documental. No autoriza desplegar, crear usuarios productivos, ejecutar DDL, migrar, validar contra Supabase ni modificar datos remotos.
 
+> **Nexus V3 (2026-07-31).** Este runbook describe el proyecto Supabase auditado (Nexus V2). NEXUS V3 introduce un mecanismo de actualización manual de datos (`pipeline.refresh_runs`, `scripts/pipeline/run-data-refresh.mjs`) pensado para un proyecto Supabase **separado y todavía no creado** - nunca escribe ni migra sobre este proyecto V2 (guard `src/lib/db-safety.js::assertKnownSupabaseProject`, exige que `SUPABASE_PROJECT_REF_V3` coincida con el destino real antes de cualquier escritura). Ver [data-refresh-runbook.md](data-refresh-runbook.md) y [adr/0002-nexus-v2-v3-project-separation.md](adr/0002-nexus-v2-v3-project-separation.md).
+
 Baseline de liberación:
 
 - `Frontend-Rev`: previews de Netlify.

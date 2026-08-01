@@ -304,6 +304,39 @@ export function validateBeforePublish(results) {
 }
 
 /**
+ * NEXUS V3 - guard de cobertura de feriados para el refresh orquestado
+ * (scripts/pipeline/run-data-refresh.mjs, etapa VALIDATE_AFTER_HOURS).
+ * Nunca reimporta feriados (eso sigue siendo exclusivamente manual, ver
+ * `npm run holidays:import` - fechas efectivas reales, nunca inventadas) -
+ * solo verifica que YA exista, para cada año presente en
+ * processed.fieldbeat_tasks, una fila VALIDATED en
+ * config.current_holiday_calendar_coverage que cubra el año calendario
+ * COMPLETO (jurisdiction='CL'). Devuelve los años SIN cobertura completa -
+ * lista vacía = todo cubierto. El caller decide qué hacer con el resultado
+ * (el orquestador lo trata como falla dura: nunca SUCCEEDED en silencio).
+ * @param {import("pg").Pool | import("pg").PoolClient} pool
+ * @returns {Promise<number[]>} años (ascendente) sin cobertura VALIDATED completa
+ */
+export async function findTaskYearsMissingHolidayCoverage(pool) {
+  const result = await pool.query(`
+    WITH task_years AS (
+      SELECT DISTINCT EXTRACT(YEAR FROM start_time)::int AS yr
+      FROM processed.fieldbeat_tasks
+      WHERE start_time IS NOT NULL
+    )
+    SELECT ty.yr
+    FROM task_years ty
+    WHERE NOT EXISTS (
+      SELECT 1 FROM config.current_holiday_calendar_coverage c
+      WHERE c.jurisdiction = 'CL'
+        AND c.coverage_range @> daterange(make_date(ty.yr, 1, 1), make_date(ty.yr + 1, 1, 1))
+    )
+    ORDER BY ty.yr
+  `);
+  return result.rows.map(row => Number(row.yr));
+}
+
+/**
  * Publica los resultados vía staging + TRUNCATE/INSERT transaccional
  * (estrategia elegida, ver §13 y el reporte de medición de 6.6B2) -advisory
  * lock, validación pre-publicación, rollback completo ante cualquier

@@ -33,7 +33,9 @@ if (missingEnvironment.length > 0) {
 // HOTFIX de integridad de datos FieldBeat (Stage 9) - test/search/ agregado
 // para cubrir la corrección real de identidad de repuestos en Búsqueda
 // (lib/search-sql.ts, ver test/search/search-parts-identity.integration.test.ts).
-const INTEGRATION_TEST_DIRS = ["test/after-hours", "test/fieldbeat", "test/search", "test/audit", "test/explorer"];
+// NEXUS V3 Bloque 3 agrega test/pipeline/ (pipeline.refresh_runs -
+// sql/101_pipeline_refresh_runs.sql).
+const INTEGRATION_TEST_DIRS = ["test/after-hours", "test/fieldbeat", "test/search", "test/audit", "test/explorer", "test/pipeline"];
 
 const files = [];
 for (const dir of INTEGRATION_TEST_DIRS) {

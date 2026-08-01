@@ -117,3 +117,65 @@ test("quality.classify_part_declaration - nunca reclasifica un match_status dist
   assert.equal(await classify("N/A", "AMBIGUOUS_MATCH", null), "AMBIGUOUS_MATCH");
   assert.equal(await classify("N/A", "MATCHED", null), "MATCHED");
 });
+
+// sql/099_part_no_usage_markers_sync.sql - sincronización de
+// quality.part_no_usage_markers con la ampliación de PLACEHOLDER_LITERALS
+// (src/resolvers/part-identity-resolver.js). Casos mínimos exigidos por la
+// tarea de sincronización, más las variantes de normalización de "no hay".
+
+const NEW_NO_PART_USED_LITERALS = [
+  "No", "NO HAY", "No hay.", "Ninguno", "Ninguna", "No aplica",
+  "Sin repuestos", "No se utilizó repuesto", "No se utilizo repuesto",
+  "Sin consumo", "Nada", "No existe", "No procede", "No requerido",
+  "Sin material", "Sin insumo", "None", "Not applicable", "No part"
+];
+
+for (const literal of NEW_NO_PART_USED_LITERALS) {
+  test(`quality.classify_part_declaration('${literal}', PLACEHOLDER_VALUE, cantidad nula) => NO_PART_USED (literal nuevo de sql/099)`, { skip: !TEST_DB_URL }, async () => {
+    const result = await classify(literal, "PLACEHOLDER_VALUE", null);
+    assert.equal(result, "NO_PART_USED", `"${literal}" con cantidad nula debería clasificar como NO_PART_USED, obtuve "${result}"`);
+  });
+}
+
+const MISSING_IDENTIFIER_OR_GENERIC_LITERALS = ["Sin número", "Sin serie", "Pendiente", "Sin información", "Desconocido", "Por confirmar"];
+
+for (const literal of MISSING_IDENTIFIER_OR_GENERIC_LITERALS) {
+  test(`quality.classify_part_declaration('${literal}', PLACEHOLDER_VALUE, cantidad nula) => sigue PLACEHOLDER_VALUE (NO_PART_USED=false, identificador/dato faltante, no ausencia de repuesto)`, { skip: !TEST_DB_URL }, async () => {
+    const result = await classify(literal, "PLACEHOLDER_VALUE", null);
+    assert.equal(result, "PLACEHOLDER_VALUE", `"${literal}" describe un dato/identificador faltante, no debería reclasificarse a NO_PART_USED, obtuve "${result}"`);
+  });
+}
+
+test("quality.classify_part_declaration - contradicción: 'N/A' con cantidad positiva permanece PLACEHOLDER_VALUE y requiere revisión", { skip: !TEST_DB_URL }, async () => {
+  assert.equal(await classify("N/A", "PLACEHOLDER_VALUE", 1), "PLACEHOLDER_VALUE");
+});
+
+test("quality.classify_part_declaration - contradicción: 'No hay' con match_status ya MATCHED (producto Dolibarr confirmado) nunca se reclasifica a NO_PART_USED", { skip: !TEST_DB_URL }, async () => {
+  assert.equal(await classify("No hay", "MATCHED", null), "MATCHED");
+});
+
+test("quality.normalize_part_declaration - 'no hay' colapsa igual con guion/guion bajo/barra/mayúsculas, y clasifica igual", { skip: !TEST_DB_URL }, async () => {
+  const variants = ["NO HAY", "No hay.", "no-hay", "no_hay", "no/hay"];
+  const normalized = await Promise.all(variants.map(normalize));
+  for (const n of normalized) assert.equal(n, normalized[0], `variantes de "no hay" deberían normalizar igual, obtuve "${n}" vs "${normalized[0]}"`);
+
+  const classifications = await Promise.all(variants.map(v => classify(v, "PLACEHOLDER_VALUE", null)));
+  for (const c of classifications) assert.equal(c, "NO_PART_USED", `todas las variantes de "no hay" deberían clasificar NO_PART_USED, obtuve "${c}"`);
+});
+
+// Guarda de divergencia de catálogo (evita repetir la causa raíz original:
+// un marcador NO_PART_USED que el resolver JS nunca produce como
+// PLACEHOLDER_VALUE en primer lugar queda inalcanzable para siempre, sin
+// importar cuántas veces se reevalúen las reglas). quality.part_no_usage_markers
+// DEBE ser subconjunto, por valor normalizado, de PLACEHOLDER_LITERALS.
+test("quality.part_no_usage_markers es subconjunto (por valor normalizado) de PLACEHOLDER_LITERALS - ningún marcador queda inalcanzable", { skip: !TEST_DB_URL }, async () => {
+  const { PLACEHOLDER_LITERALS } = await import("../../../../src/resolvers/part-identity-resolver.js");
+  const placeholderNormalized = new Set(await Promise.all(PLACEHOLDER_LITERALS.map(normalize)));
+
+  const markersResult = await pool.query<{ normalized_value: string }>(
+    "SELECT normalized_value FROM quality.part_no_usage_markers WHERE active"
+  );
+
+  const unreachable = markersResult.rows.map(r => r.normalized_value).filter(marker => !placeholderNormalized.has(marker));
+  assert.deepEqual(unreachable, [], `marcador(es) NO_PART_USED que el resolver JS nunca clasifica como PLACEHOLDER_VALUE (inalcanzables): ${unreachable.join(", ")}`);
+});

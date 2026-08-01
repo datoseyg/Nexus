@@ -15,6 +15,7 @@ interface CorreccionesSectionProps {
   clientes: string[];
   maquinas: string[];
   role: "gerencia" | "administracion";
+  capabilities: string[];
 }
 
 type SubTab = "aplicar-parts" | "aplicar-ambiguous" | "aplicar-placeholders" | "aplicar-reports" | "aplicar-tickets" | "historial";
@@ -266,7 +267,7 @@ function VersionsHistory() {
 // de versiones (nuevo, solo lectura, governance.correction_versions). Nunca
 // dos superficies separadas para "aplicar" vs. "ver el estado" de una
 // corrección - viven en la misma pestaña, distinguidas por sub-navegación.
-export function CorreccionesSection({ clientes, maquinas, role }: CorreccionesSectionProps) {
+export function CorreccionesSection({ clientes, maquinas, role, capabilities }: CorreccionesSectionProps) {
   const [subTab, setSubTab] = useState<SubTab>("aplicar-parts");
 
   return (
@@ -297,11 +298,11 @@ export function CorreccionesSection({ clientes, maquinas, role }: CorreccionesSe
       </div>
 
       <div role="tabpanel" id={`corrections-subtabpanel-${subTab}`} aria-labelledby={`corrections-subtab-${subTab}`} tabIndex={0}>
-        {subTab === "aplicar-parts" && <PartsReviewSection clientes={clientes} maquinas={maquinas} role={role} />}
-        {subTab === "aplicar-ambiguous" && <AmbiguousPartsSection clientes={clientes} maquinas={maquinas} role={role} />}
+        {subTab === "aplicar-parts" && <PartsReviewSection clientes={clientes} maquinas={maquinas} role={role} capabilities={capabilities} />}
+        {subTab === "aplicar-ambiguous" && <AmbiguousPartsSection clientes={clientes} maquinas={maquinas} role={role} capabilities={capabilities} />}
         {subTab === "aplicar-placeholders" && <PlaceholdersSection clientes={clientes} maquinas={maquinas} />}
         {subTab === "aplicar-reports" && <ReportsReviewSection clientes={clientes} maquinas={maquinas} />}
-        {subTab === "aplicar-tickets" && <TicketLinksReviewSection clientes={clientes} maquinas={maquinas} role={role} />}
+        {subTab === "aplicar-tickets" && <TicketLinksReviewSection clientes={clientes} maquinas={maquinas} role={role} capabilities={capabilities} />}
         {subTab === "historial" && <VersionsHistory />}
       </div>
     </div>

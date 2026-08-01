@@ -109,6 +109,7 @@ Rollback: no crear ni promover preview.
 - [ ] `SUPABASE_DB_URL` usa transaction pooler `:6543` y rol `nexus_app`.
 - [ ] `NEXUS_SHOW_AUDIT=false`.
 - [ ] `NEXUS_SHOW_EXPLORER=false`.
+- [ ] `GOVERNANCE_PIPELINE_REQUESTER_DB_URL` configurada (NEXUS V3 - `DataRefreshControl` en la sidebar no está detrás de un flag; sin esta variable, `POST`/`GET /api/data-refresh/runs*` responden `DB_CONNECTION_ERROR`, no un 404/500 silencioso).
 - [ ] Build y Functions logs sin secretos/errores.
 - [ ] Smoke anónimo read-only verde.
 - [ ] Smoke autenticado manual read-only verde para ambos roles.
@@ -129,6 +130,16 @@ Rollback: bloquear deploy de preview, revertir al deploy anterior de preview y r
 - [ ] Logs y métricas iniciales revisados.
 
 Rollback frontend: publicar el deploy anterior de Netlify. Rollback de base: proceso separado mediante snapshot/plan SQL; nunca asumir que el rollback frontend lo cubre.
+
+## Nota — actualización de datos STAGING/PRODUCTION (NEXUS V3)
+
+`.github/workflows/data-refresh.yml` (`workflow_dispatch`) es un prerequisito **separado** de este checklist, no bloquea ningún Gate de arriba: la app se despliega y funciona igual sin él (STAGING/PRODUCTION simplemente no tienen todavía forma de refrescar datos hasta que se complete). Antes de la primera ejecución real:
+
+- [ ] Crear los GitHub Environments `STAGING` y `PRODUCTION` (Settings → Environments) con sus secretos (ver [data-refresh-runbook.md](data-refresh-runbook.md) §4).
+- [ ] Confirmar `SUPABASE_PROJECT_REF_V3` de cada Environment coincide con el proyecto Supabase V3 real correspondiente (nunca el de Nexus V2).
+- [ ] Considerar "required reviewers" en el Environment `PRODUCTION` como aprobación humana adicional.
+
+Rollback: el workflow no tiene rollback propio - una corrida `FAILED`/`PARTIAL_FAILED` nunca mueve `pipeline.published_dataset_state` (ver runbook §5), así que no hay nada que revertir en el estado publicado.
 
 ## Cierre
 

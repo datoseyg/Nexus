@@ -7,16 +7,18 @@ import { matchStatusFinding, matchStatusRecommendation } from "@/lib/audit-vocab
 import { PartAliasCorrectionDrawer } from "./PartAliasCorrectionDrawer";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, PartsReviewRow } from "@/types/audit";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface PartsReviewSectionProps {
   clientes: string[];
   maquinas: string[];
-  /** Rol de la sesión actual - determina si el botón de corrección está
-   * activo (administracion, capacidad correction:part-alias) o simplemente
-   * no se ofrece (gerencia, solo lectura). La autorización real sigue
-   * siendo server-side (requireCapability + rol de conexión PostgreSQL) -
-   * esto es solo reflejo de permisos en la UI, nunca su único control. */
   role: "gerencia" | "administracion";
+  /** Determina si el botón de corrección está activo (capacidad
+   * correction:part-alias) o simplemente no se ofrece (solo lectura). La
+   * autorización real sigue siendo server-side (requireCapability + rol de
+   * conexión PostgreSQL) - esto es solo reflejo de permisos en la UI, nunca
+   * su único control. */
+  capabilities: string[];
 }
 
 const MATCH_STATUS_OPTIONS = ["NO_MATCH", "AMBIGUOUS_MATCH", "PLACEHOLDER_VALUE", "MATCHED"];
@@ -44,7 +46,7 @@ function RowAction({ actionLabel, canAct, onOpen }: { actionLabel: string; canAc
       <button
         type="button"
         disabled
-        title="Requiere rol Administración"
+        title="Requiere capacidad correction:part-alias"
         className="w-full cursor-not-allowed whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold sm:w-auto"
         style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", background: "var(--nx-page-bg)" }}
       >
@@ -76,7 +78,8 @@ function RowAction({ actionLabel, canAct, onOpen }: { actionLabel: string; canAc
 // recomendación - esas viven en el drawer (PartAliasCorrectionDrawer). Las
 // 6 columnas visibles responden directamente qué ocurrió, dónde, qué hacer,
 // cuál es el estado y cómo actuar.
-export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSectionProps) {
+export function PartsReviewSection({ clientes, maquinas, capabilities }: PartsReviewSectionProps) {
+  const canAct = hasCapability(capabilities, "correction:part-alias");
   const [filters, setFilters] = useState<AuditFilterValues & { matchStatus?: string }>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<PartsReviewRow> | null>(null);
@@ -210,7 +213,7 @@ export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSect
                   <td>
                     <RowAction
                       actionLabel={rec.actionLabel}
-                      canAct={role === "administracion"}
+                      canAct={canAct}
                       onOpen={() => {
                         setCorrectionRow(row);
                         setDrawerOpen(true);
@@ -251,7 +254,7 @@ export function PartsReviewSection({ clientes, maquinas, role }: PartsReviewSect
                 </div>
                 <RowAction
                   actionLabel={rec.actionLabel}
-                  canAct={role === "administracion"}
+                  canAct={canAct}
                   onOpen={() => {
                     setCorrectionRow(row);
                     setDrawerOpen(true);

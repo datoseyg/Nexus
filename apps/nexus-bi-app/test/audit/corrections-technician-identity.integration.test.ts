@@ -38,6 +38,12 @@ const { Pool } = pg;
 let adminPool: pg.Pool;
 
 const SOURCE_VALUE = "test-technician-family2";
+// Fixture separado para el caso "gerencia también puede" (capacidades
+// unificadas, sql/100) - nunca comparte SOURCE_VALUE con administracion:
+// varios asserts más abajo (versions.rows.length===2, expectedVersion:1,
+// versions.rows[0]/[1] por posición) asumen que administracion es la
+// ÚNICA autora de ese target y romperían si gerencia versionara primero.
+const GERENCIA_SOURCE_VALUE = "test-technician-family2-gerencia";
 
 function req(path: string, init?: ConstructorParameters<typeof NextRequest>[1]): NextRequest {
   return new NextRequest(new URL(`http://localhost${path}`), init);
@@ -71,18 +77,18 @@ before(async () => {
   adminPool = new Pool({ connectionString: TEST_DB_URL, ssl: false, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
   await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
 
-  await adminPool.query(`DELETE FROM manual_review.fieldbeat_engineer_identity_map WHERE source_value_normalized = $1`, [SOURCE_VALUE]);
-  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = $1`, [SOURCE_VALUE]);
-  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = $1`, [SOURCE_VALUE]);
+  await adminPool.query(`DELETE FROM manual_review.fieldbeat_engineer_identity_map WHERE source_value_normalized = ANY($1)`, [[SOURCE_VALUE, GERENCIA_SOURCE_VALUE]]);
+  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = ANY($1)`, [[SOURCE_VALUE, GERENCIA_SOURCE_VALUE]]);
+  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = ANY($1)`, [[SOURCE_VALUE, GERENCIA_SOURCE_VALUE]]);
   await adminPool.query(`DELETE FROM governance.idempotency_keys WHERE command_type IN ('correction:technician-identity','correction:reverse') AND idempotency_key LIKE 'ti-test-%'`);
   await adminPool.query(`DELETE FROM governance.command_attempts WHERE command_type = 'correction:technician-identity'`);
 });
 
 afterAll(async () => {
   if (!TEST_DB_URL) return;
-  await adminPool.query(`DELETE FROM manual_review.fieldbeat_engineer_identity_map WHERE source_value_normalized = $1`, [SOURCE_VALUE]);
-  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = $1`, [SOURCE_VALUE]);
-  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = $1`, [SOURCE_VALUE]);
+  await adminPool.query(`DELETE FROM manual_review.fieldbeat_engineer_identity_map WHERE source_value_normalized = ANY($1)`, [[SOURCE_VALUE, GERENCIA_SOURCE_VALUE]]);
+  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = ANY($1)`, [[SOURCE_VALUE, GERENCIA_SOURCE_VALUE]]);
+  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TECHNICIAN_IDENTITY' AND target_key->>'sourceValueNormalized' = ANY($1)`, [[SOURCE_VALUE, GERENCIA_SOURCE_VALUE]]);
   await adminPool.end();
   setAuthorizationProviderForTests(null);
 });
@@ -108,7 +114,7 @@ test("POST /api/audit/corrections/technician-identity - integración", { skip: !
     assert.equal(response.status, 403);
   });
 
-  await t.test("rechaza a gerencia (sin capacidad correction:technician-identity) con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede aplicar la corrección - 200 APPLIED (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/corrections/technician-identity", {
@@ -116,16 +122,17 @@ test("POST /api/audit/corrections/technician-identity - integración", { skip: !
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "ti-test-gerencia" },
         body: JSON.stringify({
           sourceType: "ASSIGNED_TO_USERNAME",
-          sourceValueNormalized: SOURCE_VALUE,
-          canonicalPersonKey: "test.technician",
-          canonicalDisplayName: "TEST TECHNICIAN",
-          reason: "x"
+          sourceValueNormalized: GERENCIA_SOURCE_VALUE,
+          canonicalPersonKey: "test.technician.gerencia",
+          canonicalDisplayName: "TEST TECHNICIAN GERENCIA",
+          reason: "gerencia ahora tiene correction:technician-identity"
         })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
     const body = await response.json();
-    assert.equal(body.code, "FORBIDDEN");
+    assert.equal(body.result, "APPLIED");
+    assert.equal(body.verification, "NOT_APPLICABLE");
   });
 
   await t.test("rechaza sourceType inválido (400 VALIDATION_ERROR)", async () => {

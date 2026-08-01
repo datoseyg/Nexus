@@ -5,10 +5,12 @@ import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { StatusBadge, issueStatusBadge, reviewCaseStatusBadge, severityBadge } from "@/components/ui/StatusBadge";
 import { RestrictedReadReveal } from "./RestrictedReadReveal";
 import { entityTypeLabel, membershipEndReasonLabel } from "@/lib/audit-vocabulary";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface ReviewCaseDetailDrawerProps {
   reviewCaseId: string | null;
   role: "gerencia" | "administracion";
+  capabilities: string[];
   onClose: () => void;
   onChanged: () => void;
 }
@@ -29,9 +31,10 @@ const FINAL_STATUSES = [
 // membresías activas/históricas, comentarios (inmutables, "editar" = nuevo
 // comentario con supersedesCommentId), asignar/reasignar, agregar/terminar
 // membresía de un issue, cerrar (cascada de membresías, B53)/reabrir.
-// Administración ve las acciones; Gerencia ve la misma información en modo
-// exclusivamente lectura (nunca botones deshabilitados sin explicación).
-export function ReviewCaseDetailDrawer({ reviewCaseId, role, onClose, onChanged }: ReviewCaseDetailDrawerProps) {
+// Quien tiene audit:review/audit:assign/audit:comment ve las acciones; sin
+// esas capacidades se ve la misma información en modo exclusivamente lectura
+// (nunca botones deshabilitados sin explicación).
+export function ReviewCaseDetailDrawer({ reviewCaseId, role, capabilities, onClose, onChanged }: ReviewCaseDetailDrawerProps) {
   const open = reviewCaseId !== null;
   const [detail, setDetail] = useState<CaseDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -112,7 +115,7 @@ export function ReviewCaseDetailDrawer({ reviewCaseId, role, onClose, onChanged 
     }
   }
 
-  const canAct = role === "administracion";
+  const canAct = hasCapability(capabilities, "audit:review");
   const isClosed = detail?.case.status === "RESOLVED" || detail?.case.status === "DISMISSED";
 
   return (

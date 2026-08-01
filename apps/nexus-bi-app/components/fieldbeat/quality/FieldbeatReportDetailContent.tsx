@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { EquipmentIdentificationCorrectionAction } from "@/components/audit/EquipmentIdentificationCorrectionAction";
 import { useAfterHoursSection } from "@/lib/use-after-hours-section";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 import {
   EQUIPMENT_SOURCE_LABEL,
   TEAM_IDENTIFICATION_STATUS_LABEL,
@@ -67,11 +68,13 @@ interface FieldbeatReportDetailContentProps {
   reportId: string;
   onMeta?: (meta: { generatedAt: string; fieldbeatOpenAvailable: boolean } | null) => void;
   /** Opcional (Gate B, Familia 5) - solo Explorador lo pasa hoy (ya tiene
-   * `role` disponible). Búsqueda y FieldBeat Quality no lo pasan y el
-   * comportamiento queda idéntico al de antes: sin acción de corrección de
-   * equipo visible, consistente con "Gerencia ve una experiencia de lectura
-   * completa" y sin cambiar 2 de los 3 consumidores de este componente. */
+   * `role` disponible). Búsqueda y FieldBeat Quality no lo pasan. */
   role?: "gerencia" | "administracion";
+  /** Idem role - determina si la acción de corrección de equipo
+   * (correction:equipment-identification) se ofrece. Sin capabilities
+   * (Búsqueda y FieldBeat Quality) el comportamiento queda idéntico al de
+   * antes: sin acción de corrección visible. */
+  capabilities?: string[];
 }
 
 // Contenido del detalle maestro (Phase 5) - solo se monta mientras el
@@ -79,7 +82,7 @@ interface FieldbeatReportDetailContentProps {
 // garantizando cero requests antes de abrir y cancelación real vía
 // useAfterHoursSection (AbortController + requestId) al cambiar de
 // reportId con el drawer abierto.
-export function FieldbeatReportDetailContent({ reportId, onMeta, role }: FieldbeatReportDetailContentProps) {
+export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities }: FieldbeatReportDetailContentProps) {
   const { status, data, error, retry } = useAfterHoursSection<FieldbeatReportDetail>(`/api/dashboard/fieldbeat/reports/${reportId}`, "", isReportDetailEmpty);
   const loading = status === "idle" || status === "loading" || status === "refreshing";
 
@@ -324,7 +327,7 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, role }: Fieldbe
             ))}
           </ul>
         )}
-        {role === "administracion" && (
+        {hasCapability(capabilities ?? [], "correction:equipment-identification") && (
           <div className="mt-2">
             <EquipmentIdentificationCorrectionAction
               fieldbeatTaskId={data.report.fieldbeatTaskId}

@@ -6,11 +6,13 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TicketLinkCorrectionDrawer } from "./TicketLinkCorrectionDrawer";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, TicketLinkReviewRow } from "@/types/audit";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface TicketLinksReviewSectionProps {
   clientes: string[];
   maquinas: string[];
   role: "gerencia" | "administracion";
+  capabilities: string[];
 }
 
 function toQuery(params: Record<string, string | undefined>): string {
@@ -32,7 +34,8 @@ function contextLine(row: TicketLinkReviewRow): string {
 // hallazgo es el mismo para toda la lista (por eso el filtro server-side ya
 // la acota) - se muestra igual como badge explícito, nunca como el nombre
 // de la pestaña por defecto.
-export function TicketLinksReviewSection({ clientes, maquinas, role }: TicketLinksReviewSectionProps) {
+export function TicketLinksReviewSection({ clientes, maquinas, capabilities }: TicketLinksReviewSectionProps) {
+  const canAct = hasCapability(capabilities, "correction:ticket-link");
   const [filters, setFilters] = useState<AuditFilterValues>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<TicketLinkReviewRow> | null>(null);
@@ -131,7 +134,7 @@ export function TicketLinksReviewSection({ clientes, maquinas, role }: TicketLin
                 </td>
                 <td style={{ whiteSpace: "normal", color: "var(--nx-text-primary)" }}>Confirmar si existe un ticket asociado o registrar que no corresponde.</td>
                 <td>
-                  {role === "administracion" ? (
+                  {canAct ? (
                     <button
                       type="button"
                       onClick={() => {
@@ -147,7 +150,7 @@ export function TicketLinksReviewSection({ clientes, maquinas, role }: TicketLin
                     <button
                       type="button"
                       disabled
-                      title="Requiere rol Administración"
+                      title="Requiere capacidad correction:ticket-link"
                       className="cursor-not-allowed whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold"
                       style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", background: "var(--nx-page-bg)" }}
                     >
@@ -179,7 +182,7 @@ export function TicketLinksReviewSection({ clientes, maquinas, role }: TicketLin
               <div className="text-sm" style={{ color: "var(--nx-text-primary)" }}>
                 Confirmar si existe un ticket asociado o registrar que no corresponde.
               </div>
-              {role === "administracion" ? (
+              {canAct ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -195,7 +198,7 @@ export function TicketLinksReviewSection({ clientes, maquinas, role }: TicketLin
                 <button
                   type="button"
                   disabled
-                  title="Requiere rol Administración"
+                  title="Requiere capacidad correction:ticket-link"
                   className="w-full cursor-not-allowed rounded-full border px-3 py-1.5 text-xs font-semibold"
                   style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", background: "var(--nx-page-bg)" }}
                 >

@@ -127,18 +127,18 @@ test("POST /api/audit/corrections/part-alias - integración", { skip: !TEST_DB_U
     assert.equal(body.code, "VALIDATION_ERROR");
   });
 
-  await t.test("rechaza a gerencia (sin la capacidad correction:part-alias) con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede aplicar la corrección - 200 APPLIED (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/corrections/part-alias", {
         method: "POST",
-        headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "test-gerencia-forbidden" },
-        body: JSON.stringify({ aliasValue: `${ALIAS_PREFIX}3`, aliasType: "RAW", dolibarrProductId: 1, reason: "x" })
+        headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "test-gerencia-unified" },
+        body: JSON.stringify({ aliasValue: `${ALIAS_PREFIX}3`, aliasType: "RAW", dolibarrProductId: 1, reason: "gerencia ahora tiene correction:part-alias" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
     const body = await response.json();
-    assert.equal(body.code, "FORBIDDEN");
+    assert.equal(body.result, "APPLIED");
   });
 
   await t.test("rechaza sin reason (400 REASON_REQUIRED)", async () => {

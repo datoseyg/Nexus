@@ -1,11 +1,14 @@
 // Pruebas de integración de Gate B - Familia 6: lectura gobernada de
 // contenido restringido (evidencia RESTRICTED_STRUCTURED, cuerpo original de
 // un comentario redactado, before/after de un evento). Invariantes
-// cubiertas: capacidad audit:evidence-restricted (solo administracion);
-// razón obligatoria; un objeto por request; cada acceso queda registrado
-// como un evento nuevo (RESTRICTED_EVIDENCE_ACCESSED/REDACTED_COMMENT_ACCESSED/
-// RESTRICTED_EVENT_STATE_ACCESSED); Gerencia 403 en las 3 rutas; ningún
-// contenido restringido se filtra a través de las vistas *_business_safe/current.
+// cubiertas: capacidad audit:evidence-restricted (gerencia y administracion
+// por igual, sql/100_role_capabilities_unification.sql - gerencia usa su
+// propio bundle de fixtures para no duplicar las filas de auditoría que
+// administracion cuenta más abajo); razón obligatoria; un objeto por
+// request; cada acceso queda registrado como un evento nuevo
+// (RESTRICTED_EVIDENCE_ACCESSED/REDACTED_COMMENT_ACCESSED/
+// RESTRICTED_EVENT_STATE_ACCESSED); ningún contenido restringido se filtra
+// a través de las vistas *_business_safe/current.
 import { test, before, after as afterAll } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
@@ -45,7 +48,14 @@ const { Pool } = pg;
 let adminPool: pg.Pool;
 
 const ENTITY_KEY = "restricted-test-975501";
+// Dedicado a "gerencia también puede" (capacidades unificadas, sql/100) -
+// cada lectura restringida crea una fila NUEVA de auditoría
+// (RESTRICTED_*_ACCESSED); varios asserts más abajo cuentan
+// events.rows.length===1 para el fixture de administracion, que se rompería
+// si gerencia leyera el mismo evidenceId/commentId/commandEventId primero.
+const ENTITY_KEY_GERENCIA = "restricted-test-975502";
 const ADMIN_ACTOR_ID = "77777777-7777-7777-7777-777777777777";
+const GERENCIA_ACTOR_ID = "88888888-8888-8888-8888-888888888888";
 
 let issueId: number;
 let evaluationRunId: string;
@@ -53,6 +63,12 @@ let evidenceId: number;
 let reviewCaseId: number;
 let redactedCommentId: number;
 let commandEventId: number;
+
+let gerenciaIssueId: number;
+let gerenciaEvidenceId: number;
+let gerenciaReviewCaseId: number;
+let gerenciaRedactedCommentId: number;
+let gerenciaCommandEventId: number;
 
 function req(path: string, init?: ConstructorParameters<typeof NextRequest>[1]): NextRequest {
   return new NextRequest(new URL(`http://localhost${path}`), init);
@@ -131,21 +147,66 @@ before(async () => {
     [issueId, ADMIN_ACTOR_ID]
   );
   commandEventId = Number(eventResult.rows[0].id);
+
+  // Segundo bundle de fixtures completo, dedicado a gerencia (ver comentario
+  // en ENTITY_KEY_GERENCIA más arriba) - misma forma exacta que el bundle de
+  // administracion de arriba, nunca comparte una fila.
+  const gerenciaIssueResult = await adminPool.query(
+    `INSERT INTO governance.issues
+      (fingerprint, rule_code, first_detected_rule_version, last_evaluated_rule_version, entity_type, entity_key, occurrence_key,
+       severity, status, first_seen_at, last_seen_at, last_evaluated_at, is_currently_detected)
+     VALUES ($1, 'PART_NO_MATCH', 1, 1, 'part_occurrence', $2, $2, 'MEDIUM', 'OPEN', now(), now(), now(), true)
+     RETURNING id`,
+    ["restricted-test-fingerprint-gerencia", ENTITY_KEY_GERENCIA]
+  );
+  gerenciaIssueId = Number(gerenciaIssueResult.rows[0].id);
+
+  const gerenciaEvidenceResult = await adminPool.query(
+    `INSERT INTO governance.issue_evidence
+      (issue_id, evaluation_run_id, evidence_type, rule_code, rule_version, source_object, source_record_key,
+       rule_inputs, observed_values, evidence_hash, redaction_level, contains_personal_data)
+     VALUES ($1, $2, 'RULE_DETECTION', 'PART_NO_MATCH', 1, 'processed.fieldbeat_used_parts', '{"usedPartId": 2}'::jsonb,
+       '{"rawPartIdentifier": "RESTRICTED-RAW-VALUE-GERENCIA"}'::jsonb, '{"matchStatus": "NO_MATCH"}'::jsonb,
+       'restricted-test-hash-gerencia', 'RESTRICTED_STRUCTURED', true)
+     RETURNING id`,
+    [gerenciaIssueId, evaluationRunId]
+  );
+  gerenciaEvidenceId = Number(gerenciaEvidenceResult.rows[0].id);
+
+  const gerenciaCaseResult = await adminPool.query(`INSERT INTO governance.review_cases (status) VALUES ('OPEN') RETURNING id`);
+  gerenciaReviewCaseId = Number(gerenciaCaseResult.rows[0].id);
+
+  const gerenciaCommentResult = await adminPool.query(
+    `INSERT INTO governance.review_case_comments (review_case_id, actor_user_id, body, is_redacted, redaction_reason, redacted_by_actor_id, redacted_at)
+     VALUES ($1, $2, 'Contenido original sensible que fue redactado (gerencia)', true, 'contenía datos que no correspondía mostrar', $2, now())
+     RETURNING id`,
+    [gerenciaReviewCaseId, ADMIN_ACTOR_ID]
+  );
+  gerenciaRedactedCommentId = Number(gerenciaCommentResult.rows[0].id);
+
+  const gerenciaEventResult = await adminPool.query(
+    `INSERT INTO governance.command_events
+      (correlation_id, event_type, command_type, issue_id, actor_type, actor_user_id, actor_role, reason, before_state, after_state, service_actor_key)
+     VALUES (gen_random_uuid(), 'ISSUE_ASSIGNED', 'review-case:assign', $1, 'HUMAN', $2, 'administracion', 'fixture', '{"status":"OPEN"}'::jsonb, '{"status":"IN_REVIEW"}'::jsonb, NULL)
+     RETURNING id`,
+    [gerenciaIssueId, ADMIN_ACTOR_ID]
+  );
+  gerenciaCommandEventId = Number(gerenciaEventResult.rows[0].id);
 });
 
 afterAll(async () => {
   if (!TEST_DB_URL) return;
 
   await adminPool.query(
-    `DELETE FROM governance.command_events WHERE issue_id = $1 OR review_case_id = $2`,
-    [issueId, reviewCaseId]
+    `DELETE FROM governance.command_events WHERE issue_id = ANY($1::bigint[]) OR review_case_id = ANY($2::bigint[])`,
+    [[issueId, gerenciaIssueId], [reviewCaseId, gerenciaReviewCaseId]]
   );
-  await adminPool.query(`DELETE FROM governance.review_case_comments WHERE review_case_id = $1`, [reviewCaseId]);
-  await adminPool.query(`DELETE FROM governance.review_cases WHERE id = $1`, [reviewCaseId]);
-  await adminPool.query(`DELETE FROM governance.issue_evidence WHERE issue_id = $1`, [issueId]);
-  await adminPool.query(`DELETE FROM governance.issues WHERE id = $1`, [issueId]);
+  await adminPool.query(`DELETE FROM governance.review_case_comments WHERE review_case_id = ANY($1::bigint[])`, [[reviewCaseId, gerenciaReviewCaseId]]);
+  await adminPool.query(`DELETE FROM governance.review_cases WHERE id = ANY($1::bigint[])`, [[reviewCaseId, gerenciaReviewCaseId]]);
+  await adminPool.query(`DELETE FROM governance.issue_evidence WHERE issue_id = ANY($1::bigint[])`, [[issueId, gerenciaIssueId]]);
+  await adminPool.query(`DELETE FROM governance.issues WHERE id = ANY($1::bigint[])`, [[issueId, gerenciaIssueId]]);
   await adminPool.query(`DELETE FROM governance.rule_evaluation_runs WHERE evaluation_run_id = $1`, [evaluationRunId]);
-  await adminPool.query(`DELETE FROM governance.command_attempts WHERE command_type = 'audit:evidence-restricted' AND actor_user_id = $1`, [ADMIN_ACTOR_ID]);
+  await adminPool.query(`DELETE FROM governance.command_attempts WHERE command_type = 'audit:evidence-restricted' AND actor_user_id = ANY($1)`, [[ADMIN_ACTOR_ID, GERENCIA_ACTOR_ID]]);
 
   await adminPool.end();
   setAuthorizationProviderForTests(null);
@@ -154,16 +215,18 @@ afterAll(async () => {
 test("POST /api/audit/restricted/evidence - integración", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/restricted/evidence/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede revelar evidencia restringida - 200 (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/restricted/evidence", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost" },
-        body: JSON.stringify({ evidenceId, reason: "x" })
+        body: JSON.stringify({ evidenceId: gerenciaEvidenceId, reason: "gerencia ahora tiene audit:evidence-restricted" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.redactionLevel, "RESTRICTED_STRUCTURED");
   });
 
   await t.test("rechaza sin razón (400 REASON_REQUIRED)", async () => {
@@ -224,16 +287,18 @@ test("POST /api/audit/restricted/evidence - integración", { skip: !TEST_DB_URL 
 test("POST /api/audit/restricted/comment-original - integración", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/restricted/comment-original/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede revelar el comentario original - 200 (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/restricted/comment-original", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost" },
-        body: JSON.stringify({ commentId: redactedCommentId, reason: "x" })
+        body: JSON.stringify({ commentId: gerenciaRedactedCommentId, reason: "gerencia ahora tiene audit:evidence-restricted" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.body, "Contenido original sensible que fue redactado (gerencia)");
   });
 
   await t.test("rechaza sin razón (400 REASON_REQUIRED)", async () => {
@@ -279,16 +344,19 @@ test("POST /api/audit/restricted/comment-original - integración", { skip: !TEST
 test("POST /api/audit/restricted/event-state - integración", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/restricted/event-state/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede revelar before/after de un evento - 200 (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/restricted/event-state", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost" },
-        body: JSON.stringify({ commandEventId, reason: "x" })
+        body: JSON.stringify({ commandEventId: gerenciaCommandEventId, reason: "gerencia ahora tiene audit:evidence-restricted" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.beforeState.status, "OPEN");
+    assert.equal(body.afterState.status, "IN_REVIEW");
   });
 
   await t.test("rechaza sin razón (400 REASON_REQUIRED)", async () => {

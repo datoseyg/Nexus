@@ -61,6 +61,14 @@ src/
 
 Ver [DATA_PIPELINE.md](DATA_PIPELINE.md) para el orden exacto de ejecución de cada comando.
 
+## Del DuckDB local a Postgres/Supabase (Nexus BI app)
+
+`data/gold/*.csv` no es el final del camino: `src/db/migrate-to-supabase.js` sincroniza `processed`/`marts`/`gold` desde el `.duckdb` local hacia PostgreSQL (Supabase), donde vive `apps/nexus-bi-app` (Next.js) más el esquema `governance` (roles, capacidades, corrección de datos, evaluación de reglas - ver `sql/089_governance_schema.sql` en adelante). Cada schema de Postgres tiene su propio rol de conexión de mínimo privilegio (`nexus_app_read`, `nexus_app_corrections`, `nexus_rule_evaluator`, `nexus_pipeline_requester`, `nexus_pipeline_worker`, ...) - la autorización real de cualquier operación siempre es ese rol + su `GRANT`, nunca solo un chequeo en la capa de aplicación (`apps/nexus-bi-app/lib/governance-db.ts`).
+
+## Actualización de datos orquestada (NEXUS V3)
+
+Correr manualmente cada comando de [DATA_PIPELINE.md](DATA_PIPELINE.md) sigue siendo válido para desarrollo/depuración, pero también existe un orquestador único (`scripts/pipeline/run-data-refresh.mjs`) que encadena las mismas 9 herramientas CLI (miners, normalizadores, mart builders, gold builders) más la sincronización a Postgres, su validación y la reevaluación de reglas de gobierno, registrando cada etapa en `pipeline.refresh_runs`/`pipeline.refresh_run_stages` (`sql/101_pipeline_refresh_runs.sql`). Nunca se dispara solo, nunca desde el login: siempre por una solicitud explícita (botón en la sidebar de la app para `LOCAL`, `workflow_dispatch` manual de GitHub Actions para `STAGING`/`PRODUCTION`). Ver [data-refresh-runbook.md](data-refresh-runbook.md) para el detalle operativo completo y [adr/0001-data-refresh-local-worker-and-github-actions.md](adr/0001-data-refresh-local-worker-and-github-actions.md) para el porqué de este diseño.
+
 ## Legacy: Cloudflare
 
 Hubo un intento previo de migrar a Cloudflare (Workers/D1/Pages), congelado porque el paso siguiente (R2) exige tarjeta y el proyecto debe usar solo servicios cardless. Ese trabajo **no se borró** -vive completo en otras ramas de este mismo repo, sin tocar por la migración a Supabase:

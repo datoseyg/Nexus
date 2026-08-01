@@ -6,13 +6,14 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import { PartAliasCorrectionDrawer } from "./PartAliasCorrectionDrawer";
 import type { AmbiguousPartRow, PaginatedResponse } from "@/types/audit";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface AmbiguousPartsSectionProps {
   clientes: string[];
   maquinas: string[];
-  /** Ver PartsReviewSection.tsx - misma capacidad (correction:part-alias),
-   * misma razón para reflejar el rol acá en vez de asumirlo. */
   role: "gerencia" | "administracion";
+  /** Ver PartsReviewSection.tsx - misma capacidad (correction:part-alias). */
+  capabilities: string[];
 }
 
 function toQuery(params: Record<string, string | undefined>): string {
@@ -28,7 +29,8 @@ function toQuery(params: Record<string, string | undefined>): string {
 // IDs de candidatos Dolibarr en la tabla principal (sección 5/6 de la
 // corrección de negocio) - esa señal técnica vive en el drawer de
 // corrección, no en la bandeja de decisión.
-export function AmbiguousPartsSection({ clientes, maquinas, role }: AmbiguousPartsSectionProps) {
+export function AmbiguousPartsSection({ clientes, maquinas, capabilities }: AmbiguousPartsSectionProps) {
+  const canAct = hasCapability(capabilities, "correction:part-alias");
   const [filters, setFilters] = useState<AuditFilterValues>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<AmbiguousPartRow> | null>(null);
@@ -127,7 +129,7 @@ export function AmbiguousPartsSection({ clientes, maquinas, role }: AmbiguousPar
                 </td>
                 <td style={{ whiteSpace: "normal", color: "var(--nx-text-primary)" }}>Elegir el producto correcto entre los candidatos sugeridos.</td>
                 <td>
-                  {role === "administracion" ? (
+                  {canAct ? (
                     <button
                       type="button"
                       onClick={() => {
@@ -143,7 +145,7 @@ export function AmbiguousPartsSection({ clientes, maquinas, role }: AmbiguousPar
                     <button
                       type="button"
                       disabled
-                      title="Requiere rol Administración"
+                      title="Requiere capacidad correction:part-alias"
                       className="cursor-not-allowed whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold"
                       style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", background: "var(--nx-page-bg)" }}
                     >
@@ -174,7 +176,7 @@ export function AmbiguousPartsSection({ clientes, maquinas, role }: AmbiguousPar
               <div className="text-sm" style={{ color: "var(--nx-text-primary)" }}>
                 Elegir el producto correcto entre los candidatos sugeridos.
               </div>
-              {role === "administracion" ? (
+              {canAct ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -190,7 +192,7 @@ export function AmbiguousPartsSection({ clientes, maquinas, role }: AmbiguousPar
                 <button
                   type="button"
                   disabled
-                  title="Requiere rol Administración"
+                  title="Requiere capacidad correction:part-alias"
                   className="w-full cursor-not-allowed rounded-full border px-3 py-1.5 text-xs font-semibold"
                   style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)", background: "var(--nx-page-bg)" }}
                 >

@@ -27,11 +27,19 @@ import { readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { config as loadDotenv } from "dotenv";
 import { isLikelyDisposableName, isSupabaseCloudHost, describeConnectionTarget, PROTECTED_DATABASE_NAMES } from "../../../src/lib/db-safety.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.join(__dirname, "..");
 const REPO_ROOT = path.join(APP_DIR, "..", "..");
+
+// Necesario SOLO para WORKING_HOURS_DB_URL (resync post-corrida, ver abajo)
+// - el resto del script sigue sin depender de ningún .env para su lógica
+// principal. Silencioso si no existe (ej. CI sin ese archivo) - dotenv no
+// lanza si el path no existe, `WORKING_HOURS_DB_URL` simplemente queda
+// undefined y el paso de resync más abajo se salta solo.
+loadDotenv({ path: path.join(REPO_ROOT, ".env") });
 
 const KEEP = process.argv.includes("--keep");
 const BASE_URL = process.env.PG_BASE_URL ?? "postgresql://postgres:localtest@localhost:55480/postgres";
@@ -129,7 +137,46 @@ async function main() {
     await dropDatabase();
   }
 
+  await resyncInteractiveDevPasswords();
+
   process.exit(exitCode);
+
+  // Este script recién rotó las contraseñas de los roles nexus_* a nivel de
+  // CLÚSTER (línea ~98 arriba, vía set-local-governance-role-passwords.mjs
+  // --print-env) para poder conectarse a la base efímera de esta corrida -
+  // eso invalida, de paso, las mismas contraseñas que `npm run dev` sigue
+  // usando contra la base interactiva (nexus_bi_dev_local_test), porque un
+  // rol de Postgres es cluster-wide, no por base. Sin este paso, cualquier
+  // corrida de integración deja el servidor de desarrollo roto con
+  // "password authentication failed for user nexus_app_read" hasta que
+  // alguien resincroniza a mano - repetido varias veces en esta sesión.
+  // Resincroniza automáticamente contra el mismo destino interactivo
+  // (WORKING_HOURS_DB_URL, superusuario) para que quede utilizable de
+  // inmediato después de cualquier corrida de integración.
+  async function resyncInteractiveDevPasswords() {
+    const interactiveDevUrl = process.env.WORKING_HOURS_DB_URL;
+    if (!interactiveDevUrl) {
+      console.warn(
+        "[run-integration-tests-fresh] Falta WORKING_HOURS_DB_URL (.env raíz) - se omite el resync automático de contraseñas de gobierno. " +
+        "Si `npm run dev` empieza a fallar con \"password authentication failed\", correr manualmente: " +
+        "node scripts/set-local-governance-role-passwords.mjs --url=<WORKING_HOURS_DB_URL>"
+      );
+      return;
+    }
+
+    console.log("[run-integration-tests-fresh] Resincronizando contraseñas de gobierno contra el destino interactivo de `npm run dev`...");
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/set-local-governance-role-passwords.mjs", `--url=${interactiveDevUrl}`],
+      { cwd: REPO_ROOT, stdio: "inherit" }
+    );
+    if (result.status !== 0) {
+      console.warn(
+        "[run-integration-tests-fresh] ADVERTENCIA: el resync automático post-corrida falló (código " + result.status + "). " +
+        "`npm run dev` puede necesitar node scripts/set-local-governance-role-passwords.mjs --url=<WORKING_HOURS_DB_URL> a mano."
+      );
+    }
+  }
 
   async function dropDatabase() {
     console.log(`[run-integration-tests-fresh] Eliminando "${DB_NAME}" (y SOLO esa base)...`);

@@ -47,6 +47,7 @@ const TASK_ID_A = 975001; // CORRECTED -> PASSED
 const TASK_ID_B = 975002; // CONFIRMED_NO_TICKET -> PASSED
 const TASK_ID_C = 975003; // STILL_DETECTED (override revertido antes de verificar)
 const TASK_ID_D = 975004; // idempotencia/version-conflict, nunca llega a verificación
+const TASK_ID_GERENCIA = 975005; // gerencia también puede (capacidades unificadas, sql/100) - fixture propio, nunca comparte con TASK_ID_A
 const CLIENT_NAME = "TICKETLINK_TEST_CLIENT";
 
 function req(path: string, init?: ConstructorParameters<typeof NextRequest>[1]): NextRequest {
@@ -124,15 +125,15 @@ before(async () => {
   await adminPool.query(`UPDATE governance.issues SET status = 'OPEN', resolution_type = NULL, resolved_rule_version = NULL,
       resolution_evaluation_run_id = NULL, resolution_evidence_id = NULL, resolution_triggered_by_correlation_id = NULL,
       dismissed_by_actor_id = NULL, closed_at = NULL, closed_reason = NULL, is_currently_detected = true, disappeared_at = NULL
-    WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004')`);
-  await adminPool.query(`DELETE FROM governance.command_events WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004'))`);
-  await adminPool.query(`DELETE FROM governance.verification_requests WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004'))`);
-  await adminPool.query(`DELETE FROM governance.issue_evidence WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004'))`);
-  await adminPool.query(`DELETE FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004')`);
+    WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005')`);
+  await adminPool.query(`DELETE FROM governance.command_events WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005'))`);
+  await adminPool.query(`DELETE FROM governance.verification_requests WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005'))`);
+  await adminPool.query(`DELETE FROM governance.issue_evidence WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005'))`);
+  await adminPool.query(`DELETE FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005')`);
   await adminPool.query(`DELETE FROM marts.fieldbeat_report_dolibarr_operational_view WHERE fieldbeat_task_id BETWEEN 975001 AND 975099`);
   await adminPool.query(`DELETE FROM manual_review.ticket_link_overrides WHERE fieldbeat_task_id BETWEEN 975001 AND 975099`);
-  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004')`);
-  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004')`);
+  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004','975005')`);
+  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004','975005')`);
   await adminPool.query(`DELETE FROM governance.idempotency_keys WHERE command_type = 'correction:ticket-link' AND idempotency_key LIKE 'tl-test-%'`);
   await adminPool.query(`DELETE FROM governance.command_attempts WHERE command_type = 'correction:ticket-link'`);
 
@@ -140,8 +141,9 @@ before(async () => {
   await insertTaskFixture(TASK_ID_B);
   await insertTaskFixture(TASK_ID_C);
   await insertTaskFixture(TASK_ID_D);
+  await insertTaskFixture(TASK_ID_GERENCIA);
 
-  for (const id of [TASK_ID_A, TASK_ID_B, TASK_ID_C, TASK_ID_D]) {
+  for (const id of [TASK_ID_A, TASK_ID_B, TASK_ID_C, TASK_ID_D, TASK_ID_GERENCIA]) {
     await runScopedEvaluation(id);
   }
 });
@@ -151,15 +153,15 @@ afterAll(async () => {
   await adminPool.query(`UPDATE governance.issues SET status = 'OPEN', resolution_type = NULL, resolved_rule_version = NULL,
       resolution_evaluation_run_id = NULL, resolution_evidence_id = NULL, resolution_triggered_by_correlation_id = NULL,
       dismissed_by_actor_id = NULL, closed_at = NULL, closed_reason = NULL, is_currently_detected = true, disappeared_at = NULL
-    WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004')`);
-  await adminPool.query(`DELETE FROM governance.command_events WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004'))`);
-  await adminPool.query(`DELETE FROM governance.verification_requests WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004'))`);
-  await adminPool.query(`DELETE FROM governance.issue_evidence WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004'))`);
-  await adminPool.query(`DELETE FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004')`);
+    WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005')`);
+  await adminPool.query(`DELETE FROM governance.command_events WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005'))`);
+  await adminPool.query(`DELETE FROM governance.verification_requests WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005'))`);
+  await adminPool.query(`DELETE FROM governance.issue_evidence WHERE issue_id IN (SELECT id FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005'))`);
+  await adminPool.query(`DELETE FROM governance.issues WHERE rule_code = 'TICKET_LINK_RESTRICTED_OR_MISSING' AND entity_key IN ('975001','975002','975003','975004','975005')`);
   await adminPool.query(`DELETE FROM marts.fieldbeat_report_dolibarr_operational_view WHERE fieldbeat_task_id BETWEEN 975001 AND 975099`);
   await adminPool.query(`DELETE FROM manual_review.ticket_link_overrides WHERE fieldbeat_task_id BETWEEN 975001 AND 975099`);
-  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004')`);
-  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004')`);
+  await adminPool.query(`DELETE FROM governance.correction_targets WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004','975005')`);
+  await adminPool.query(`DELETE FROM governance.correction_versions WHERE target_type = 'TICKET_LINK' AND target_key->>'fieldbeatTaskId' IN ('975001','975002','975003','975004','975005')`);
   await adminPool.query(`DELETE FROM governance.idempotency_keys WHERE command_type = 'correction:ticket-link' AND idempotency_key LIKE 'tl-test-%'`);
   await adminPool.query(`DELETE FROM governance.command_attempts WHERE command_type = 'correction:ticket-link'`);
   await adminPool.end();
@@ -182,18 +184,23 @@ test("POST /api/audit/corrections/ticket-link - integración", { skip: !TEST_DB_
     assert.equal(response.status, 403);
   });
 
-  await t.test("rechaza a gerencia (sin capacidad correction:ticket-link) con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede aplicar la corrección - 200 APPLIED (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/corrections/ticket-link", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "tl-test-gerencia" },
-        body: JSON.stringify({ fieldbeatTaskId: TASK_ID_A, overrideType: "CORRECTED", correctedZendeskTicketId: 12345, reason: "x" })
+        body: JSON.stringify({
+          fieldbeatTaskId: TASK_ID_GERENCIA,
+          overrideType: "CORRECTED",
+          correctedZendeskTicketId: 12345,
+          reason: "gerencia ahora tiene correction:ticket-link"
+        })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
     const body = await response.json();
-    assert.equal(body.code, "FORBIDDEN");
+    assert.equal(body.result, "APPLIED");
   });
 
   await t.test("rechaza CORRECTED sin correctedZendeskTicketId (400 VALIDATION_ERROR)", async () => {

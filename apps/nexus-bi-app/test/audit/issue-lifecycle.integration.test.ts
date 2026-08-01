@@ -2,7 +2,12 @@
 // 3): iniciar revisión, descartar con razón, reabrir. Invariantes cubiertas:
 // DISMISSED exige razón; descartar NO significa que la regla deje de
 // detectar (is_currently_detected se conserva); reabrir deja el issue en
-// IN_REVIEW (nunca RESOLVED); optimistic concurrency; Gerencia read-only.
+// IN_REVIEW (nunca RESOLVED); optimistic concurrency; gerencia y
+// administracion tienen exactamente las mismas capacidades
+// (sql/100_role_capabilities_unification.sql) - gerencia encadena
+// start-review->dismiss->reopen sobre su propio fixture (gerenciaIssueId)
+// para nunca interferir con los expectedVersion hardcodeados de
+// administracion más abajo.
 import { test, before, after as afterAll } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
@@ -37,9 +42,16 @@ const { Pool } = pg;
 let adminPool: pg.Pool;
 let issueOpenId: number;
 let issueForReopenId: number;
+let gerenciaIssueId: number;
 
 const ENTITY_KEY_A = "lifecycle-test-975101";
 const ENTITY_KEY_B = "lifecycle-test-975102";
+// Dedicado a "gerencia también puede" (capacidades unificadas, sql/100) -
+// issueOpenId/issueForReopenId tienen expectedVersion hardcodeado en varios
+// asserts más abajo (1, 2, 999) atados a la secuencia EXACTA de transiciones
+// de administracion; gerencia encadena start-review->dismiss->reopen sobre
+// SU PROPIO issue para nunca correr esos números.
+const ENTITY_KEY_GERENCIA = "lifecycle-test-975103";
 
 function req(path: string, init?: ConstructorParameters<typeof NextRequest>[1]): NextRequest {
   return new NextRequest(new URL(`http://localhost${path}`), init);
@@ -85,20 +97,21 @@ before(async () => {
   adminPool = new Pool({ connectionString: TEST_DB_URL, ssl: false, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
   await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
 
-  await adminPool.query(`DELETE FROM governance.issues WHERE entity_key IN ($1, $2)`, [ENTITY_KEY_A, ENTITY_KEY_B]);
+  await adminPool.query(`DELETE FROM governance.issues WHERE entity_key IN ($1, $2, $3)`, [ENTITY_KEY_A, ENTITY_KEY_B, ENTITY_KEY_GERENCIA]);
 
   issueOpenId = await insertOpenIssue(ENTITY_KEY_A, "lifecycle-test-fingerprint-a");
   issueForReopenId = await insertOpenIssue(ENTITY_KEY_B, "lifecycle-test-fingerprint-b");
+  gerenciaIssueId = await insertOpenIssue(ENTITY_KEY_GERENCIA, "lifecycle-test-fingerprint-gerencia");
 });
 
 afterAll(async () => {
   if (!TEST_DB_URL) return;
-  await adminPool.query(`DELETE FROM governance.command_events WHERE issue_id IN ($1, $2)`, [issueOpenId, issueForReopenId]);
+  await adminPool.query(`DELETE FROM governance.command_events WHERE issue_id IN ($1, $2, $3)`, [issueOpenId, issueForReopenId, gerenciaIssueId]);
   await adminPool.query(`UPDATE governance.issues SET status='OPEN', resolution_type=NULL, resolved_rule_version=NULL,
       resolution_evaluation_run_id=NULL, resolution_evidence_id=NULL, resolution_triggered_by_correlation_id=NULL,
       dismissed_by_actor_id=NULL, closed_at=NULL, closed_reason=NULL, is_currently_detected=true, disappeared_at=NULL
-    WHERE id IN ($1, $2)`, [issueOpenId, issueForReopenId]);
-  await adminPool.query(`DELETE FROM governance.issues WHERE id IN ($1, $2)`, [issueOpenId, issueForReopenId]);
+    WHERE id IN ($1, $2, $3)`, [issueOpenId, issueForReopenId, gerenciaIssueId]);
+  await adminPool.query(`DELETE FROM governance.issues WHERE id IN ($1, $2, $3)`, [issueOpenId, issueForReopenId, gerenciaIssueId]);
   await adminPool.end();
   setAuthorizationProviderForTests(null);
 });
@@ -106,16 +119,20 @@ afterAll(async () => {
 test("POST /api/audit/issues/start-review - integración", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/issues/start-review/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede iniciar revisión - 200 (capacidades unificadas, sql/100)", async () => {
+    // Primer eslabón de la cadena start-review->dismiss->reopen de gerencia
+    // sobre gerenciaIssueId (su propio fixture, nunca issueOpenId).
     asGerencia();
     const response = await POST(
       req("/api/audit/issues/start-review", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "sr-test-gerencia" },
-        body: JSON.stringify({ issueId: issueOpenId })
+        body: JSON.stringify({ issueId: gerenciaIssueId })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.status, "IN_REVIEW");
   });
 
   await t.test("administracion: OPEN -> IN_REVIEW, razón opcional", async () => {
@@ -154,16 +171,21 @@ test("POST /api/audit/issues/start-review - integración", { skip: !TEST_DB_URL 
 test("POST /api/audit/issues/dismiss - integración", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/issues/dismiss/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede descartar - 200 (capacidades unificadas, sql/100)", async () => {
+    // Segundo eslabón: gerenciaIssueId ya está IN_REVIEW por el paso
+    // anterior (start-review) - dismiss se permite tanto desde OPEN como
+    // desde IN_REVIEW.
     asGerencia();
     const response = await POST(
       req("/api/audit/issues/dismiss", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "dm-test-gerencia" },
-        body: JSON.stringify({ issueId: issueOpenId, reason: "x" })
+        body: JSON.stringify({ issueId: gerenciaIssueId, reason: "gerencia ahora tiene correction:dismiss" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.status, "DISMISSED");
   });
 
   await t.test("rechaza sin razón (400 REASON_REQUIRED) - DISMISSED exige razón", async () => {
@@ -229,16 +251,20 @@ test("POST /api/audit/issues/reopen - integración", { skip: !TEST_DB_URL }, asy
   const { POST: dismissPost } = await import("../../app/api/audit/issues/dismiss/route.ts");
   const { POST: reopenPost } = await import("../../app/api/audit/issues/reopen/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede reabrir - 200 (capacidades unificadas, sql/100)", async () => {
+    // Tercer y último eslabón: gerenciaIssueId ya está DISMISSED por el
+    // paso anterior (dismiss).
     asGerencia();
     const response = await reopenPost(
       req("/api/audit/issues/reopen", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "ro-test-gerencia" },
-        body: JSON.stringify({ issueId: issueForReopenId, reason: "x" })
+        body: JSON.stringify({ issueId: gerenciaIssueId, reason: "gerencia ahora tiene audit:review" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.status, "IN_REVIEW");
   });
 
   await t.test("rechaza sin razón (400 REASON_REQUIRED)", async () => {

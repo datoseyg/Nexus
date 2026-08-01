@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { ExplorerShell } from "@/components/explorer/ExplorerShell";
 import { requireAuthenticatedUser } from "@/lib/auth/authorization";
+import { fetchCapabilitiesForRole } from "@/lib/auth/capabilities";
 
 // Explorador semántico (Gate B, B20-B23) - reemplaza al Explorador físico
 // (browser de schema.tabla vía information_schema, retirado en este cambio
@@ -21,6 +22,7 @@ export default async function ExplorerPage() {
   // comando, esa vive server-side en cada ruta de
   // /api/audit/corrections/** vía requireCapability).
   const user = await requireAuthenticatedUser();
+  const capabilities = await fetchCapabilitiesForRole(user.role);
 
   return (
     <PageContainer wide>
@@ -28,7 +30,7 @@ export default async function ExplorerPage() {
           persistidas en la URL, mismo patrón que AuditManualReviewShell) -
           exige un límite Suspense alrededor en el árbol de Server Components. */}
       <Suspense fallback={<p style={{ color: "var(--nx-text-secondary)" }}>Cargando…</p>}>
-        <ExplorerShell role={user.role} />
+        <ExplorerShell role={user.role} capabilities={capabilities} />
       </Suspense>
     </PageContainer>
   );

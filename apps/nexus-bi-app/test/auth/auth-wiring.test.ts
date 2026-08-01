@@ -41,7 +41,13 @@ test("todos los Route Handlers están protegidos por el mecanismo correcto", asy
   // reads, exports de Auditoría/Explorador) + rutas de lectura nuevas
   // (issues/review-cases listado y detalle, history, kpis, corrections,
   // rules, evaluation-runs) - ninguna reemplaza una ruta existente.
-  assert.equal(routes.length, 76);
+  // NEXUS V3 - Filtros completos del Explorador agregó 1 ruta nueva
+  // (76 -> 77): GET /api/explorer/[entity]/facets (sección 14 - opciones
+  // reales scoped a la entidad activa, nunca las 9 entidades de una).
+  // NEXUS V3 - Mecanismo de actualización manual de datos agregó 2 rutas
+  // nuevas (77 -> 79): POST+GET /api/data-refresh/runs (encolar/listar) y
+  // GET /api/data-refresh/runs/[id] (detalle + etapas).
+  assert.equal(routes.length, 79);
 
   for (const path of routes) {
     const contents = await source(path);
@@ -107,4 +113,31 @@ test("los módulos pausados se ocultan en sidebar e inicio mediante los mismos f
   assert.match(home, /<HomeNavigationGrid showAudit=\{showAudit\}/);
   assert.match(homeNavigation, /showAudit \|\| item\.feature !== "audit"/);
   assert.match(sidebarNavigation, /features\[item\.feature\]/);
+});
+
+test("gerencia y administracion nunca se autorizan por nombre de rol fuera de authorization-core.ts", async () => {
+  // Unificación de capacidades (sql/100_role_capabilities_unification.sql):
+  // gerencia y administracion comparten exactamente el mismo set en
+  // governance.role_capabilities. Ningún componente cliente debe decidir
+  // qué mostrar/permitir comparando `role` contra un literal de rol - la
+  // única fuente de verdad es hasCapability(capabilities, "<capacidad>")
+  // (lib/auth/capabilities-shared.ts). La única excepción legítima es
+  // authorization-core.ts:roleLabel, una etiqueta cosmética de display
+  // (nunca gatea una acción ni una capacidad).
+  const banned = /role\s*===\s*["'](gerencia|administracion)["']/;
+  const offenders: string[] = [];
+
+  for await (const path of glob("components/**/*.tsx")) {
+    const contents = await source(path);
+    if (banned.test(contents)) offenders.push(path);
+  }
+  for await (const path of glob("app/**/*.tsx")) {
+    const contents = await source(path);
+    if (banned.test(contents)) offenders.push(path);
+  }
+
+  assert.deepEqual(offenders, []);
+
+  const authorizationCore = await source("lib/auth/authorization-core.ts");
+  assert.match(authorizationCore, /role === "gerencia" \? "Gerencia" : "Administración"/);
 });

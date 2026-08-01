@@ -20,14 +20,18 @@ export type GovernanceDbRole =
   | "app_corrections"
   | "audit_restricted_read"
   | "rule_evaluator"
-  | "command_attempt_logger";
+  | "command_attempt_logger"
+  | "pipeline_requester"
+  | "pipeline_worker";
 
 const ENV_VAR_BY_ROLE: Record<GovernanceDbRole, string> = {
   app_read: "GOVERNANCE_APP_READ_DB_URL",
   app_corrections: "GOVERNANCE_APP_CORRECTIONS_DB_URL",
   audit_restricted_read: "GOVERNANCE_AUDIT_RESTRICTED_READ_DB_URL",
   rule_evaluator: "GOVERNANCE_RULE_EVALUATOR_DB_URL",
-  command_attempt_logger: "GOVERNANCE_COMMAND_ATTEMPT_LOGGER_DB_URL"
+  command_attempt_logger: "GOVERNANCE_COMMAND_ATTEMPT_LOGGER_DB_URL",
+  pipeline_requester: "GOVERNANCE_PIPELINE_REQUESTER_DB_URL",
+  pipeline_worker: "GOVERNANCE_PIPELINE_WORKER_DB_URL"
 };
 
 declare global {

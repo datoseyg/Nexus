@@ -47,7 +47,12 @@ const ENTITY_KEYS = [
   "reviewcase-test-975303",
   "reviewcase-test-975304",
   "reviewcase-test-975305",
-  "reviewcase-test-975306"
+  "reviewcase-test-975306",
+  // Dedicado a "gerencia también puede crear" (capacidades unificadas,
+  // sql/100) - issueIds[0] ya queda comprometido a lo largo de todo el
+  // archivo (miembro de caseId, y reutilizado deliberadamente en la prueba
+  // de membresía única en OTRO caso), nunca reutilizable acá.
+  "reviewcase-test-975307"
 ];
 const ADMIN_ACTOR_ID = "77777777-7777-7777-7777-777777777777";
 
@@ -126,16 +131,18 @@ afterAll(async () => {
 test("POST /api/audit/review-cases - crear caso", { skip: !TEST_DB_URL }, async t => {
   const { POST } = await import("../../app/api/audit/review-cases/route.ts");
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede crear un caso - 201 APPLIED (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await POST(
       req("/api/audit/review-cases", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "rc-test-create-gerencia" },
-        body: JSON.stringify({ issueIds: [issueIds[0]], reason: "x" })
+        body: JSON.stringify({ issueIds: [issueIds[6]], reason: "gerencia ahora tiene audit:review" })
       })
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 201);
+    const body = await response.json();
+    assert.equal(body.result, "APPLIED");
   });
 
   await t.test("rechaza sin issueIds (400 VALIDATION_ERROR)", async () => {
@@ -297,17 +304,20 @@ test("Casos - asignar (capacidad audit:assign)", { skip: !TEST_DB_URL }, async t
   const { POST: assignPost } = await import("../../app/api/audit/review-cases/[id]/assign/route.ts");
   const caseId = (globalThis as unknown as { __rcTestCaseId: number }).__rcTestCaseId;
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede asignarse - 200 (capacidades unificadas, sql/100)", async () => {
+    // Reasigna a administracion en el siguiente caso ("se autoasigna") - la
+    // versión se relee ahí mismo antes de cada POST, así que esta asignación
+    // intermedia de gerencia nunca deja una expectedVersion desactualizada.
     asGerencia();
     const response = await assignPost(
       req(`/api/audit/review-cases/${caseId}/assign`, {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "rc-test-assign-gerencia" },
-        body: JSON.stringify({})
+        body: JSON.stringify({ reason: "gerencia ahora tiene audit:assign" })
       }),
       { params: Promise.resolve({ id: String(caseId) }) }
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 200);
   });
 
   await t.test("administracion se autoasigna (assigneeUserId omitido -> sesión actual)", async () => {
@@ -356,17 +366,17 @@ test("Casos - comentarios (inmutables, redacción sin borrar body)", { skip: !TE
 
   let firstCommentId: number;
 
-  await t.test("rechaza a gerencia con 403 FORBIDDEN", async () => {
+  await t.test("gerencia también puede comentar - 201 (capacidades unificadas, sql/100)", async () => {
     asGerencia();
     const response = await commentPost(
       req(`/api/audit/review-cases/${caseId}/comment`, {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost", "idempotency-key": "rc-test-comment-gerencia" },
-        body: JSON.stringify({ body: "x" })
+        body: JSON.stringify({ body: "gerencia ahora tiene audit:comment" })
       }),
       { params: Promise.resolve({ id: String(caseId) }) }
     );
-    assert.equal(response.status, 403);
+    assert.equal(response.status, 201);
   });
 
   await t.test("agrega un comentario", async () => {

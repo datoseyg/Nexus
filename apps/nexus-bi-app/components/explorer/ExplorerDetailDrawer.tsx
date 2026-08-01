@@ -5,12 +5,14 @@ import Link from "next/link";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { IssueLifecycleActions } from "./IssueLifecycleActions";
 import { EXPLORER_ENTITY_CONFIG, formatCell } from "@/lib/explorer-entity-config";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 import type { ExplorerDetailResponse, ExplorerEntity } from "@/types/explorer";
 
 interface ExplorerDetailDrawerProps {
   entity: ExplorerEntity | null;
   entityKey: string | null;
   role: "gerencia" | "administracion";
+  capabilities: string[];
   onClose: () => void;
   /** Se llama tras cualquier acción que cambie datos (identidad de técnico,
    * ciclo de vida de incidencia) - el caller decide si eso implica refrescar
@@ -21,9 +23,9 @@ interface ExplorerDetailDrawerProps {
    * (ExplorerShell.navigateToDetail) - nunca apila un segundo drawer. */
   onNavigate?: (entity: ExplorerEntity, key: string) => void;
   /** Acción de corrección específica de una entidad (hoy solo "Resolver
-   * identidad" para Técnicos, gateada a administracion por el caller) -
-   * recibe el summary ya cargado, nunca inventa una acción genérica para
-   * las demás entidades. */
+   * identidad" para Técnicos, gateada a correction:technician-identity por
+   * el caller) - recibe el summary ya cargado, nunca inventa una acción
+   * genérica para las demás entidades. */
   resolveIdentityAction?: (summary: Record<string, unknown>) => void;
 }
 
@@ -32,7 +34,7 @@ interface ExplorerDetailDrawerProps {
 // Reportes usa su propio drawer canónico (FieldbeatReportDetailDrawer,
 // montado aparte en ExplorerShell) - este componente nunca se abre para esa
 // entidad (B22: nunca un segundo detalle de reporte).
-export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChanged, onNavigate, resolveIdentityAction }: ExplorerDetailDrawerProps) {
+export function ExplorerDetailDrawer({ entity, entityKey, capabilities, onClose, onChanged, onNavigate, resolveIdentityAction }: ExplorerDetailDrawerProps) {
   const open = entity !== null && entityKey !== null;
   const [data, setData] = useState<ExplorerDetailResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -159,7 +161,7 @@ export function ExplorerDetailDrawer({ entity, entityKey, role, onClose, onChang
             </button>
           )}
 
-          {entity === "issues" && role === "administracion" && (
+          {entity === "issues" && hasCapability(capabilities, "audit:review") && (
             <IssueLifecycleActions issue={summary} onChanged={handleIssueChanged} />
           )}
 

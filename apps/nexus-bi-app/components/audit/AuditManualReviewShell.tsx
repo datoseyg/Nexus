@@ -13,9 +13,11 @@ import { HistorialSection } from "./HistorialSection";
 import { FuentesPipelineSection } from "./FuentesPipelineSection";
 import { AUDIT_TABS, DEFAULT_AUDIT_TAB, auditTabLabel, buildAuditTabQuery, readAuditTab, type AuditTab } from "@/lib/audit-manual-review-url-state";
 import { evaluationRunStatusLabel } from "@/lib/audit-vocabulary";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface AuditManualReviewShellProps {
   role: "gerencia" | "administracion";
+  capabilities: string[];
 }
 
 interface LastRunInfo {
@@ -38,11 +40,12 @@ interface LastRunInfo {
 // idioma que lib/fieldbeat-tabs-url-state.ts (useSearchParams + router.push,
 // nunca useState local no persistido) para que back/forward y enlaces
 // directos funcionen.
-export function AuditManualReviewShell({ role }: AuditManualReviewShellProps) {
+export function AuditManualReviewShell({ role, capabilities }: AuditManualReviewShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeTab = readAuditTab(searchParams);
+  const canReview = hasCapability(capabilities, "audit:review");
 
   const [options, setOptions] = useState<{ clientes: string[]; maquinas: string[] } | null>(null);
   const [lastRun, setLastRun] = useState<LastRunInfo | null>(null);
@@ -93,7 +96,7 @@ export function AuditManualReviewShell({ role }: AuditManualReviewShellProps) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <PageHeader
-              eyebrow={role === "administracion" ? "Auditoría gobernada activa" : "Solo lectura"}
+              eyebrow={canReview ? "Auditoría gobernada activa" : "Solo lectura"}
               title="Auditoría y Validación Manual"
               description="Incidencias, casos y correcciones bajo gobierno - cada acción de escritura queda versionada, auditada y verificada."
             />
@@ -122,9 +125,9 @@ export function AuditManualReviewShell({ role }: AuditManualReviewShellProps) {
 
         {helpOpen && (
           <div className="mt-3 rounded border px-3 py-2 text-sm" style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)" }}>
-            {role === "administracion"
+            {canReview
               ? "Incidencias, casos de revisión, correcciones (alias de repuesto/identidad de técnico/vínculo de ticket/identificación de equipo), catálogo de reglas, historial de eventos y estado del evaluador. Cada corrección queda versionada con actor, razón y verificación posterior - nunca se sobrescribe una decisión anterior."
-              : "Vista de lectura completa de incidencias, casos de revisión, correcciones, reglas, historial y estado del evaluador. Las acciones de corrección requieren el rol Administración - esta vista muestra el mismo contenido, sin los controles de escritura."}
+              : "Vista de lectura completa de incidencias, casos de revisión, correcciones, reglas, historial y estado del evaluador. Las acciones de corrección requieren capacidades de escritura - esta vista muestra el mismo contenido, sin los controles de escritura."}
           </div>
         )}
 
@@ -176,16 +179,16 @@ export function AuditManualReviewShell({ role }: AuditManualReviewShellProps) {
             </div>
           </div>
         )}
-        {activeTab === "inbox" && <IssuesBandejaSection role={role} />}
-        {activeTab === "cases" && <ReviewCasesSection role={role} />}
+        {activeTab === "inbox" && <IssuesBandejaSection role={role} capabilities={capabilities} />}
+        {activeTab === "cases" && <ReviewCasesSection role={role} capabilities={capabilities} />}
         {activeTab === "corrections" &&
           (!options ? (
             <p style={{ color: "var(--text-muted)" }}>Cargando…</p>
           ) : (
-            <CorreccionesSection clientes={clientes} maquinas={maquinas} role={role} />
+            <CorreccionesSection clientes={clientes} maquinas={maquinas} role={role} capabilities={capabilities} />
           ))}
         {activeTab === "rules" && <ReglasSection />}
-        {activeTab === "history" && <HistorialSection role={role} />}
+        {activeTab === "history" && <HistorialSection role={role} capabilities={capabilities} />}
         {activeTab === "sources" && <FuentesPipelineSection />}
       </div>
     </div>

@@ -463,7 +463,101 @@ test("GET /api/explorer/[entity] - integración", { skip: !TEST_DB_URL }, async 
   // app/api/explorer/[entity]/export/route.ts) y fue verificada end-to-end
   // contra el servidor real vía Playwright (26 filas idénticas en listado y
   // CSV exportado, mismos valores de Reportes/Tickets/Incidencias activas
-  // por cliente, 0 filas duplicadas).
+  // por cliente, 0 filas duplicadas). El mismo argumento aplica a los
+  // filtros nuevos de abajo (sección 13/14): ambas rutas resuelven vía
+  // resolveExplorerEntityQuery, la MISMA función - lo que se prueba acá para
+  // el listado aplica estructuralmente a la exportación.
+
+  // --- Filtros completos del Explorador (sección 13) ---
+
+  await t.test("reports: hasTicket=true incluye TASK_ID_MIN (con ticket), excluye TASK_ID_MAX (sin ticket)", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/reports?q=EXPLORER_TEST_CLIENT&hasTicket=true&page=1&pageSize=100`), { params: Promise.resolve({ entity: "reports" }) });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const ids = body.rows.map((r: { fieldbeat_task_id: unknown }) => Number(r.fieldbeat_task_id));
+    assert.ok(ids.includes(TASK_ID_MIN), "TASK_ID_MIN tiene linked_zendesk_ticket_id, debe aparecer con hasTicket=true");
+    assert.ok(!ids.includes(TASK_ID_MAX), "TASK_ID_MAX no tiene ticket vinculado, no debe aparecer con hasTicket=true");
+  });
+
+  await t.test("reports: hasTicket=false incluye TASK_ID_MAX, excluye TASK_ID_MIN (mismo universo, filtro invertido)", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/reports?q=EXPLORER_TEST_CLIENT&hasTicket=false&page=1&pageSize=100`), { params: Promise.resolve({ entity: "reports" }) });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const ids = body.rows.map((r: { fieldbeat_task_id: unknown }) => Number(r.fieldbeat_task_id));
+    assert.ok(!ids.includes(TASK_ID_MIN));
+    assert.ok(ids.includes(TASK_ID_MAX));
+  });
+
+  await t.test("reports: equipment=EXP-EQUIP-1 (exacto, mayúsculas normalizadas) incluye ambos fixtures", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/reports?q=EXPLORER_TEST_CLIENT&equipment=exp-equip-1&page=1&pageSize=100`), { params: Promise.resolve({ entity: "reports" }) });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const ids = body.rows.map((r: { fieldbeat_task_id: unknown }) => Number(r.fieldbeat_task_id));
+    assert.ok(ids.includes(TASK_ID_MIN) && ids.includes(TASK_ID_MAX), "el filtro de equipo normaliza mayúsculas, nunca exige coincidencia exacta de casing");
+  });
+
+  await t.test("tickets: hasReports=true incluye TICKET_ID (tiene 1 reporte vinculado)", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/tickets?q=Fixture+ticket&hasReports=true&page=1&pageSize=100`), { params: Promise.resolve({ entity: "tickets" }) });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const ids = body.rows.map((r: { zendesk_ticket_id: unknown }) => Number(r.zendesk_ticket_id));
+    assert.ok(ids.includes(TICKET_ID));
+  });
+
+  await t.test("tickets: ticketStatus=open incluye TICKET_ID, ticketStatus=closed lo excluye", async () => {
+    asGerencia();
+    const openResponse = await GET(req(`/api/explorer/tickets?q=Fixture+ticket&ticketStatus=open&page=1&pageSize=100`), { params: Promise.resolve({ entity: "tickets" }) });
+    const openBody = await openResponse.json();
+    assert.ok(openBody.rows.map((r: { zendesk_ticket_id: unknown }) => Number(r.zendesk_ticket_id)).includes(TICKET_ID));
+
+    const closedResponse = await GET(req(`/api/explorer/tickets?q=Fixture+ticket&ticketStatus=closed&page=1&pageSize=100`), { params: Promise.resolve({ entity: "tickets" }) });
+    const closedBody = await closedResponse.json();
+    assert.ok(!closedBody.rows.map((r: { zendesk_ticket_id: unknown }) => Number(r.zendesk_ticket_id)).includes(TICKET_ID));
+  });
+
+  await t.test("clients: city=Santiago incluye el cliente con dirección real, hasEquipment distingue DUP_CLIENT (tiene equipos) de ALPHA/BETA (no tienen)", async () => {
+    asGerencia();
+    const cityResponse = await GET(req(`/api/explorer/clients?q=EXPLORER_TEST&city=Santiago&page=1&pageSize=100`), { params: Promise.resolve({ entity: "clients" }) });
+    assert.equal(cityResponse.status, 200);
+    const cityNames = (await cityResponse.json()).rows.map((r: { client_name: unknown }) => r.client_name);
+    assert.ok(cityNames.includes("EXPLORER_TEST_DUP_CLIENT"));
+
+    const hasEquipTrue = await GET(req(`/api/explorer/clients?q=EXPLORER_TEST&hasEquipment=true&page=1&pageSize=100`), { params: Promise.resolve({ entity: "clients" }) });
+    const hasEquipTrueNames = (await hasEquipTrue.json()).rows.map((r: { client_name: unknown }) => r.client_name);
+    assert.ok(hasEquipTrueNames.includes("EXPLORER_TEST_DUP_CLIENT"), "DUP_CLIENT tiene equipos fixture vinculados");
+    assert.ok(!hasEquipTrueNames.includes("EXPLORER_TEST_CLIENT_ALPHA"), "ALPHA no tiene ningún equipo fixture");
+
+    const hasEquipFalse = await GET(req(`/api/explorer/clients?q=EXPLORER_TEST&hasEquipment=false&page=1&pageSize=100`), { params: Promise.resolve({ entity: "clients" }) });
+    const hasEquipFalseNames = (await hasEquipFalse.json()).rows.map((r: { client_name: unknown }) => r.client_name);
+    assert.ok(hasEquipFalseNames.includes("EXPLORER_TEST_CLIENT_ALPHA"));
+    assert.ok(!hasEquipFalseNames.includes("EXPLORER_TEST_DUP_CLIENT"));
+  });
+
+  await t.test("equipment: client=EXPLORER_TEST_DUP_CLIENT + model=ExplorerTestModel + linkStatus=MATCHED devuelven el mismo equipo canónico", async () => {
+    asGerencia();
+    const response = await GET(
+      req(`/api/explorer/equipment?q=EXPLORER_TEST_DUP_EQUIP&client=EXPLORER_TEST_DUP_CLIENT&model=ExplorerTestModel&linkStatus=MATCHED&page=1&pageSize=25`),
+      { params: Promise.resolve({ entity: "equipment" }) }
+    );
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.rows.length, 1);
+    assert.equal(body.rows[0].internal_id, "EXPLORER_TEST_DUP_EQUIP");
+  });
+
+  await t.test("equipment: linkStatus=UNMATCHED excluye un equipo con contrato MATCHED real", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/equipment?q=EXPLORER_TEST_DUP_EQUIP&linkStatus=UNMATCHED&page=1&pageSize=25`), {
+      params: Promise.resolve({ entity: "equipment" })
+    });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.rows.length, 0, "EXPLORER_TEST_DUP_EQUIP solo tiene un contrato MATCHED en la fixture, nunca debe aparecer con linkStatus=UNMATCHED");
+  });
 });
 
 test("GET /api/explorer/detail - integración", { skip: !TEST_DB_URL }, async t => {

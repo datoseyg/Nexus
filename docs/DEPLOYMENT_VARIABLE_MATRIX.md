@@ -16,6 +16,9 @@ Esta matriz registra variables consumidas por el código auditado. No contiene v
 | `NEXUS_SHOW_AUDIT` | Opcional | No | Sí | No | `false` en primera liberación |
 | `NEXUS_SHOW_EXPLORER` | Opcional | No | Sí | No | `false` en primera liberación |
 | `NODE_ENV` | Automática | Automática | Automática | No | Next/Node; no configurar como credencial |
+| `GOVERNANCE_PIPELINE_REQUESTER_DB_URL` | Sí | No | Sí | Sí | NEXUS V3 - `POST`/`GET /api/data-refresh/runs*`; rol `nexus_pipeline_requester` (`pipeline.fn_start_refresh_run` + lectura de `pipeline.refresh_runs`). A diferencia de Auditoría, `DataRefreshControl.tsx` se monta siempre en la sidebar (no está detrás de `NEXUS_SHOW_AUDIT`) - esta variable es requerida desde el primer deploy que incluya este cambio, no solo cuando Auditoría se active |
+
+Notas de scope Netlify (NEXUS V3): `GOVERNANCE_PIPELINE_REQUESTER_DB_URL` solo autoriza encolar/observar corridas (`fn_start_refresh_run`, `SELECT` sobre `pipeline.refresh_runs`/`refresh_run_stages`) - nunca reclamar, avanzar etapas ni completar/fallar una corrida (eso es `GOVERNANCE_PIPELINE_WORKER_DB_URL`, exclusivo del worker local y de GitHub Actions, **nunca** en Netlify). La app desplegada nunca ejecuta el pipeline en sí, solo lo solicita.
 
 Notas de scope Netlify:
 

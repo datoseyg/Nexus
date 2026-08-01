@@ -30,6 +30,9 @@ export function mapGovernanceFunctionError(error: unknown): MappedGovernanceErro
   if (message === "REASON_REQUIRED" || message.startsWith("REASON_REQUIRED")) {
     return { status: 400, body: { error: "Se requiere una razón para este comando.", code: "REASON_REQUIRED" } };
   }
+  if (message.startsWith("CONFIRMATION_REQUIRED")) {
+    return { status: 400, body: { error: message, code: "CONFIRMATION_REQUIRED" } };
+  }
   if (message.startsWith("VALIDATION_ERROR")) {
     return { status: 400, body: { error: message, code: "VALIDATION_ERROR" } };
   }

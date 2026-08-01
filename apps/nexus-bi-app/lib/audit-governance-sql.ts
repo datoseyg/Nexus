@@ -413,10 +413,11 @@ export async function fetchRulesList(): Promise<Record<string, unknown>[]> {
 // =============================================================================
 // Gate B - Familia 8: pestaña "Fuentes y pipeline" - frescura/estado del
 // evaluador de reglas (governance.rule_evaluation_runs) - corridas recientes,
-// errores operacionales resumidos. Nunca un botón de "actualizar" falso: el
-// mecanismo de actualización de datos (Sección 23 del diseño) sigue fuera de
-// alcance de este tramo (data-refresh, prioridad más baja, explícitamente
-// diferido).
+// errores operacionales resumidos. El mecanismo de actualización de datos en
+// sí (NEXUS V3, pipeline.refresh_runs - sql/101_pipeline_refresh_runs.sql)
+// vive en components/data-refresh/DataRefreshControl.tsx (montado en la
+// sidebar, no en esta pestaña) - esta vista sigue siendo solo de lectura
+// sobre el evaluador de reglas.
 // =============================================================================
 export async function fetchPipelineRuns(page: number, pageSize: number): Promise<{ rows: Record<string, unknown>[]; total: number }> {
   const [rows, countRows] = await Promise.all([

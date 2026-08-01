@@ -7,9 +7,11 @@ import { StatusBadge, reviewCaseStatusBadge } from "@/components/ui/StatusBadge"
 import { ReviewCaseCreateDrawer } from "./ReviewCaseCreateDrawer";
 import { ReviewCaseDetailDrawer } from "./ReviewCaseDetailDrawer";
 import { triggerBlobDownload } from "@/lib/csv-export";
+import { hasCapability } from "@/lib/auth/capabilities-shared";
 
 interface ReviewCasesSectionProps {
   role: "gerencia" | "administracion";
+  capabilities: string[];
 }
 
 const STATUS_OPTIONS = ["OPEN", "IN_REVIEW", "RESOLVED", "DISMISSED"];
@@ -61,7 +63,8 @@ function HeaderStat({ label, value, active, onClick }: { label: string; value: n
 // ve el listado completo de solo lectura (audit:read); Administración además
 // puede crear casos y abrir el detalle con acciones (audit:review/assign/
 // comment/redact-comment, verificadas server-side por cada ruta).
-export function ReviewCasesSection({ role }: ReviewCasesSectionProps) {
+export function ReviewCasesSection({ role, capabilities }: ReviewCasesSectionProps) {
+  const canReview = hasCapability(capabilities, "audit:review");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<ReviewCasesResponse | null>(null);
@@ -154,7 +157,7 @@ export function ReviewCasesSection({ role }: ReviewCasesSectionProps) {
             >
               {exporting ? "Exportando…" : "Exportar CSV"}
             </button>
-            {role === "administracion" && (
+            {canReview && (
               <button
                 type="button"
                 onClick={() => {
@@ -174,7 +177,7 @@ export function ReviewCasesSection({ role }: ReviewCasesSectionProps) {
         }
       >
         <span className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
-          {role === "gerencia" ? "Vista de solo lectura." : "Selecciona un caso para ver su detalle."}
+          {canReview ? "Selecciona un caso para ver su detalle." : "Vista de solo lectura."}
         </span>
       </FilterBar>
 
@@ -287,7 +290,7 @@ export function ReviewCasesSection({ role }: ReviewCasesSectionProps) {
         </div>
       </ResponsiveTableShell>
 
-      {role === "administracion" && (
+      {canReview && (
         <ReviewCaseCreateDrawer
           open={createOpen}
           onClose={() => setCreateOpen(false)}
@@ -298,7 +301,7 @@ export function ReviewCasesSection({ role }: ReviewCasesSectionProps) {
         />
       )}
 
-      <ReviewCaseDetailDrawer reviewCaseId={selectedCaseId} role={role} onClose={() => setSelectedCaseId(null)} onChanged={refetch} />
+      <ReviewCaseDetailDrawer reviewCaseId={selectedCaseId} role={role} capabilities={capabilities} onClose={() => setSelectedCaseId(null)} onChanged={refetch} />
     </div>
   );
 }

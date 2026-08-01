@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { AuditManualReviewShell } from "@/components/audit/AuditManualReviewShell";
 import { requireAuthenticatedUser } from "@/lib/auth/authorization";
+import { fetchCapabilitiesForRole } from "@/lib/auth/capabilities";
 
 export const metadata = {
   title: "Auditoría y Validación Manual - Nexus BI"
@@ -15,6 +16,7 @@ export default async function AuditManualReviewPage() {
   // es la autorización real de ningún comando, esa vive server-side en cada
   // ruta de /api/audit/corrections/** vía requireCapability).
   const user = await requireAuthenticatedUser();
+  const capabilities = await fetchCapabilitiesForRole(user.role);
 
   return (
     <PageContainer wide>
@@ -22,7 +24,7 @@ export default async function AuditManualReviewPage() {
           en la URL, mismo patrón que FieldbeatQualityShell/SearchDashboard) -
           exige un límite Suspense alrededor en el árbol de Server Components. */}
       <Suspense fallback={<p style={{ color: "var(--nx-text-secondary)" }}>Cargando…</p>}>
-        <AuditManualReviewShell role={user.role} />
+        <AuditManualReviewShell role={user.role} capabilities={capabilities} />
       </Suspense>
     </PageContainer>
   );
