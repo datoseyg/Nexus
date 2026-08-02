@@ -13,7 +13,10 @@ import {
   PARTICIPANT_RESOLUTION_STATUS_LABEL,
   formatFieldbeatDateTime
 } from "@/lib/fieldbeat-report-labels";
+import { formatModelCell } from "@/lib/explorer-entity-config";
+import { contractStatusLabel, spaTierLabel, partsCoverageLabel } from "@/lib/contracts-vocabulary";
 import type { FieldbeatReportDetail } from "@/types/fieldbeat-report-detail";
+import type { AfterHoursDrawerContext } from "@/lib/after-hours-detail-view";
 
 function isReportDetailEmpty(): boolean {
   // Un detalle no tiene noción de "vacío" - existe (200), no existe (404,
@@ -75,6 +78,9 @@ interface FieldbeatReportDetailContentProps {
    * (Búsqueda y FieldBeat Quality) el comportamiento queda idéntico al de
    * antes: sin acción de corrección visible. */
   capabilities?: string[];
+  /** Sección 14 del encargo NEXUS V3 After-Hours - ver mismo comentario en
+   * FieldbeatReportDetailDrawer.tsx. Solo After-Hours lo pasa hoy. */
+  afterHoursContext?: AfterHoursDrawerContext | null;
 }
 
 // Contenido del detalle maestro (Phase 5) - solo se monta mientras el
@@ -82,7 +88,7 @@ interface FieldbeatReportDetailContentProps {
 // garantizando cero requests antes de abrir y cancelación real vía
 // useAfterHoursSection (AbortController + requestId) al cambiar de
 // reportId con el drawer abierto.
-export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities }: FieldbeatReportDetailContentProps) {
+export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, afterHoursContext }: FieldbeatReportDetailContentProps) {
   const { status, data, error, retry } = useAfterHoursSection<FieldbeatReportDetail>(`/api/dashboard/fieldbeat/reports/${reportId}`, "", isReportDetailEmpty);
   const loading = status === "idle" || status === "loading" || status === "refreshing";
 
@@ -315,14 +321,33 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities }:
         ) : (
           <ul className="flex flex-col gap-1.5">
             {data.equipment.items.map(item => (
-              <li key={`${item.source}-${item.internalId}`} className="flex items-center justify-between rounded-[var(--nx-radius-chip)] border px-2.5 py-1.5" style={{ borderColor: "var(--nx-border)" }}>
-                <span className="text-[13px]" style={{ color: "var(--nx-text-primary)" }}>
-                  {item.internalId}
-                </span>
-                <span className="text-[11.5px]" style={{ color: item.confirmed ? "var(--nx-text-secondary)" : "var(--nx-warning-fg, #8a5a00)" }}>
-                  {EQUIPMENT_SOURCE_LABEL[item.source]}
-                  {!item.confirmed && " (sin confirmar)"}
-                </span>
+              <li key={`${item.source}-${item.internalId}`} className="rounded-[var(--nx-radius-chip)] border px-2.5 py-1.5" style={{ borderColor: "var(--nx-border)" }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px]" style={{ color: "var(--nx-text-primary)" }}>
+                    {item.internalId}
+                  </span>
+                  <span className="text-[11.5px]" style={{ color: item.confirmed ? "var(--nx-text-secondary)" : "var(--nx-warning-fg, #8a5a00)" }}>
+                    {EQUIPMENT_SOURCE_LABEL[item.source]}
+                    {!item.confirmed && " (sin confirmar)"}
+                  </span>
+                </div>
+                {/* Sección 14.5.C del encargo - modelo/familia/serie/contrato
+                    por equipo (Sección 14 del encargo NEXUS V3 After-Hours).
+                    Mismo fallback "—"/"Modelo no identificado" que el resto
+                    del Explorador (formatModelCell, reutilizado tal cual). */}
+                <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
+                  <Field label="Modelo" value={formatModelCell(item.model, { model_resolution_status: item.modelResolutionStatus })} />
+                  <Field label="Familia" value={item.equipmentFamily ?? "—"} />
+                  <Field label="N.º de serie" value={item.serialNumbers.length > 0 ? item.serialNumbers.join(" / ") : "—"} />
+                  <Field
+                    label="Contrato relacionado"
+                    value={
+                      item.contracts.length === 0
+                        ? "Sin contrato vigente vinculado"
+                        : item.contracts.map(c => `${contractStatusLabel(c.statusCode)} · ${spaTierLabel(c.spaTierCode)}`).join(" / ")
+                    }
+                  />
+                </dl>
               </li>
             ))}
           </ul>
@@ -423,6 +448,76 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities }:
           </ul>
         )}
       </Section>
+
+      {/* 8b. Incidencias de gobierno (Sección 14.5.F del encargo NEXUS V3
+          After-Hours) - governance.issues corre en una query aparte (pool
+          de gobierno, ver fetchReportActiveIssues) y puede degradar a
+          "unavailable" sin tumbar el resto del detalle; se distingue
+          explícitamente de "confirmado, cero incidencias" (nunca la misma
+          UI para ambos casos). */}
+      <Section title="Incidencias">
+        {data.issues.status === "unavailable" ? (
+          <p className="text-[13px]" style={{ color: "var(--nx-warning-fg, #8a5a00)" }}>
+            No fue posible verificar incidencias activas - intenta más tarde.
+          </p>
+        ) : data.issues.issues.length === 0 ? (
+          <p className="text-[13px]" style={{ color: "var(--nx-text-secondary)" }}>
+            Sin incidencias activas.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {data.issues.issues.map(issue => (
+              <li key={issue.id} className="flex items-center justify-between rounded-[var(--nx-radius-chip)] border px-2.5 py-1.5" style={{ borderColor: "var(--nx-border)" }}>
+                <span className="text-[13px]" style={{ color: "var(--nx-text-primary)" }}>
+                  {issue.ruleCode}
+                </span>
+                <SeverityBadge severity={issue.severity} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      {/* 8c/8d. Tiempos del reporte / Resolución contractual - EXCLUSIVOS de
+          After-Hours (Sección 14.5.D/E del encargo), compuestos en el
+          cliente desde la fila ya cargada por la tabla (ver
+          lib/after-hours-detail-view.ts::buildAfterHoursDrawerContext).
+          Nunca se renderizan para Explorador/Búsqueda/FieldBeat Calidad
+          (afterHoursContext queda undefined/null ahí). */}
+      {afterHoursContext && (
+        <>
+          <Section title="Tiempos del reporte">
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+              <Field label="Hora de inicio" value={afterHoursContext.startTime} />
+              <Field label="Hora de término" value={afterHoursContext.endTime} />
+              <Field label="Duración total" value={afterHoursContext.durationLabel} />
+              <Field label="Tiempo cubierto" value={afterHoursContext.coveredTimeLabel} />
+              <Field label="Tiempo fuera de cobertura" value={afterHoursContext.uncoveredTimeLabel} />
+              <Field label="· Día hábil fuera de horario" value={afterHoursContext.weekdayAfterHoursLabel} />
+              <Field label="· Fin de semana" value={afterHoursContext.weekendLabel} />
+              <Field label="· Feriado" value={afterHoursContext.holidayLabel} />
+            </dl>
+          </Section>
+
+          <Section title="Resolución contractual">
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+              <Field label="Base de cálculo" value={afterHoursContext.dataBasis.label} />
+              <Field label="Clasificación" value={afterHoursContext.coverage.label} />
+              <Field label="Motivo final" value={afterHoursContext.finalReason.label} />
+              {afterHoursContext.contractualReason && <Field label="Motivo contractual" value={afterHoursContext.contractualReason.label} />}
+              <Field label="Horario de respaldo" value={afterHoursContext.fallback.label} />
+              {/* Confianza del intervalo temporal y confianza de la
+                  resolución contractual se mantienen DIFERENCIADAS (Sección
+                  14.5.E del encargo) - nunca una etiqueta genérica única. */}
+              <Field label="Confianza temporal" value={afterHoursContext.temporalConfidenceText} />
+              {afterHoursContext.contractualConfidenceText && <Field label="Confianza contractual" value={afterHoursContext.contractualConfidenceText} />}
+            </dl>
+            <p className="text-[13px]" style={{ color: "var(--nx-text-secondary)" }}>
+              {afterHoursContext.finalReason.description}
+            </p>
+          </Section>
+        </>
+      )}
 
       {/* 9. Auditoría */}
       <Section title="Auditoría">

@@ -35,7 +35,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const detail = shapeReportDetail(serializeRows(rows)[0] as never, isFieldbeatOpenConfigured());
+    // El PDF no renderiza incidencias de gobierno (fuera del alcance de este
+    // documento, generateFieldbeatReportPdf no las referencia) - se pasa
+    // "unavailable" en vez de disparar una query extra que nadie usaría acá;
+    // "unavailable" es la representación honesta (nunca "available: []",
+    // que afirmaría falsamente una verificación que no ocurrió).
+    const detail = shapeReportDetail(serializeRows(rows)[0] as never, isFieldbeatOpenConfigured(), { status: "unavailable" });
     const pdfBuffer = await generateFieldbeatReportPdf(detail);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {

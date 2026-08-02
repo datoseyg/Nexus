@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useDataRefreshEpoch } from "@/lib/data-refresh-epoch-context";
 
 // Hook compartido de fetch por sección para /dashboard/after-hours (ETAPA
 // 6.6D) - cada bloque (summary, by-period, by-technician, ..., by-weekday,
@@ -62,6 +63,11 @@ export function useAfterHoursSection<T>(path: string, query: string, isEmpty: (d
   const mountedRef = useRef(true);
   const isEmptyRef = useRef(isEmpty);
   isEmptyRef.current = isEmpty;
+  // NEXUS V3 - manejado DENTRO del hook compartido (en vez de agregar un
+  // parámetro nuevo a las 10 llamadas en AfterHoursShell.tsx) para que las
+  // 10 secciones de /dashboard/after-hours (incluida detailQuery) queden
+  // conectadas a la invalidación global con un solo cambio acá.
+  const epoch = useDataRefreshEpoch();
 
   useEffect(() => {
     mountedRef.current = true;
@@ -103,7 +109,7 @@ export function useAfterHoursSection<T>(path: string, query: string, isEmpty: (d
       });
 
     return () => controller.abort();
-  }, [path, query, retryNonce]);
+  }, [path, query, retryNonce, epoch]);
 
   const retry = useCallback(() => setRetryNonce(n => n + 1), []);
 

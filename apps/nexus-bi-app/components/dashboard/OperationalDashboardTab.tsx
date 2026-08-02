@@ -12,6 +12,7 @@ import { MiniBarTableCell } from "./MiniBarTableCell";
 import { DateRangePicker, type DateRangeValue } from "./DateRangePicker";
 import { FilterChips, type FilterChipItem } from "./FilterChips";
 import { ErrorBanner } from "@/components/ErrorBanner";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 import type { Grain } from "@/lib/dashboard-filters";
 import {
   DASHBOARD_PALETTE,
@@ -226,6 +227,7 @@ const SECTION_LABEL_CLASS = "mb-2.5 text-[13px] font-bold uppercase tracking-wid
 const SECTION_LABEL_STYLE: React.CSSProperties = { color: "var(--nx-text-secondary)" };
 
 export function OperationalDashboardTab() {
+  const epoch = useDataRefreshEpoch();
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [filters, setFilters] = useState<FiltersState>(() => parseFiltersFromLocation());
   const [summary, setSummary] = useState<SummaryData | null>(null);
@@ -270,7 +272,7 @@ export function OperationalDashboardTab() {
       })
       .catch(body => setError({ message: body?.error ?? "Error desconocido", code: body?.code }))
       .finally(() => setLoading(false));
-  }, [filters]);
+  }, [filters, epoch]);
 
   useEffect(() => {
     const query = toQueryString({ page: String(partsPage), pageSize: "10", ...(filters as unknown as Record<string, string | undefined>) });
@@ -278,7 +280,7 @@ export function OperationalDashboardTab() {
       .then(res => res.json())
       .then(setParts)
       .catch(() => setParts(null));
-  }, [partsPage, filters]);
+  }, [partsPage, filters, epoch]);
 
   useEffect(() => {
     const query = toQueryString({
@@ -292,7 +294,7 @@ export function OperationalDashboardTab() {
       .then(res => res.json())
       .then(setDetail)
       .catch(() => setDetail(null));
-  }, [detailPage, idTarea, idTicket, filters]);
+  }, [detailPage, idTarea, idTicket, filters, epoch]);
 
   const resetPages = useCallback(() => {
     setPartsPage(1);

@@ -14,6 +14,7 @@ import { FuentesPipelineSection } from "./FuentesPipelineSection";
 import { AUDIT_TABS, DEFAULT_AUDIT_TAB, auditTabLabel, buildAuditTabQuery, readAuditTab, type AuditTab } from "@/lib/audit-manual-review-url-state";
 import { evaluationRunStatusLabel } from "@/lib/audit-vocabulary";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface AuditManualReviewShellProps {
   role: "gerencia" | "administracion";
@@ -46,6 +47,7 @@ export function AuditManualReviewShell({ role, capabilities }: AuditManualReview
   const searchParams = useSearchParams();
   const activeTab = readAuditTab(searchParams);
   const canReview = hasCapability(capabilities, "audit:review");
+  const epoch = useDataRefreshEpoch();
 
   const [options, setOptions] = useState<{ clientes: string[]; maquinas: string[] } | null>(null);
   const [lastRun, setLastRun] = useState<LastRunInfo | null>(null);
@@ -66,7 +68,7 @@ export function AuditManualReviewShell({ role, capabilities }: AuditManualReview
         if (row) setLastRun({ status: row.status, finishedAt: row.finished_at, startedAt: row.started_at });
       })
       .catch(() => setLastRun(null));
-  }, []);
+  }, [epoch]);
 
   function setTab(tab: AuditTab) {
     const qs = buildAuditTabQuery(tab);

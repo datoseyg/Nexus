@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-21T00:56:51.578Z",
+  "generated_at": "2026-08-02T09:19:44.991Z",
   "validation_status": "PASSED",
   "checks": {
     "unknown_objects": [],
@@ -16,8 +16,8 @@
     {
       "object": "processed.zendesk_tickets",
       "status": "MATCH",
-      "duckdb_row_count": 628,
-      "postgres_row_count": 628,
+      "duckdb_row_count": 658,
+      "postgres_row_count": 658,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -26,8 +26,8 @@
     {
       "object": "processed.fieldbeat_tasks",
       "status": "MATCH",
-      "duckdb_row_count": 3747,
-      "postgres_row_count": 3747,
+      "duckdb_row_count": 3791,
+      "postgres_row_count": 3791,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -36,8 +36,8 @@
     {
       "object": "processed.fieldbeat_used_parts",
       "status": "MATCH",
-      "duckdb_row_count": 2193,
-      "postgres_row_count": 2193,
+      "duckdb_row_count": 2209,
+      "postgres_row_count": 2209,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -46,8 +46,8 @@
     {
       "object": "processed.dolibarr_products",
       "status": "MATCH",
-      "duckdb_row_count": 1609,
-      "postgres_row_count": 1609,
+      "duckdb_row_count": 1611,
+      "postgres_row_count": 1611,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -76,8 +76,8 @@
     {
       "object": "processed.fieldbeat_task_equipments",
       "status": "MATCH",
-      "duckdb_row_count": 3157,
-      "postgres_row_count": 3157,
+      "duckdb_row_count": 3197,
+      "postgres_row_count": 3197,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -86,8 +86,8 @@
     {
       "object": "processed.fieldbeat_report_fields",
       "status": "MATCH",
-      "duckdb_row_count": 66107,
-      "postgres_row_count": 66107,
+      "duckdb_row_count": 66950,
+      "postgres_row_count": 66950,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -96,8 +96,8 @@
     {
       "object": "processed.zendesk_ticket_tags",
       "status": "MATCH",
-      "duckdb_row_count": 8383,
-      "postgres_row_count": 8383,
+      "duckdb_row_count": 8812,
+      "postgres_row_count": 8812,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -106,8 +106,8 @@
     {
       "object": "processed.zendesk_custom_fields",
       "status": "MATCH",
-      "duckdb_row_count": 10048,
-      "postgres_row_count": 10048,
+      "duckdb_row_count": 14458,
+      "postgres_row_count": 14458,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -116,8 +116,8 @@
     {
       "object": "processed.dolibarr_product_identity_map",
       "status": "MATCH",
-      "duckdb_row_count": 3219,
-      "postgres_row_count": 3219,
+      "duckdb_row_count": 3223,
+      "postgres_row_count": 3223,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -126,8 +126,8 @@
     {
       "object": "marts.ticket_fieldbeat_operational_view",
       "status": "MATCH",
-      "duckdb_row_count": 628,
-      "postgres_row_count": 628,
+      "duckdb_row_count": 658,
+      "postgres_row_count": 658,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -136,8 +136,8 @@
     {
       "object": "marts.ticket_fieldbeat_dolibarr_operational_view",
       "status": "MATCH",
-      "duckdb_row_count": 628,
-      "postgres_row_count": 628,
+      "duckdb_row_count": 658,
+      "postgres_row_count": 658,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -146,8 +146,8 @@
     {
       "object": "marts.used_parts_dolibarr_match",
       "status": "MATCH",
-      "duckdb_row_count": 2193,
-      "postgres_row_count": 2193,
+      "duckdb_row_count": 2209,
+      "postgres_row_count": 2209,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -156,8 +156,8 @@
     {
       "object": "marts.ticket_fieldbeat_report_detail",
       "status": "MATCH",
-      "duckdb_row_count": 290,
-      "postgres_row_count": 290,
+      "duckdb_row_count": 302,
+      "postgres_row_count": 302,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -166,8 +166,8 @@
     {
       "object": "marts.fieldbeat_report_dolibarr_operational_view",
       "status": "MATCH",
-      "duckdb_row_count": 3747,
-      "postgres_row_count": 3747,
+      "duckdb_row_count": 3791,
+      "postgres_row_count": 3791,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -216,8 +216,8 @@
     {
       "object": "gold.used_parts_analysis",
       "status": "MATCH",
-      "duckdb_row_count": 576,
-      "postgres_row_count": 576,
+      "duckdb_row_count": 578,
+      "postgres_row_count": 578,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -246,8 +246,8 @@
     {
       "object": "gold.client_parts_consumption",
       "status": "MATCH",
-      "duckdb_row_count": 913,
-      "postgres_row_count": 913,
+      "duckdb_row_count": 923,
+      "postgres_row_count": 923,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -256,8 +256,8 @@
     {
       "object": "gold.client_report_volume_by_period",
       "status": "MATCH",
-      "duckdb_row_count": 913,
-      "postgres_row_count": 913,
+      "duckdb_row_count": 923,
+      "postgres_row_count": 923,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -390,6 +390,16 @@
     },
     {
       "object": "manual_review.contract_data_issues",
+      "ownership": "POSTGRES_TRANSACTIONAL",
+      "status": "POSTGRES_NATIVE_PRESENT"
+    },
+    {
+      "object": "manual_review.equipment_identification_overrides",
+      "ownership": "POSTGRES_TRANSACTIONAL",
+      "status": "POSTGRES_NATIVE_PRESENT"
+    },
+    {
+      "object": "manual_review.fieldbeat_engineer_identity_map",
       "ownership": "POSTGRES_TRANSACTIONAL",
       "status": "POSTGRES_NATIVE_PRESENT"
     },
@@ -488,8 +498,8 @@
     {
       "object": "processed.zendesk_tickets",
       "status": "MATCH",
-      "duckdb_row_count": 628,
-      "postgres_row_count": 628,
+      "duckdb_row_count": 658,
+      "postgres_row_count": 658,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -498,8 +508,8 @@
     {
       "object": "processed.fieldbeat_tasks",
       "status": "MATCH",
-      "duckdb_row_count": 3747,
-      "postgres_row_count": 3747,
+      "duckdb_row_count": 3791,
+      "postgres_row_count": 3791,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -508,8 +518,8 @@
     {
       "object": "processed.fieldbeat_used_parts",
       "status": "MATCH",
-      "duckdb_row_count": 2193,
-      "postgres_row_count": 2193,
+      "duckdb_row_count": 2209,
+      "postgres_row_count": 2209,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -518,8 +528,8 @@
     {
       "object": "processed.dolibarr_products",
       "status": "MATCH",
-      "duckdb_row_count": 1609,
-      "postgres_row_count": 1609,
+      "duckdb_row_count": 1611,
+      "postgres_row_count": 1611,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -548,8 +558,8 @@
     {
       "object": "processed.fieldbeat_task_equipments",
       "status": "MATCH",
-      "duckdb_row_count": 3157,
-      "postgres_row_count": 3157,
+      "duckdb_row_count": 3197,
+      "postgres_row_count": 3197,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -558,8 +568,8 @@
     {
       "object": "processed.fieldbeat_report_fields",
       "status": "MATCH",
-      "duckdb_row_count": 66107,
-      "postgres_row_count": 66107,
+      "duckdb_row_count": 66950,
+      "postgres_row_count": 66950,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -568,8 +578,8 @@
     {
       "object": "processed.zendesk_ticket_tags",
       "status": "MATCH",
-      "duckdb_row_count": 8383,
-      "postgres_row_count": 8383,
+      "duckdb_row_count": 8812,
+      "postgres_row_count": 8812,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -578,8 +588,8 @@
     {
       "object": "processed.zendesk_custom_fields",
       "status": "MATCH",
-      "duckdb_row_count": 10048,
-      "postgres_row_count": 10048,
+      "duckdb_row_count": 14458,
+      "postgres_row_count": 14458,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -588,8 +598,8 @@
     {
       "object": "processed.dolibarr_product_identity_map",
       "status": "MATCH",
-      "duckdb_row_count": 3219,
-      "postgres_row_count": 3219,
+      "duckdb_row_count": 3223,
+      "postgres_row_count": 3223,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -598,8 +608,8 @@
     {
       "object": "marts.ticket_fieldbeat_operational_view",
       "status": "MATCH",
-      "duckdb_row_count": 628,
-      "postgres_row_count": 628,
+      "duckdb_row_count": 658,
+      "postgres_row_count": 658,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -608,8 +618,8 @@
     {
       "object": "marts.ticket_fieldbeat_dolibarr_operational_view",
       "status": "MATCH",
-      "duckdb_row_count": 628,
-      "postgres_row_count": 628,
+      "duckdb_row_count": 658,
+      "postgres_row_count": 658,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -618,8 +628,8 @@
     {
       "object": "marts.used_parts_dolibarr_match",
       "status": "MATCH",
-      "duckdb_row_count": 2193,
-      "postgres_row_count": 2193,
+      "duckdb_row_count": 2209,
+      "postgres_row_count": 2209,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -628,8 +638,8 @@
     {
       "object": "marts.ticket_fieldbeat_report_detail",
       "status": "MATCH",
-      "duckdb_row_count": 290,
-      "postgres_row_count": 290,
+      "duckdb_row_count": 302,
+      "postgres_row_count": 302,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -638,8 +648,8 @@
     {
       "object": "marts.fieldbeat_report_dolibarr_operational_view",
       "status": "MATCH",
-      "duckdb_row_count": 3747,
-      "postgres_row_count": 3747,
+      "duckdb_row_count": 3791,
+      "postgres_row_count": 3791,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -688,8 +698,8 @@
     {
       "object": "gold.used_parts_analysis",
       "status": "MATCH",
-      "duckdb_row_count": 576,
-      "postgres_row_count": 576,
+      "duckdb_row_count": 578,
+      "postgres_row_count": 578,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -718,8 +728,8 @@
     {
       "object": "gold.client_parts_consumption",
       "status": "MATCH",
-      "duckdb_row_count": 913,
-      "postgres_row_count": 913,
+      "duckdb_row_count": 923,
+      "postgres_row_count": 923,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -728,8 +738,8 @@
     {
       "object": "gold.client_report_volume_by_period",
       "status": "MATCH",
-      "duckdb_row_count": 913,
-      "postgres_row_count": 913,
+      "duckdb_row_count": 923,
+      "postgres_row_count": 923,
       "missing_columns": [],
       "extra_columns": [],
       "type_mismatches": [],
@@ -866,6 +876,16 @@
       "status": "POSTGRES_NATIVE_PRESENT"
     },
     {
+      "object": "manual_review.equipment_identification_overrides",
+      "ownership": "POSTGRES_TRANSACTIONAL",
+      "status": "POSTGRES_NATIVE_PRESENT"
+    },
+    {
+      "object": "manual_review.fieldbeat_engineer_identity_map",
+      "ownership": "POSTGRES_TRANSACTIONAL",
+      "status": "POSTGRES_NATIVE_PRESENT"
+    },
+    {
       "object": "stock.stock_movements",
       "ownership": "POSTGRES_TRANSACTIONAL",
       "status": "POSTGRES_NATIVE_PRESENT"
@@ -927,7 +947,7 @@
     }
   ],
   "provenance": {
-    "target": "localhost:55480/nexus_bi_dev_local_test",
-    "sync_run_id": "4d6a0f7f-23c8-4dff-a43c-c09a266c1621"
+    "target": "localhost:55480/nexus_bi_it_1785662099590_test",
+    "sync_run_id": "204b6683-b095-484a-80b1-7da7599af780"
   }
 }

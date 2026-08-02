@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { ErrorBanner } from "@/components/ErrorBanner";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 import type { AuditSummary } from "@/types/audit";
 
 // Alimenta la pestaña "Resumen de calidad" - ver
@@ -11,6 +12,7 @@ import type { AuditSummary } from "@/types/audit";
 // gold.fieldbeat_data_quality / gold.scope_metadata vía
 // /api/audit/summary; nada se calcula de nuevo acá.
 export function QualitySummarySection() {
+  const epoch = useDataRefreshEpoch();
   const [data, setData] = useState<AuditSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +24,7 @@ export function QualitySummarySection() {
         setData(body);
       })
       .catch(body => setError(body?.error ?? "Error desconocido"));
-  }, []);
+  }, [epoch]);
 
   if (error) return <ErrorBanner message={error} />;
   if (!data) return <p style={{ color: "var(--nx-text-secondary)" }}>Cargando resumen de calidad…</p>;

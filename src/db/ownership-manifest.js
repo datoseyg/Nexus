@@ -70,6 +70,22 @@ const POSTGRES_TRANSACTIONAL_ENTRIES = [
   entry("manual_review", "part_aliases", OWNERSHIP.POSTGRES_TRANSACTIONAL),
   entry("manual_review", "ticket_link_overrides", OWNERSHIP.POSTGRES_TRANSACTIONAL),
   entry("manual_review", "contract_data_issues", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  // sql/091_manual_review_equipment.sql: mismo patrón aditivo que
+  // part_aliases/ticket_link_overrides - fila efectiva vigente escrita vía
+  // /api/audit/corrections/equipment-identification, historial real vive en
+  // governance.correction_versions (nunca en esta tabla). Nunca truncar ni
+  // reconstruir desde DuckDB - no tiene generador CSV, es un overlay
+  // gobernado puro.
+  entry("manual_review", "equipment_identification_overrides", OWNERSHIP.POSTGRES_TRANSACTIONAL),
+  // sql/088_fieldbeat_part_occurrences_and_participants.sql: sembrada por un
+  // análisis offline reproducible (src/qa/analyze-fieldbeat-engineer-identity.js)
+  // pero editable después por un humano (verification_method pasa de
+  // AUTO_EVIDENCED a MANUALLY_VERIFIED, con verified_at/verified_by) - mismo
+  // GRANT a governance_owner que part_aliases/ticket_link_overrides
+  // (sql/089, sección 15). Nunca truncar ni reconstruir desde DuckDB -
+  // reaplicar la siembra original usa ON CONFLICT DO NOTHING justamente para
+  // no pisar una corrección humana posterior.
+  entry("manual_review", "fieldbeat_engineer_identity_map", OWNERSHIP.POSTGRES_TRANSACTIONAL),
   entry("stock", "stock_movements", OWNERSHIP.POSTGRES_TRANSACTIONAL),
   entry("config", "contract_import_runs", OWNERSHIP.POSTGRES_TRANSACTIONAL),
   entry("config", "contract_source_rows", OWNERSHIP.POSTGRES_TRANSACTIONAL),

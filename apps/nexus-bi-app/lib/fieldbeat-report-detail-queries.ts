@@ -10,10 +10,19 @@ import { INCONSISTENCY_TAXONOMY, type InconsistencyCode, type InconsistencySever
 import { deriveEquipmentItems } from "./fieldbeat-equipment-derivation";
 import { shapePartOccurrence, type RawPartOccurrenceRow } from "./fieldbeat-part-occurrence";
 import { shapeLaborSummary, shapeParticipant, sortParticipants, type RawLaborSummaryRow, type RawParticipantRow } from "./fieldbeat-participants";
+import { EQUIPMENT_CANONICAL_CTE, EQUIPMENT_MODEL_RESOLUTION_COLUMNS, equipmentContractCandidatesLateral } from "./explorer-sql";
+import { runGovernanceQuery } from "./governance-db";
 import {
   FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION,
+  type FieldbeatContractRelation,
+  type FieldbeatEquipmentIdentityItem,
+  type FieldbeatEquipmentItem,
+  type FieldbeatEquipmentResolutionSource,
   type FieldbeatInconsistencyDetail,
+  type FieldbeatIssuesAvailability,
+  type FieldbeatModelResolutionStatus,
   type FieldbeatReportDetail,
+  type FieldbeatReportIssue,
   type FieldbeatTicketLink
 } from "@/types/fieldbeat-report-detail";
 
@@ -37,8 +46,20 @@ export interface ReportDetailQueryResult {
   params: unknown[];
 }
 
+// Correlación de canonical_equipment.source_equipment_keys contra
+// config.contract_equipment_analysis - MISMO predicado que usa el
+// Explorador (ver CANONICAL_EQUIPMENT_CONTRACT_PREDICATE en explorer-sql.ts,
+// no exportado por ser un detalle interno de ese archivo) - se repite acá
+// literal en vez de exportar esa constante porque el predicado real es
+// `canonical_equipment.source_equipment_keys`/`ce.source_equipment_keys`
+// según el alias que tenga la CTE en cada consulta (acá se alía `ce`, no
+// `canonical_equipment`, para dejar claro dentro del subquery de equipos que
+// es una fila puntual, no la CTE completa).
+const REPORT_EQUIPMENT_CONTRACT_PREDICATE = "ca.fieldbeat_equipment_key = ANY(ce.source_equipment_keys)";
+
 export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQueryResult {
   const sql = `
+    ${EQUIPMENT_CANONICAL_CTE}
     SELECT
       q.fieldbeat_task_id,
       q.state,
@@ -70,6 +91,61 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
       q.part_total_lines,
       q.ticket_accessible,
       q.ticket_missing_or_restricted,
+      (
+        -- Enriquecimiento de modelo/familia/serie/contrato por equipo
+        -- (Sección 14 del encargo NEXUS V3 After-Hours) - NUNCA reemplaza la
+        -- identidad ya resuelta por deriveEquipmentItems()/matched_candidate_ids
+        -- (eso sigue siendo team_identification_status), solo la enriquece
+        -- por internal_id normalizado. Precedencia estructurada real:
+        -- processed.fieldbeat_task_equipments (1 fila por par tarea-equipo,
+        -- medido: 82.7% de las tareas la tienen) es SIEMPRE la fuente
+        -- primaria; el fallback de texto (UNNEST de equipment_internal_ids)
+        -- solo se activa cuando esa tabla no tiene NINGUNA fila para esta
+        -- tarea (NOT EXISTS) - nunca cuando hay filas estructuradas que
+        -- simplemente no matchean canonical_equipment (ahí queda con
+        -- model=null/UNKNOWN vía LEFT JOIN, nunca se descarta la fila ni se
+        -- cae al fallback de texto silenciosamente).
+        SELECT COALESCE(json_agg(json_build_object(
+          'internal_id', item.internal_id,
+          'resolution_source', item.resolution_source,
+          'model', item.model,
+          'model_resolution_status', item.model_resolution_status,
+          'equipment_family', item.equipment_type,
+          'serial_numbers', item.serial_numbers,
+          'contracts', item.contracts
+        ) ORDER BY item.internal_id), '[]'::json)
+        FROM (
+          SELECT
+            ce.internal_id,
+            eq.resolution_source,
+            ce.equipment_type,
+            ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS},
+            COALESCE(contract.serial_numbers, ARRAY[]::text[]) AS serial_numbers,
+            (
+              SELECT COALESCE(json_agg(json_build_object(
+                'contract_version_id', ca.contract_version_id::text,
+                'status_code', ca.contract_status_code,
+                'spa_tier_code', ca.spa_tier_code,
+                'parts_coverage_code', ca.parts_coverage_code,
+                'warranty_end_date', ca.warranty_end_date
+              ) ORDER BY ca.contract_version_id), '[]'::json)
+              FROM config.contract_equipment_analysis ca
+              WHERE ca.is_current = true AND ca.fieldbeat_equipment_key = ANY(ce.source_equipment_keys)
+            ) AS contracts
+          FROM (
+            SELECT te.equipment_internal_id AS raw_internal_id, 'TASK_EQUIPMENT_LINK' AS resolution_source
+            FROM processed.fieldbeat_task_equipments te
+            WHERE te.fieldbeat_task_id = q.fieldbeat_task_id
+            UNION ALL
+            SELECT TRIM(unnested.value), 'TEXT_FALLBACK'
+            FROM UNNEST(STRING_TO_ARRAY(COALESCE(q.equipment_internal_ids, ''), '|')) AS unnested(value)
+            WHERE TRIM(unnested.value) <> ''
+              AND NOT EXISTS (SELECT 1 FROM processed.fieldbeat_task_equipments te2 WHERE te2.fieldbeat_task_id = q.fieldbeat_task_id)
+          ) eq
+          JOIN canonical_equipment ce ON ce.internal_id = UPPER(TRIM(eq.raw_internal_id))
+          ${equipmentContractCandidatesLateral(REPORT_EQUIPMENT_CONTRACT_PREDICATE)}
+        ) item
+      ) AS equipment_enrichment,
       (
         SELECT COALESCE(json_agg(json_build_object(
           'zendesk_ticket_id', b.zendesk_ticket_id::text,
@@ -176,6 +252,24 @@ interface RawInconsistencyRow {
   priority_order: number;
 }
 
+interface RawContractRelationRow {
+  contract_version_id: string;
+  status_code: string | null;
+  spa_tier_code: string | null;
+  parts_coverage_code: string | null;
+  warranty_end_date: string | null;
+}
+
+interface RawEquipmentEnrichmentRow {
+  internal_id: string;
+  resolution_source: FieldbeatEquipmentResolutionSource;
+  model: string | null;
+  model_resolution_status: FieldbeatModelResolutionStatus;
+  equipment_family: string | null;
+  serial_numbers: string[];
+  contracts: RawContractRelationRow[];
+}
+
 export interface ReportDetailQueryRow {
   fieldbeat_task_id: string;
   state: string | null;
@@ -207,6 +301,7 @@ export interface ReportDetailQueryRow {
   part_total_lines: number;
   ticket_accessible: boolean | null;
   ticket_missing_or_restricted: boolean;
+  equipment_enrichment: RawEquipmentEnrichmentRow[];
   tickets: RawTicketRow[];
   parts: RawPartOccurrenceRow[];
   participants: RawParticipantRow[];
@@ -217,6 +312,52 @@ export interface ReportDetailQueryRow {
 
 function shapeTicket(t: RawTicketRow): FieldbeatTicketLink {
   return { zendeskTicketId: t.zendesk_ticket_id, subject: t.subject, status: t.status, priority: t.priority, linkMethod: t.link_method };
+}
+
+function shapeContractRelation(c: RawContractRelationRow): FieldbeatContractRelation {
+  return {
+    contractVersionId: c.contract_version_id,
+    statusCode: c.status_code,
+    spaTierCode: c.spa_tier_code,
+    partsCoverageCode: c.parts_coverage_code,
+    warrantyEndDate: c.warranty_end_date
+  };
+}
+
+// Combina la identidad de equipo YA resuelta por deriveEquipmentItems()
+// (team_identification_status/matched_candidate_ids - nunca tocada acá) con
+// el enriquecimiento de modelo/familia/serie/contrato de equipment_enrichment
+// (fuente independiente, ver comentario en buildReportDetailQuery). Ambas
+// listas pueden diverger en casos raros (ítem de texto ambiguo sin ninguna
+// fila en processed.fieldbeat_task_equipments ni en equipment_internal_ids)
+// - un ítem sin enriquecimiento correspondiente degrada a "sin dato" en vez
+// de fallar, nunca inventa un modelo/contrato.
+function mergeEquipmentEnrichment(items: FieldbeatEquipmentIdentityItem[], enrichment: RawEquipmentEnrichmentRow[]): FieldbeatEquipmentItem[] {
+  const byInternalId = new Map(enrichment.map(e => [e.internal_id.toUpperCase().trim(), e]));
+
+  return items.map(item => {
+    const match = byInternalId.get(item.internalId.toUpperCase().trim());
+    if (!match) {
+      return {
+        ...item,
+        resolutionSource: "TEXT_FALLBACK",
+        model: null,
+        modelResolutionStatus: "UNKNOWN",
+        equipmentFamily: null,
+        serialNumbers: [],
+        contracts: []
+      };
+    }
+    return {
+      ...item,
+      resolutionSource: match.resolution_source,
+      model: match.model,
+      modelResolutionStatus: match.model_resolution_status,
+      equipmentFamily: match.equipment_family,
+      serialNumbers: match.serial_numbers ?? [],
+      contracts: (match.contracts ?? []).map(shapeContractRelation)
+    };
+  });
 }
 
 function shapeInconsistency(f: RawInconsistencyRow, primaryCode: InconsistencyCode | null): FieldbeatInconsistencyDetail {
@@ -236,12 +377,15 @@ function shapeInconsistency(f: RawInconsistencyRow, primaryCode: InconsistencyCo
 // de process.env acá) - esta función se mantiene pura/determinística dado
 // su input; la ruta es quien resuelve isFieldbeatOpenConfigured() y se lo
 // pasa (ver app/api/dashboard/fieldbeat/reports/[id]/route.ts).
-export function shapeReportDetail(row: ReportDetailQueryRow, fieldbeatOpenAvailable: boolean): FieldbeatReportDetail {
-  const equipment = deriveEquipmentItems({
-    equipmentInternalIds: row.equipment_internal_ids,
-    teamIdentificationStatus: row.team_identification_status,
-    matchedCandidateIds: row.matched_candidate_ids
-  });
+export function shapeReportDetail(row: ReportDetailQueryRow, fieldbeatOpenAvailable: boolean, issues: FieldbeatIssuesAvailability): FieldbeatReportDetail {
+  const equipment = mergeEquipmentEnrichment(
+    deriveEquipmentItems({
+      equipmentInternalIds: row.equipment_internal_ids,
+      teamIdentificationStatus: row.team_identification_status,
+      matchedCandidateIds: row.matched_candidate_ids
+    }),
+    row.equipment_enrichment ?? []
+  );
 
   return {
     contractVersion: FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION,
@@ -296,10 +440,37 @@ export function shapeReportDetail(row: ReportDetailQueryRow, fieldbeatOpenAvaila
       totalInconsistencies: (row.inconsistencies ?? []).length
     },
     inconsistencies: (row.inconsistencies ?? []).map(f => shapeInconsistency(f, row.primary_code)),
+    issues,
     audit: {
       contractVersion: FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION,
       generatedAt: new Date().toISOString(),
       fieldbeatOpenAvailable
     }
   };
+}
+
+interface RawIssueRow {
+  id: number;
+  rule_code: string;
+  severity: string;
+  status: string;
+  first_seen_at: string;
+}
+
+// governance.issues solo es legible por el rol de gobierno (nexus_app_read)
+// - NUNCA puede ir dentro del mismo SELECT que buildReportDetailQuery, que
+// corre contra el pool genérico (runQuery). Query aparte, en paralelo (ver
+// app/api/dashboard/fieldbeat/reports/[id]/route.ts::Promise.allSettled) -
+// una falla acá NUNCA debe tumbar el detalle base del reporte.
+export async function fetchReportActiveIssues(fieldbeatTaskId: string): Promise<FieldbeatReportIssue[]> {
+  const rows = await runGovernanceQuery<RawIssueRow>(
+    "app_read",
+    `SELECT id, rule_code, severity, status, first_seen_at
+     FROM governance.issues
+     WHERE entity_type = 'report' AND entity_key = $1 AND is_currently_detected = true AND status IN ('OPEN', 'IN_REVIEW')
+     ORDER BY severity, first_seen_at`,
+    [fieldbeatTaskId]
+  );
+
+  return rows.map(r => ({ id: r.id, ruleCode: r.rule_code, severity: r.severity, status: r.status, firstSeenAt: r.first_seen_at }));
 }

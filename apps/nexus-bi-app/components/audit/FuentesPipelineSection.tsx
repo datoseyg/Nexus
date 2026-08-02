@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { evaluationRunStatusLabel, evaluationScopeModeLabel, evaluationTriggeredByLabel } from "@/lib/audit-vocabulary";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface RunRow {
   evaluation_run_id: string;
@@ -61,6 +62,7 @@ function scopeLabel(row: RunRow): string {
 // hacia dónde está (honestidad de estado, docs/design-context/09 "estado
 // del dato siempre visible").
 export function FuentesPipelineSection() {
+  const epoch = useDataRefreshEpoch();
   const [page, setPage] = useState(1);
   const [data, setData] = useState<RunsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,7 @@ export function FuentesPipelineSection() {
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, epoch]);
 
   const lastSucceeded = data?.rows.find(row => row.status === "SUCCEEDED");
 

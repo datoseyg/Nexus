@@ -1,5 +1,5 @@
 import type { TeamIdentificationStatus } from "./fieldbeat-team-identification";
-import type { FieldbeatEquipmentItem } from "@/types/fieldbeat-report-detail";
+import type { FieldbeatEquipmentIdentityItem } from "@/types/fieldbeat-report-detail";
 
 export interface DeriveEquipmentItemsInput {
   equipmentInternalIds: string | null;
@@ -15,7 +15,7 @@ export interface DeriveEquipmentItemsInput {
  * a una lista de items. TEXT_AMBIGUOUS nunca se promueve a match
  * confirmado (Phase 5 §4.2) - se listan como candidatos, confirmed=false.
  */
-export function deriveEquipmentItems({ equipmentInternalIds, teamIdentificationStatus, matchedCandidateIds }: DeriveEquipmentItemsInput): FieldbeatEquipmentItem[] {
+export function deriveEquipmentItems({ equipmentInternalIds, teamIdentificationStatus, matchedCandidateIds }: DeriveEquipmentItemsInput): FieldbeatEquipmentIdentityItem[] {
   if (teamIdentificationStatus === "STRUCTURED_IDENTIFIED") {
     if (!equipmentInternalIds) return [];
     return equipmentInternalIds

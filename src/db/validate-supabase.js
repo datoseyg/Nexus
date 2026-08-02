@@ -199,6 +199,11 @@ export async function validateSupabase() {
     return summary;
   } finally {
     connection.closeSync();
+    // Ver el comentario equivalente en src/db/load-duckdb.js - buena
+    // higiene aunque VALIDATE sea hoy la última etapa de este orquestador
+    // que abre el .duckdb (una etapa futura que también lo abriera fallaría
+    // igual que las demás sin esto).
+    instance.closeSync();
   }
 }
 

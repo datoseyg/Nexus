@@ -1,7 +1,7 @@
 "use client";
 
 import "@/lib/chartjs-setup";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { FilterBar, type FilterConfig } from "./FilterBar";
 import { KpiCard } from "./KpiCard";
@@ -9,6 +9,7 @@ import { ChartCard } from "./ChartCard";
 import { DataTableCard, type DataTableColumn } from "./DataTableCard";
 import { DateRangePicker, type DateRangeValue } from "./DateRangePicker";
 import { ErrorBanner } from "@/components/ErrorBanner";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 import type { Grain } from "@/lib/dashboard-filters";
 import { DASHBOARD_PALETTE_SEQUENCE, formatDateTimeEsCl, formatMinutesAsHhMm, formatNumberEsCl } from "@/lib/dashboard-formatters";
 
@@ -87,6 +88,23 @@ export function UptimeDowntimeTab() {
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+
+  // NEXUS V3 - reusa el mismo botón "⟳ Actualizar datos" ya existente
+  // (refreshKey) para reaccionar a un refresh de datos exitoso, en vez de un
+  // mecanismo paralelo. isFirstEpochRef evita un refetch redundante al
+  // montar: epoch ya vale lo que vale desde el primer render (no arranca en
+  // "recién cambió"), así que solo bumpeamos refreshKey en cambios REALES
+  // posteriores al mount, nunca en el mount mismo (las 3 queries de abajo ya
+  // corren solas al montar).
+  const epoch = useDataRefreshEpoch();
+  const isFirstEpochRef = useRef(true);
+  useEffect(() => {
+    if (isFirstEpochRef.current) {
+      isFirstEpochRef.current = false;
+      return;
+    }
+    setRefreshKey(k => k + 1);
+  }, [epoch]);
 
   useEffect(() => {
     fetch("/api/dashboard/operacional/filters")

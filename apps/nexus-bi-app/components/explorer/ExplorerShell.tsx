@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FieldbeatReportDetailDrawer } from "@/components/fieldbeat/quality/FieldbeatReportDetailDrawer";
 import { ExplorerDetailDrawer } from "./ExplorerDetailDrawer";
@@ -12,11 +12,12 @@ import { ExplorerTableToolbar } from "./ExplorerTableToolbar";
 import { ExplorerTableFooter } from "./ExplorerTableFooter";
 import { EXPLORER_ENTITY_CONFIG, formatCell } from "@/lib/explorer-entity-config";
 import { triggerBlobDownload } from "@/lib/csv-export";
-import { readExplorerUrlState, buildExplorerQueryString, hasActiveExplorerFilters, type ExplorerFilters } from "@/lib/explorer-url-state";
+import { readExplorerUrlState, buildExplorerQueryString, hasActiveExplorerFilters, deriveExplorerDrawerKeys, type ExplorerFilters } from "@/lib/explorer-url-state";
 import type { ExplorerFilterOption } from "@/lib/explorer-filters-config";
 import type { TableDensity } from "@/components/ui/ResponsiveTableShell";
-import type { ExplorerEntity, ExplorerListResponse } from "@/types/explorer";
+import type { ExplorerEntity, ExplorerListResponse, ExplorerLoadState } from "@/types/explorer";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface ExplorerShellProps {
   role: "gerencia" | "administracion";
@@ -37,18 +38,34 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
   const searchParams = useSearchParams();
   const { entity, page, q, filters, key: urlKey } = readExplorerUrlState(searchParams);
   const config = EXPLORER_ENTITY_CONFIG[entity];
+  const epoch = useDataRefreshEpoch();
 
-  const [data, setData] = useState<ExplorerListResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Sección 9 - contrato único de carga/error (types/explorer.ts). Nunca
+  // tres booleans independientes (data/loading/error) que podían quedar en
+  // combinaciones imposibles o ambiguas (ej. loading=true Y error!=null a
+  // la vez) - un solo estado con forma discriminada por status.
+  const [loadState, setLoadState] = useState<ExplorerLoadState>({ status: "idle" });
+  // Sección 2/6 - protección por generación: una respuesta que ya no
+  // corresponde a la última consulta disparada (por cambio de entidad,
+  // filtro o página mientras esa respuesta seguía en vuelo) se descarta en
+  // vez de pisar el estado con datos de forma equivocada (causa raíz real
+  // del "Encountered two children with the same key, `undefined`" - ver
+  // reporte final, sección A).
+  const requestGenerationRef = useRef(0);
   // La clave del detalle abierto vive en la URL (ver lib/explorer-url-state.ts)
   // - nunca solo en useState local, para que un link "Ver equipo"/"Ver
   // cliente" desde el detalle de OTRA entidad navegue reemplazando el
   // contenido (URL canónica), en vez de apilar un segundo drawer sobre el
-  // primero. reportDrawerId (Reportes, usesExternalDrawer) sigue local: ese
-  // drawer nunca se enlaza desde otra entidad hoy.
-  const selectedKey = config.usesExternalDrawer ? null : (urlKey ?? null);
-  const [reportDrawerId, setReportDrawerId] = useState<string | null>(null);
+  // primero. Sección 14 del encargo NEXUS V3 After-Hours - reportDrawerId
+  // (Reportes, usesExternalDrawer) YA NO es un useState local aparte:
+  // colapsaba dos mecanismos de selección paralelos (uno por URL para las
+  // otras 8 entidades, otro por estado local solo para Reportes) y hacía
+  // que un deep-link ?entity=reports&key=<id> se ignorara en silencio (el
+  // estado local siempre arrancaba en null). Ambos se derivan ahora del
+  // MISMO valor de URL en cada render - reactivo a atrás/adelante del
+  // navegador sin lógica adicional, gated únicamente por qué drawer usa
+  // cada entidad.
+  const { selectedKey, reportDrawerId } = deriveExplorerDrawerKeys(config.usesExternalDrawer ?? false, urlKey);
   const [technicianCorrectionTarget, setTechnicianCorrectionTarget] = useState<{ normalizedName: string; displayName: string | null } | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -92,19 +109,47 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, q]);
 
-  function pushState(patch: Partial<{ entity: ExplorerEntity; page: number; q: string; filters: ExplorerFilters; key: string | undefined }>) {
+  // Corrección aplicada (Sección 14 del encargo NEXUS V3 After-Hours) -
+  // `replace` opcional (default push, comportamiento sin cambios para
+  // entidad/filtros/página, que SÍ son navegación real que el usuario
+  // puede querer deshacer con "atrás"). La selección de fila (abrir/cerrar
+  // el drawer, cambiar solo `key`) pasa replace:true - antes, cada clic de
+  // fila apilaba una entrada de historial nueva; con varias filas visitadas
+  // "atrás" tenía que pasar fila por fila antes de salir del Explorador.
+  function pushState(patch: Partial<{ entity: ExplorerEntity; page: number; q: string; filters: ExplorerFilters; key: string | undefined }>, options?: { replace?: boolean }) {
     const next = { entity, page, q, filters, key: urlKey, ...patch };
     const qs = buildExplorerQueryString(next);
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const href = qs ? `${pathname}?${qs}` : pathname;
+    if (options?.replace) {
+      router.replace(href, { scroll: false });
+    } else {
+      router.push(href, { scroll: false });
+    }
   }
 
   function handleEntityChange(next: ExplorerEntity) {
-    setData(null);
+    // Sección 6 - reseleccionar la entidad YA activa (doble clic incluido)
+    // es idempotente: no cambia datos, no limpia filtros, no vacía rows, no
+    // dispara una transición inválida. Sin este guard, buildExplorerQueryString
+    // produce la MISMA URL (los valores por defecto se omiten), router.push
+    // se vuelve un no-op, y el useEffect de refetch (que depende de esos
+    // mismos valores) nunca vuelve a dispararse - data quedaba en null para
+    // siempre (causa raíz real de "Sin X para mostrar" tras un clic
+    // repetido - ver reporte final, sección E).
+    if (next === entity) return;
+    // Cambiar de entidad SÍ debe mostrar un loading vacío a propósito (a
+    // diferencia de un refetch dentro de la MISMA entidad, que conserva los
+    // resultados anteriores - ver refetch() más abajo): las filas de la
+    // entidad anterior tienen columnas/identidad distintas, mostrarlas un
+    // instante contra la config de la entidad nueva es exactamente lo que
+    // producía "undefined" como key de React.
+    setLoadState({ status: "loading", previousData: null });
     // Cambiar de entidad con un drawer abierto dejaba selectedKey/reportDrawerId
     // de la entidad ANTERIOR con vida - un click posterior podía reabrir
     // ExplorerDetailDrawer con la entidad nueva pero la clave vieja (B22:
     // ningún drawer debe sobrevivir a un cambio de universo de navegación).
-    setReportDrawerId(null);
+    // Ahora basta con limpiar `key` en la URL (activeKey/reportDrawerId/
+    // selectedKey se derivan de ahí, ya no hay un useState aparte que limpiar).
     pushState({ entity: next, page: 1, q: "", filters: {}, key: undefined });
   }
 
@@ -113,8 +158,7 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
   // SIEMPRE vía URL canónica (cambia entity+key juntos), nunca apilando un
   // segundo drawer sobre el que ya está abierto.
   function navigateToDetail(nextEntity: ExplorerEntity, nextKey: string) {
-    setData(null);
-    setReportDrawerId(null);
+    setLoadState({ status: "loading", previousData: null });
     pushState({ entity: nextEntity, page: 1, q: "", filters: {}, key: nextKey });
   }
 
@@ -171,20 +215,37 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
     return params;
   }
 
-  function refetch() {
-    setLoading(true);
-    setError(null);
+  // `signal` es opcional (AbortController) - callers automáticos (el efecto
+  // de abajo) lo pasan para cancelar la request en vuelo si entity/page/q/
+  // filtros/epoch cambian antes de que responda; callers manuales (drawer
+  // onChanged/onApplied) lo omiten, no participan de esa carrera. La
+  // protección REAL contra una respuesta fuera de orden es el contador de
+  // generación (requestGenerationRef) - AbortController es una optimización
+  // de red complementaria, nunca la única defensa (sección 6 del encargo:
+  // "no dependas solamente de él").
+  function refetch(signal?: AbortSignal) {
+    const generation = ++requestGenerationRef.current;
+    setLoadState(prev => ({
+      status: "loading",
+      previousData: prev.status === "success" || prev.status === "empty" ? prev.data : prev.status === "loading" ? prev.previousData : null
+    }));
     const params = buildFetchParams();
     params.set("page", String(page));
     params.set("pageSize", "25");
-    fetch(`/api/explorer/${entity}?${params.toString()}`)
+    fetch(`/api/explorer/${entity}?${params.toString()}`, { signal })
       .then(async res => {
         const body = await res.json();
         if (!res.ok) throw body;
-        setData(body);
+        if (generation !== requestGenerationRef.current) return; // respuesta obsoleta - se descarta sin tocar el estado
+        const listResponse = body as ExplorerListResponse;
+        setLoadState(listResponse.rows.length === 0 ? { status: "empty", data: listResponse } : { status: "success", data: listResponse });
       })
-      .catch(body => setError(body?.error ?? "Error desconocido"))
-      .finally(() => setLoading(false));
+      .catch((body: unknown) => {
+        if (body instanceof DOMException && body.name === "AbortError") return; // abort esperado, nunca un error visible
+        if (generation !== requestGenerationRef.current) return;
+        const err = body as { error?: string; requestId?: string } | undefined;
+        setLoadState({ status: "error", message: err?.error ?? "Error desconocido", requestId: err?.requestId });
+      });
   }
 
   // Dependencia serializada (nunca listar cada filtro a mano, sección 14) -
@@ -193,7 +254,15 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
   // clave nueva acá manualmente rompería silenciosamente el refetch de
   // cualquier filtro agregado después sin tocar esta línea.
   const filtersKey = JSON.stringify(filters);
-  useEffect(refetch, [entity, page, q, filtersKey]);
+  useEffect(() => {
+    const controller = new AbortController();
+    refetch(controller.signal);
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entity, page, q, filtersKey, epoch]);
+
+  const effectiveData: ExplorerListResponse | null =
+    loadState.status === "success" || loadState.status === "empty" ? loadState.data : loadState.status === "loading" ? loadState.previousData : null;
 
   function getRowKey(row: Record<string, unknown>): string {
     return String(row[config.detailKeyColumn]);
@@ -204,13 +273,13 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
     return config.usesExternalDrawer ? reportDrawerId === key : selectedKey === key;
   }
 
+  // Corrección aplicada (Sección 14 del encargo NEXUS V3 After-Hours) - ya
+  // no bifurca por usesExternalDrawer (las 9 entidades comparten el mismo
+  // mecanismo de `key` en la URL, ver activeKey arriba); replace:true
+  // porque seleccionar una fila nunca debe apilar una entrada de historial
+  // nueva.
   function handleRowClick(row: Record<string, unknown>) {
-    const key = getRowKey(row);
-    if (config.usesExternalDrawer) {
-      setReportDrawerId(key);
-    } else {
-      pushState({ key });
-    }
+    pushState({ key: getRowKey(row) }, { replace: true });
   }
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -254,7 +323,7 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
         <ExplorerEntitySummary
           title={config.label}
           description={config.description}
-          totalRows={data?.totalRows}
+          totalRows={effectiveData?.totalRows}
           activeFilterCount={activeFilterCount}
           onExport={handleExport}
           exporting={exporting}
@@ -287,15 +356,32 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
             onDensityChange={setDensity}
           />
 
-          {loading ? (
-            <p className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-text-secondary)" }}>
+          {loadState.status === "error" ? (
+            // Sección 9 - una caída de base de datos nunca se representa
+            // como "Sin X para mostrar" (eso implicaría, falsamente, que la
+            // consulta funcionó y el universo real está vacío). Mensaje
+            // distinto + acción de recuperación real, sin reiniciar nada.
+            <div role="alert" className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-danger-fg, #c0392b)" }}>
+              <p>No fue posible cargar {config.label.toLowerCase()}.</p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="mt-2.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+                style={{ borderColor: "var(--nx-danger-fg, #c0392b)", color: "var(--nx-danger-fg, #c0392b)" }}
+              >
+                Reintentar
+              </button>
+              {loadState.requestId && (
+                <p className="mt-1.5 text-xs" style={{ color: "var(--nx-text-muted)" }}>
+                  ID de referencia: {loadState.requestId}
+                </p>
+              )}
+            </div>
+          ) : !effectiveData ? (
+            <p className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-text-secondary)" }} aria-busy="true">
               Cargando…
             </p>
-          ) : error ? (
-            <p className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-danger-fg, #c0392b)" }}>
-              {error}
-            </p>
-          ) : (data?.rows.length ?? 0) === 0 ? (
+          ) : effectiveData.rows.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-text-secondary)" }}>
               {q || activeFilterCount > 0 ? `Sin resultados para este filtro.` : `Sin ${config.label.toLowerCase()} para mostrar.`}
             </p>
@@ -304,8 +390,11 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
               {/* Tabla clara - sin panel oscuro, sin scroll interno
                   dominante (sección 9): altura natural, scroll de página
                   normal. Solo escritorio/tablet ancho; mobile usa tarjetas
-                  (abajo). */}
-              <div className="hidden md:block overflow-x-auto">
+                  (abajo). aria-busy cuando hay un refetch en vuelo pero
+                  todavía se muestran resultados anteriores (nunca se
+                  blanquea la tabla solo por estar recargando la MISMA
+                  entidad). */}
+              <div className="hidden md:block overflow-x-auto" aria-busy={loadState.status === "loading"}>
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: "var(--nx-page-bg)" }}>
@@ -321,7 +410,7 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {data?.rows.map(row => {
+                    {effectiveData.rows.map(row => {
                       const selected = isRowSelected(row);
                       return (
                         <tr
@@ -358,8 +447,8 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
               </div>
 
               {/* Tarjetas - vista real en mobile (< md). */}
-              <div className="flex flex-col gap-2.5 p-3 md:hidden">
-                {data?.rows.map(row => {
+              <div className="flex flex-col gap-2.5 p-3 md:hidden" aria-busy={loadState.status === "loading"}>
+                {effectiveData.rows.map(row => {
                   const selected = isRowSelected(row);
                   return (
                     <button
@@ -389,11 +478,11 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
             </>
           )}
 
-          {data && (
+          {effectiveData && (
             <ExplorerTableFooter
-              page={data.page}
-              totalPages={data.totalPages}
-              pageSize={data.pageSize}
+              page={effectiveData.page}
+              totalPages={effectiveData.totalPages}
+              pageSize={effectiveData.pageSize}
               onPageChange={next => pushState({ page: next })}
               contextLabel={selectedKey || reportDrawerId ? "Selecciona otra fila para ver su detalle" : "Selecciona una fila para ver el detalle"}
             />
@@ -402,20 +491,20 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
       </div>
 
       {config.usesExternalDrawer ? (
-        <FieldbeatReportDetailDrawer reportId={reportDrawerId} onClose={() => setReportDrawerId(null)} role={role} capabilities={capabilities} />
+        <FieldbeatReportDetailDrawer reportId={reportDrawerId} onClose={() => pushState({ key: undefined }, { replace: true })} role={role} capabilities={capabilities} />
       ) : (
         <ExplorerDetailDrawer
           entity={selectedKey ? entity : null}
           entityKey={selectedKey}
           role={role}
           capabilities={capabilities}
-          onClose={() => pushState({ key: undefined })}
+          onClose={() => pushState({ key: undefined }, { replace: true })}
           onChanged={refetch}
           onNavigate={navigateToDetail}
           resolveIdentityAction={
             entity === "technicians" && hasCapability(capabilities, "correction:technician-identity")
               ? (summary: Record<string, unknown>) => {
-                  pushState({ key: undefined });
+                  pushState({ key: undefined }, { replace: true });
                   setTechnicianCorrectionTarget({
                     normalizedName: String(summary.normalized_name),
                     displayName: (summary.display_name as string | null) ?? null

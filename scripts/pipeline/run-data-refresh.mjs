@@ -7,13 +7,32 @@
 //
 // Secuencia (cada etapa registrada en pipeline.refresh_run_stages vía
 // pipeline.fn_update_refresh_run_stage antes de ejecutarla):
-//   EXTRACT -> NORMALIZE -> BUILD_MARTS -> BUILD_GOLD -> SYNC_POSTGRES ->
-//   BUILD_WORKING_HOURS -> VALIDATE_AFTER_HOURS -> VALIDATE ->
+//   EXTRACT -> NORMALIZE -> BUILD_MARTS -> BUILD_GOLD -> LOAD_DUCKDB ->
+//   SYNC_POSTGRES -> BUILD_WORKING_HOURS -> VALIDATE_AFTER_HOURS -> VALIDATE ->
 //   REEVALUATE_RULES -> PUBLISH_SNAPSHOT
 // Cualquier falla detiene el resto y llama pipeline.fn_fail_refresh_run -
 // un snapshot publicado sano NUNCA se reemplaza por una carga incompleta
 // (pipeline.fn_complete_refresh_run, que mueve pipeline.published_dataset_state,
 // solo se alcanza si TODO lo anterior terminó bien).
+//
+// LOAD_DUCKDB (agregada tras un incidente real, ver
+// data/reports/supabase_validation_summary.json y el reporte de esa
+// corrección) - BUILD_GOLD escribe CSV nuevos, pero nada volvía a cargar
+// data/warehouse/eyg_nexus.duckdb desde ellos antes de que SYNC_POSTGRES
+// (migrateToSupabase) migrara el .duckdb hacia Postgres: el resultado era
+// un snapshot consistente entre DuckDB y Postgres, pero VIEJO. Esta etapa
+// reutiliza loadDuckDb() (src/db/load-duckdb.js) tal cual - nunca reimplementa
+// su lógica de carga - y agrega dos guardas propias de este orquestador
+// (src/db/duckdb-freshness.js), ambas bloqueantes:
+//   - assertDuckDbLoadComplete: ninguna tabla DUCKDB_SYNC obligatoria puede
+//     quedar SKIPPED_MISSING_CSV/ERROR en silencio (loadDuckDb() por sí solo
+//     solo lanza ante ERROR, nunca ante CSV faltante - correcto para su uso
+//     manual histórico, insuficiente acá).
+//   - assertDuckDbFreshAfterLoad: releé el CSV y la tabla recién cargada de
+//     forma independiente para el mínimo de tablas exigido (fieldbeat_tasks/
+//     zendesk_tickets/dolibarr_products/fieldbeat_used_parts) - nunca basta
+//     con que DuckDB y Postgres coincidan entre sí, podrían coincidir sobre
+//     un snapshot antiguo.
 //
 // Reutiliza los módulos reales, nunca los reimplementa:
 //   - Miners (src/miners/{fieldbeat-all,zendesk,dolibarr}.js) - export una
@@ -86,7 +105,22 @@
 //     un mensaje explícito indicando qué año importar a mano (fecha
 //     efectiva real, nunca inventada) - jamás reimporta un calendario ya
 //     publicado ni intenta adivinar una fecha de vigencia contractual.
-import "dotenv/config";
+//
+// Este archivo NUNCA carga dotenv por su cuenta (a propósito - antes tenía
+// `import "dotenv/config"` acá, que cargaba en silencio el .env de la raíz
+// del repo -con un SUPABASE_DB_URL_DIRECT de Supabase CLOUD- cada vez que
+// faltaba esa variable. Como los imports de un módulo ES se ejecutan ANTES
+// que el código propio de quien lo importa, esto pasaba incluso antes de
+// que scripts/pipeline/local-refresh-worker.mjs llegara a correr su propia
+// validación (requireAllEnv) - enmascarando justo lo que el requisito 1 del
+// encargo exige: "reportar TODAS las variables faltantes juntas" (detectado
+// con un test de integración real, ver
+// test/pipeline/local-refresh-worker.integration.test.ts, incluso después de
+// quitar el dotenv/config equivalente de ESE archivo). Los dos únicos
+// callers reales de este orquestador (local-refresh-worker.mjs, vía
+// with-local-pipeline-env.mjs, y .github/workflows/data-refresh.yml, vía
+// secretos de GitHub Actions - nunca un archivo .env) ya entregan el
+// entorno completo antes de invocarlo.
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -95,6 +129,8 @@ import { buildWriteConfirmationToken, describeConnectionTarget, isSupabaseCloudH
 import { mineAllFieldBeatTasks } from "../../src/miners/fieldbeat-all.js";
 import { mineZendeskTickets } from "../../src/miners/zendesk.js";
 import { mineDolibarrProducts } from "../../src/miners/dolibarr.js";
+import { loadDuckDb } from "../../src/db/load-duckdb.js";
+import { assertDuckDbLoadComplete, assertDuckDbFreshAfterLoad } from "../../src/db/duckdb-freshness.js";
 import { migrateToSupabase } from "../../src/db/migrate-to-supabase.js";
 import { validateSupabase } from "../../src/db/validate-supabase.js";
 import { runApply as runWorkingHoursApply } from "../../src/working-hours/build-working-hours.js";
@@ -104,7 +140,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..", "..");
 
 const STAGES = [
-  "EXTRACT", "NORMALIZE", "BUILD_MARTS", "BUILD_GOLD", "SYNC_POSTGRES",
+  "EXTRACT", "NORMALIZE", "BUILD_MARTS", "BUILD_GOLD", "LOAD_DUCKDB", "SYNC_POSTGRES",
   "BUILD_WORKING_HOURS", "VALIDATE_AFTER_HOURS", "VALIDATE", "REEVALUATE_RULES", "PUBLISH_SNAPSHOT"
 ];
 const HEARTBEAT_INTERVAL_MS = 15000;
@@ -279,6 +315,17 @@ export async function executeClaimedRefreshRun({
       await enterStage("BUILD_GOLD");
       for (const script of GOLD_BUILDER_SCRIPTS) runNode(script);
 
+      await enterStage("LOAD_DUCKDB");
+      // Reconstruye data/warehouse/eyg_nexus.duckdb COMPLETO desde los CSV
+      // que BUILD_GOLD (y las etapas anteriores) acaban de escribir - nunca
+      // deja que SYNC_POSTGRES lea un .duckdb de una corrida anterior. Ambas
+      // guardas son bloqueantes: cualquier excepción acá detiene el resto de
+      // la secuencia exactamente igual que cualquier otra etapa (catch de
+      // más abajo).
+      const duckDbLoadResults = await loadDuckDb();
+      assertDuckDbLoadComplete(duckDbLoadResults);
+      const duckDbFreshnessChecked = await assertDuckDbFreshAfterLoad();
+
       await enterStage("SYNC_POSTGRES");
       prepareSupabaseWriteConfirmation(supabaseDbUrlDirect);
       const syncResult = await migrateToSupabase({ expectedProjectRefEnvVar });
@@ -335,7 +382,15 @@ export async function executeClaimedRefreshRun({
           "PASSED",
           ruleEvaluationRunId,
           sourceSnapshotId,
-          JSON.stringify({ fieldbeat, zendesk, dolibarr, sync: syncResult, workingHours: workingHoursResult })
+          JSON.stringify({
+            fieldbeat,
+            zendesk,
+            dolibarr,
+            duckDbLoad: duckDbLoadResults,
+            duckDbFreshnessChecked,
+            sync: syncResult,
+            workingHours: workingHoursResult
+          })
         ]
       );
 
@@ -431,4 +486,4 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   });
 }
 
-export { claimNextRefreshRun, claimNextRefreshRunOnPool, startRefreshRun };
+export { claimNextRefreshRun, claimNextRefreshRunOnPool, startRefreshRun, STAGES };

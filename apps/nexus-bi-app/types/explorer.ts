@@ -85,6 +85,24 @@ export interface ExplorerListResponse<TRow = Record<string, unknown>> {
   totalPages: number;
 }
 
+// Sección 9 del encargo NEXUS V3 - contrato único de carga/error para el
+// Explorador. Nunca representar "cargando", "vacío legítimo" y "error de
+// base de datos" con el mismo `rows = []` - son estados distintos que
+// exigen UI distinta ("Cargando…" vs "Sin X para mostrar" vs "No fue
+// posible cargar - Reintentar"). `loading` conserva `previousData` (la
+// última respuesta exitosa) para que un refetch de la MISMA entidad nunca
+// blanquee la tabla mientras llega la respuesta nueva - solo un cambio de
+// entidad decide deliberadamente mostrar el loading vacío (ver
+// ExplorerShell.tsx::handleEntityChange). `empty`/`success` conservan
+// `data` completo (no solo `rows`) porque el footer de paginación necesita
+// page/totalPages/totalRows incluso cuando totalRows=0.
+export type ExplorerLoadState<TRow = Record<string, unknown>> =
+  | { status: "idle" }
+  | { status: "loading"; previousData: ExplorerListResponse<TRow> | null }
+  | { status: "success"; data: ExplorerListResponse<TRow> }
+  | { status: "empty"; data: ExplorerListResponse<TRow> }
+  | { status: "error"; message: string; requestId?: string };
+
 /** Respuesta de GET /api/explorer/[entity]/facets - opciones reales para los
  * <select> de la tarjeta de filtros (sección 6), scoped a la entidad activa
  * (nunca las 9 entidades cargadas de una). Única fuente de estas opciones -

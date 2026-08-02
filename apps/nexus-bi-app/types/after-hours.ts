@@ -167,6 +167,15 @@ export interface AfterHoursDetailRow extends AfterHoursContractualFields {
   // para que la fila deje de implicar silenciosamente que assigned_to es
   // la única persona que trabajó la tarea.
   participant_count: number | null;
+  // Sección 14 del encargo NEXUS V3 After-Hours - modelo(s) resuelto(s) para
+  // el/los equipo(s) de la tarea, MISMA precedencia estructurada
+  // (processed.fieldbeat_task_equipments primero, texto como fallback
+  // gobernado) que usa el detalle canónico de reporte. RESOLVED cuando hay
+  // 1+ modelo distinto resuelto (2+ se listan juntos, nunca se elige uno);
+  // UNKNOWN cuando no hay ninguno. Nunca AMBIGUOUS a este nivel de fila -
+  // ver comentario en app/api/dashboard/after-hours/detail/route.ts.
+  model: string | null;
+  model_resolution_status: "RESOLVED" | "UNKNOWN";
 }
 
 export interface AfterHoursByDimensionRow extends AfterHoursPopulationCounts {

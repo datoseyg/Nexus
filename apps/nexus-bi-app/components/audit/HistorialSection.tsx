@@ -5,6 +5,7 @@ import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { RestrictedReadReveal } from "./RestrictedReadReveal";
 import { eventTypeLabel, commandTypeLabel } from "@/lib/audit-vocabulary";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface HistorialSectionProps {
   role: "gerencia" | "administracion";
@@ -70,6 +71,7 @@ function eventDotColor(eventType: string): string {
 // - ambas con razón obligatoria y auditadas.
 export function HistorialSection({ capabilities }: HistorialSectionProps) {
   const canViewRestricted = hasCapability(capabilities, "audit:evidence-restricted");
+  const epoch = useDataRefreshEpoch();
   const [page, setPage] = useState(1);
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ export function HistorialSection({ capabilities }: HistorialSectionProps) {
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, epoch]);
 
   return (
     <ResponsiveTableShell

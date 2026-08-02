@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readExplorerUrlState, buildExplorerQueryString, DEFAULT_EXPLORER_ENTITY } from "../../lib/explorer-url-state.ts";
+import { readExplorerUrlState, buildExplorerQueryString, deriveExplorerDrawerKeys, DEFAULT_EXPLORER_ENTITY } from "../../lib/explorer-url-state.ts";
 
 function sp(params: Record<string, string>): URLSearchParams {
   return new URLSearchParams(params);
@@ -58,4 +58,32 @@ test("un filtro con valor vacío nunca se escribe en la query string (mismo crit
   const qs = buildExplorerQueryString({ entity: "equipment", page: 1, q: "", filters: { equipmentType: "", model: undefined }, key: undefined });
   assert.ok(!qs.includes("equipmentType="));
   assert.ok(!qs.includes("model="));
+});
+
+// Sección 14.1/14.6 del encargo NEXUS V3 After-Hours - deriveExplorerDrawerKeys
+// reemplaza el useState local que antes tenía reportDrawerId (ExplorerShell.tsx):
+// ambas claves se derivan del MISMO valor de `key` de la URL en cada
+// llamada, nunca de un estado cacheado - por eso un `key` de prueba
+// distinto en cada llamada ya simula lo que pasaría con atrás/adelante del
+// navegador (useSearchParams cambia, el componente re-renderiza, esta
+// función se vuelve a llamar con el nuevo valor).
+test("deriveExplorerDrawerKeys: entidad SIN drawer externo usa selectedKey, reportDrawerId siempre null", () => {
+  assert.deepEqual(deriveExplorerDrawerKeys(false, "ACME::LINAC-1"), { selectedKey: "ACME::LINAC-1", reportDrawerId: null });
+  assert.deepEqual(deriveExplorerDrawerKeys(false, undefined), { selectedKey: null, reportDrawerId: null });
+});
+
+test("deriveExplorerDrawerKeys: entidad CON drawer externo (Reportes) usa reportDrawerId, selectedKey siempre null", () => {
+  assert.deepEqual(deriveExplorerDrawerKeys(true, "12345"), { selectedKey: null, reportDrawerId: "12345" });
+  assert.deepEqual(deriveExplorerDrawerKeys(true, undefined), { selectedKey: null, reportDrawerId: null });
+});
+
+test("deriveExplorerDrawerKeys: simula navegación atrás/adelante - cada llamada con un urlKey distinto resuelve independientemente, sin arrastrar el valor anterior", () => {
+  const opened = deriveExplorerDrawerKeys(true, "111");
+  assert.equal(opened.reportDrawerId, "111");
+  // "Atrás" del navegador -> useSearchParams ya no trae key -> se vuelve a
+  // llamar con undefined, nunca conserva "111" de la llamada anterior
+  // (a diferencia del useState local que reemplazó, que si no se limpiaba
+  // a mano seguía mostrando el drawer del reporte previo).
+  const closedByBack = deriveExplorerDrawerKeys(true, undefined);
+  assert.equal(closedByBack.reportDrawerId, null);
 });

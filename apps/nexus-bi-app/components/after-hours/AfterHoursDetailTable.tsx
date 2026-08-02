@@ -3,7 +3,8 @@
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { AfterHoursEmptyBlock } from "./AfterHoursEmptyBlock";
 import { buildDiagnosis, getConfidenceTierLabel } from "@/lib/after-hours-labels";
-import { formatHoursOrDash, splitDateTime, totalAfterHoursHours } from "@/lib/after-hours-detail-view";
+import { formatHoursOrDash, isAfterHoursRowSelected, splitDateTime, totalAfterHoursHours } from "@/lib/after-hours-detail-view";
+import { formatModelCell } from "@/lib/explorer-entity-config";
 import type { AfterHoursDetailRow } from "@/types/after-hours";
 
 export type DetailSortColumn = "start_time" | "duration" | "after_hours_rate" | "confidence_score";
@@ -22,13 +23,26 @@ interface AfterHoursDetailTableProps {
   sortDir: DetailSortDir;
   onSortChange: (column: DetailSortColumn) => void;
   onRowClick: (row: AfterHoursDetailRow) => void;
+  /** Sección 14 del encargo NEXUS V3 After-Hours - misma identidad usada
+   * para React key/drawer (fieldbeat_task_id), comparada acá solo para el
+   * resaltado visual de la fila abierta. */
+  selectedTaskId: number | null;
 }
 
+// Sección 14.2 del encargo - N.º de reporte (fieldbeat_task_id, misma
+// identidad visible que ya usa el título del drawer canónico "Tarea #<id>"
+// y la columna "Reporte" del Explorador - nunca un campo inventado, ver
+// reporte final § "Identidad del reporte") y Modelo (columna nueva,
+// separada de "ID del equipo" - nunca reemplaza el identificador de
+// activo). "Equipo" se renombra a "ID del equipo" cuando el valor es un
+// código crudo (equipment_internal_ids), sin cambiar el valor mostrado.
 const COLUMNS: Array<{ key: string; label: string; sortKey?: DetailSortColumn }> = [
   { key: "date", label: "Fecha", sortKey: "start_time" },
+  { key: "reportNumber", label: "N.º de reporte" },
   { key: "technician", label: "Técnico" },
   { key: "client", label: "Cliente" },
-  { key: "equipment", label: "Equipo" },
+  { key: "equipment", label: "ID del equipo" },
+  { key: "model", label: "Modelo" },
   { key: "taskType", label: "Tipo de tarea" },
   { key: "start", label: "Inicio" },
   { key: "end", label: "Término" },
@@ -39,8 +53,9 @@ const COLUMNS: Array<{ key: string; label: string; sortKey?: DetailSortColumn }>
 
 const SKELETON_WIDTHS = [90, 75, 85, 60, 80];
 
-// Tabla "Registros detectados fuera de horario" (ETAPA 6.6D §11) -
-// columnas del prototipo + Diagnóstico (traduce data_basis/fallback_used/
+// Tabla "Registros detectados fuera de horario" (ETAPA 6.6D §11, ampliada
+// Sección 14 del encargo NEXUS V3 After-Hours) - columnas del prototipo +
+// N.º de reporte/Modelo + Diagnóstico (traduce data_basis/fallback_used/
 // coverage_reason_code/contractual_reason_code a texto legible vía
 // lib/after-hours-labels.ts, nunca códigos técnicos como texto principal).
 // data_basis=NONE nunca muestra "0 min" (§11): totalAfterHours() retorna
@@ -58,7 +73,8 @@ export function AfterHoursDetailTable({
   sortBy,
   sortDir,
   onSortChange,
-  onRowClick
+  onRowClick,
+  selectedTaskId
 }: AfterHoursDetailTableProps) {
   return (
     <div className="mb-2 overflow-hidden rounded-[var(--nx-radius-card)]" style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }}>
@@ -73,8 +89,10 @@ export function AfterHoursDetailTable({
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1080px] border-collapse text-[13px]">
+      {/* Escritorio (>= md) - tabla completa con scroll horizontal como
+          respaldo, nunca como único mecanismo (ver tarjetas móviles abajo). */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-[1240px] border-collapse text-[13px]">
           <thead>
             <tr style={{ background: "var(--nx-page-bg)" }}>
               {COLUMNS.map(col => (
@@ -108,16 +126,25 @@ export function AfterHoursDetailTable({
                   coverageReasonCode: row.coverage_reason_code,
                   contractualReasonCode: row.contractual_reason_code
                 });
+                const selected = isAfterHoursRowSelected(row.fieldbeat_task_id, selectedTaskId);
 
                 return (
                   <tr
                     key={row.fieldbeat_task_id}
                     onClick={() => onRowClick(row)}
-                    className="cursor-pointer border-b"
-                    style={{ borderColor: "var(--nx-border)" }}
+                    aria-selected={selected}
+                    data-selected={selected || undefined}
+                    className="cursor-pointer border-b transition-colors hover:bg-[var(--nx-page-bg)]"
+                    style={{
+                      borderColor: "var(--nx-border)",
+                      ...(selected ? { background: "var(--nx-row-selected-bg)", boxShadow: "inset 3px 0 0 var(--nx-row-selected-border)" } : undefined)
+                    }}
                   >
                     <td className="px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }}>
                       {start.date}
+                    </td>
+                    <td className="px-3.5 py-2 [font-variant-numeric:tabular-nums]" style={{ color: "var(--nx-text-primary)" }}>
+                      #{row.fieldbeat_task_id}
                     </td>
                     <td className="px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }}>
                       {row.assigned_to ?? "-"}
@@ -149,6 +176,9 @@ export function AfterHoursDetailTable({
                     <td className="max-w-[180px] truncate px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }} title={row.equipment_internal_ids ?? ""}>
                       {row.equipment_internal_ids ?? "-"}
                     </td>
+                    <td className="max-w-[160px] truncate px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }} title={row.model ?? ""}>
+                      {formatModelCell(row.model, row as unknown as Record<string, unknown>)}
+                    </td>
                     <td className="px-3.5 py-2" style={{ color: "var(--nx-text-primary)" }}>
                       {row.task_type ?? "-"}
                     </td>
@@ -174,6 +204,61 @@ export function AfterHoursDetailTable({
           )}
         </table>
       </div>
+
+      {/* Móvil (< md) - tarjetas (mismo patrón que ExplorerShell.tsx),
+          nunca dependiente de scroll horizontal de 12 columnas. */}
+      {!loading && !error && rows.length > 0 && (
+        <div className="flex flex-col gap-2.5 p-3 md:hidden">
+          {rows.map(row => {
+            const start = splitDateTime(row.start_time);
+            const total = totalAfterHoursHours(row);
+            const confidenceTier = getConfidenceTierLabel(row.confidence_label);
+            const diagnosis = buildDiagnosis({
+              dataBasis: row.data_basis,
+              fallbackUsed: row.fallback_used,
+              coverageReasonCode: row.coverage_reason_code,
+              contractualReasonCode: row.contractual_reason_code
+            });
+            const selected = isAfterHoursRowSelected(row.fieldbeat_task_id, selectedTaskId);
+
+            return (
+              <button
+                key={row.fieldbeat_task_id}
+                type="button"
+                onClick={() => onRowClick(row)}
+                aria-pressed={selected}
+                data-selected={selected || undefined}
+                className="flex flex-col gap-1 rounded-[var(--nx-radius-card)] border p-3 text-left"
+                style={{
+                  borderColor: selected ? "var(--nx-row-selected-border)" : "var(--nx-border)",
+                  background: selected ? "var(--nx-row-selected-bg)" : "var(--nx-card-bg)"
+                }}
+              >
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span style={{ color: "var(--nx-text-muted)" }}>{start.date}</span>
+                  <span className="font-semibold [font-variant-numeric:tabular-nums]" style={{ color: "var(--nx-text-primary)" }}>
+                    #{row.fieldbeat_task_id}
+                  </span>
+                </div>
+                <div className="text-sm font-semibold" style={{ color: "var(--nx-text-primary)" }}>
+                  {row.client_name ?? "-"}
+                </div>
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span style={{ color: "var(--nx-text-secondary)" }}>{row.equipment_internal_ids ?? "-"}</span>
+                  <span style={{ color: "var(--nx-text-secondary)" }}>{formatModelCell(row.model, row as unknown as Record<string, unknown>)}</span>
+                </div>
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span style={{ color: "var(--nx-text-muted)" }}>{formatHoursOrDash(total)} fuera de horario</span>
+                  <StatusBadge label={confidenceTier.label} tone={confidenceTier.severity} size="sm" />
+                </div>
+                <div>
+                  <StatusBadge label={diagnosis.primary.shortLabel} tone={diagnosis.primary.severity} size="sm" />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {loading && (
         <div className="border-t px-5 py-5" style={{ borderColor: "var(--nx-border)" }}>

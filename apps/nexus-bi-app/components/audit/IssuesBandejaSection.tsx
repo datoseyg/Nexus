@@ -18,6 +18,7 @@ import {
   hasActiveBandejaFilters,
   type BandejaUrlFilters
 } from "@/lib/audit-bandeja-url-state";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 // Bug real (revisión visual, 2026-07-30): la Bandeja no distinguía
 // "actualmente detectada" de "status histórico" - una incidencia
@@ -95,6 +96,7 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { filters, page } = readBandejaUrlState(searchParams);
+  const epoch = useDataRefreshEpoch();
 
   const [ruleOptions, setRuleOptions] = useState<RuleOption[]>([]);
   const [data, setData] = useState<IssuesResponse | null>(null);
@@ -192,7 +194,7 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
       .finally(() => setLoading(false));
   }
 
-  useEffect(refetch, [filters.status, filters.severity, filters.ruleCode, filters.entityType, filters.hasCase, filters.verification, filters.detection, filters.q, page]);
+  useEffect(refetch, [filters.status, filters.severity, filters.ruleCode, filters.entityType, filters.hasCase, filters.verification, filters.detection, filters.q, page, epoch]);
 
   const activeFilterChips: Array<{ key: keyof BandejaUrlFilters; label: string }> = [];
   if (filters.status) activeFilterChips.push({ key: "status", label: `Estado: ${issueStatusBadge(filters.status).label}` });

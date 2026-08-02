@@ -570,10 +570,10 @@ zendesk_ticket_id,subject,status,priority,has_fieldbeat_report,fieldbeat_report_
 9217,TPS estan muy lentos,closed,low,true,1,false,3114,2025-06-07T15:00:00.000Z,2025-06-07T15:00:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,varenas,SERVICIO DE SALUD DE MAGALLANES,OIS-HCM|TPS-HCM,false,0,,SINGLE_FIELDBEAT_REPORT
 9996,Cambio sistema pacs,closed,low,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10033,Interlock Table Long,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-9918,Re: [E&G Medical Systems] Asunto: Falla XVI,open,normal,true,5,true,3571|3582|3584|3652|3654,2026-03-06T01:30:00.000Z,2026-04-16T18:38:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA|CORRECTIVA PROGRAMADA,jbustamante|ccarrasquel,CLÍNICA LAS CONDES,CLC-1,true,2,1540352|1540356,MULTIPLE_FIELDBEAT_REPORTS
+9918,Re: [E&G Medical Systems] Asunto: Falla XVI,open,normal,true,6,true,3571|3582|3584|3652|3654|3792,2026-03-06T01:30:00.000Z,2026-07-07T20:52:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA|CORRECTIVA PROGRAMADA,jbustamante|ccarrasquel,CLÍNICA LAS CONDES,CLC-1,true,3,1540352|1540356,MULTIPLE_FIELDBEAT_REPORTS
 10071,Problemas Versa HD - Caida De kV,open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10053,isorot de camilla fuera de tolerancia,pending,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10032,Mensaje XVI,pending,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10032,Mensaje XVI,open,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10069,RV: [PRTG Network Monitor - IngenieriaGTI] SRVMOSAIQAPP Disk Free: G:\ Label:DATA  Serial Number 18890db6 (Espacio libre en disco (SNMP)) Fallo (anterior: advertencia)  (10 % (Espacio libre) está por debajo del limite de error 10 % en Espacio libre),closed,low,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10073,Caida de Tasa de Dosis 10 MV Axesse,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10070,Calibración hexapod,closed,high,true,1,false,3688,2026-05-07T19:30:00.000Z,2026-05-07T19:30:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,jbustamante,UC CHRISTUS - SCA,Linac-109256,false,0,,SINGLE_FIELDBEAT_REPORT
@@ -611,19 +611,49 @@ zendesk_ticket_id,subject,status,priority,has_fieldbeat_report,fieldbeat_report_
 10188,Dose rate para 12 y 15 MeV en el Infinity,closed,high,true,1,false,3760,2026-06-17T13:00:00.000Z,2026-06-17T13:00:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,jbustamante,UC CHRISTUS - CECA,Linac-109374,true,1,1502613,SINGLE_FIELDBEAT_REPORT
 10186,Telemetro intermitente para encender en el Infinity,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10157,Versa| problemas en hexapod,closed,urgent,true,1,false,3730,2026-06-03T16:45:00.000Z,2026-06-03T16:45:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,mabreu,CLINICA ALEMANA DE SANTIAGO,Linac-109496,false,0,,SINGLE_FIELDBEAT_REPORT
-10210,Versa|equipo desenergizado,open,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10199,Interlock target check,pending,high,true,3,true,3766|3770|3771,2026-06-19T21:30:00.000Z,2026-06-24T11:30:00.000Z,FINISHED,CORRECTIVA PROGRAMADA|PREVENTIVA PROGRAMADA,jbustamante|mabreu,UC CHRISTUS - SCA,Linac-109256,false,0,,MULTIPLE_FIELDBEAT_REPORTS
-10173,FALLA BRAZO XVI AXESSE,open,urgent,true,1,false,3748,2026-06-11T20:08:00.000Z,2026-06-11T20:08:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,aecheverria,UC CHRISTUS - CECA,Linac-153935,true,1,45133412329,SINGLE_FIELDBEAT_REPORT
+10210,Versa|equipo desenergizado,closed,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10199,Interlock target check,closed,high,true,4,true,3766|3770|3771|3787,2026-06-19T21:30:00.000Z,2026-07-04T19:27:00.000Z,FINISHED,CORRECTIVA PROGRAMADA|PREVENTIVA PROGRAMADA|CORRECTIVA PROGRAMADA V2,jbustamante|mabreu,UC CHRISTUS - SCA,Linac-109256,true,1,1538261,MULTIPLE_FIELDBEAT_REPORTS
+10173,FALLA BRAZO XVI AXESSE,closed,urgent,true,2,true,3748|3784,2026-06-11T20:08:00.000Z,2026-07-02T23:28:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA|CORRECTIVA PROGRAMADA,aecheverria|ccarrasquel,UC CHRISTUS - CECA,Linac-153935,true,3,45133412329|45133411853|1569146,MULTIPLE_FIELDBEAT_REPORTS
 10232,RV: Intermitencia Telémetro,new,,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10110,Problema con dos equipos de radioterapia,pending,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10110,Problema con dos equipos de radioterapia,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10165,Cambio de panel Iview,open,normal,true,1,false,3765,2026-06-19T21:03:00.000Z,2026-06-19T21:03:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,mabreu,HOSPITAL CARLOS VAN BUREN (SSVSA),Linac-154325,true,1,1505978,SINGLE_FIELDBEAT_REPORT
-10230,Versa | equipo inoperativo,solved,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10113,2r 10FFF / simetria 10 MV,solved,high,true,1,false,3708,2026-05-19T22:17:00.000Z,2026-05-19T22:17:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,ccarrasquel,UC CHRISTUS - SCA,Linac-109256,false,0,,SINGLE_FIELDBEAT_REPORT
-10137,Falla inicio Infinity,solved,urgent,true,2,true,3716|3726,2026-05-27T13:45:00.000Z,2026-06-01T16:43:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,jbustamante|aecheverria,UC CHRISTUS - CECA,Linac-109374,true,2,1516727,MULTIPLE_FIELDBEAT_REPORTS
-10144,Calibración MLC,solved,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10126,Falla MLC campo 40x40,solved,high,true,1,false,3712,2026-05-25T14:30:00.000Z,2026-05-25T14:30:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,jbustamante,UC CHRISTUS - CECA,Linac-109374,false,0,,SINGLE_FIELDBEAT_REPORT
-10208,2R y 2T en 6MV y 10MV,solved,normal,true,1,false,3767,2026-06-19T23:52:00.000Z,2026-06-19T23:52:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,ccarrasquel,UC CHRISTUS - CECA,Linac-109374,false,0,,SINGLE_FIELDBEAT_REPORT
-9897,10 MV con Coll.lockd - haz inoperativo,open,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10231,MLC INOPERATIVO INFINITY,open,urgent,true,1,false,3780,2026-06-30T20:03:00.000Z,2026-06-30T20:03:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,ccarrasquel,UC CHRISTUS - CECA,Linac-109374,true,3,1015075|1015076|1565768,SINGLE_FIELDBEAT_REPORT
-10229,Panel iView no se mueve por interlock de colisión,open,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10141,Asunto: Infinity Inhibit Dose rate Mon,open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10230,Versa | equipo inoperativo,closed,urgent,true,1,false,3779,2026-06-30T16:51:00.000Z,2026-06-30T16:51:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,mabreu,CLINICA ALEMANA DE SANTIAGO,Linac-109496,false,0,,SINGLE_FIELDBEAT_REPORT
+10113,2r 10FFF / simetria 10 MV,closed,high,true,1,false,3708,2026-05-19T22:17:00.000Z,2026-05-19T22:17:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,ccarrasquel,UC CHRISTUS - SCA,Linac-109256,false,0,,SINGLE_FIELDBEAT_REPORT
+10137,Falla inicio Infinity,closed,urgent,true,2,true,3716|3726,2026-05-27T13:45:00.000Z,2026-06-01T16:43:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,jbustamante|aecheverria,UC CHRISTUS - CECA,Linac-109374,true,2,1516727,MULTIPLE_FIELDBEAT_REPORTS
+10144,Calibración MLC,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10126,Falla MLC campo 40x40,closed,high,true,1,false,3712,2026-05-25T14:30:00.000Z,2026-05-25T14:30:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,jbustamante,UC CHRISTUS - CECA,Linac-109374,false,0,,SINGLE_FIELDBEAT_REPORT
+10208,2R y 2T en 6MV y 10MV,closed,normal,true,1,false,3767,2026-06-19T23:52:00.000Z,2026-06-19T23:52:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,ccarrasquel,UC CHRISTUS - CECA,Linac-109374,false,0,,SINGLE_FIELDBEAT_REPORT
+9897,10 MV con Coll.lockd - haz inoperativo,closed,normal,true,1,false,3805,2026-07-13T16:36:00.000Z,2026-07-13T16:36:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,mabreu,HOSPITAL CARLOS VAN BUREN (SSVSA),Linac-154325,false,0,,SINGLE_FIELDBEAT_REPORT
+10231,MLC INOPERATIVO INFINITY,closed,urgent,true,1,false,3780,2026-06-30T20:03:00.000Z,2026-06-30T20:03:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,ccarrasquel,UC CHRISTUS - CECA,Linac-109374,true,3,1015075|1015076|1565768,SINGLE_FIELDBEAT_REPORT
+10229,Panel iView no se mueve por interlock de colisión,closed,urgent,true,1,false,3785,2026-07-03T10:00:00.000Z,2026-07-03T10:00:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,jecheverria,HOSPITAL CARLOS VAN BUREN (SSVSA),Linac-154325,false,0,,SINGLE_FIELDBEAT_REPORT
+10141,Asunto: Infinity Inhibit Dose rate Mon,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10241,Auditoria Versa | Problemas de comunicación XVI/Iview,open,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10240,Auditoria Versa |Calibración guía de onda,open,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10243,Asunto: Low Dose Rate Channel A y B - Elekta Compact,pending,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10252,Mirror roto,closed,high,true,1,false,3790,2026-07-06T18:01:00.000Z,2026-07-06T18:01:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,mabreu,UC CHRISTUS - SCA,Linac-109256,true,1,1010848,SINGLE_FIELDBEAT_REPORT
+10253,Falla al levantar CCP después de apagado,open,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10277,Consulta sobre estadística de Beam ON asociada a tratamientos desde MOSAIQ,new,,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10247,"Coordinación cambio de magnetron, discos duros y motor MLC ",open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10263,Oscilaciones Bancos de láminas Agility,pending,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10283,Falla reflectores MLC Versa1,new,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10250,Telemetro Axesse,closed,normal,true,1,false,3802,2026-07-11T18:53:00.000Z,2026-07-11T18:53:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,aecheverria,UC CHRISTUS - CECA,Linac-153935,true,1,1500954,SINGLE_FIELDBEAT_REPORT
+10268,Falla en laminas versa,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10267,Comando mesa derecho suelto,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10276,Interlock Table long,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10291,Solicitud reparación manilla EPID y cotizaciónn motores multiláminas,new,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10285,MLC lost reflector rate,new,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10296,"Problema con XVI, panel queda pegado",new,urgent,true,1,false,3819,2026-07-27T22:40:00.000Z,2026-07-27T22:40:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,mabreu,Instituto Nacional del Cáncer (INC),INC-156473,false,0,,SINGLE_FIELDBEAT_REPORT
+10237,Calibración hexapod,open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10284,XVI se bloque al intentar guardarlo,closed,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10236,sonido xvi,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10269,Fault 40 XVI,closed,urgent,true,1,false,3806,2026-07-13T18:42:00.000Z,2026-07-13T18:42:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,ccarrasquel,UC CHRISTUS - CECA,Linac-153935,false,0,,SINGLE_FIELDBEAT_REPORT
+10266,Interlock Vac Trag,closed,high,true,2,true,3800|3817,2026-07-10T22:30:00.000Z,2026-07-24T18:17:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,ccarrasquel|mabreu,UC CHRISTUS - SCA,Linac-109256,true,3,1597814|1515098|45133308244,MULTIPLE_FIELDBEAT_REPORTS
+10282,Reinicio de RTP99 para Monaco,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10299,Falla de Chiller,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10290,Interlock High Water Pressure,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10298,Infinity estado closed intermitente,pending,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10311,Interlock Dos.temp1,new,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10288,Interlock Gas Press,new,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10312,Cambio de disco servidor mosaiq,pending,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10262,Falla reflector/MLC Infinity,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10293,Iso mecánico del colimador.,open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT

@@ -39,6 +39,29 @@ test("config.*/manual_review.* -> POSTGRES_TRANSACTIONAL", () => {
   assert.equal(getOwnership("manual_review", "contract_data_issues"), OWNERSHIP.POSTGRES_TRANSACTIONAL);
 });
 
+// Regresión real (data/reports/supabase_validation_summary.json reportaba
+// ambas en checks.unknown_objects) - overlays gobernados sin generador CSV,
+// mismo patrón que part_aliases/ticket_link_overrides de arriba: nunca deben
+// truncarse ni reconstruirse desde DuckDB. Ver sql/091_manual_review_equipment.sql
+// y sql/088_fieldbeat_part_occurrences_and_participants.sql.
+test("manual_review.equipment_identification_overrides -> POSTGRES_TRANSACTIONAL", () => {
+  assert.equal(
+    ownershipManifest.classifyOwnership("manual_review", "equipment_identification_overrides").ownership,
+    OWNERSHIP.POSTGRES_TRANSACTIONAL
+  );
+  assert.equal(getOwnership("manual_review", "equipment_identification_overrides"), OWNERSHIP.POSTGRES_TRANSACTIONAL);
+  assert.equal(isDuckdbSync("manual_review", "equipment_identification_overrides"), false);
+});
+
+test("manual_review.fieldbeat_engineer_identity_map -> POSTGRES_TRANSACTIONAL", () => {
+  assert.equal(
+    ownershipManifest.classifyOwnership("manual_review", "fieldbeat_engineer_identity_map").ownership,
+    OWNERSHIP.POSTGRES_TRANSACTIONAL
+  );
+  assert.equal(getOwnership("manual_review", "fieldbeat_engineer_identity_map"), OWNERSHIP.POSTGRES_TRANSACTIONAL);
+  assert.equal(isDuckdbSync("manual_review", "fieldbeat_engineer_identity_map"), false);
+});
+
 test("tabla EXTERNAL conocida queda declarada de forma explícita", () => {
   assert.equal(getOwnership("gold", "after_hours_by_client"), OWNERSHIP.EXTERNAL);
 });

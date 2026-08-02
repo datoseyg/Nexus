@@ -7,6 +7,7 @@ import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import { PartAliasCorrectionDrawer } from "./PartAliasCorrectionDrawer";
 import type { AmbiguousPartRow, PaginatedResponse } from "@/types/audit";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface AmbiguousPartsSectionProps {
   clientes: string[];
@@ -31,6 +32,7 @@ function toQuery(params: Record<string, string | undefined>): string {
 // corrección, no en la bandeja de decisión.
 export function AmbiguousPartsSection({ clientes, maquinas, capabilities }: AmbiguousPartsSectionProps) {
   const canAct = hasCapability(capabilities, "correction:part-alias");
+  const epoch = useDataRefreshEpoch();
   const [filters, setFilters] = useState<AuditFilterValues>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<AmbiguousPartRow> | null>(null);
@@ -53,7 +55,7 @@ export function AmbiguousPartsSection({ clientes, maquinas, capabilities }: Ambi
       .finally(() => setLoading(false));
   }
 
-  useEffect(refetch, [filters, page]);
+  useEffect(refetch, [filters, page, epoch]);
 
   return (
     <div className="flex flex-col gap-3">

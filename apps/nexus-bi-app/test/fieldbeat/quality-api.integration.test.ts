@@ -938,7 +938,25 @@ test("detalle: reporte limpio (900001) - technician/client presentes, coleccione
   assert.equal(body.technician?.name, "Técnico Fixture", "technician_names en quality.fieldbeat_report_quality viene de la fila mart, no de processed.fieldbeat_tasks.assigned_to");
   assert.equal(body.client?.clientName, CLIENT_NAME);
   assert.equal(body.equipment.status, "STRUCTURED_IDENTIFIED");
-  assert.deepEqual(body.equipment.items, [{ internalId: "EQ-901", source: "STRUCTURED", confirmed: true }]);
+  // Contrato 2.1.0 (Sección 14 del encargo NEXUS V3 After-Hours, aditivo) -
+  // este fixture no inserta processed.fieldbeat_task_equipments para
+  // EQ-901, así que el enriquecimiento cae al fallback de texto gobernado
+  // (resolutionSource=TEXT_FALLBACK); tampoco inserta un contrato para ese
+  // equipo, así que el modelo queda UNKNOWN - equipmentFamily="BOMBA" sí
+  // viene del fixture real de processed.fieldbeat_equipments (línea ~171).
+  assert.deepEqual(body.equipment.items, [
+    {
+      internalId: "EQ-901",
+      source: "STRUCTURED",
+      confirmed: true,
+      resolutionSource: "TEXT_FALLBACK",
+      model: null,
+      modelResolutionStatus: "UNKNOWN",
+      equipmentFamily: "BOMBA",
+      serialNumbers: [],
+      contracts: []
+    }
+  ]);
   assert.deepEqual(body.tickets, []);
   assert.deepEqual(body.parts, []);
   assert.deepEqual(body.inconsistencies, []);

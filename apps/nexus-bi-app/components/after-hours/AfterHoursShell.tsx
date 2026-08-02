@@ -13,9 +13,10 @@ import { AfterHoursTechnicianClientCard } from "./AfterHoursTechnicianClientCard
 import { AfterHoursConfidenceSection } from "./AfterHoursConfidenceSection";
 import { AfterHoursEmptyBlock } from "./AfterHoursEmptyBlock";
 import { AfterHoursDetailTable, type DetailSortColumn, type DetailSortDir } from "./AfterHoursDetailTable";
-import { AfterHoursDrawer } from "./AfterHoursDrawer";
+import { FieldbeatReportDetailDrawer } from "@/components/fieldbeat/quality/FieldbeatReportDetailDrawer";
 import { useAfterHoursSection } from "@/lib/use-after-hours-section";
 import { buildAfterHoursQuery } from "@/lib/after-hours-query";
+import { buildAfterHoursDrawerContext } from "@/lib/after-hours-detail-view";
 import { isTechnicianClientResponseEmpty, isWeekdayHourResponseEmpty, isWeekdayResponseEmpty } from "@/lib/after-hours-weekday-view";
 import type {
   AfterHoursByDimensionRow,
@@ -116,6 +117,15 @@ export function AfterHoursShell() {
   const detail = useAfterHoursSection<DetailResponse>("/api/dashboard/after-hours/detail", detailQuery, isDetailEmpty);
 
   const rangeLabel = useMemo(() => formatRangeLabel(filters), [filters]);
+
+  // Sección 14 del encargo NEXUS V3 After-Hours - misma identidad
+  // (fieldbeat_task_id) que ya usa React key/el título del drawer canónico/
+  // el Explorador. reportId conduce el fetch del drawer canónico
+  // (FieldbeatReportDetailDrawer -> /api/dashboard/fieldbeat/reports/[id]) -
+  // afterHoursContext SOLO aporta los campos temporales/contractuales
+  // propios de After-Hours desde la fila YA cargada por la tabla (cero
+  // fetch adicional para esa parte).
+  const reportId = selectedRow ? String(selectedRow.fieldbeat_task_id) : null;
 
   function handleFiltersChange(next: AfterHoursFilterState) {
     setFilters(next);
@@ -310,10 +320,22 @@ export function AfterHoursShell() {
           sortDir={sortDir}
           onSortChange={handleSortChange}
           onRowClick={setSelectedRow}
+          selectedTaskId={selectedRow?.fieldbeat_task_id ?? null}
         />
       </div>
 
-      <AfterHoursDrawer row={selectedRow} onClose={() => setSelectedRow(null)} />
+      {/* Sección 14 del encargo NEXUS V3 After-Hours - reutiliza EL MISMO
+          drawer canónico que Explorador/Búsqueda/FieldBeat Calidad, nunca
+          un segundo sistema de detalle de reportes (ver AfterHoursDrawer.tsx,
+          eliminado). explorerHref usa la MISMA identidad (key=fieldbeat_task_id)
+          que ExplorerShell.tsx ya lee de la URL para el resto de las
+          entidades - ver Sección 14.6 del encargo. */}
+      <FieldbeatReportDetailDrawer
+        reportId={reportId}
+        onClose={() => setSelectedRow(null)}
+        afterHoursContext={selectedRow ? buildAfterHoursDrawerContext(selectedRow) : null}
+        explorerHref={reportId ? `/explorer?entity=reports&key=${reportId}` : undefined}
+      />
     </div>
   );
 }

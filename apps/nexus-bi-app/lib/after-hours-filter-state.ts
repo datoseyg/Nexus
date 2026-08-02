@@ -117,3 +117,12 @@ export function activeQuickRangeKey(ranges: QuickRange[], filters: Pick<AfterHou
   if (match) return match.key;
   return filters.from || filters.to ? null : "all";
 }
+
+// Sección 1 del encargo - "solo Desde", "solo Hasta" y "Desde + Hasta" son
+// todos válidos; SOLO es inválido cuando AMBOS están presentes y Desde es
+// posterior a Hasta (comparación lexicográfica sobre YYYY-MM-DD, válida
+// para fechas ISO). Pura y sin DOM para ser testeable directo.
+export function isValidAfterHoursDateRange(from: string | undefined, to: string | undefined): boolean {
+  if (!from || !to) return true;
+  return from <= to;
+}

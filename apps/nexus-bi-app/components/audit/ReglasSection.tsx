@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
 import { StatusBadge, severityBadge } from "@/components/ui/StatusBadge";
 import { entityTypeLabel } from "@/lib/audit-vocabulary";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface RuleRow {
   rule_code: string;
@@ -27,6 +28,7 @@ interface RuleRow {
 // oculto del todo - "trazabilidad", docs/design-context/09) para quien
 // necesite correlacionar con logs/SQL.
 export function ReglasSection() {
+  const epoch = useDataRefreshEpoch();
   const [rows, setRows] = useState<RuleRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export function ReglasSection() {
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [epoch]);
 
   return (
     <ResponsiveTableShell

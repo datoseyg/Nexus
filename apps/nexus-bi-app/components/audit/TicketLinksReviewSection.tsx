@@ -7,6 +7,7 @@ import { TicketLinkCorrectionDrawer } from "./TicketLinkCorrectionDrawer";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, TicketLinkReviewRow } from "@/types/audit";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface TicketLinksReviewSectionProps {
   clientes: string[];
@@ -36,6 +37,7 @@ function contextLine(row: TicketLinkReviewRow): string {
 // de la pestaña por defecto.
 export function TicketLinksReviewSection({ clientes, maquinas, capabilities }: TicketLinksReviewSectionProps) {
   const canAct = hasCapability(capabilities, "correction:ticket-link");
+  const epoch = useDataRefreshEpoch();
   const [filters, setFilters] = useState<AuditFilterValues>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<TicketLinkReviewRow> | null>(null);
@@ -58,7 +60,7 @@ export function TicketLinksReviewSection({ clientes, maquinas, capabilities }: T
       .finally(() => setLoading(false));
   }
 
-  useEffect(refetch, [filters, page]);
+  useEffect(refetch, [filters, page, epoch]);
 
   return (
     <div className="flex flex-col gap-3">

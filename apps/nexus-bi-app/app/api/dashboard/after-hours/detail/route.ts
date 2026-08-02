@@ -5,6 +5,8 @@ import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
 import { AFTER_HOURS_VIEW, resolveEstimatedEndTime } from "@/lib/after-hours-metrics";
+import { EQUIPMENT_CANONICAL_CTE, EQUIPMENT_MODEL_RESOLUTION_COLUMNS, equipmentContractCandidatesLateral } from "@/lib/explorer-sql";
+import { resolveRowModel } from "@/lib/after-hours-detail-view";
 import type {
   AfterHoursCalculationStatus,
   AfterHoursContractualAttemptStatus,
@@ -123,8 +125,10 @@ export async function GET(request: NextRequest) {
       confidence_model_version: string | null;
       primary_equipment_key: string | null;
       participant_count: string | null;
+      resolved_models: string[] | null;
     }>(
       `
+        ${EQUIPMENT_CANONICAL_CTE}
         SELECT
           w.fieldbeat_task_id,
           w.start_time_local,
@@ -156,7 +160,35 @@ export async function GET(request: NextRequest) {
           w.contract_resolution_label,
           w.confidence_model_version,
           w.primary_equipment_key,
-          ls.participant_count
+          ls.participant_count,
+          (
+            -- Columna "Modelo" (Sección 14 del encargo NEXUS V3 After-Hours) -
+            -- MISMA precedencia estructurada que buildReportDetailQuery
+            -- (lib/fieldbeat-report-detail-queries.ts): processed.
+            -- fieldbeat_task_equipments primero, texto (w.equipment_internal_ids)
+            -- solo como fallback gobernado cuando esa tabla no tiene ninguna
+            -- fila para la tarea. DISTINCT non-null - una tarea con 2+ equipos
+            -- de modelos distintos conserva ambos (formateados " / " en
+            -- lib/explorer-entity-config.ts::formatModelCell), nunca elige uno.
+            SELECT ARRAY_AGG(DISTINCT item.model) FILTER (WHERE item.model IS NOT NULL)
+            FROM (
+              SELECT
+                ce.internal_id,
+                ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS}
+              FROM (
+                SELECT te.equipment_internal_id AS raw_internal_id
+                FROM processed.fieldbeat_task_equipments te
+                WHERE te.fieldbeat_task_id = w.fieldbeat_task_id
+                UNION ALL
+                SELECT TRIM(unnested.value)
+                FROM UNNEST(STRING_TO_ARRAY(COALESCE(w.equipment_internal_ids, ''), '|')) AS unnested(value)
+                WHERE TRIM(unnested.value) <> ''
+                  AND NOT EXISTS (SELECT 1 FROM processed.fieldbeat_task_equipments te2 WHERE te2.fieldbeat_task_id = w.fieldbeat_task_id)
+              ) eq
+              JOIN canonical_equipment ce ON ce.internal_id = UPPER(TRIM(eq.raw_internal_id))
+              ${equipmentContractCandidatesLateral("ca.fieldbeat_equipment_key = ANY(ce.source_equipment_keys)")}
+            ) item
+          ) AS resolved_models
         ${rowsFrom}
         ORDER BY ${sortColumn} ${sortDir} NULLS LAST
         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}
@@ -197,6 +229,7 @@ export async function GET(request: NextRequest) {
         contract_resolution_label: row.contract_resolution_label,
         confidence_model_version: row.confidence_model_version,
         primary_equipment_key: row.primary_equipment_key,
+        ...resolveRowModel(row.resolved_models),
         // Aditivo (auditoría After-Hours §5) - informativo, nunca altera
         // duration_hours/business_hours/after_hours (ver comentario de
         // cabecera del archivo). NULL solo si assigned_to está vacío (la

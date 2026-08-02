@@ -7,6 +7,7 @@ import { MiniBarTableCell } from "@/components/dashboard/MiniBarTableCell";
 import { FutureActionButton } from "./FutureActionButton";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, PlaceholderGroupRow } from "@/types/audit";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface PlaceholdersSectionProps {
   clientes: string[];
@@ -25,6 +26,7 @@ function toQuery(params: Record<string, string | undefined>): string {
 // crudo normalizado - el objetivo es ver cuáles son los valores basura
 // más frecuentes (N/A, NO HAY, S/N, --, etc.) reales del pipeline.
 export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionProps) {
+  const epoch = useDataRefreshEpoch();
   const [filters, setFilters] = useState<AuditFilterValues>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<PlaceholderGroupRow> | null>(null);
@@ -43,7 +45,7 @@ export function PlaceholdersSection({ clientes, maquinas }: PlaceholdersSectionP
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, [filters, page]);
+  }, [filters, page, epoch]);
 
   const maxOccurrences = data?.rows[0]?.occurrences ?? 1;
 

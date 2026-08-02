@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { triggerBlobDownload } from "@/lib/csv-export";
 import { FieldbeatReportDetailContent } from "./FieldbeatReportDetailContent";
+import type { AfterHoursDrawerContext } from "@/lib/after-hours-detail-view";
 
 const PANEL_WIDTH_CLASS = "w-full sm:w-[600px] lg:w-[720px]";
 
@@ -22,6 +24,18 @@ interface FieldbeatReportDetailDrawerProps {
   /** Idem role - solo Explorador lo pasa hoy (único caller con acceso al
    * usuario autenticado en este árbol). */
   capabilities?: string[];
+  /** Sección 14 del encargo NEXUS V3 After-Hours - análisis temporal/
+   * contractual propio de After-Hours, compuesto en el cliente desde la
+   * fila ya cargada (ver lib/after-hours-detail-view.ts::buildAfterHoursDrawerContext).
+   * Solo After-Hours lo pasa hoy - Explorador/Búsqueda/FieldBeat Calidad
+   * quedan visualmente idénticos a como estaban (prop opcional, sin
+   * consumidor no significa sin efecto: cuando es undefined/null,
+   * FieldbeatReportDetailContent simplemente no renderiza esas 2 secciones). */
+  afterHoursContext?: AfterHoursDrawerContext | null;
+  /** Sección 14.6 del encargo - URL estable a "esta misma identidad, en el
+   * Explorador" (/explorer?entity=reports&key=<id>). Solo se renderiza el
+   * botón cuando está definido - el Explorador nunca se enlaza a sí mismo. */
+  explorerHref?: string;
 }
 
 // Drawer de detalle maestro (Phase 5) - reutiliza components/ui/DetailDrawer.tsx
@@ -33,7 +47,7 @@ interface FieldbeatReportDetailDrawerProps {
 // efecto interno vuelve a correr, cancela el fetch anterior y pasa a
 // status="refreshing" (que este componente trata igual que "loading") -
 // nunca queda expuesto el contenido del reporte anterior bajo el ID nuevo.
-export function FieldbeatReportDetailDrawer({ reportId, onClose, role, capabilities }: FieldbeatReportDetailDrawerProps) {
+export function FieldbeatReportDetailDrawer({ reportId, onClose, role, capabilities, afterHoursContext, explorerHref }: FieldbeatReportDetailDrawerProps) {
   const open = reportId !== null;
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   // false por defecto (nunca asumir disponibilidad) hasta que
@@ -180,6 +194,18 @@ export function FieldbeatReportDetailDrawer({ reportId, onClose, role, capabilit
             Abrir en FieldBeat
           </button>
         )}
+        {/* Sección 14.6 del encargo NEXUS V3 After-Hours - acción principal
+            para saltar al Explorador con este mismo reporte ya identificado
+            (misma identidad, key=fieldbeat_task_id) - next/link (navegación
+            interna real, a diferencia de "Abrir en FieldBeat" arriba que es
+            intencionalmente <a> nativo por el motivo de prefetch explicado
+            ahí). Nunca se renderiza cuando no está definido (el Explorador
+            no se enlaza a sí mismo). */}
+        {explorerHref && (
+          <Link href={explorerHref} className={secondaryButtonClassName} style={secondaryButtonStyle}>
+            Abrir reporte en el Explorador
+          </Link>
+        )}
       </div>
       <div aria-live="polite" className="sr-only">
         {copyStatus === "copied" ? "Enlace copiado al portapapeles." : copyStatus === "error" ? "No fue posible copiar el enlace." : ""}
@@ -196,6 +222,7 @@ export function FieldbeatReportDetailDrawer({ reportId, onClose, role, capabilit
           onMeta={meta => setOpenAvailable(meta?.fieldbeatOpenAvailable ?? false)}
           role={role}
           capabilities={capabilities}
+          afterHoursContext={afterHoursContext}
         />
       )}
     </DetailDrawer>

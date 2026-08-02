@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { StatusBadge, severityBadge, issueStatusBadge } from "@/components/ui/StatusBadge";
 import { entityTypeLabel, correctionTypeLabel, actorTypeLabel } from "@/lib/audit-vocabulary";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface KpisResponse {
   byStatus: Array<{ status: string; n: string }>;
@@ -154,6 +155,7 @@ function BarRow({ label, value, total, color, onClick }: { label: string; value:
 // título") y el dataviz skill (forma antes que color, un hue por gráfico de
 // magnitud, colores de severidad reservados y consistentes con StatusBadge).
 export function GovernanceKpisSection({ onNavigateToInbox }: GovernanceKpisSectionProps) {
+  const epoch = useDataRefreshEpoch();
   const [data, setData] = useState<KpisResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -169,7 +171,7 @@ export function GovernanceKpisSection({ onNavigateToInbox }: GovernanceKpisSecti
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [epoch]);
 
   if (loading) return <p style={{ color: "var(--nx-text-secondary)" }}>Cargando…</p>;
   if (error) return <p style={{ color: "var(--nx-danger-fg, #c0392b)" }}>{error}</p>;

@@ -8,6 +8,7 @@ import { ReviewCaseCreateDrawer } from "./ReviewCaseCreateDrawer";
 import { ReviewCaseDetailDrawer } from "./ReviewCaseDetailDrawer";
 import { triggerBlobDownload } from "@/lib/csv-export";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface ReviewCasesSectionProps {
   role: "gerencia" | "administracion";
@@ -65,6 +66,7 @@ function HeaderStat({ label, value, active, onClick }: { label: string; value: n
 // comment/redact-comment, verificadas server-side por cada ruta).
 export function ReviewCasesSection({ role, capabilities }: ReviewCasesSectionProps) {
   const canReview = hasCapability(capabilities, "audit:review");
+  const epoch = useDataRefreshEpoch();
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<ReviewCasesResponse | null>(null);
@@ -114,7 +116,7 @@ export function ReviewCasesSection({ role, capabilities }: ReviewCasesSectionPro
       .finally(() => setLoading(false));
   }
 
-  useEffect(refetch, [status, page]);
+  useEffect(refetch, [status, page, epoch]);
 
   const statusCountMap = Object.fromEntries((data?.statusCounts ?? []).map(row => [row.status, Number(row.n)]));
   const totalCases = STATUS_OPTIONS.reduce((sum, option) => sum + (statusCountMap[option] ?? 0), 0);

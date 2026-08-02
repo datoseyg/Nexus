@@ -16,21 +16,28 @@ async function fileExists(filePath) {
 // cada corrida reemplaza el contenido completo de cada tabla con lo que hay
 // hoy en el CSV correspondiente, sin acumular filas viejas ni requerir un
 // DROP manual previo.
-export async function loadDuckDb() {
+//
+// dbPath/schemas/tables son parámetros opcionales (con los valores reales
+// del módulo como default) SOLO para poder probar esta función contra un
+// .duckdb y unos CSV temporales y aislados (ver test/db/load-duckdb.test.js)
+// - ningún caller real (este archivo como CLI, ni
+// scripts/pipeline/run-data-refresh.mjs) los pasa nunca; ambos siguen
+// operando sobre data/warehouse/eyg_nexus.duckdb tal cual.
+export async function loadDuckDb({ dbPath = DB_PATH, schemas = SCHEMAS, tables = TABLES } = {}) {
   console.log("=== Cargando DuckDB Warehouse desde CSV (reconstrucción completa) ===");
 
   await fs.mkdir(DB_DIR, { recursive: true });
 
-  const instance = await DuckDBInstance.create(DB_PATH);
+  const instance = await DuckDBInstance.create(dbPath);
   const connection = await instance.connect();
 
-  for (const schema of SCHEMAS) {
+  for (const schema of schemas) {
     await connection.run(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
   }
 
   const results = [];
 
-  for (const { schema, table, csv } of TABLES) {
+  for (const { schema, table, csv } of tables) {
     const fullTableName = `${schema}.${table}`;
 
     if (!(await fileExists(csv))) {
@@ -56,6 +63,17 @@ export async function loadDuckDb() {
   }
 
   connection.closeSync();
+  // instance.closeSync() (distinto de connection.closeSync(), ver
+  // node_modules/@duckdb/node-api/lib/DuckDBInstance.d.ts) - sin esto, el
+  // handle nativo del archivo queda abierto aunque la conexión se cierre.
+  // Antes era invisible porque cada script era su propio proceso (el SO
+  // libera el handle al salir); ahora que el orquestador
+  // (scripts/pipeline/run-data-refresh.mjs) abre este MISMO archivo varias
+  // veces seguidas dentro de un solo proceso (LOAD_DUCKDB -> SYNC_POSTGRES ->
+  // ... -> VALIDATE), un handle sin cerrar hace fallar la siguiente apertura
+  // con "the process cannot access the file" (reproducido en
+  // test/db/load-duckdb.test.js).
+  instance.closeSync();
 
   const loaded = results.filter(r => r.status === "LOADED").length;
   const skipped = results.filter(r => r.status === "SKIPPED_MISSING_CSV").length;

@@ -48,7 +48,7 @@
     "holidays:test:integration": "node scripts/run-test-suite.mjs test/holidays integration",
     "pipeline:local:env": "node scripts/with-local-pipeline-env.mjs",
     "after-hours:import-all": "node scripts/import-after-hours-pipeline.mjs",
-    "pipeline:refresh:worker:local": "node scripts/pipeline/local-refresh-worker.mjs",
+    "pipeline:refresh:worker:local": "node scripts/with-local-pipeline-env.mjs node scripts/pipeline/local-refresh-worker.mjs",
     "pipeline:refresh:run": "node scripts/pipeline/run-data-refresh.mjs"
   },
   "dependencies": {

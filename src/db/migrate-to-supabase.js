@@ -212,7 +212,12 @@ async function syncRawJson(connection) {
   return { migrated, failed };
 }
 
-export async function migrateToSupabase({ expectedProjectRefEnvVar } = {}) {
+// dbPath es opcional (default: el .duckdb real del módulo) SOLO para poder
+// probar esta función contra un .duckdb temporal y aislado (ver
+// test/db/duckdb-freshness.test.js) - scripts/pipeline/run-data-refresh.mjs
+// y la invocación CLI histórica (`npm run db:pg:migrate`) nunca lo pasan,
+// ambos siguen migrando data/warehouse/eyg_nexus.duckdb tal cual.
+export async function migrateToSupabase({ expectedProjectRefEnvVar, dbPath = DB_PATH } = {}) {
   console.log("=== Migrando DuckDB -> Supabase Postgres ===");
 
   // ETAPA SAFETY-1 (Policy D, corregida en el cierre) - este script SIEMPRE
@@ -248,7 +253,7 @@ export async function migrateToSupabase({ expectedProjectRefEnvVar } = {}) {
   const loadRaw = process.env.LOAD_RAW === "true";
   console.log(`LOAD_RAW=${loadRaw} (default: false -ver riesgo de presupuesto de espacio en el plan de migración)`);
 
-  const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_WRITE" });
+  const instance = await DuckDBInstance.create(dbPath, { access_mode: "READ_WRITE" });
   const connection = await instance.connect();
 
   await attachPostgres(connection);
@@ -269,10 +274,14 @@ export async function migrateToSupabase({ expectedProjectRefEnvVar } = {}) {
     `INSERT INTO pg.audit.warehouse_sync_state
        (run_id, tables_migrated, tables_skipped, tables_failed, validation_status, duckdb_source_path, triggered_by)
      VALUES ($1, $2, $3, $4, 'PENDING', $5, $6)`,
-    [runId, tablesMigrated, tablesSkipped, tablesFailed, DB_PATH, process.env.USER ?? process.env.USERNAME ?? "unknown"]
+    [runId, tablesMigrated, tablesSkipped, tablesFailed, dbPath, process.env.USER ?? process.env.USERNAME ?? "unknown"]
   );
 
   connection.closeSync();
+  // Ver el comentario equivalente en src/db/load-duckdb.js - sin esto,
+  // validateSupabase() (que abre este mismo archivo más adelante, en
+  // VALIDATE) podría fallar con el archivo aún bloqueado por esta migración.
+  instance.closeSync();
 
   await fs.mkdir("data/reports", { recursive: true });
   const target = buildWriteConfirmationToken(describeConnectionTarget(connectionString));

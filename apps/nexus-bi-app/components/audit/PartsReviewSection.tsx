@@ -8,6 +8,7 @@ import { PartAliasCorrectionDrawer } from "./PartAliasCorrectionDrawer";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, PartsReviewRow } from "@/types/audit";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface PartsReviewSectionProps {
   clientes: string[];
@@ -80,6 +81,7 @@ function RowAction({ actionLabel, canAct, onOpen }: { actionLabel: string; canAc
 // cuál es el estado y cómo actuar.
 export function PartsReviewSection({ clientes, maquinas, capabilities }: PartsReviewSectionProps) {
   const canAct = hasCapability(capabilities, "correction:part-alias");
+  const epoch = useDataRefreshEpoch();
   const [filters, setFilters] = useState<AuditFilterValues & { matchStatus?: string }>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<PartsReviewRow> | null>(null);
@@ -102,7 +104,7 @@ export function PartsReviewSection({ clientes, maquinas, capabilities }: PartsRe
       .finally(() => setLoading(false));
   }
 
-  useEffect(refetch, [filters, page]);
+  useEffect(refetch, [filters, page, epoch]);
 
   function handleChange(key: keyof AuditFilterValues, value: string) {
     setFilters(prev => ({ ...prev, [key]: value || undefined }));

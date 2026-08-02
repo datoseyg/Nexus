@@ -109,9 +109,15 @@ function formatDistinctList(value: unknown, itemFormat: (item: unknown) => strin
 // candidato en el cliente: RESOLVED muestra el modelo (row.model, ya
 // singular); AMBIGUOUS muestra "Modelo por confirmar" (row.model es NULL a
 // propósito - los candidatos en desacuerdo viven en el detalle técnico, ver
-// equipment_models); UNKNOWN muestra "-" (sin contrato vigente vinculado).
-function formatModelCell(value: unknown, row: Record<string, unknown>): string {
+// equipment_models); UNKNOWN muestra "—" (guion largo, NUNCA "-"/"N/A"/"NA"/
+// null/"" - Sección 14.2 del encargo NEXUS V3 After-Hours prohíbe
+// explícitamente esos valores para "modelo no identificado". Exportada -
+// components/after-hours/AfterHoursDetailTable.tsx reutiliza esta misma
+// función para su propia columna "Modelo", en vez de reimplementar el
+// fallback).
+export function formatModelCell(value: unknown, row: Record<string, unknown>): string {
   if (row.model_resolution_status === "AMBIGUOUS") return "Modelo por confirmar";
+  if (row.model_resolution_status === "UNKNOWN" || value === null || value === undefined || value === "") return "—";
   return formatValue(value);
 }
 

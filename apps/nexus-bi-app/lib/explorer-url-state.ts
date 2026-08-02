@@ -124,9 +124,26 @@ export interface ExplorerUrlState {
    * URL, nunca solo en useState local, para que "Ver equipo"/"Ver cliente"
    * desde OTRA entidad (ej. el detalle de un Contrato) navegue reemplazando
    * el contenido vía URL canónica en vez de apilar un segundo drawer sobre
-   * el primero. reportDrawerId (Reportes, usesExternalDrawer) sigue local: ese
-   * drawer nunca se enlaza desde otra entidad hoy. */
+   * el primero. Sección 14 del encargo NEXUS V3 After-Hours - Reportes
+   * (usesExternalDrawer) reutiliza EL MISMO campo `key` (ver
+   * deriveExplorerDrawerKeys más abajo), ya no un useState local aparte -
+   * antes eso hacía que un deep-link ?entity=reports&key=<id> se ignorara
+   * en silencio. */
   key?: string;
+}
+
+/** Sección 14.1/14.6 del encargo NEXUS V3 After-Hours - deriva qué drawer
+ * debe abrirse (el genérico ExplorerDetailDrawer vía selectedKey, o el
+ * canónico de reportes vía reportDrawerId) a partir del MISMO valor de URL
+ * (`key`), gateado únicamente por si la entidad activa usa drawer externo.
+ * Función pura extraída de ExplorerShell.tsx para quedar testeable sin
+ * useSearchParams/next/navigation (el componente no puede importarse en el
+ * runner de tests) - reactivo a atrás/adelante del navegador porque
+ * ExplorerShell la vuelve a llamar en cada render con el urlKey vigente,
+ * nunca cachea el resultado en un useState. */
+export function deriveExplorerDrawerKeys(usesExternalDrawer: boolean, urlKey: string | undefined): { selectedKey: string | null; reportDrawerId: string | null } {
+  const activeKey = urlKey ?? null;
+  return { selectedKey: usesExternalDrawer ? null : activeKey, reportDrawerId: usesExternalDrawer ? activeKey : null };
 }
 
 /** Un valor de entidad inválido o ausente siempre resuelve a la entidad

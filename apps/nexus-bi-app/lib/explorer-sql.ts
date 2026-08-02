@@ -204,6 +204,13 @@ export interface ReportsExplorerFilters {
   /** internal_id EXACTO (mayúsculas ya normalizadas por el facet) - nunca
    * substring, para no confundir "LINAC-1" con "LINAC-10". */
   equipment?: string;
+  /** Sección 4 del encargo - Modelo de equipo (VersaHD/Infinity/Axesse/...),
+   * NUNCA el identificador de activo (`equipment` arriba). Mismo valor real
+   * de config.contract_equipment_analysis.equipment_model que ya usa el
+   * filtro de Equipos (equipmentFilterConditions) - ver EQUIPMENT_MODEL_JOIN
+   * más abajo para cómo un reporte (sin equipment_key propio, solo una lista
+   * de internal_id) se conecta con el modelo resuelto de su(s) equipo(s). */
+  model?: string;
   /** normalized_name exacto de quality.fieldbeat_report_participants. */
   technician?: string;
   hasTicket?: boolean;
@@ -235,7 +242,15 @@ function reportsFilterConditions(pusher: ParamPusher, filter: string | undefined
   const conditions: string[] = [];
   const cond = ilikeConditions(pusher, filter, REPORTS_FILTER_COLUMNS);
   if (cond) conditions.push(cond);
-  if (extra?.client) conditions.push(`client_name = ${pusher.push(extra.client)}`);
+  // Sección 3 del encargo NEXUS V3 - normalizado igual que el filtro de
+  // equipo un poco más abajo (UPPER(TRIM())): el facet de cliente se arma
+  // desde processed.fieldbeat_clients (CLIENTS_CANONICAL_CTE), pero esta
+  // tabla (marts.fieldbeat_report_dolibarr_operational_view) trae client_name
+  // desde el pipeline crudo de FieldBeat - una comparación exacta (=) fallaba
+  // en silencio ante cualquier diferencia de mayúsculas/espacios entre
+  // ambas fuentes (causa raíz real, ver reporte final sección B - probado
+  // con "UC CHRISTUS - CECA" y los otros 3 clientes citados en el encargo).
+  if (extra?.client) conditions.push(`UPPER(TRIM(client_name)) = ${pusher.push(extra.client.toUpperCase().trim())}`);
   if (extra?.taskType) conditions.push(`task_type = ${pusher.push(extra.taskType)}`);
   if (extra?.dateFrom) conditions.push(`fieldbeat_task_date >= ${pusher.push(extra.dateFrom)}::date`);
   if (extra?.dateTo) conditions.push(`fieldbeat_task_date <= ${pusher.push(extra.dateTo)}::date`);
@@ -476,7 +491,11 @@ function partsFilterConditions(pusher: ParamPusher, filter: string | undefined, 
   if (extra?.matchStatus) where.push(`m.match_status = ${pusher.push(extra.matchStatus)}`);
   if (extra?.hasDolibarrProduct === true) where.push(`NULLIF(TRIM(m.dolibarr_ref), '') IS NOT NULL`);
   if (extra?.hasDolibarrProduct === false) where.push(`NULLIF(TRIM(m.dolibarr_ref), '') IS NULL`);
-  if (extra?.client) where.push(`r.client_name = ${pusher.push(extra.client)}`);
+  // Sección 3 del encargo - mismo fix y misma razón que reportsFilterConditions
+  // más arriba: r.client_name viene del pipeline crudo de FieldBeat, el
+  // facet viene de processed.fieldbeat_clients - sin UPPER(TRIM()) una
+  // comparación exacta fallaba en silencio.
+  if (extra?.client) where.push(`UPPER(TRIM(r.client_name)) = ${pusher.push(extra.client.toUpperCase().trim())}`);
   if (extra?.dateFrom) where.push(`r.fieldbeat_task_date >= ${pusher.push(extra.dateFrom)}::date`);
   if (extra?.dateTo) where.push(`r.fieldbeat_task_date <= ${pusher.push(extra.dateTo)}::date`);
   if (extra?.hasActiveIssues === true) having.push(`bool_or(m.used_part_id::text = ANY(${pusher.push(extra.activeIssueUsedPartIds ?? [])}))`);
@@ -901,7 +920,10 @@ export async function countClientsTotal(filter?: string, extra?: ClientsExplorer
 // que permite luego unir contra config.contract_equipment_analysis.
 // fieldbeat_equipment_key sin importar CUÁL de las filas físicas haya sido
 // la que el matcher de contratos efectivamente enlazó.
-const EQUIPMENT_CANONICAL_CTE = `${CLIENTS_CANONICAL_CTE},
+// Exportado (Sección 14 del encargo NEXUS V3 After-Hours) - lib/fieldbeat-report-detail-queries.ts
+// lo reutiliza tal cual para resolver modelo/familia/contrato de los equipos
+// de un reporte, en vez de reimplementar esta misma agrupación.
+export const EQUIPMENT_CANONICAL_CTE = `${CLIENTS_CANONICAL_CTE},
   canonical_equipment AS (
     SELECT
       COALESCE(cc.canonical_client_key, e.client_key) AS client_key,
@@ -926,7 +948,15 @@ const EQUIPMENT_CANONICAL_CTE = `${CLIENTS_CANONICAL_CTE},
 // contratos en desacuerdo, ambos valores viajan juntos (join " / " en el
 // formateador de columna, ver explorer-entity-config.ts) en vez de que uno
 // oculte al otro.
-const EQUIPMENT_CONTRACT_CANDIDATES_LATERAL = `
+// Parametrizada (Sección 14 del encargo NEXUS V3 After-Hours) - el único
+// punto real de variación entre consumidores es la condición de correlación
+// con canonical_equipment.source_equipment_keys (un arreglo, caso Explorador)
+// vs. un equipo puntual ya resuelto por otro camino (caso detalle de
+// reporte, ver lib/fieldbeat-report-detail-queries.ts) - el resto del
+// SELECT/ARRAY_AGG es idéntico para ambos, así que se recibe como parámetro
+// en vez de duplicar el bloque completo por un JOIN distinto.
+export function equipmentContractCandidatesLateral(correlationPredicate: string): string {
+  return `
   LEFT JOIN LATERAL (
     SELECT
       ARRAY_AGG(DISTINCT ca.equipment_model) AS equipment_models,
@@ -946,9 +976,16 @@ const EQUIPMENT_CONTRACT_CANDIDATES_LATERAL = `
       ARRAY_AGG(DISTINCT ca.preventive_maintenance_max) AS preventive_maintenance_maxs,
       ARRAY_AGG(DISTINCT ca.preventive_maintenance_rule) FILTER (WHERE ca.preventive_maintenance_rule IS NOT NULL) AS preventive_maintenance_rules
     FROM config.contract_equipment_analysis ca
-    WHERE ca.is_current = true AND ca.fieldbeat_equipment_key = ANY(canonical_equipment.source_equipment_keys)
+    WHERE ca.is_current = true AND ${correlationPredicate}
   ) contract ON true
 `;
+}
+
+// Predicado de correlación estándar del Explorador (equipo canónico
+// agrupado, arreglo de filas físicas que colapsaron) - se pasa a
+// equipmentContractCandidatesLateral() en cada uno de sus consumidores
+// dentro de este archivo, todos referidos a la misma CTE canonical_equipment.
+const CANONICAL_EQUIPMENT_CONTRACT_PREDICATE = "ca.fieldbeat_equipment_key = ANY(canonical_equipment.source_equipment_keys)";
 
 // Resolución de modelo (nunca MAX/MIN/primera fila): RESOLVED cuando los
 // contratos vigentes vinculados concuerdan en exactamente 1 modelo (el caso
@@ -958,7 +995,8 @@ const EQUIPMENT_CONTRACT_CANDIDATES_LATERAL = `
 // no hay ningún contrato vigente vinculado. equipment_models (el arreglo
 // completo) sigue disponible aparte para mostrar los candidatos + procedencia
 // en el detalle, nunca se pierde aunque el campo `model` quede en NULL.
-const EQUIPMENT_MODEL_RESOLUTION_COLUMNS = `
+// Exportado - lib/fieldbeat-report-detail-queries.ts la reutiliza tal cual.
+export const EQUIPMENT_MODEL_RESOLUTION_COLUMNS = `
   CASE WHEN COALESCE(array_length(contract.equipment_models, 1), 0) = 1 THEN contract.equipment_models[1] ELSE NULL END AS model,
   CASE
     WHEN COALESCE(array_length(contract.equipment_models, 1), 0) = 0 THEN 'UNKNOWN'
@@ -1039,7 +1077,7 @@ export async function fetchClientDetail(clientKey: string) {
                       LATERAL UNNEST(STRING_TO_ARRAY(r.equipment_internal_ids, '|')) equipo
                  WHERE UPPER(TRIM(equipo)) = canonical_equipment.internal_id) AS report_task_ids
        FROM canonical_equipment
-       ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+       ${equipmentContractCandidatesLateral(CANONICAL_EQUIPMENT_CONTRACT_PREDICATE)}
        WHERE canonical_equipment.client_key = $1
        ORDER BY canonical_equipment.internal_id LIMIT 20`,
       [canonicalKey]
@@ -1206,7 +1244,7 @@ export function buildEquipmentListQuery(pusher: ParamPusher, limit: number, offs
                    LATERAL UNNEST(STRING_TO_ARRAY(r.equipment_internal_ids, '|')) equipo
               WHERE UPPER(TRIM(equipo)) = canonical_equipment.internal_id) AS report_task_ids
     FROM canonical_equipment
-    ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+    ${equipmentContractCandidatesLateral(CANONICAL_EQUIPMENT_CONTRACT_PREDICATE)}
     ${cond ? `WHERE ${cond}` : ""}
     ORDER BY report_count DESC, canonical_equipment.internal_id ASC
     LIMIT ${limit} OFFSET ${offset}
@@ -1235,7 +1273,7 @@ export async function countEquipmentTotal(filter?: string, extra?: EquipmentExpl
   const rows = await runQuery<{ n: string }>(
     `${EQUIPMENT_CANONICAL_CTE}
      SELECT COUNT(*) AS n FROM canonical_equipment
-     ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+     ${equipmentContractCandidatesLateral(CANONICAL_EQUIPMENT_CONTRACT_PREDICATE)}
      ${cond ? `WHERE ${cond}` : ""}`,
     pusher.params
   );
@@ -1252,7 +1290,7 @@ export async function fetchEquipmentDetail(equipmentKey: string) {
             contract.warranty_end_dates, contract.match_statuses, contract.contract_keys, contract.contract_count,
             contract.preventive_maintenance_mins, contract.preventive_maintenance_maxs, contract.preventive_maintenance_rules
      FROM canonical_equipment
-     ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+     ${equipmentContractCandidatesLateral(CANONICAL_EQUIPMENT_CONTRACT_PREDICATE)}
      WHERE canonical_equipment.equipment_key = $1`,
     [equipmentKey]
   );
@@ -1646,7 +1684,7 @@ export async function fetchContractDetail(equipmentKey: string) {
                   ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS},
                   contract.serial_numbers, contract.match_statuses
            FROM canonical_equipment
-           ${EQUIPMENT_CONTRACT_CANDIDATES_LATERAL}
+           ${equipmentContractCandidatesLateral(CANONICAL_EQUIPMENT_CONTRACT_PREDICATE)}
            WHERE canonical_equipment.equipment_key = $1`,
           [linkedEquipmentKey]
         )

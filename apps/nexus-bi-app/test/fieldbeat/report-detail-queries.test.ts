@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseFieldbeatTaskId, buildReportDetailQuery, shapeReportDetail, type ReportDetailQueryRow } from "../../lib/fieldbeat-report-detail-queries.ts";
+import type { FieldbeatIssuesAvailability } from "../../types/fieldbeat-report-detail.ts";
 
 test("parseFieldbeatTaskId: acepta enteros positivos simples", () => {
   assert.equal(parseFieldbeatTaskId("1"), "1");
@@ -30,6 +31,25 @@ test("buildReportDetailQuery: selecciona de las vistas canónicas quality.fieldb
   assert.match(sql, /quality\.fieldbeat_report_participants/);
   assert.match(sql, /quality\.fieldbeat_report_labor_summary/);
 });
+
+// Sección 14 del encargo NEXUS V3 After-Hours (contrato 2.1.0) - la query
+// gana un enriquecimiento de equipo con precedencia estructurada real
+// (processed.fieldbeat_task_equipments primero, texto solo como fallback
+// gobernado cuando esa tabla no tiene ninguna fila para la tarea).
+test("buildReportDetailQuery: resuelve equipo/modelo con precedencia estructurada (fieldbeat_task_equipments primero, texto como fallback gobernado)", () => {
+  const { sql } = buildReportDetailQuery("900005");
+  assert.match(sql, /WITH/);
+  assert.match(sql, /processed\.fieldbeat_task_equipments/);
+  assert.match(sql, /TASK_EQUIPMENT_LINK/);
+  assert.match(sql, /TEXT_FALLBACK/);
+  assert.match(sql, /NOT EXISTS \(SELECT 1 FROM processed\.fieldbeat_task_equipments te2/, "el fallback de texto solo se activa cuando no hay NINGUNA fila estructurada para la tarea");
+  assert.match(sql, /config\.contract_equipment_analysis/);
+  assert.match(sql, /contract_version_id/, "la identidad de un contrato es contract_version_id, nunca equipment_key");
+  assert.match(sql, /ORDER BY item\.internal_id/, "orden determinista del arreglo de equipos");
+  assert.match(sql, /ORDER BY ca\.contract_version_id/, "orden determinista del arreglo de contratos por equipo");
+});
+
+const NO_ISSUES: FieldbeatIssuesAvailability = { status: "available", issues: [] };
 
 function baseRow(overrides: Partial<ReportDetailQueryRow> = {}): ReportDetailQueryRow {
   return {
@@ -63,6 +83,7 @@ function baseRow(overrides: Partial<ReportDetailQueryRow> = {}): ReportDetailQue
     part_total_lines: 0,
     ticket_accessible: null,
     ticket_missing_or_restricted: false,
+    equipment_enrichment: [],
     tickets: [],
     parts: [],
     participants: [
@@ -84,15 +105,54 @@ function baseRow(overrides: Partial<ReportDetailQueryRow> = {}): ReportDetailQue
 }
 
 test("shapeReportDetail: technician/client son null cuando has_technician/has_client son false, nunca un objeto vacío fantasma", () => {
-  const detail = shapeReportDetail(baseRow({ has_technician: false, technician_names: null, has_client: false, client_key: null, client_name: null }), false);
+  const detail = shapeReportDetail(baseRow({ has_technician: false, technician_names: null, has_client: false, client_key: null, client_name: null }), false, NO_ISSUES);
   assert.equal(detail.technician, null);
   assert.equal(detail.client, null);
 });
 
-test("shapeReportDetail: equipment usa deriveEquipmentItems (STRUCTURED_IDENTIFIED con 1 equipo)", () => {
-  const detail = shapeReportDetail(baseRow(), false);
+test("shapeReportDetail: equipment usa deriveEquipmentItems (STRUCTURED_IDENTIFIED con 1 equipo), enriquecido con fallback seguro cuando no hay match en equipment_enrichment", () => {
+  const detail = shapeReportDetail(baseRow(), false, NO_ISSUES);
   assert.equal(detail.equipment.status, "STRUCTURED_IDENTIFIED");
-  assert.deepEqual(detail.equipment.items, [{ internalId: "EQ-901", source: "STRUCTURED", confirmed: true }]);
+  assert.equal(detail.equipment.items.length, 1);
+  const item = detail.equipment.items[0];
+  assert.equal(item.internalId, "EQ-901");
+  assert.equal(item.source, "STRUCTURED");
+  assert.equal(item.confirmed, true);
+  // Sin fila correspondiente en equipment_enrichment (fixture vacía) -
+  // degrada a "sin dato", nunca inventa un modelo/contrato.
+  assert.equal(item.model, null);
+  assert.equal(item.modelResolutionStatus, "UNKNOWN");
+  assert.deepEqual(item.contracts, []);
+  assert.deepEqual(item.serialNumbers, []);
+});
+
+test("shapeReportDetail: equipment_enrichment enriquece un ítem existente por internal_id normalizado (RESOLVED, TASK_EQUIPMENT_LINK, contrato como objeto)", () => {
+  const detail = shapeReportDetail(
+    baseRow({
+      equipment_enrichment: [
+        {
+          internal_id: "EQ-901",
+          resolution_source: "TASK_EQUIPMENT_LINK",
+          model: "VersaHD",
+          model_resolution_status: "RESOLVED",
+          equipment_family: "LINAC",
+          serial_numbers: ["SN-123"],
+          contracts: [{ contract_version_id: "42", status_code: "ACTIVE_AUTO_RENEW", spa_tier_code: "GOLD", parts_coverage_code: "FULL_COVERAGE", warranty_end_date: "2027-01-01" }]
+        }
+      ]
+    }),
+    false,
+    NO_ISSUES
+  );
+  const item = detail.equipment.items[0];
+  assert.equal(item.resolutionSource, "TASK_EQUIPMENT_LINK");
+  assert.equal(item.model, "VersaHD");
+  assert.equal(item.modelResolutionStatus, "RESOLVED");
+  assert.equal(item.equipmentFamily, "LINAC");
+  assert.deepEqual(item.serialNumbers, ["SN-123"]);
+  assert.equal(item.contracts.length, 1);
+  assert.equal(item.contracts[0].contractVersionId, "42");
+  assert.equal(item.contracts[0].spaTierCode, "GOLD");
 });
 
 test("shapeReportDetail: tickets 0..N pasan sin duplicarse ni colapsarse al primero", () => {
@@ -103,7 +163,8 @@ test("shapeReportDetail: tickets 0..N pasan sin duplicarse ni colapsarse al prim
         { zendesk_ticket_id: "500011", subject: "Seguimiento", status: "open", priority: "high", link_method: "exact" }
       ]
     }),
-    false
+    false,
+    NO_ISSUES
   );
   assert.equal(detail.tickets.length, 2);
   assert.equal(detail.tickets[0].zendeskTicketId, "500010");
@@ -138,7 +199,8 @@ test("shapeReportDetail: repuesto CX1551G/Thyratron - rawPartNumber SIEMPRE visi
         }
       ]
     }),
-    false
+    false,
+    NO_ISSUES
   );
   const part = detail.parts[0];
   assert.equal(part.rawName, "Thyratron");
@@ -177,7 +239,8 @@ test("shapeReportDetail: repuesto AMBIGUOUS_MATCH expone matchEvidence.candidate
         }
       ]
     }),
-    false
+    false,
+    NO_ISSUES
   );
   const part = detail.parts[0];
   assert.equal(part.matchedProductId, null);
@@ -213,7 +276,8 @@ test("shapeReportDetail: alias histórico solo se muestra cuando catalogMatchSta
         }
       ]
     }),
-    false
+    false,
+    NO_ISSUES
   );
   assert.deepEqual(withAlias.parts[0].matchEvidence, { kind: "HISTORICAL_ALIAS", aliasValue: "Y-HIST", reason: "curado por Fulano", createdBy: "fulano" });
   assert.equal(withAlias.parts[0].quantity, 2);
@@ -246,7 +310,8 @@ test("shapeReportDetail: alias histórico solo se muestra cuando catalogMatchSta
         }
       ]
     }),
-    false
+    false,
+    NO_ISSUES
   );
   assert.deepEqual(withoutAliasEvidence.parts[0].matchEvidence, { kind: "NONE" });
 });
@@ -259,7 +324,8 @@ test("shapeReportDetail: participants incluye siempre al responsable principal, 
         { fieldbeat_task_id: "900005", raw_name: "mreyes", normalized_name: "MANUEL REYES", role: "PRIMARY_ASSIGNEE", source_field: "assigned_to", resolution_status: "RESOLVED_ASSIGNED_TO", is_primary: true }
       ]
     }),
-    false
+    false,
+    NO_ISSUES
   );
   assert.equal(detail.participants.length, 2);
   assert.equal(detail.participants[0].role, "PRIMARY_ASSIGNEE", "el responsable principal siempre aparece primero, sin importar el orden crudo de la fila");
@@ -279,7 +345,8 @@ test("shapeReportDetail: labor separa actualReportDurationMinutes (real) de sche
         individual_time_available: false
       }
     }),
-    false
+    false,
+    NO_ISSUES
   );
   assert.equal(detail.labor.actualReportDurationMinutes, 130);
   assert.equal(detail.labor.scheduledEstimateMinutes, 120);
@@ -295,7 +362,8 @@ test("shapeReportDetail: inconsistencias traen explanation/suggestedAction/unive
       ],
       primary_code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY"
     }),
-    false
+    false,
+    NO_ISSUES
   );
   assert.equal(detail.inconsistencies.length, 2);
   assert.equal(detail.inconsistencies[0].isPrimary, true);
@@ -306,19 +374,34 @@ test("shapeReportDetail: inconsistencias traen explanation/suggestedAction/unive
 });
 
 test("shapeReportDetail: sin inconsistencias, quality.totalInconsistencies=0 y array vacío (nunca null)", () => {
-  const detail = shapeReportDetail(baseRow(), false);
+  const detail = shapeReportDetail(baseRow(), false, NO_ISSUES);
   assert.deepEqual(detail.inconsistencies, []);
   assert.equal(detail.quality.totalInconsistencies, 0);
 });
 
-test("shapeReportDetail: contractVersion 2.0.0 y generatedAt siempre presentes", () => {
-  const detail = shapeReportDetail(baseRow(), false);
-  assert.equal(detail.contractVersion, "2.0.0");
+test("shapeReportDetail: contractVersion 2.1.0 y generatedAt siempre presentes", () => {
+  const detail = shapeReportDetail(baseRow(), false, NO_ISSUES);
+  assert.equal(detail.contractVersion, "2.1.0");
   assert.ok(detail.generatedAt);
   assert.equal(detail.audit.contractVersion, detail.contractVersion);
 });
 
 test("shapeReportDetail: audit.fieldbeatOpenAvailable refleja EXACTAMENTE el parámetro recibido, nunca una lectura interna de process.env", () => {
-  assert.equal(shapeReportDetail(baseRow(), false).audit.fieldbeatOpenAvailable, false);
-  assert.equal(shapeReportDetail(baseRow(), true).audit.fieldbeatOpenAvailable, true);
+  assert.equal(shapeReportDetail(baseRow(), false, NO_ISSUES).audit.fieldbeatOpenAvailable, false);
+  assert.equal(shapeReportDetail(baseRow(), true, NO_ISSUES).audit.fieldbeatOpenAvailable, true);
+});
+
+// Sección 14 del encargo NEXUS V3 After-Hours - governance.issues corre en
+// una query aparte (pool de gobierno); su disponibilidad se representa con
+// una unión discriminada explícita, nunca T[] | null.
+test("shapeReportDetail: issues respeta la disponibilidad recibida - available con datos, unavailable degradado sin inventar una lista vacía", () => {
+  const withIssues = shapeReportDetail(baseRow(), false, {
+    status: "available",
+    issues: [{ id: 1, ruleCode: "SOME_RULE", severity: "HIGH", status: "OPEN", firstSeenAt: "2026-03-01T00:00:00Z" }]
+  });
+  assert.equal(withIssues.issues.status, "available");
+  assert.equal(withIssues.issues.status === "available" ? withIssues.issues.issues.length : -1, 1);
+
+  const unavailable = shapeReportDetail(baseRow(), false, { status: "unavailable" });
+  assert.deepEqual(unavailable.issues, { status: "unavailable" });
 });

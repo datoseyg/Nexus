@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileTopBar } from "@/components/layout/MobileTopBar";
 import { MobileSidebar } from "@/components/layout/MobileSidebar";
+import { DataRefreshEpochProvider } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 const COLLAPSE_STORAGE_KEY = "nx-sidebar-collapsed";
 
@@ -82,7 +83,13 @@ export function AppShell({ children, userLabel, features, capabilities }: AppShe
   if (publicRoute || !userLabel) return children;
 
   return (
-    <>
+    // Un solo DataRefreshEpochProvider para todo el árbol autenticado - así
+    // DataRefreshControl (dentro de Sidebar) y cualquier vista bajo
+    // {children} comparten el mismo epoch sin importarse entre sí. Nunca se
+    // monta en /login (ver el return temprano de arriba) - no hay
+    // DataRefreshControl ahí que pueda emitir el evento, ni nada que
+    // necesite escucharlo.
+    <DataRefreshEpochProvider>
       <div className="flex min-h-screen" inert={mobileOpen}>
         <Sidebar
           collapsed={collapsed}
@@ -111,6 +118,6 @@ export function AppShell({ children, userLabel, features, capabilities }: AppShe
         userLabel={userLabel}
         features={features}
       />
-    </>
+    </DataRefreshEpochProvider>
   );
 }

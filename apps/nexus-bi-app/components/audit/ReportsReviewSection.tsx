@@ -6,6 +6,7 @@ import { StatusBadge, reportQualityBadge, zendeskJoinBadge } from "@/components/
 import { FutureActionButton } from "./FutureActionButton";
 import { AuditFilterBar, type AuditFilterValues } from "./AuditFilterBar";
 import type { PaginatedResponse, ReportReviewRow } from "@/types/audit";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 interface ReportsReviewSectionProps {
   clientes: string[];
@@ -34,6 +35,7 @@ function reportRecommendation(row: ReportReviewRow): string {
 // de 5 columnas separadas de igual peso visual - sección 5 de la corrección
 // de negocio de Auditoría.
 export function ReportsReviewSection({ clientes, maquinas }: ReportsReviewSectionProps) {
+  const epoch = useDataRefreshEpoch();
   const [filters, setFilters] = useState<AuditFilterValues & { reportQuality?: string }>({});
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<ReportReviewRow> | null>(null);
@@ -52,7 +54,7 @@ export function ReportsReviewSection({ clientes, maquinas }: ReportsReviewSectio
       })
       .catch(body => setError(body?.error ?? "Error desconocido"))
       .finally(() => setLoading(false));
-  }, [filters, page]);
+  }, [filters, page, epoch]);
 
   return (
     <div className="flex flex-col gap-3">
