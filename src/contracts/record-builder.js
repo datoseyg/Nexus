@@ -113,6 +113,7 @@ export function buildEquipmentRecord(classifiedRow, effectiveDate, clientNameNor
 
   const normalizedFields = {
     clientNameCanonical: client.clientNameCanonical,
+    clientNameKey: client.clientNameKey,
     siteAbbreviation,
     equipmentModel,
     serialNumber: serialNumberRaw,

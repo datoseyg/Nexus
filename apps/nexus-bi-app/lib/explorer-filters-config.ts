@@ -61,6 +61,7 @@ export interface ExplorerFilterOption {
 
 export type ExplorerDynamicOptionsKey =
   | "clientes"
+  | "contractClients"
   | "taskTypes"
   | "equipmentTypes"
   | "ruleCodes"
@@ -187,7 +188,15 @@ export const EXPLORER_FILTER_CONFIG: Partial<Record<ExplorerEntity, ExplorerFilt
     { key: "hasUsageInReports", label: "Con uso en reportes", kind: "boolean", staticOptions: YES_NO_OPTIONS }
   ],
   contracts: [
-    { key: "client", label: "Cliente", kind: "select", dynamicOptionsKey: "clientes" },
+    // "contractClients" (Bloque 2 NEXUS V3), NUNCA "clientes" acá -
+    // "clientes" resuelve identidad de FieldBeat (processed.fieldbeat_clients),
+    // un vocabulario de cliente distinto y no interoperable con el de la
+    // planilla de contratos (config.contract_equipment_versions) - usar
+    // "clientes" en Contratos era la causa raíz del filtro Cliente
+    // devolviendo 0 resultados (facet y filtro leían dos identidades
+    // distintas). Ver fetchContractClientOptions()/contractsFilterConditions
+    // en lib/explorer-sql.ts.
+    { key: "client", label: "Cliente", kind: "select", dynamicOptionsKey: "contractClients" },
     {
       key: "contractStatus",
       label: "Estado de contrato",

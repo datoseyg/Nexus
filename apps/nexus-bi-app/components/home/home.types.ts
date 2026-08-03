@@ -26,6 +26,7 @@ export interface OperacionalSummaryData {
     totalTickets: number;
     totalRegistros: number;
     ultimoCliente: string | null;
+    ultimoClienteFecha: string | null;
   };
 }
 
@@ -73,7 +74,8 @@ export function isOperacionalSummaryData(value: unknown): value is OperacionalSu
   return (
     isNonNegativeSafeInteger(kpis.totalTickets) &&
     isNonNegativeSafeInteger(kpis.totalRegistros) &&
-    (typeof kpis.ultimoCliente === "string" || kpis.ultimoCliente === null)
+    (typeof kpis.ultimoCliente === "string" || kpis.ultimoCliente === null) &&
+    (typeof kpis.ultimoClienteFecha === "string" || kpis.ultimoClienteFecha === null)
   );
 }
 
@@ -154,9 +156,21 @@ export type HomeAreaStatusTuple = readonly [
 // --- "Último cliente registrado": misma disciplina de unión discriminada
 //     que HomeMetricState - `clientName` no existe fuera de "success". ---
 export type HomeLastClientState =
-  | { status: "loading"; clientName?: never }
-  | { status: "success"; clientName: string | null }
-  | { status: "error"; clientName?: never };
+  | {
+      status: "loading";
+      clientName?: never;
+      activityDate?: never;
+    }
+  | {
+      status: "success";
+      clientName: string | null;
+      activityDate: string | null;
+    }
+  | {
+      status: "error";
+      clientName?: never;
+      activityDate?: never;
+    };
 
 export interface HomeAttentionItem {
   id: string;

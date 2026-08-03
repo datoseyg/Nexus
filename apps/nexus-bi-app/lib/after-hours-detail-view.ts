@@ -79,6 +79,12 @@ export interface AfterHoursDrawerContext {
   weekendLabel: string;
   holidayLabel: string;
   dataBasis: CodeLabel;
+  /** Código crudo de dataBasis (Bloque 2 NEXUS V3) - CodeLabel no expone el
+   * código original, solo label/shortLabel/description/severity; este campo
+   * es lo que permite al drawer decidir si el horario mostrado en
+   * ContractCoverageScheduleView es el contractual real o el fallback
+   * global, sin comparar contra un texto de label (frágil). */
+  dataBasisCode: string | null;
   coverage: CodeLabel;
   finalReason: CodeLabel;
   contractualReason: CodeLabel | null;
@@ -111,6 +117,7 @@ export function buildAfterHoursDrawerContext(row: AfterHoursDetailRow): AfterHou
     weekendLabel: formatHoursOrDash(row.weekend_hours),
     holidayLabel: formatHoursOrDash(row.holiday_hours),
     dataBasis,
+    dataBasisCode: row.data_basis ?? null,
     coverage,
     finalReason,
     contractualReason,

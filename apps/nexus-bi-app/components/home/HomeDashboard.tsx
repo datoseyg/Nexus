@@ -74,8 +74,12 @@ function toKpi<T, K extends HomeKpiKey>(
 
 function toLastClientState(source: RemoteData<OperacionalSummaryData>): HomeLastClientState {
   if (source.status === "success") {
-    return { status: "success", clientName: normalizeClientName(source.data.kpis.ultimoCliente) };
-  }
+  return {
+    status: "success",
+    clientName: normalizeClientName(source.data.kpis.ultimoCliente),
+    activityDate: source.data.kpis.ultimoClienteFecha
+  };
+}
   if (source.status === "loading") return { status: "loading" };
   return { status: "error" };
 }

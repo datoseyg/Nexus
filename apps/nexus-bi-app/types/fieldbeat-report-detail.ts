@@ -1,6 +1,7 @@
 import type { InconsistencyCode, InconsistencySeverity } from "@/lib/fieldbeat-inconsistency-taxonomy";
 import type { TeamIdentificationStatus } from "@/lib/fieldbeat-team-identification";
 import type { HistoricalPartMatchStatus } from "@/lib/fieldbeat-parts-history";
+import type { ContractScheduleResult } from "@/types/contracts";
 
 // HOTFIX de integridad de datos FieldBeat (post-Phase 6) - 2.0.0: reemplaza
 // FieldbeatUsedPartDetail por FieldbeatPartOccurrence (separa declaración de
@@ -17,7 +18,12 @@ import type { HistoricalPartMatchStatus } from "@/lib/fieldbeat-parts-history";
 // consumidor 2.0.0 (Búsqueda, FieldBeat Calidad) sigue funcionando sin
 // cambios - los campos nuevos son adicionales, ninguno reemplaza uno
 // existente.
-export const FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION = "2.1.0";
+//
+// 2.2.0 (Bloque 2 NEXUS V3 - horario de cobertura contractual) - aditivo:
+// FieldbeatContractRelation gana `schedule` (ContractScheduleResult, ver
+// types/contracts.ts). Ningún consumidor 2.1.0 se rompe - el campo es
+// adicional.
+export const FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION = "2.2.0";
 
 /** Fuente de un ítem de equipo - NUNCA promueve una ambigüedad a match
  * confirmado (ver lib/fieldbeat-equipment-derivation.ts). */
@@ -43,6 +49,11 @@ export interface FieldbeatContractRelation {
   spaTierCode: string | null;
   partsCoverageCode: string | null;
   warrantyEndDate: string | null;
+  /** Horario de cobertura contractual de ESTA versión puntual (Bloque 2
+   * NEXUS V3) - ver types/contracts.ts. Resuelto por
+   * mapServiceWindowRowsToCoverageSchedule() (lib/contract-coverage-schedule.ts),
+   * el mismo mapper que usa el drawer de Contratos - nunca reimplementado acá. */
+  schedule: ContractScheduleResult;
 }
 
 /** De dónde salió el enriquecimiento de modelo/familia/serie/contrato de

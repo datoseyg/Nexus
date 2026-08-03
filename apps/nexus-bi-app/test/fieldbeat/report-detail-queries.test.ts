@@ -137,7 +137,17 @@ test("shapeReportDetail: equipment_enrichment enriquece un ítem existente por i
           model_resolution_status: "RESOLVED",
           equipment_family: "LINAC",
           serial_numbers: ["SN-123"],
-          contracts: [{ contract_version_id: "42", status_code: "ACTIVE_AUTO_RENEW", spa_tier_code: "GOLD", parts_coverage_code: "FULL_COVERAGE", warranty_end_date: "2027-01-01" }]
+          contracts: [
+            {
+              contract_version_id: "42",
+              status_code: "ACTIVE_AUTO_RENEW",
+              spa_tier_code: "GOLD",
+              parts_coverage_code: "FULL_COVERAGE",
+              warranty_end_date: "2027-01-01",
+              valid_from: "2024-01-01",
+              valid_to: null
+            }
+          ]
         }
       ]
     }),
@@ -379,9 +389,9 @@ test("shapeReportDetail: sin inconsistencias, quality.totalInconsistencies=0 y a
   assert.equal(detail.quality.totalInconsistencies, 0);
 });
 
-test("shapeReportDetail: contractVersion 2.1.0 y generatedAt siempre presentes", () => {
+test("shapeReportDetail: contractVersion 2.2.0 y generatedAt siempre presentes", () => {
   const detail = shapeReportDetail(baseRow(), false, NO_ISSUES);
-  assert.equal(detail.contractVersion, "2.1.0");
+  assert.equal(detail.contractVersion, "2.2.0");
   assert.ok(detail.generatedAt);
   assert.equal(detail.audit.contractVersion, detail.contractVersion);
 });

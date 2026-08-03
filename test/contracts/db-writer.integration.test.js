@@ -120,6 +120,15 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
     const versionUniquenessDdl = await fs.readFile("sql/085_contract_version_revision_uniqueness.sql", "utf8");
     await adminPool.query(versionUniquenessDdl);
 
+    // Bloque 2 NEXUS V3 - mismo patrón que 084 arriba: VERSION_INSERT_SQL en
+    // db-writer.js ahora persiste client_name_key incondicionalmente en todo
+    // INSERT real -sin esta migración, applyContracts() fallaría acá con
+    // "column client_name_key does not exist" (no con la lógica de negocio
+    // que este archivo prueba). Solo la fase nullable (103); la fase NOT
+    // NULL (104) no es necesaria para lo que se prueba acá.
+    const clientNameKeyDdl = await fs.readFile("sql/103_contract_client_name_key_nullable.sql", "utf8");
+    await adminPool.query(clientNameKeyDdl);
+
     applyContracts = (await import("../../src/contracts/db-writer.js")).applyContracts;
   });
 

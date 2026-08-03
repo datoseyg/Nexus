@@ -4,6 +4,7 @@ import { explorerFiltersFor, type ExplorerDynamicOptionsKey } from "@/lib/explor
 import { handleApiError } from "@/lib/api-error";
 import {
   fetchClientNameOptions,
+  fetchContractClientOptions,
   fetchClientCityOptions,
   fetchClientCommuneOptions,
   fetchEquipmentTypeOptions,
@@ -31,6 +32,8 @@ async function resolveFacet(key: ExplorerDynamicOptionsKey): Promise<Array<{ val
   switch (key) {
     case "clientes":
       return (await fetchClientNameOptions()).map(v => ({ value: v, label: v }));
+    case "contractClients":
+      return fetchContractClientOptions();
     case "cities":
       return (await fetchClientCityOptions()).map(v => ({ value: v, label: v }));
     case "communes":

@@ -13,6 +13,7 @@ import { ExplorerTableFooter } from "./ExplorerTableFooter";
 import { EXPLORER_ENTITY_CONFIG, formatCell } from "@/lib/explorer-entity-config";
 import { triggerBlobDownload } from "@/lib/csv-export";
 import { readExplorerUrlState, buildExplorerQueryString, hasActiveExplorerFilters, deriveExplorerDrawerKeys, type ExplorerFilters } from "@/lib/explorer-url-state";
+import { resolveLegacyContractClientFilter } from "@/lib/contract-client-filter";
 import type { ExplorerFilterOption } from "@/lib/explorer-filters-config";
 import type { TableDensity } from "@/components/ui/ResponsiveTableShell";
 import type { ExplorerEntity, ExplorerListResponse, ExplorerLoadState } from "@/types/explorer";
@@ -103,6 +104,33 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
       cancelled = true;
     };
   }, [entity]);
+
+  // Migración de un `client` heredado en la URL de Contratos (Bloque 2
+  // NEXUS V3) - solo corre para esa entidad, y solo una vez que el facet
+  // contractClients ya llegó (dynamicOptions.contractClients !== undefined
+  // - evita un falso "no disponible" mientras la request de facets sigue en
+  // vuelo). MIGRATED reescribe la URL con router.replace (nunca push, para
+  // no ensuciar el historial con una migración transparente) y se resuelve
+  // solo: en el próximo render el valor ya es EXACT_MATCH. UNRESOLVED nunca
+  // toca la URL -unresolvedContractClient dispara el mensaje distinguible
+  // más abajo, en vez del panel genérico de cero resultados.
+  const [unresolvedContractClient, setUnresolvedContractClient] = useState(false);
+  useEffect(() => {
+    if (entity !== "contracts" || !filters.client || !dynamicOptions.contractClients) {
+      setUnresolvedContractClient(false);
+      return;
+    }
+    const resolution = resolveLegacyContractClientFilter(filters.client, dynamicOptions.contractClients);
+    if (resolution.kind === "EXACT_MATCH") {
+      setUnresolvedContractClient(false);
+    } else if (resolution.kind === "MIGRATED") {
+      setUnresolvedContractClient(false);
+      pushState({ filters: { ...filters, client: resolution.value } }, { replace: true });
+    } else {
+      setUnresolvedContractClient(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entity, filters.client, dynamicOptions.contractClients]);
 
   useEffect(() => {
     setQDraft(q);
@@ -381,6 +409,23 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
             <p className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-text-secondary)" }} aria-busy="true">
               Cargando…
             </p>
+          ) : effectiveData.rows.length === 0 && unresolvedContractClient ? (
+            // Bloque 2 NEXUS V3 - un client= de un enlace viejo que no
+            // resolvió contra el facet actual (ver el efecto de migración
+            // arriba) nunca se presenta como el panel genérico de cero
+            // resultados - el usuario no eligió un cliente sin contratos,
+            // el enlace quedó apuntando a un valor que ya no existe.
+            <div className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-text-secondary)" }}>
+              <p>El cliente del enlace ya no está disponible en el listado actual.</p>
+              <button
+                type="button"
+                onClick={() => handleFilterChange("client", "")}
+                className="mt-2.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+                style={{ borderColor: "var(--nx-border)", color: "var(--nx-accent-indigo)" }}
+              >
+                Limpiar filtro de cliente
+              </button>
+            </div>
           ) : effectiveData.rows.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm" style={{ color: "var(--nx-text-secondary)" }}>
               {q || activeFilterCount > 0 ? `Sin resultados para este filtro.` : `Sin ${config.label.toLowerCase()} para mostrar.`}

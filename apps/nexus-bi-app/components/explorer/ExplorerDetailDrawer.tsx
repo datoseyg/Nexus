@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { IssueLifecycleActions } from "./IssueLifecycleActions";
+import { ContractCoverageScheduleView } from "@/components/contracts/ContractCoverageScheduleView";
 import { EXPLORER_ENTITY_CONFIG, formatCell } from "@/lib/explorer-entity-config";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
 import type { ExplorerDetailResponse, ExplorerEntity } from "@/types/explorer";
+import type { ContractScheduleResult } from "@/types/contracts";
 
 interface ExplorerDetailDrawerProps {
   entity: ExplorerEntity | null;
@@ -127,6 +129,10 @@ export function ExplorerDetailDrawer({ entity, entityKey, capabilities, onClose,
                 {summary.is_manually_verified ? "Revisar identidad" : "Resolver identidad"}
               </button>
             </div>
+          )}
+
+          {entity === "contracts" && summary.schedule != null && (
+            <ContractCoverageScheduleView result={summary.schedule as ContractScheduleResult} />
           )}
 
           {entity === "issues" && typeof summary.entity_key === "string" && (

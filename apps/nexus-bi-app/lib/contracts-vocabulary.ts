@@ -1,3 +1,5 @@
+import type { ContractScheduleResult } from "@/types/contracts";
+
 // Vocabulario de negocio para Contratos - traduce los códigos técnicos de
 // config.contract_equipment_versions/matches (catálogos cerrados vía CHECK,
 // sql/070_config.sql) a etiquetas legibles. Mismo criterio que
@@ -124,6 +126,72 @@ export function contractMatchMethodLabel(code: unknown): string {
 }
 export function coverageTypeLabel(code: unknown): string {
   return labelOr(COVERAGE_TYPE_LABELS, code);
+}
+
+// Estado presentable del horario de cobertura contractual (Bloque 2 NEXUS
+// V3) - función PURA, único lugar que traduce ContractScheduleResult a un
+// mensaje de UI. Nunca colapsa los distintos casos en un genérico "Horario
+// no informado" (schedule inexistente / no verificable / 24/7 / 24/7 solo
+// crítico / ventanas explícitas / hábil sin tramo / sin cobertura / no
+// reconocido son estados DISTINGUIBLES, cada uno con su propio mensaje).
+// `kind` es para lógica de presentación (iconos/color); `message` es el
+// texto mostrado. `needsReview` es una marca ORTOGONAL (parse_status=
+// REVIEW_REQUIRED puede coexistir con cualquier `kind`), no un kind aparte.
+export interface ContractCoverageState {
+  kind:
+    | "UNAVAILABLE"
+    | "MISSING"
+    | "TWENTY_FOUR_SEVEN"
+    | "CRITICAL_ONLY_TWENTY_FOUR_SEVEN"
+    | "EXPLICIT_WINDOWS"
+    | "NO_EXPLICIT_WINDOWS"
+    | "BUSINESS_HOURS_UNSPECIFIED"
+    | "NO_COVERAGE"
+    | "UNKNOWN";
+  message: string;
+  needsReview: boolean;
+}
+
+export function resolveContractCoverageState(result: ContractScheduleResult): ContractCoverageState {
+  if (result.status === "UNAVAILABLE") {
+    return { kind: "UNAVAILABLE", message: "No fue posible verificar el horario contractual.", needsReview: false };
+  }
+  if (result.status === "MISSING") {
+    return { kind: "MISSING", message: "No existe una configuración horaria contractual para esta versión.", needsReview: false };
+  }
+
+  const { schedule } = result;
+  const needsReview = schedule.parseStatus === "REVIEW_REQUIRED";
+
+  switch (schedule.coverageType) {
+    case "FULL_24X7":
+      // windows.length === 0 es el caso ESPERADO y correcto para 24/7 -
+      // nunca se interpreta como "sin horario".
+      return { kind: "TWENTY_FOUR_SEVEN", message: "Cobertura 24/7.", needsReview };
+    case "CRITICAL_ONLY_24X7":
+      return { kind: "CRITICAL_ONLY_TWENTY_FOUR_SEVEN", message: "Cobertura 24/7 solo para eventos críticos.", needsReview };
+    case "FIXED_WINDOW":
+      if (schedule.windows.length === 0) {
+        // Inconsistencia de datos (no debería ocurrir dado el CHECK de la
+        // tabla) - mismo tratamiento que "sin tramo explícito", nunca
+        // inventa horas.
+        return { kind: "NO_EXPLICIT_WINDOWS", message: "Horario contractual sin tramo explícito.", needsReview };
+      }
+      return { kind: "EXPLICIT_WINDOWS", message: "Horario contractual con ventanas explícitas.", needsReview };
+    case "BUSINESS_HOURS_UNDEFINED":
+      return {
+        kind: "BUSINESS_HOURS_UNSPECIFIED",
+        message: "Horario hábil. El contrato no define un tramo horario explícito.",
+        needsReview
+      };
+    case "ON_DEMAND":
+    case "NOT_COVERED":
+    case "NOT_APPLICABLE":
+      return { kind: "NO_COVERAGE", message: "Contrato sin cobertura horaria definida.", needsReview };
+    case "UNKNOWN":
+    default:
+      return { kind: "UNKNOWN", message: "No fue posible verificar el horario contractual.", needsReview };
+  }
 }
 
 // Q Mant Prev x Año (preventive_maintenance_min/max/rule) - la ÚNICA cifra

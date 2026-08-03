@@ -95,7 +95,8 @@ function buildVersionInsertParams(record, resolvedStart, ctx) {
     ctx.importId, // source_import_id ($36)
     record.sourceRowNumber, // $37
     record.sourceRowHash, // $38
-    record.contractFingerprint // $39
+    record.contractFingerprint, // $39
+    f.clientNameKey // $40
   ];
 }
 
@@ -110,10 +111,10 @@ const VERSION_INSERT_SQL = `
     warranty_end_date, warranty_end_date_source,
     valid_from, valid_from_is_inferred, valid_from_basis, valid_from_precision, valid_from_source_field, valid_from_source_value_raw,
     valid_to, is_current, requires_review, normalization_status,
-    source_import_id, source_row_number, source_row_hash, contract_fingerprint
+    source_import_id, source_row_number, source_row_hash, contract_fingerprint, client_name_key
   ) VALUES (
     $1,$2,$3,$4,$5,$6, $7,$8, $9,$10,$11,$12, $13,$14,$15,$16,$17, $18,$19,$20,$21,$22,
-    $23,$24,$25, $26,$27, $28,$29,$30,$31,$32,$33, NULL, true, $34, $35, $36,$37,$38,$39
+    $23,$24,$25, $26,$27, $28,$29,$30,$31,$32,$33, NULL, true, $34, $35, $36,$37,$38,$39, $40
   ) RETURNING contract_version_id
 `;
 

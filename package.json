@@ -36,6 +36,8 @@
     "build:fieldbeat-report-dolibarr-view": "node src/marts/build-fieldbeat-report-dolibarr-view.js",
     "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js",
     "contracts:import": "node src/contracts/import-contracts.js",
+    "contracts:backfill-client-name-key": "node scripts/contracts/backfill-client-name-key.mjs",
+    "contracts:audit-client-name-key": "node scripts/contracts/audit-client-name-key-collisions.mjs",
     "contracts:test": "node scripts/run-test-suite.mjs test/contracts unit",
     "contracts:test:integration": "node scripts/run-test-suite.mjs test/contracts integration",
     "working-hours:test": "node scripts/run-test-suite.mjs test/working-hours unit",

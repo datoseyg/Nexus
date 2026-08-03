@@ -2,7 +2,8 @@ import { requireReadApiAccess } from "@/lib/auth/authorization";
 import { NextRequest, NextResponse } from "next/server";
 import { runQueryWithoutJit, serializeRows } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
-import { buildReportDetailQuery, fetchReportActiveIssues, parseFieldbeatTaskId, shapeReportDetail } from "@/lib/fieldbeat-report-detail-queries";
+import { buildReportDetailQuery, collectReportContractVersionIds, fetchReportActiveIssues, parseFieldbeatTaskId, shapeReportDetail, type ReportDetailQueryRow } from "@/lib/fieldbeat-report-detail-queries";
+import { fetchContractScheduleResultsByVersionIds } from "@/lib/explorer-sql";
 import { isFieldbeatOpenConfigured } from "@/lib/fieldbeat-open-url";
 import type { FieldbeatIssuesAvailability } from "@/types/fieldbeat-report-detail";
 
@@ -59,7 +60,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       console.error("[fieldbeat-report-detail] fetchReportActiveIssues falló, detalle degrada a issues.status=unavailable:", issuesResult.reason);
     }
 
-    const detail = shapeReportDetail(serializeRows(rows)[0] as never, isFieldbeatOpenConfigured(), issues);
+    // Horario de cobertura contractual (Bloque 2 NEXUS V3) - se recolectan
+    // los contract_version_id de TODOS los equipos/contratos de este reporte
+    // y se resuelven en UNA sola consulta batch (nunca una por contrato).
+    // Aislado de shapeReportDetail (sigue una función pura de shaping) - un
+    // fallo acá ya degrada a UNAVAILABLE por contrato dentro de
+    // fetchContractScheduleResultsByVersionIds, así que nunca hace falta un
+    // try/catch adicional en esta ruta.
+    const serializedRow = serializeRows(rows)[0] as never as ReportDetailQueryRow;
+    const scheduleByVersionId = await fetchContractScheduleResultsByVersionIds(collectReportContractVersionIds(serializedRow));
+
+    const detail = shapeReportDetail(serializedRow, isFieldbeatOpenConfigured(), issues, scheduleByVersionId);
     return NextResponse.json(detail, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return handleApiError(error);

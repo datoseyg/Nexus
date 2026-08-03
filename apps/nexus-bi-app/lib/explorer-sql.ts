@@ -18,6 +18,8 @@ import {
   parsePartsKey
 } from "./search-sql";
 import type { ExplorerEntity } from "@/types/explorer";
+import type { ContractScheduleResult } from "@/types/contracts";
+import { mapServiceWindowRowsToCoverageSchedule, type RawServiceWindowRow } from "./contract-coverage-schedule";
 
 export function clampExplorerPage(value: number): number {
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : 1;
@@ -1574,6 +1576,99 @@ export async function fetchProductDetail(ref: string) {
 // =============================================================================
 const CONTRACTS_FILTER_COLUMNS = ["client_name_canonical", "equipment_model", "serial_number"];
 
+// Facet exclusivo de Contratos (Bloque 2 NEXUS V3) - "contractClients", no
+// el "clientes" compartido con equipment/reports/parts (identidad de
+// FieldBeat, processed.fieldbeat_clients). value=client_name_key (clave de
+// folding estable, nunca mostrada al usuario), label=grafía canónica más
+// reciente (created_at, con contract_version_id como desempate
+// determinista). Mismo universo que el listado (is_current=true) -
+// garantiza por construcción que cada opción devuelta, consultada sin
+// otros filtros, produce count > 0.
+export async function fetchContractClientOptions(): Promise<Array<{ value: string; label: string }>> {
+  return runQuery<{ value: string; label: string }>(
+    `SELECT client_name_key AS value,
+            (array_agg(client_name_canonical ORDER BY created_at DESC, contract_version_id DESC))[1] AS label
+     FROM config.contract_equipment_analysis
+     WHERE is_current = true AND client_name_key IS NOT NULL AND BTRIM(client_name_key) <> ''
+     GROUP BY client_name_key
+     ORDER BY label`
+  );
+}
+
+// Batch para Reportes/After-Hours (Bloque 2 NEXUS V3) - UNA sola consulta
+// para TODOS los contract_version_id de un reporte (potencialmente varios
+// equipos, cada uno con 1+ contratos), nunca una consulta por contrato. El
+// caller (fieldbeat-report-detail-queries.ts vía
+// collectReportContractVersionIds) ya deduplicó y ya trae valid_from/valid_to
+// de CADA versión exacta - este batch nunca hace un lookup adicional de
+// vigencia. Un fallo aislado degrada TODOS los IDs de este batch a
+// UNAVAILABLE (nunca tumba el resto del detalle del reporte, que se resuelve
+// aparte).
+export async function fetchContractScheduleResultsByVersionIds(
+  versions: Array<{ contractVersionId: string; validFrom: string | null; validTo: string | null }>
+): Promise<Map<string, ContractScheduleResult>> {
+  const results = new Map<string, ContractScheduleResult>();
+  if (versions.length === 0) return results;
+
+  try {
+    const rows = await runQuery<RawServiceWindowRow & { contract_version_id: string }>(
+      `SELECT contract_version_id, coverage_type, coverage_condition, parse_status, timezone,
+              service_window_id, day_of_week, start_time, end_time, all_day, includes_holidays
+       FROM config.contract_service_window_analysis
+       WHERE contract_version_id = ANY($1::bigint[])`,
+      [versions.map(v => v.contractVersionId)]
+    );
+    const rowsByVersionId = new Map<string, RawServiceWindowRow[]>();
+    for (const row of rows) {
+      const key = String(row.contract_version_id);
+      const bucket = rowsByVersionId.get(key);
+      if (bucket) bucket.push(row);
+      else rowsByVersionId.set(key, [row]);
+    }
+    for (const version of versions) {
+      const versionRows = rowsByVersionId.get(version.contractVersionId);
+      results.set(
+        version.contractVersionId,
+        !versionRows || versionRows.length === 0
+          ? { status: "MISSING", schedule: null }
+          : { status: "AVAILABLE", schedule: mapServiceWindowRowsToCoverageSchedule(versionRows, version) }
+      );
+    }
+  } catch (error) {
+    console.error("fetchContractScheduleResultsByVersionIds: fallo en la consulta batch de schedules", error);
+    for (const version of versions) results.set(version.contractVersionId, { status: "UNAVAILABLE", schedule: null });
+  }
+  return results;
+}
+
+// Resuelve el horario de cobertura contractual de UN contract_version_id -
+// consulta SECUENCIAL (nunca paralela: contract_version_id es un resultado
+// de la consulta base de fetchContractDetail, no un input disponible de
+// antemano). Aislada en su propio try/catch: un fallo produce UNAVAILABLE
+// sin tumbar el resto del detalle del contrato ya resuelto. Ausencia de
+// filas (la vista ya es LEFT JOIN desde schedules, sql/105) solo ocurre
+// cuando NO existe fila en contract_service_schedules para esa versión ->
+// MISSING, nunca confundido con UNAVAILABLE.
+export async function resolveContractScheduleResult(
+  contractVersionId: string | number,
+  versionValidity: { validFrom: string | null; validTo: string | null }
+): Promise<ContractScheduleResult> {
+  try {
+    const rows = await runQuery<RawServiceWindowRow>(
+      `SELECT contract_version_id, coverage_type, coverage_condition, parse_status, timezone,
+              service_window_id, day_of_week, start_time, end_time, all_day, includes_holidays
+       FROM config.contract_service_window_analysis
+       WHERE contract_version_id = $1`,
+      [contractVersionId]
+    );
+    if (rows.length === 0) return { status: "MISSING", schedule: null };
+    return { status: "AVAILABLE", schedule: mapServiceWindowRowsToCoverageSchedule(rows, versionValidity) };
+  } catch (error) {
+    console.error(`resolveContractScheduleResult: fallo consultando schedule de contract_version_id=${contractVersionId}`, error);
+    return { status: "UNAVAILABLE", schedule: null };
+  }
+}
+
 // Vocabularios reales (lib/contracts-vocabulary.ts, ya validados contra el
 // CHECK real de sql/070_config.sql): contractStatus (8 valores), spaTier (8),
 // matchStatus (3, compartido con Equipos), partsCoverage (5). warrantyStatus
@@ -1607,7 +1702,12 @@ function contractsFilterConditions(pusher: ParamPusher, filter: string | undefin
   const conditions: string[] = [];
   const cond = ilikeConditions(pusher, filter, CONTRACTS_FILTER_COLUMNS);
   if (cond) conditions.push(cond);
-  if (extra?.client) conditions.push(`client_name_canonical = ${pusher.push(extra.client)}`);
+  // client_name_key (Bloque 2 NEXUS V3), NUNCA client_name_canonical -esta
+  // columna es una clave de folding estable, distinta de la grafía legible
+  // (ver fetchContractClientOptions() y src/contracts/client-name-key.js);
+  // el facet de Contratos envía client_name_key como value, así que
+  // compararlo acá contra la misma columna es correcto por construcción.
+  if (extra?.client) conditions.push(`client_name_key = ${pusher.push(extra.client)}`);
   if (extra?.contractStatus) conditions.push(`contract_status_code = ${pusher.push(extra.contractStatus)}`);
   if (extra?.spaTier) conditions.push(`spa_tier_code = ${pusher.push(extra.spaTier)}`);
   if (extra?.serviceWeekday !== undefined) conditions.push(`weekday_service = ${pusher.push(extra.serviceWeekday)}`);
@@ -1646,7 +1746,7 @@ export async function countContractsTotal(filter?: string, extra?: ContractsExpl
 export async function fetchContractDetail(equipmentKey: string) {
   const summaryRows = await runQuery<Record<string, unknown>>(
     `${EQUIPMENT_CANONICAL_CTE}
-     SELECT ca.equipment_key, ca.client_name_canonical, ca.site_abbreviation, ca.equipment_model, ca.serial_number,
+     SELECT ca.equipment_key, ca.contract_version_id, ca.client_name_canonical, ca.site_abbreviation, ca.equipment_model, ca.serial_number,
             ca.installation_month, ca.installation_date_precision, ca.contract_status_code, ca.spa_tier_code,
             ca.weekday_service, ca.weekend_service, ca.support_mode_code, ca.parts_coverage_code, ca.hw_refresh_code,
             ca.updates_code, ca.upgrades_code, ca.preventive_maintenance_min, ca.preventive_maintenance_max,
@@ -1664,6 +1764,17 @@ export async function fetchContractDetail(equipmentKey: string) {
   );
   if (summaryRows.length === 0) return null;
   const linkedEquipmentKey = summaryRows[0].linked_equipment_key as string | null;
+
+  // Horario de cobertura contractual (Bloque 2 NEXUS V3) - secuencial, DESPUÉS
+  // de conocer contract_version_id (resultado de la consulta de arriba, no
+  // disponible antes) - ver resolveContractScheduleResult(). Sigue siendo
+  // UNA sola request HTTP para el caller (esta función entera responde a UN
+  // GET del drawer), aunque internamente sean 2 pasos secuenciales de
+  // Postgres en vez de N en paralelo.
+  const scheduleResult = await resolveContractScheduleResult(summaryRows[0].contract_version_id as string | number, {
+    validFrom: (summaryRows[0].valid_from as string | null) ?? null,
+    validTo: (summaryRows[0].valid_to as string | null) ?? null
+  });
 
   const [historyRows, coveredEquipmentRows] = await Promise.all([
     runQuery<Record<string, unknown>>(
@@ -1692,7 +1803,7 @@ export async function fetchContractDetail(equipmentKey: string) {
   ]);
 
   return {
-    summary: serializeRows(summaryRows)[0],
+    summary: { ...serializeRows(summaryRows)[0], schedule: scheduleResult },
     related: { versionHistory: serializeRows(historyRows), coveredEquipment: serializeRows(coveredEquipmentRows) }
   };
 }

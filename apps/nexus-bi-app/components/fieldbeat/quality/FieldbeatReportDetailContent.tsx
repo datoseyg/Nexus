@@ -15,8 +15,30 @@ import {
 } from "@/lib/fieldbeat-report-labels";
 import { formatModelCell } from "@/lib/explorer-entity-config";
 import { contractStatusLabel, spaTierLabel, partsCoverageLabel } from "@/lib/contracts-vocabulary";
-import type { FieldbeatReportDetail } from "@/types/fieldbeat-report-detail";
+import { ContractCoverageScheduleView } from "@/components/contracts/ContractCoverageScheduleView";
+import type { FieldbeatReportDetail, FieldbeatContractRelation } from "@/types/fieldbeat-report-detail";
 import type { AfterHoursDrawerContext } from "@/lib/after-hours-detail-view";
+
+// Bloque 2 NEXUS V3 - "Horario aplicado al cálculo" SOLO existe cuando hay
+// un data_basis de tarea contra el cual comparar (contexto After-Hours);
+// fuera de ese contexto (equipo de un reporte sin afterHoursContext),
+// ContractCoverageScheduleView se monta sin appliedSource, nunca inventando
+// una comparación que no aplica. El horario global NUNCA se presenta como
+// si fuera parte del contrato - por eso dataBasisCode decide el texto, no
+// se asume "contractual" por default.
+function contractAppliedSource(afterHoursContext: AfterHoursDrawerContext | null | undefined): { label: string; reason?: string | null } | undefined {
+  if (!afterHoursContext) return undefined;
+  switch (afterHoursContext.dataBasisCode) {
+    case "CONTRACTUAL":
+      return { label: "Horario contractual del equipo" };
+    case "LEGACY_SCHEDULE":
+      return { label: "Horario global de respaldo", reason: afterHoursContext.finalReason.label };
+    case "NONE":
+      return { label: "Sin horario calculable" };
+    default:
+      return undefined;
+  }
+}
 
 function isReportDetailEmpty(): boolean {
   // Un detalle no tiene noción de "vacío" - existe (200), no existe (404,
@@ -344,10 +366,17 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
                     value={
                       item.contracts.length === 0
                         ? "Sin contrato vigente vinculado"
-                        : item.contracts.map(c => `${contractStatusLabel(c.statusCode)} · ${spaTierLabel(c.spaTierCode)}`).join(" / ")
+                        : item.contracts.map((c: FieldbeatContractRelation) => `${contractStatusLabel(c.statusCode)} · ${spaTierLabel(c.spaTierCode)}`).join(" / ")
                     }
                   />
                 </dl>
+                {item.contracts.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    {item.contracts.map((c: FieldbeatContractRelation) => (
+                      <ContractCoverageScheduleView key={c.contractVersionId} result={c.schedule} appliedSource={contractAppliedSource(afterHoursContext)} />
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

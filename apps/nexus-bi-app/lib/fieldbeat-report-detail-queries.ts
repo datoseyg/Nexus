@@ -25,6 +25,7 @@ import {
   type FieldbeatReportIssue,
   type FieldbeatTicketLink
 } from "@/types/fieldbeat-report-detail";
+import type { ContractScheduleResult } from "@/types/contracts";
 
 const ID_PATTERN = /^[1-9]\d*$/;
 
@@ -127,7 +128,9 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
                 'status_code', ca.contract_status_code,
                 'spa_tier_code', ca.spa_tier_code,
                 'parts_coverage_code', ca.parts_coverage_code,
-                'warranty_end_date', ca.warranty_end_date
+                'warranty_end_date', ca.warranty_end_date,
+                'valid_from', ca.valid_from,
+                'valid_to', ca.valid_to
               ) ORDER BY ca.contract_version_id), '[]'::json)
               FROM config.contract_equipment_analysis ca
               WHERE ca.is_current = true AND ca.fieldbeat_equipment_key = ANY(ce.source_equipment_keys)
@@ -258,6 +261,8 @@ interface RawContractRelationRow {
   spa_tier_code: string | null;
   parts_coverage_code: string | null;
   warranty_end_date: string | null;
+  valid_from: string | null;
+  valid_to: string | null;
 }
 
 interface RawEquipmentEnrichmentRow {
@@ -314,13 +319,23 @@ function shapeTicket(t: RawTicketRow): FieldbeatTicketLink {
   return { zendeskTicketId: t.zendesk_ticket_id, subject: t.subject, status: t.status, priority: t.priority, linkMethod: t.link_method };
 }
 
-function shapeContractRelation(c: RawContractRelationRow): FieldbeatContractRelation {
+// scheduleByVersionId (Bloque 2 NEXUS V3) - resuelto ANTES por el caller
+// (una sola consulta batch, ANY($1::bigint[]) - ver
+// fetchContractScheduleResultsByVersionIds en lib/explorer-sql.ts), nunca
+// una consulta por contrato acá. Esta función se mantiene pura (solo mapea
+// filas ya traídas), igual que el resto de shape*() de este archivo.
+// UNAVAILABLE de respaldo si el mapa no trae este contract_version_id (no
+// debería ocurrir si el caller batcheó exactamente los IDs de esta misma
+// fila, pero nunca se asume - "no encontrado en el mapa" nunca se confunde
+// con MISSING, que significa "se consultó y no existe schedule").
+function shapeContractRelation(c: RawContractRelationRow, scheduleByVersionId: Map<string, ContractScheduleResult>): FieldbeatContractRelation {
   return {
     contractVersionId: c.contract_version_id,
     statusCode: c.status_code,
     spaTierCode: c.spa_tier_code,
     partsCoverageCode: c.parts_coverage_code,
-    warrantyEndDate: c.warranty_end_date
+    warrantyEndDate: c.warranty_end_date,
+    schedule: scheduleByVersionId.get(c.contract_version_id) ?? { status: "UNAVAILABLE", schedule: null }
   };
 }
 
@@ -332,7 +347,11 @@ function shapeContractRelation(c: RawContractRelationRow): FieldbeatContractRela
 // fila en processed.fieldbeat_task_equipments ni en equipment_internal_ids)
 // - un ítem sin enriquecimiento correspondiente degrada a "sin dato" en vez
 // de fallar, nunca inventa un modelo/contrato.
-function mergeEquipmentEnrichment(items: FieldbeatEquipmentIdentityItem[], enrichment: RawEquipmentEnrichmentRow[]): FieldbeatEquipmentItem[] {
+function mergeEquipmentEnrichment(
+  items: FieldbeatEquipmentIdentityItem[],
+  enrichment: RawEquipmentEnrichmentRow[],
+  scheduleByVersionId: Map<string, ContractScheduleResult>
+): FieldbeatEquipmentItem[] {
   const byInternalId = new Map(enrichment.map(e => [e.internal_id.toUpperCase().trim(), e]));
 
   return items.map(item => {
@@ -355,9 +374,28 @@ function mergeEquipmentEnrichment(items: FieldbeatEquipmentIdentityItem[], enric
       modelResolutionStatus: match.model_resolution_status,
       equipmentFamily: match.equipment_family,
       serialNumbers: match.serial_numbers ?? [],
-      contracts: (match.contracts ?? []).map(shapeContractRelation)
+      contracts: (match.contracts ?? []).map(c => shapeContractRelation(c, scheduleByVersionId))
     };
   });
+}
+
+/** Recolecta los contract_version_id de TODOS los contratos de TODOS los
+ * equipos de una fila de detalle de reporte - el caller (route.ts) los
+ * batchea en una sola consulta antes de llamar a shapeReportDetail(), nunca
+ * una consulta por contrato. Exportada para que el caller no tenga que
+ * conocer la forma cruda de equipment_enrichment. */
+export function collectReportContractVersionIds(
+  row: Pick<ReportDetailQueryRow, "equipment_enrichment">
+): Array<{ contractVersionId: string; validFrom: string | null; validTo: string | null }> {
+  const seen = new Map<string, { contractVersionId: string; validFrom: string | null; validTo: string | null }>();
+  for (const item of row.equipment_enrichment ?? []) {
+    for (const c of item.contracts ?? []) {
+      if (!seen.has(c.contract_version_id)) {
+        seen.set(c.contract_version_id, { contractVersionId: c.contract_version_id, validFrom: c.valid_from, validTo: c.valid_to });
+      }
+    }
+  }
+  return Array.from(seen.values());
 }
 
 function shapeInconsistency(f: RawInconsistencyRow, primaryCode: InconsistencyCode | null): FieldbeatInconsistencyDetail {
@@ -377,14 +415,20 @@ function shapeInconsistency(f: RawInconsistencyRow, primaryCode: InconsistencyCo
 // de process.env acá) - esta función se mantiene pura/determinística dado
 // su input; la ruta es quien resuelve isFieldbeatOpenConfigured() y se lo
 // pasa (ver app/api/dashboard/fieldbeat/reports/[id]/route.ts).
-export function shapeReportDetail(row: ReportDetailQueryRow, fieldbeatOpenAvailable: boolean, issues: FieldbeatIssuesAvailability): FieldbeatReportDetail {
+export function shapeReportDetail(
+  row: ReportDetailQueryRow,
+  fieldbeatOpenAvailable: boolean,
+  issues: FieldbeatIssuesAvailability,
+  scheduleByVersionId: Map<string, ContractScheduleResult> = new Map()
+): FieldbeatReportDetail {
   const equipment = mergeEquipmentEnrichment(
     deriveEquipmentItems({
       equipmentInternalIds: row.equipment_internal_ids,
       teamIdentificationStatus: row.team_identification_status,
       matchedCandidateIds: row.matched_candidate_ids
     }),
-    row.equipment_enrichment ?? []
+    row.equipment_enrichment ?? [],
+    scheduleByVersionId
   );
 
   return {

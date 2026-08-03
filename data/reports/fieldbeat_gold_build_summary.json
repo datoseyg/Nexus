@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-02T09:19:31.595Z",
+  "generated_at": "2026-08-03T04:54:42.001Z",
   "inputs_used": [
     "data/marts/FieldBeat_Report_Dolibarr_Operational_View.csv",
     "data/marts/Used_Parts_Dolibarr_Match.csv"

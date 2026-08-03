@@ -103,10 +103,10 @@ before(async () => {
 
   const versionRes = await pool.query(
     `INSERT INTO config.contract_equipment_versions
-       (equipment_key, client_name_canonical, client_name_raw, equipment_model, installation_date_precision,
+       (equipment_key, client_name_canonical, client_name_raw, client_name_key, equipment_model, installation_date_precision,
         contract_status_code, spa_tier_code, support_mode_code, parts_coverage_code, hw_refresh_code, updates_code, upgrades_code,
         valid_from, valid_to, is_current, source_import_id, source_row_number, source_row_hash, contract_fingerprint)
-     VALUES ('SN:TEST1','Cliente Test','Cliente Test','EQ-1','UNKNOWN',
+     VALUES ('SN:TEST1','Cliente Test','Cliente Test','cliente test','EQ-1','UNKNOWN',
              'ACTIVE_AUTO_RENEW','NO_SPA','REMOTE','NOT_INCLUDED','NO','NO','NO',
              '2020-01-01', NULL, true, $1, 1, 'fixture-row-hash', 'fixture-fingerprint')
      RETURNING contract_version_id`,

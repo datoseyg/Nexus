@@ -98,12 +98,12 @@ async function insertContractFixture(
   const sourceRowId = sourceRow.rows[0].source_row_id;
   const contractVersion = await pool.query(
     `INSERT INTO config.contract_equipment_versions
-       (equipment_key, client_name_canonical, client_name_raw, equipment_model, serial_number,
+       (equipment_key, client_name_canonical, client_name_raw, client_name_key, equipment_model, serial_number,
         installation_date_precision, contract_status_code, spa_tier_code, support_mode_code,
         parts_coverage_code, hw_refresh_code, updates_code, upgrades_code,
         valid_from, source_import_id, source_row_number, source_row_hash, contract_fingerprint)
      VALUES
-       ($1, 'NEXUS_AH Test Contract Client', 'NEXUS_AH Test Contract Client', $2, $3,
+       ($1, 'NEXUS_AH Test Contract Client', 'NEXUS_AH Test Contract Client', 'nexus ah test contract client', $2, $3,
         'UNKNOWN', 'ACTIVE_AUTO_RENEW', 'GOLD', 'ONSITE_AND_REMOTE',
         'FULL_COVERAGE', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN',
         CURRENT_DATE, $4, $5, $6, $6)

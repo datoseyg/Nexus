@@ -72,6 +72,13 @@ async function insertContractFixture(
     pmMax: number | null;
     fieldbeatEquipmentKey: string;
     fieldbeatInternalId: string;
+    // Bloque 2 NEXUS V3 - permite que un caller inserte varios contratos con
+    // el MISMO cliente pero grafías/claves distintas (para probar la
+    // property "cada opción del facet -> count > 0" con datos reales de
+    // fixture, no solo con el cliente por defecto). Por defecto usa el
+    // cliente histórico de esta fixture (client_name_canonical/key fijos).
+    clientNameCanonical?: string;
+    clientNameKey?: string;
   }
 ) {
   contractRowCounter += 1;
@@ -83,21 +90,26 @@ async function insertContractFixture(
     [importId, contractRowCounter, rowHash]
   );
   const sourceRowId = sourceRow.rows[0].source_row_id;
+  const clientNameCanonical = params.clientNameCanonical ?? "Explorer Test Contract Client";
+  // client_name_key (Bloque 2 NEXUS V3, sql/104 SET NOT NULL) - NUNCA se
+  // omite: una fixture sin esta columna violaría el CHECK/NOT NULL real
+  // contra un esquema recién migrado, exactamente lo que este fix corrige.
+  const clientNameKey = params.clientNameKey ?? "explorer test contract client";
   const contractVersion = await pool.query(
     `INSERT INTO config.contract_equipment_versions
-       (equipment_key, client_name_canonical, client_name_raw, equipment_model, serial_number,
+       (equipment_key, client_name_canonical, client_name_raw, client_name_key, equipment_model, serial_number,
         installation_date_precision, contract_status_code, spa_tier_code, support_mode_code,
         parts_coverage_code, hw_refresh_code, updates_code, upgrades_code,
         preventive_maintenance_min, preventive_maintenance_max,
         valid_from, source_import_id, source_row_number, source_row_hash, contract_fingerprint)
      VALUES
-       ($1, 'Explorer Test Contract Client', 'Explorer Test Contract Client', $2, $3,
+       ($1, $9, $9, $10, $2, $3,
         'UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN',
         'UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN',
         $4, $5,
         CURRENT_DATE, $6, $7, $8, $8)
      RETURNING contract_version_id`,
-    [params.contractEquipmentKey, params.model, params.serial, params.pmMin, params.pmMax, importId, contractRowCounter, rowHash]
+    [params.contractEquipmentKey, params.model, params.serial, params.pmMin, params.pmMax, importId, contractRowCounter, rowHash, clientNameCanonical, clientNameKey]
   );
   const contractVersionId = contractVersion.rows[0].contract_version_id;
   const observation = await pool.query(
@@ -112,6 +124,38 @@ async function insertContractFixture(
      VALUES ($1, 'MATCHED', 'SERIAL_SUFFIX', $2, $2, $3, 1)`,
     [observationId, params.fieldbeatEquipmentKey, params.fieldbeatInternalId]
   );
+  return { contractVersionId: contractVersionId as string };
+}
+
+// Bloque 2 NEXUS V3 - inserta config.contract_service_schedules +
+// config.contract_service_windows para un contract_version_id ya creado por
+// insertContractFixture(). windows=[] reproduce el caso real y válido de un
+// schedule sin ventanas (FULL_24X7/CRITICAL_ONLY_24X7/BUSINESS_HOURS_UNDEFINED/
+// etc.) - la vista corregida (sql/105, LEFT JOIN) debe seguir mostrándolo
+// como AVAILABLE, nunca MISSING.
+async function insertContractScheduleFixture(
+  pool: pg.Pool,
+  contractVersionId: string,
+  params: {
+    coverageType: string;
+    parseStatus?: "OK" | "REVIEW_REQUIRED";
+    windows?: Array<{ dayOfWeek: string; startTime: string | null; endTime: string | null; allDay: boolean; includesHolidays: boolean }>;
+  }
+) {
+  const scheduleResult = await pool.query(
+    `INSERT INTO config.contract_service_schedules (contract_version_id, coverage_type, parse_status)
+     VALUES ($1, $2, $3)
+     RETURNING schedule_id`,
+    [contractVersionId, params.coverageType, params.parseStatus ?? "OK"]
+  );
+  const scheduleId = scheduleResult.rows[0].schedule_id;
+  for (const w of params.windows ?? []) {
+    await pool.query(
+      `INSERT INTO config.contract_service_windows (schedule_id, day_of_week, start_time, end_time, all_day, includes_holidays)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [scheduleId, w.dayOfWeek, w.startTime, w.endTime, w.allDay, w.includesHolidays]
+    );
+  }
 }
 
 before(async () => {
@@ -215,7 +259,7 @@ before(async () => {
   // fila física fue la efectivamente enlazada (el match apunta a la fila con
   // uuid real, NUNCA a la de uuid vacío - EQUIPMENT_CONTRACT_CANDIDATES_LATERAL
   // usa TODAS las source_equipment_keys, nunca solo una).
-  await insertContractFixture(adminPool, importId, {
+  const mainContract = await insertContractFixture(adminPool, importId, {
     contractEquipmentKey: "EXPLORER_TEST_CONTRACT_EQUIP",
     model: "ExplorerTestModel",
     serial: "EXPLORER-TEST-SERIAL",
@@ -224,6 +268,40 @@ before(async () => {
     fieldbeatEquipmentKey: "FIELDBEAT_EQUIPMENT|explorer-test-equip-uuid|EXPLORER_TEST_DUP_EQUIP",
     fieldbeatInternalId: "EXPLORER_TEST_DUP_EQUIP"
   });
+  // Bloque 2 NEXUS V3 - schedule FULL_24X7 SIN ventanas (caso real y válido,
+  // ver sql/105): la vista corregida debe mostrarlo como AVAILABLE, nunca
+  // "sin horario"/MISSING.
+  await insertContractScheduleFixture(adminPool, mainContract.contractVersionId, { coverageType: "FULL_24X7", windows: [] });
+
+  // Bloque 2 NEXUS V3 - segundo cliente contractual, distinto del anterior,
+  // con horario de ventanas explícitas (Lun-Vie) - prueba (a) que el facet
+  // contractClients devuelve MÁS de una opción real y cada una resuelve
+  // count>0, y (b) el mapper de horario con ventanas concretas de punta a
+  // punta contra Postgres real.
+  const secondClientContract = await insertContractFixture(adminPool, importId, {
+    contractEquipmentKey: "EXPLORER_TEST_SCHEDULE_CONTRACT",
+    model: "ExplorerScheduleModel",
+    serial: "EXPLORER-SCHEDULE-SERIAL",
+    pmMin: 1,
+    pmMax: 1,
+    fieldbeatEquipmentKey: "FIELDBEAT_EQUIPMENT|explorer-test-triple-uuid|EXPLORER_TEST_TRIPLE_EQUIP",
+    fieldbeatInternalId: "EXPLORER_TEST_TRIPLE_EQUIP",
+    clientNameCanonical: "Explorer Test Schedule Client",
+    clientNameKey: "explorer test schedule client"
+  });
+  await insertContractScheduleFixture(adminPool, secondClientContract.contractVersionId, {
+    coverageType: "FIXED_WINDOW",
+    windows: [
+      { dayOfWeek: "MON", startTime: "08:00:00", endTime: "17:00:00", allDay: false, includesHolidays: false },
+      { dayOfWeek: "TUE", startTime: "08:00:00", endTime: "17:00:00", allDay: false, includesHolidays: false },
+      { dayOfWeek: "WED", startTime: "08:00:00", endTime: "17:00:00", allDay: false, includesHolidays: false },
+      { dayOfWeek: "THU", startTime: "08:00:00", endTime: "17:00:00", allDay: false, includesHolidays: false },
+      { dayOfWeek: "FRI", startTime: "08:00:00", endTime: "17:00:00", allDay: false, includesHolidays: false }
+    ]
+  });
+  // EXPLORER_TEST_AMBIG_CONTRACT_A/B (abajo) quedan deliberadamente SIN fila
+  // de schedule - reproduce el caso MISSING (versión sin configuración
+  // horaria) contra datos reales, sin una fixture aparte.
 
   // (b)+(c) DOS contratos distintos vinculados al MISMO equipo canónico
   // (EXPLORER_TEST_AMBIG_EQUIP), con modelo Y mantenimiento preventivo
@@ -253,8 +331,16 @@ afterAll(async () => {
   await adminPool.query(`DELETE FROM marts.fieldbeat_report_dolibarr_operational_view WHERE fieldbeat_task_id BETWEEN $1 AND $2`, [TASK_ID_MIN, TASK_ID_MAX]);
   await adminPool.query(`DELETE FROM processed.fieldbeat_tasks WHERE fieldbeat_task_id BETWEEN $1 AND $2`, [TASK_ID_MIN, TASK_ID_MAX]);
   await adminPool.query(`DELETE FROM processed.zendesk_tickets WHERE zendesk_ticket_id = $1`, [TICKET_ID]);
-  const CONTRACT_EQUIPMENT_KEYS = ["EXPLORER_TEST_CONTRACT_EQUIP", "EXPLORER_TEST_AMBIG_CONTRACT_A", "EXPLORER_TEST_AMBIG_CONTRACT_B"];
-  // Orden inverso de FKs: matches -> observations -> versions -> source_rows -> import_runs.
+  const CONTRACT_EQUIPMENT_KEYS = [
+    "EXPLORER_TEST_CONTRACT_EQUIP",
+    "EXPLORER_TEST_SCHEDULE_CONTRACT",
+    "EXPLORER_TEST_AMBIG_CONTRACT_A",
+    "EXPLORER_TEST_AMBIG_CONTRACT_B"
+  ];
+  // Orden inverso de FKs: matches -> observations -> windows -> schedules ->
+  // versions -> source_rows -> import_runs. Bloque 2 NEXUS V3 agrega
+  // windows/schedules (config.contract_service_windows/_schedules) - deben
+  // borrarse ANTES de contract_equipment_versions (FK contract_version_id).
   await adminPool.query(
     `DELETE FROM config.contract_equipment_matches WHERE observation_id IN (
        SELECT observation_id FROM config.contract_equipment_observations WHERE equipment_key = ANY($1)
@@ -262,6 +348,20 @@ afterAll(async () => {
     [CONTRACT_EQUIPMENT_KEYS]
   );
   await adminPool.query(`DELETE FROM config.contract_equipment_observations WHERE equipment_key = ANY($1)`, [CONTRACT_EQUIPMENT_KEYS]);
+  await adminPool.query(
+    `DELETE FROM config.contract_service_windows WHERE schedule_id IN (
+       SELECT schedule_id FROM config.contract_service_schedules WHERE contract_version_id IN (
+         SELECT contract_version_id FROM config.contract_equipment_versions WHERE equipment_key = ANY($1)
+       )
+     )`,
+    [CONTRACT_EQUIPMENT_KEYS]
+  );
+  await adminPool.query(
+    `DELETE FROM config.contract_service_schedules WHERE contract_version_id IN (
+       SELECT contract_version_id FROM config.contract_equipment_versions WHERE equipment_key = ANY($1)
+     )`,
+    [CONTRACT_EQUIPMENT_KEYS]
+  );
   await adminPool.query(`DELETE FROM config.contract_equipment_versions WHERE equipment_key = ANY($1)`, [CONTRACT_EQUIPMENT_KEYS]);
   await adminPool.query(
     `DELETE FROM config.contract_source_rows WHERE import_id IN (SELECT import_id FROM config.contract_import_runs WHERE source_filename = 'explorer-test-fixture.csv')`
@@ -645,5 +745,158 @@ test("GET /api/explorer/detail - integración", { skip: !TEST_DB_URL }, async t 
       "Contratos y cobertura debe traer el mantenimiento preventivo real por equipo, no dejarlo vacío"
     );
     assert.ok(typeof body.summary.contract_equipment_count === "number" && body.summary.contract_equipment_count >= 1);
+  });
+});
+
+// Bloque 2 NEXUS V3 - filtro de Cliente en Contratos: facet y filtro deben
+// compartir la MISMA identidad (client_name_key), nunca client_name_canonical
+// (identidad de la planilla de contratos) comparado contra client_name
+// (identidad de FieldBeat, dos vocabularios no interoperables - ver
+// lib/explorer-sql.ts).
+// facetsGET (app/api/explorer/[entity]/facets/route.ts) importa
+// lib/explorer-filters-config.ts, que a su vez importa
+// components/ui/StatusBadge.tsx (para el facet "issues", preexistente, sin
+// relación con Bloque 2) - un .tsx no puede cargarse bajo
+// --experimental-strip-types (sin soporte JSX, límite real del runner de
+// tests, ver test/ts-extension-loader.mjs). Por eso estas pruebas llaman a
+// fetchContractClientOptions() directamente (la función real detrás del
+// caso "contractClients" en resolveFacet()) en vez de pasar por la ruta
+// HTTP de facets - prueba exactamente la misma lógica de identidad, sin el
+// límite de infraestructura del runner.
+test("GET /api/explorer/contracts - filtro de Cliente (Bloque 2 NEXUS V3)", { skip: !TEST_DB_URL }, async t => {
+  const { GET: listGET } = await import("../../app/api/explorer/[entity]/route.ts");
+  const { fetchContractClientOptions } = await import("../../lib/explorer-sql.ts");
+
+  await t.test("fetchContractClientOptions: value es la clave normalizada, label la grafía canónica - nunca el mismo texto crudo de FieldBeat", async () => {
+    const options = await fetchContractClientOptions();
+    assert.ok(Array.isArray(options) && options.length > 0);
+
+    const mainOption = options.find(o => o.label === "Explorer Test Contract Client");
+    assert.ok(mainOption, "el cliente de la fixture principal debe aparecer en el facet");
+    assert.equal(mainOption!.value, "explorer test contract client");
+    assert.notEqual(mainOption!.value, mainOption!.label, "value (clave) y label (grafía) nunca deben ser el mismo texto crudo");
+
+    const scheduleOption = options.find(o => o.label === "Explorer Test Schedule Client");
+    assert.ok(scheduleOption, "el segundo cliente de la fixture debe aparecer también");
+    assert.equal(scheduleOption!.value, "explorer test schedule client");
+  });
+
+  await t.test("propiedad: cada opción del facet contractClients, consultada sin otros filtros, devuelve count > 0", async () => {
+    asGerencia();
+    const options = await fetchContractClientOptions();
+    assert.ok(options.length > 0);
+
+    for (const option of options) {
+      const listResponse = await listGET(req(`/api/explorer/contracts?client=${encodeURIComponent(option.value)}&page=1&pageSize=25`), {
+        params: Promise.resolve({ entity: "contracts" })
+      });
+      assert.equal(listResponse.status, 200);
+      const body = await listResponse.json();
+      assert.ok(body.totalRows > 0, `client="${option.value}" (label="${option.label}") debe devolver al menos 1 fila -si esto falla, el facet y el filtro volvieron a divergir`);
+    }
+  });
+
+  await t.test("filtrar por client_name_key devuelve exactamente los contratos de ese cliente", async () => {
+    asGerencia();
+    const response = await listGET(req(`/api/explorer/contracts?client=${encodeURIComponent("explorer test contract client")}&page=1&pageSize=25`), {
+      params: Promise.resolve({ entity: "contracts" })
+    });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const equipmentKeys = body.rows.map((r: { equipment_key: unknown }) => r.equipment_key);
+    assert.ok(equipmentKeys.includes("EXPLORER_TEST_CONTRACT_EQUIP"));
+    assert.ok(!equipmentKeys.includes("EXPLORER_TEST_SCHEDULE_CONTRACT"), "no debe traer contratos de OTRO cliente");
+  });
+
+  await t.test("causa raíz reproducida: filtrar por la grafía canónica cruda (comportamiento pre-fix) ya NO es lo que envía el facet, y por sí sola no calza con client_name_key", async () => {
+    asGerencia();
+    // "Explorer Test Contract Client" es la grafía LEGIBLE (client_name_canonical),
+    // nunca lo que el facet corregido envía como value (client_name_key =
+    // "explorer test contract client", plegado). Confirma que el filtro
+    // compara contra la clave, no contra el texto crudo - exactamente la
+    // divergencia que causaba 0 resultados antes de este fix.
+    const response = await listGET(
+      req(`/api/explorer/contracts?client=${encodeURIComponent("Explorer Test Contract Client")}&page=1&pageSize=25`),
+      { params: Promise.resolve({ entity: "contracts" }) }
+    );
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.totalRows, 0, "la grafía canónica cruda nunca debe calzar directamente contra client_name_key - el frontend siempre debe enviar la clave del facet, nunca el label");
+  });
+
+  // "Exportación usa la misma semántica de filtro que el listado" se
+  // verifica por lectura de código (buildContractsListQuery/countContractsTotal
+  // y el handler de export comparten resolveExplorerEntityQuery/
+  // contractsFilterConditions - un solo punto, ver lib/explorer-sql.ts) y
+  // manualmente contra el servidor real (ver reporte final) - un test
+  // automatizado que importa dinámicamente app/api/explorer/[entity]/export/route.ts
+  // en este runner (node --experimental-strip-types, sin soporte JSX)
+  // choca con un límite preexistente del test runner (ERR_UNKNOWN_FILE_EXTENSION
+  // para un .tsx transitivo), no con un problema de esta corrección.
+});
+
+// Bloque 2 NEXUS V3 - horario de cobertura contractual: la vista corregida
+// (sql/105, LEFT JOIN) y el mapper único deben distinguir AVAILABLE (incluso
+// sin ventanas)/MISSING/estados de coverage_type, nunca colapsar todo en un
+// genérico "sin horario".
+test("GET /api/explorer/detail?entity=contracts - horario de cobertura (Bloque 2 NEXUS V3)", { skip: !TEST_DB_URL }, async t => {
+  const { GET } = await import("../../app/api/explorer/detail/route.ts");
+
+  await t.test("FULL_24X7 sin filas de ventana -> AVAILABLE, coverageType FULL_24X7, windows vacío (nunca MISSING)", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/detail?entity=contracts&key=${encodeURIComponent("EXPLORER_TEST_CONTRACT_EQUIP")}`));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const schedule = body.summary.schedule as { status: string; schedule: { coverageType: string; windows: unknown[] } | null };
+    assert.equal(schedule.status, "AVAILABLE");
+    assert.equal(schedule.schedule!.coverageType, "FULL_24X7");
+    assert.deepEqual(schedule.schedule!.windows, []);
+  });
+
+  await t.test("FIXED_WINDOW con 5 ventanas reales -> AVAILABLE, ventanas Lun->Vie en orden, horas presentes", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/detail?entity=contracts&key=${encodeURIComponent("EXPLORER_TEST_SCHEDULE_CONTRACT")}`));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const schedule = body.summary.schedule as { status: string; schedule: { coverageType: string; windows: Array<{ dayOfWeek: string; startTime: string; endTime: string }> } | null };
+    assert.equal(schedule.status, "AVAILABLE");
+    assert.equal(schedule.schedule!.coverageType, "FIXED_WINDOW");
+    assert.equal(schedule.schedule!.windows.length, 5);
+    assert.deepEqual(
+      schedule.schedule!.windows.map(w => w.dayOfWeek),
+      ["MON", "TUE", "WED", "THU", "FRI"],
+      "orden Lun->Vie, nunca alfabético"
+    );
+    assert.ok(schedule.schedule!.windows.every(w => w.startTime && w.endTime));
+  });
+
+  await t.test("contrato sin fila de schedule -> MISSING, nunca confundido con UNAVAILABLE", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/detail?entity=contracts&key=${encodeURIComponent("EXPLORER_TEST_AMBIG_CONTRACT_A")}`));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    const schedule = body.summary.schedule as { status: string; schedule: null };
+    assert.equal(schedule.status, "MISSING");
+    assert.equal(schedule.schedule, null);
+  });
+
+  await t.test("resiliencia: un fallo REAL en la consulta de schedule (contract_version_id no numérico, forzando un error de cast en Postgres) produce UNAVAILABLE sin tumbar el resto del detalle", async () => {
+    const { resolveContractScheduleResult } = await import("../../lib/explorer-sql.ts");
+    // No usa un mock -contract_version_id="not-a-bigint" fuerza un error real
+    // de conversión de tipo en el WHERE contract_version_id = $1 (bigint),
+    // el mismo tipo de fallo real que un timeout/desconexión produciría
+    // desde la perspectiva de resolveContractScheduleResult (una excepción
+    // en runQuery). Confirma que el try/catch degrada de verdad, no solo en
+    // el código fuente.
+    const result = await resolveContractScheduleResult("not-a-bigint", { validFrom: null, validTo: null });
+    assert.deepEqual(result, { status: "UNAVAILABLE", schedule: null });
+  });
+
+  await t.test("una sola request HTTP resuelve equipo + horario juntos (sin N+1) - confirmado por la forma de la respuesta, no por conteo de queries externo", async () => {
+    asGerencia();
+    const response = await GET(req(`/api/explorer/detail?entity=contracts&key=${encodeURIComponent("EXPLORER_TEST_CONTRACT_EQUIP")}`));
+    const body = await response.json();
+    assert.ok(body.summary.schedule, "el horario viaja DENTRO de la misma respuesta del detalle, nunca en una request aparte");
+    assert.ok(body.summary.equipment_model, "el resto del detalle del contrato sigue presente en la misma respuesta");
   });
 });
