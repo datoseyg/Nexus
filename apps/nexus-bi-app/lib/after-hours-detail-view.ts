@@ -5,6 +5,7 @@
 // despoja tipos, no transforma JSX).
 import { getCoverageClassificationLabel, getDataBasisLabel, getFallbackLabel, getReasonCodeLabel, getConfidenceTierLabel, type CodeLabel } from "./after-hours-labels";
 import type { AfterHoursDetailRow } from "@/types/after-hours";
+import { ANALYSIS_INTERVAL_BASIS_LABEL } from "./fieldbeat-report-labels";
 
 // Divide un valor "YYYY-MM-DD HH:mm:ss" (o con 'T') en fecha/hora legibles.
 // Nunca lanza con null/valores mal formados - degrada a "-".
@@ -69,10 +70,12 @@ export function resolveRowModel(resolvedModels: readonly string[] | null): { mod
 // "Tiempo cubierto"/"Tiempo fuera de cobertura" (antes decían "Minutos"
 // para un valor formateado en horas, inconsistencia semántica real).
 export interface AfterHoursDrawerContext {
-  date: string;
-  startTime: string;
-  endTime: string;
+  analysisStartLabel: string;
+  analysisEndLabel: string;
   durationLabel: string;
+  analysisIntervalBasisLabel: string;
+  analysisFallbackUsed: boolean;
+  analysisFallbackReason: string | null;
   coveredTimeLabel: string;
   uncoveredTimeLabel: string;
   weekdayAfterHoursLabel: string;
@@ -94,8 +97,8 @@ export interface AfterHoursDrawerContext {
 }
 
 export function buildAfterHoursDrawerContext(row: AfterHoursDetailRow): AfterHoursDrawerContext {
-  const start = splitDateTime(row.start_time);
-  const end = splitDateTime(row.estimated_end_time);
+  const start = splitDateTime(row.analysis_start_time);
+  const end = splitDateTime(row.analysis_end_time);
   const total = totalAfterHoursHours(row);
 
   const dataBasis = getDataBasisLabel(row.data_basis);
@@ -107,10 +110,12 @@ export function buildAfterHoursDrawerContext(row: AfterHoursDetailRow): AfterHou
   const contractualConfidence = row.data_basis === "CONTRACTUAL" ? getConfidenceTierLabel(row.contract_resolution_label) : null;
 
   return {
-    date: start.date,
-    startTime: start.time,
-    endTime: end.time,
+    analysisStartLabel: start.date === "-" ? "-" : `${start.date} ${start.time}`,
+    analysisEndLabel: end.date === "-" ? "-" : `${end.date} ${end.time}`,
     durationLabel: formatHoursOrDash(row.duration_hours),
+    analysisIntervalBasisLabel: ANALYSIS_INTERVAL_BASIS_LABEL[row.analysis_interval_basis] ?? row.analysis_interval_basis,
+    analysisFallbackUsed: row.analysis_fallback_used,
+    analysisFallbackReason: row.analysis_fallback_reason,
     coveredTimeLabel: formatHoursOrDash(row.business_hours),
     uncoveredTimeLabel: formatHoursOrDash(total),
     weekdayAfterHoursLabel: formatHoursOrDash(row.after_hours),

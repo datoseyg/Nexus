@@ -32,11 +32,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.join(__dirname, "..");
 const REPO_ROOT = path.join(APP_DIR, "..", "..");
 
-const CONTAINER_NAME = "nexus_bi_dev_local";
-const DB_NAME = "nexus_bi_dev_local_test"; // sufijo _test: se autoidentifica como desechable (db-safety.js)
+const CONTAINER_NAME = "nexus_bi_test_disposable";
+const DB_NAME = "nexus_bi_test_disposable";
 const DB_PASSWORD = "localtest";
-const DB_PORT = 55480;
-const ENV_FILE = path.join(APP_DIR, ".env.development.local");
+const DB_PORT = 55481;
+const ENV_FILE = path.join(APP_DIR, ".env.test.local");
 
 function run(cmd, args, opts = {}) {
   const result = spawnSync(cmd, args, { encoding: "utf8", ...opts });
@@ -107,6 +107,7 @@ function main() {
     const createResult = run("docker", [
       "run", "-d",
       "--name", CONTAINER_NAME,
+      "--label", "com.eyg.nexus.database-purpose=disposable-test",
       "-e", `POSTGRES_PASSWORD=${DB_PASSWORD}`,
       "-e", `POSTGRES_DB=${DB_NAME}`,
       "-p", `${DB_PORT}:5432`,

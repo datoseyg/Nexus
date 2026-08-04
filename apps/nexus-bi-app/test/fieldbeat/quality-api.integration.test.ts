@@ -439,7 +439,7 @@ test("KPI4: MATCHED+NO_MATCH en el mismo reporte no es fully traceable; grano l�
 
 // === KPI5 - consistencia temporal ===
 
-test("KPI5: cronología imposible, duración cero y duración NULL cuentan por separado", { skip: !TEST_DB_URL }, async () => {
+test("KPI5: orden de metadatos, duración cero y duración NULL cuentan por separado sin generar issue temporal", { skip: !TEST_DB_URL }, async () => {
   asGerencia();
   const { GET } = await import("../../app/api/dashboard/fieldbeat/overview/route.ts");
   const body = await (await GET(req("/api/dashboard/fieldbeat/overview", scoped()))).json();
@@ -457,10 +457,11 @@ test("KPI6: reporte con inconsistencias múltiples (Alta+Advertencia+Media) tien
   const { GET: getOverview } = await import("../../app/api/dashboard/fieldbeat/overview/route.ts");
   const body = await (await getOverview(req("/api/dashboard/fieldbeat/overview", scoped()))).json();
 
-  // Afectados en el fixture: 900003,900004,900005,900006,900007,900008,900009,900011,900013,900015 = 10.
-  assert.equal(body.kpi6.affectedReports, 10);
-  assert.equal(body.kpi6.highSeverityReports >= 3, true, "900005,900008,900009 tienen primary Alta (chronology/ambiguous)");
-  assert.equal(body.kpi6.totalSecondaryIssues >= 2, true, "900008 aporta >=2 findings secundarios (zero_duration + min_fields), 900009 aporta 0 extra");
+  // 900005 solo difería en metadatos administrativos y deja de integrar el
+  // universo de issues. Las demás brechas reales se conservan.
+  assert.equal(body.kpi6.affectedReports, 9);
+  assert.equal(body.kpi6.highSeverityReports >= 1, true, "las ambigüedades reales conservan severidad Alta");
+  assert.equal(body.kpi6.totalSecondaryIssues >= 1, true, "900008 aporta un finding secundario además del principal");
 });
 
 test("KPI6: desempate estable - PART_AMBIGUOUS_MATCH gana sobre TEAM_TEXT_AMBIGUOUS cuando ambos son Alta (900009)", { skip: !TEST_DB_URL }, async () => {
@@ -471,11 +472,11 @@ test("KPI6: desempate estable - PART_AMBIGUOUS_MATCH gana sobre TEAM_TEXT_AMBIGU
   assert.equal(rows.rows[0].severity, "Alta");
 });
 
-test("KPI6: 900008 tiene primary TEMPORAL_IMPOSSIBLE_CHRONOLOGY pese a tener también Advertencia y Media", { skip: !TEST_DB_URL }, async () => {
+test("KPI6: 900008 ignora la relación entre transición y programación y prioriza la brecha estructural", { skip: !TEST_DB_URL }, async () => {
   const rows = await adminPool.query(
     `SELECT code FROM quality.fieldbeat_report_primary_inconsistency WHERE fieldbeat_task_id = 900008`
   );
-  assert.equal(rows.rows[0].code, "TEMPORAL_IMPOSSIBLE_CHRONOLOGY");
+  assert.equal(rows.rows[0].code, "MIN_FIELDS_INCOMPLETE");
 });
 
 // === Filtros combinados y límites de fecha ===
@@ -517,7 +518,7 @@ test("filters: incluye los nuevos campos aditivos (tecnicos, severities, inconsi
   assert.ok(Array.isArray(body.clientes)); // contrato viejo intacto
   assert.ok(Array.isArray(body.tecnicos));
   assert.deepEqual(body.severities, ["Alta", "Media", "Baja", "Advertencia"]);
-  assert.ok(body.inconsistencyCodes.includes("TEMPORAL_IMPOSSIBLE_CHRONOLOGY"));
+  assert.equal(body.inconsistencyCodes.includes("TEMPORAL_IMPOSSIBLE_CHRONOLOGY"), false);
   assert.deepEqual(body.ticketStatuses, ["accessible", "missing_or_restricted", "none"]);
 });
 
@@ -1029,7 +1030,7 @@ test("detalle: inconsistencia principal (900008) coincide con quality.fieldbeat_
   assert.ok(body.inconsistencies.length >= 2, "900008 dispara varios códigos simultáneos");
   const primaryEntries = body.inconsistencies.filter((f: { isPrimary: boolean }) => f.isPrimary);
   assert.equal(primaryEntries.length, 1, "exactamente 1 inconsistencia marcada como principal");
-  assert.equal(primaryEntries[0].code, "TEMPORAL_IMPOSSIBLE_CHRONOLOGY");
+  assert.equal(primaryEntries[0].code, "MIN_FIELDS_INCOMPLETE");
   assert.ok(primaryEntries[0].explanation.length > 0);
   assert.ok(primaryEntries[0].suggestedAction.length > 0);
   // Orden: severidad (Alta antes que Media/Advertencia) primero.

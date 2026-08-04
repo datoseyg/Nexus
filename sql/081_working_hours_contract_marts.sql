@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS marts.fieldbeat_contract_coverage_segments (
   -- pudiera divergir).
   CHECK (date_trunc('second', segment_start_utc) = segment_start_utc),
   CHECK (date_trunc('second', segment_end_utc) = segment_end_utc),
-  CHECK (segment_end_utc > segment_start_utc),
   CHECK (segment_seconds = EXTRACT(EPOCH FROM (segment_end_utc - segment_start_utc))::integer),
 
   CHECK ((segment_calculation_status = 'CALCULATED') = (segment_coverage_state <> 'NOT_CALCULABLE')),
@@ -127,6 +126,21 @@ CREATE INDEX IF NOT EXISTS fbchs_reason_idx ON marts.fieldbeat_contract_coverage
 CREATE INDEX IF NOT EXISTS fbchs_source_idx ON marts.fieldbeat_contract_coverage_segments (schedule_source);
 CREATE INDEX IF NOT EXISTS fbchs_run_idx ON marts.fieldbeat_contract_coverage_segments (builder_run_id);
 
+ALTER TABLE marts.fieldbeat_contract_coverage_segments
+  DROP CONSTRAINT IF EXISTS fieldbeat_contract_coverage_segments_check;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'marts.fieldbeat_contract_coverage_segments'::regclass
+      AND conname = 'fieldbeat_contract_coverage_segments_nonnegative_interval'
+  ) THEN
+    ALTER TABLE marts.fieldbeat_contract_coverage_segments
+      ADD CONSTRAINT fieldbeat_contract_coverage_segments_nonnegative_interval
+      CHECK (segment_end_utc >= segment_start_utc);
+  END IF;
+END $$;
+
 -- ============================================================
 -- 2. Capa C -- marts.fieldbeat_working_hours_analysis_v2
 -- ============================================================
@@ -145,8 +159,23 @@ CREATE TABLE IF NOT EXISTS marts.fieldbeat_working_hours_analysis_v2 (
 
   start_time_utc timestamptz, start_time_local timestamp,
   end_time_utc timestamptz, end_time_local timestamp,
-  reported_end_raw text,
   duration_seconds integer,
+
+  -- Modelo temporal FieldBeat: start/end son SIEMPRE el intervalo analítico
+  -- resuelto. Los valores informados y la entrega conservan procedencia y
+  -- estado de parseo por separado; nunca se infieren desde agenda.
+  analysis_interval_basis text NOT NULL DEFAULT 'SCHEDULED_ESTIMATE' CHECK (analysis_interval_basis IN (
+    'REPORTED_WORK_INTERVAL', 'DELIVERY_FALLBACK', 'TASK_TRANSITIONS', 'SCHEDULED_ESTIMATE', 'INSUFFICIENT_DATA'
+  )),
+  analysis_fallback_used boolean NOT NULL DEFAULT true,
+  analysis_fallback_reason text,
+  reported_work_start_utc timestamptz, reported_work_start_local timestamp, reported_work_start_raw text,
+  reported_work_start_parse_status text NOT NULL DEFAULT 'MISSING' CHECK (reported_work_start_parse_status IN ('PARSED','MISSING','INVALID','AMBIGUOUS')),
+  reported_work_end_utc timestamptz, reported_work_end_local timestamp, reported_work_end_raw text,
+  reported_work_end_parse_status text NOT NULL DEFAULT 'MISSING' CHECK (reported_work_end_parse_status IN ('PARSED','MISSING','INVALID','AMBIGUOUS')),
+  delivered_at_utc timestamptz, delivered_at_local timestamp, delivered_raw text,
+  delivered_parse_status text NOT NULL DEFAULT 'MISSING' CHECK (delivered_parse_status IN ('PARSED','MISSING','INVALID','AMBIGUOUS')),
+  temporal_issue_codes text[] NOT NULL DEFAULT ARRAY[]::text[],
 
   covered_seconds integer,
   outside_coverage_seconds integer,
@@ -253,22 +282,6 @@ CREATE TABLE IF NOT EXISTS marts.fieldbeat_working_hours_analysis_v2 (
   -- === Invariantes completas de métricas (punto 8: IS NOT NULL Y >=0
   -- EXPLÍCITOS -nunca depender solo de una expresión aritmética con NULL,
   -- que en Postgres un CHECK con resultado NULL se trata como satisfecho) ===
-  CHECK (data_basis = 'NONE' OR (
-    duration_seconds IS NOT NULL AND duration_seconds > 0 AND
-    covered_seconds IS NOT NULL AND covered_seconds >= 0 AND
-    outside_coverage_seconds IS NOT NULL AND outside_coverage_seconds >= 0 AND
-    after_hours_weekday_seconds IS NOT NULL AND after_hours_weekday_seconds >= 0 AND
-    weekend_seconds IS NOT NULL AND weekend_seconds >= 0 AND
-    holiday_seconds IS NOT NULL AND holiday_seconds >= 0 AND
-    after_hours_total_seconds IS NOT NULL AND after_hours_total_seconds >= 0 AND
-    after_hours_rate IS NOT NULL AND
-    is_after_hours_task IS NOT NULL AND
-    (covered_seconds + outside_coverage_seconds = duration_seconds) AND
-    (after_hours_weekday_seconds + weekend_seconds + holiday_seconds = after_hours_total_seconds) AND
-    (outside_coverage_seconds = after_hours_total_seconds) AND
-    (is_after_hours_task = (after_hours_total_seconds > 0)) AND
-    (after_hours_rate = ROUND(after_hours_total_seconds::numeric / duration_seconds, 4))
-  )),
   CHECK (coverage_classification <> 'FULLY_COVERED' OR outside_coverage_seconds = 0),
   CHECK (coverage_classification <> 'NOT_COVERED' OR covered_seconds = 0),
   CHECK (coverage_classification <> 'PARTIALLY_COVERED' OR (covered_seconds > 0 AND outside_coverage_seconds > 0)),
@@ -276,6 +289,72 @@ CREATE TABLE IF NOT EXISTS marts.fieldbeat_working_hours_analysis_v2 (
   CHECK (data_basis = 'CONTRACTUAL' OR contract_resolution_confidence IS NULL),
   CHECK (data_basis <> 'CONTRACTUAL' OR contract_resolution_confidence IS NOT NULL)
 );
+
+-- Evolución idempotente de instalaciones existentes. La columna legado
+-- reported_end_raw representaba exactamente el término informado y se
+-- renombra en vez de duplicarla.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'marts' AND table_name = 'fieldbeat_working_hours_analysis_v2' AND column_name = 'reported_end_raw'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'marts' AND table_name = 'fieldbeat_working_hours_analysis_v2' AND column_name = 'reported_work_end_raw'
+  ) THEN
+    ALTER TABLE marts.fieldbeat_working_hours_analysis_v2 RENAME COLUMN reported_end_raw TO reported_work_end_raw;
+  END IF;
+END $$;
+
+ALTER TABLE marts.fieldbeat_working_hours_analysis_v2
+  ADD COLUMN IF NOT EXISTS analysis_interval_basis text NOT NULL DEFAULT 'SCHEDULED_ESTIMATE',
+  ADD COLUMN IF NOT EXISTS analysis_fallback_used boolean NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS analysis_fallback_reason text,
+  ADD COLUMN IF NOT EXISTS reported_work_start_utc timestamptz,
+  ADD COLUMN IF NOT EXISTS reported_work_start_local timestamp,
+  ADD COLUMN IF NOT EXISTS reported_work_start_raw text,
+  ADD COLUMN IF NOT EXISTS reported_work_start_parse_status text NOT NULL DEFAULT 'MISSING',
+  ADD COLUMN IF NOT EXISTS reported_work_end_utc timestamptz,
+  ADD COLUMN IF NOT EXISTS reported_work_end_local timestamp,
+  ADD COLUMN IF NOT EXISTS reported_work_end_raw text,
+  ADD COLUMN IF NOT EXISTS reported_work_end_parse_status text NOT NULL DEFAULT 'MISSING',
+  ADD COLUMN IF NOT EXISTS delivered_at_utc timestamptz,
+  ADD COLUMN IF NOT EXISTS delivered_at_local timestamp,
+  ADD COLUMN IF NOT EXISTS delivered_raw text,
+  ADD COLUMN IF NOT EXISTS delivered_parse_status text NOT NULL DEFAULT 'MISSING',
+  ADD COLUMN IF NOT EXISTS temporal_issue_codes text[] NOT NULL DEFAULT ARRAY[]::text[];
+
+-- Un intervalo informado con inicio=término es coherente (duración cero) y
+-- no debe sustituirse por agenda. La tasa fuera de cobertura se define como
+-- cero, igual que en aggregateSegments().
+ALTER TABLE marts.fieldbeat_working_hours_analysis_v2
+  DROP CONSTRAINT IF EXISTS fieldbeat_working_hours_analysis_v2_check11;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'marts.fieldbeat_working_hours_analysis_v2'::regclass
+      AND conname = 'fieldbeat_working_hours_analysis_v2_metrics_consistent'
+  ) THEN
+    ALTER TABLE marts.fieldbeat_working_hours_analysis_v2
+      ADD CONSTRAINT fieldbeat_working_hours_analysis_v2_metrics_consistent CHECK (data_basis = 'NONE' OR (
+        duration_seconds IS NOT NULL AND duration_seconds >= 0 AND
+        covered_seconds IS NOT NULL AND covered_seconds >= 0 AND
+        outside_coverage_seconds IS NOT NULL AND outside_coverage_seconds >= 0 AND
+        after_hours_weekday_seconds IS NOT NULL AND after_hours_weekday_seconds >= 0 AND
+        weekend_seconds IS NOT NULL AND weekend_seconds >= 0 AND
+        holiday_seconds IS NOT NULL AND holiday_seconds >= 0 AND
+        after_hours_total_seconds IS NOT NULL AND after_hours_total_seconds >= 0 AND
+        after_hours_rate IS NOT NULL AND is_after_hours_task IS NOT NULL AND
+        covered_seconds + outside_coverage_seconds = duration_seconds AND
+        after_hours_weekday_seconds + weekend_seconds + holiday_seconds = after_hours_total_seconds AND
+        outside_coverage_seconds = after_hours_total_seconds AND
+        is_after_hours_task = (after_hours_total_seconds > 0) AND
+        after_hours_rate = CASE WHEN duration_seconds = 0 THEN 0 ELSE ROUND(after_hours_total_seconds::numeric / duration_seconds, 4) END
+      ));
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS fbwha_v2_client_idx ON marts.fieldbeat_working_hours_analysis_v2 (client_key);
 CREATE INDEX IF NOT EXISTS fbwha_v2_status_idx ON marts.fieldbeat_working_hours_analysis_v2 (calculation_status);

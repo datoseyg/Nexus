@@ -217,7 +217,7 @@ export function GovernanceKpisSection({ onNavigateToInbox }: GovernanceKpisSecti
         />
         <ExceptionCard label="Verificaciones pendientes" value={pendingCount} tone="warning" onClick={() => onNavigateToInbox({ verification: "pending" })} />
         <ExceptionCard label="Aún detectadas tras corrección" value={stillDetectedCount} tone="danger" onClick={() => onNavigateToInbox({ verification: "still_detected" })} />
-        <ExceptionCard label="Dead letters (error operacional)" value={deadLetterCount} tone="danger" onClick={() => onNavigateToInbox({ verification: "dead_letter" })} />
+        <ExceptionCard label="Con error operacional" value={deadLetterCount} tone="danger" onClick={() => onNavigateToInbox({ verification: "dead_letter" })} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

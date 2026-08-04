@@ -633,7 +633,7 @@ zendesk_ticket_id,subject,status,priority,has_fieldbeat_report,fieldbeat_report_
 10252,Mirror roto,closed,high,true,1,false,3790,2026-07-06T18:01:00.000Z,2026-07-06T18:01:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,mabreu,UC CHRISTUS - SCA,Linac-109256,true,1,1010848,SINGLE_FIELDBEAT_REPORT
 10253,Falla al levantar CCP después de apagado,open,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10277,Consulta sobre estadística de Beam ON asociada a tratamientos desde MOSAIQ,new,,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10247,"Coordinación cambio de magnetron, discos duros y motor MLC ",open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10247,"Coordinación cambio de magnetron, discos duros y motor MLC ",open,high,true,1,false,3828,2026-08-03T13:50:00.000Z,2026-08-03T13:50:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,mreyes,INRAD,Linac-201172,true,1,4714201102,SINGLE_FIELDBEAT_REPORT
 10263,Oscilaciones Bancos de láminas Agility,pending,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10283,Falla reflectores MLC Versa1,new,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10250,Telemetro Axesse,closed,normal,true,1,false,3802,2026-07-11T18:53:00.000Z,2026-07-11T18:53:00.000Z,FINISHED,CORRECTIVA NO PROGRAMADA,aecheverria,UC CHRISTUS - CECA,Linac-153935,true,1,1500954,SINGLE_FIELDBEAT_REPORT
@@ -652,8 +652,9 @@ zendesk_ticket_id,subject,status,priority,has_fieldbeat_report,fieldbeat_report_
 10299,Falla de Chiller,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10290,Interlock High Water Pressure,closed,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10298,Infinity estado closed intermitente,pending,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10311,Interlock Dos.temp1,new,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10311,Interlock Dos.temp1,new,urgent,true,1,false,3823,2026-07-29T22:00:00.000Z,2026-07-29T22:00:00.000Z,FINISHED,CORRECTIVA PROGRAMADA,ccarrasquel,UC CHRISTUS - SCA,,false,0,,SINGLE_FIELDBEAT_REPORT
 10288,Interlock Gas Press,new,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
-10312,Cambio de disco servidor mosaiq,pending,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10312,Cambio de disco servidor mosaiq,open,normal,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10262,Falla reflector/MLC Infinity,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10293,Iso mecánico del colimador.,open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10316,Versa | Problemas en tubo de RX,new,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT

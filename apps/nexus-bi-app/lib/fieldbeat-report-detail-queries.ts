@@ -23,7 +23,10 @@ import {
   type FieldbeatModelResolutionStatus,
   type FieldbeatReportDetail,
   type FieldbeatReportIssue,
-  type FieldbeatTicketLink
+  type FieldbeatTicketLink,
+  type AnalysisIntervalBasis,
+  type TemporalField,
+  type TemporalParseStatus
 } from "@/types/fieldbeat-report-detail";
 import type { ContractScheduleResult } from "@/types/contracts";
 
@@ -76,6 +79,23 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
       q.start_time,
       q.last_transition_at,
       q.duration_minutes,
+      q.start_time + q.duration_minutes * INTERVAL '1 minute' AS scheduled_estimated_end_at,
+      w.start_time_utc AS analysis_start_at,
+      w.end_time_utc AS analysis_end_at,
+      w.duration_minutes AS analysis_duration_minutes,
+      w.analysis_interval_basis,
+      w.analysis_fallback_used,
+      w.analysis_fallback_reason,
+      w.reported_work_start_utc AS reported_work_start_at,
+      w.reported_work_start_raw,
+      w.reported_work_start_parse_status,
+      w.reported_work_end_utc AS reported_work_end_at,
+      w.reported_work_end_raw,
+      w.reported_work_end_parse_status,
+      w.delivered_at_utc AS delivered_at,
+      w.delivered_raw,
+      w.delivered_parse_status,
+      w.temporal_issue_codes,
       q.chronology_impossible,
       q.has_sufficient_timestamps,
       q.finished_zero_duration,
@@ -236,6 +256,7 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
       (SELECT pi.code FROM quality.fieldbeat_report_primary_inconsistency pi WHERE pi.fieldbeat_task_id = q.fieldbeat_task_id) AS primary_code
     FROM quality.fieldbeat_report_quality q
     LEFT JOIN quality.fieldbeat_team_identification ti ON ti.fieldbeat_task_id = q.fieldbeat_task_id
+    LEFT JOIN marts.fieldbeat_working_hours_analysis_current w ON w.fieldbeat_task_id = q.fieldbeat_task_id
     WHERE q.fieldbeat_task_id = $1
   `;
   return { sql, params: [fieldbeatTaskId] };
@@ -290,6 +311,23 @@ export interface ReportDetailQueryRow {
   start_time: string | null;
   last_transition_at: string | null;
   duration_minutes: number | null;
+  scheduled_estimated_end_at: string | null;
+  analysis_start_at: string | null;
+  analysis_end_at: string | null;
+  analysis_duration_minutes: number | string | null;
+  analysis_interval_basis: AnalysisIntervalBasis | null;
+  analysis_fallback_used: boolean | null;
+  analysis_fallback_reason: string | null;
+  reported_work_start_at: string | null;
+  reported_work_start_raw: string | null;
+  reported_work_start_parse_status: TemporalParseStatus | null;
+  reported_work_end_at: string | null;
+  reported_work_end_raw: string | null;
+  reported_work_end_parse_status: TemporalParseStatus | null;
+  delivered_at: string | null;
+  delivered_raw: string | null;
+  delivered_parse_status: TemporalParseStatus | null;
+  temporal_issue_codes: string[] | null;
   chronology_impossible: boolean;
   has_sufficient_timestamps: boolean;
   finished_zero_duration: boolean;
@@ -431,6 +469,30 @@ export function shapeReportDetail(
     scheduleByVersionId
   );
 
+  const normalizedTimestamp = (value: unknown): string | null => {
+    if (value === null || value === undefined) return null;
+    return value instanceof Date ? value.toISOString() : String(value);
+  };
+  const temporalField = (
+    value: unknown,
+    rawValue: unknown,
+    source: TemporalField["source"],
+    sourceField: string | null,
+    parseStatus?: TemporalParseStatus | null
+  ): TemporalField => {
+    const normalized = normalizedTimestamp(value);
+    return {
+      value: normalized,
+      rawValue: rawValue === null || rawValue === undefined ? null : String(rawValue),
+      source,
+      sourceField,
+      parseStatus: parseStatus ?? (normalized ? "PARSED" : "MISSING")
+    };
+  };
+  const deliveryDeltaMinutes = row.delivered_at && row.reported_work_end_at
+    ? Math.round((new Date(row.delivered_at).getTime() - new Date(row.reported_work_end_at).getTime()) / 60000)
+    : null;
+
   return {
     contractVersion: FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION,
     generatedAt: new Date().toISOString(),
@@ -445,15 +507,25 @@ export function shapeReportDetail(
       reportQualityStatus: row.report_quality_status,
       fieldbeatTaskDate: row.fieldbeat_task_date
     },
-    chronology: {
-      createdAt: row.created_at,
-      startTime: row.start_time,
-      lastTransitionAt: row.last_transition_at,
-      durationMinutes: row.duration_minutes === null ? null : Number(row.duration_minutes),
-      chronologyImpossible: row.chronology_impossible,
-      hasSufficientTimestamps: row.has_sufficient_timestamps,
-      finishedZeroDuration: row.finished_zero_duration,
-      finishedNullDuration: row.finished_null_duration
+    temporal: {
+      reportRegisteredAt: temporalField(row.created_at, row.created_at, "TASK_METADATA", "created_at"),
+      scheduledAt: temporalField(row.start_time, row.start_time, "TASK_METADATA", "start_time"),
+      estimatedDurationMinutes: row.duration_minutes === null ? null : Number(row.duration_minutes),
+      scheduledEstimatedEndAt: temporalField(row.scheduled_estimated_end_at, null, "DERIVED", "start_time + duration_minutes"),
+      reportedWorkStartAt: temporalField(row.reported_work_start_at, row.reported_work_start_raw, "FORM_FIELD", "HORA DE INICIO DEL TRABAJO", row.reported_work_start_parse_status),
+      reportedWorkEndAt: temporalField(row.reported_work_end_at, row.reported_work_end_raw, "FORM_FIELD", "HORA DE TERMINO DEL TRABAJO", row.reported_work_end_parse_status),
+      reportedWorkDurationMinutes: row.analysis_interval_basis === "REPORTED_WORK_INTERVAL" && row.analysis_duration_minutes !== null ? Number(row.analysis_duration_minutes) : null,
+      deliveredAt: temporalField(row.delivered_at, row.delivered_raw, "FORM_FIELD", "FECHA Y HORA DE ENTREGA", row.delivered_parse_status),
+      deliveryDeltaMinutes,
+      firstTransitionAt: temporalField(null, null, "STATUS_HISTORY", "first_transition_at"),
+      lastTransitionAt: temporalField(row.last_transition_at, row.last_transition_at, "STATUS_HISTORY", "last_transition_at"),
+      analysisIntervalStartAt: temporalField(row.analysis_start_at, null, "DERIVED", row.analysis_interval_basis),
+      analysisIntervalEndAt: temporalField(row.analysis_end_at, null, "DERIVED", row.analysis_interval_basis),
+      analysisIntervalDurationMinutes: row.analysis_duration_minutes === null ? null : Number(row.analysis_duration_minutes),
+      analysisIntervalBasis: row.analysis_interval_basis ?? "INSUFFICIENT_DATA",
+      analysisFallbackUsed: row.analysis_fallback_used ?? false,
+      analysisFallbackReason: row.analysis_fallback_reason,
+      temporalIssues: row.temporal_issue_codes ?? []
     },
     technician: row.has_technician && row.technician_names ? { name: row.technician_names } : null,
     client: row.has_client && row.client_key && row.client_name ? { clientKey: row.client_key, clientName: row.client_name } : null,

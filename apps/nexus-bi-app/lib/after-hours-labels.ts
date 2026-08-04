@@ -100,7 +100,7 @@ const REASON_CODE_LABELS: Record<AfterHoursCoverageReasonCode, CodeLabel> = {
   WITHIN_LEGACY_SCHEDULE: {
     label: "Horario global de respaldo",
     shortLabel: "Horario global",
-    description: "Se usó el horario laboral general porque el intento contractual no fue calculable.",
+    description: "Se usó el horario laboral general (8h30 - 17h30) porque el intento de relacionar un contrato no fue posible para esta instancia de trabajo.",
     severity: "info"
   },
   MULTIPLE_EQUIPMENT_SAME_COVERAGE: {

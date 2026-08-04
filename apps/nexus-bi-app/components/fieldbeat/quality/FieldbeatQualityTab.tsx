@@ -135,7 +135,7 @@ export function FieldbeatQualityTab({ query, onMeta }: FieldbeatQualityTabProps)
                 Consistencia temporal - advertencias separadas
               </h3>
               <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
-                <dt style={{ color: "var(--nx-text-muted)" }}>Cronología imposible</dt>
+                <dt style={{ color: "var(--nx-text-muted)" }}>Transición administrativa anterior a programación</dt>
                 <dd className="text-right font-semibold" style={{ color: data.kpi5.impossibleChronology > 0 ? "var(--nx-danger-fg)" : undefined }}>
                   {data.kpi5.impossibleChronology.toLocaleString("es-CL")}
                 </dd>

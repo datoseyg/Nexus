@@ -31,8 +31,11 @@ test("isAfterHoursRowSelected: mismo id -> true, id distinto -> false, nada sele
 function baseRow(overrides: Partial<AfterHoursDetailRow> = {}): AfterHoursDetailRow {
   return {
     fieldbeat_task_id: 500001,
-    start_time: "2026-03-10 22:00:00",
-    estimated_end_time: "2026-03-11 00:30:00",
+    analysis_start_time: "2026-03-10 22:00:00",
+    analysis_end_time: "2026-03-11 00:30:00",
+    analysis_interval_basis: "REPORTED_WORK_INTERVAL",
+    analysis_fallback_used: false,
+    analysis_fallback_reason: null,
     reported_end_raw: null,
     calculation_method: "NORMALIZED_INTERVAL",
     client_name: "ACME",
@@ -80,6 +83,15 @@ test("buildAfterHoursDrawerContext: coveredTimeLabel/uncoveredTimeLabel son hora
   assert.match(ctx.uncoveredTimeLabel, /^\d+([,.]\d)? h$/, `uncoveredTimeLabel debe ser un formato "X,X h": "${ctx.uncoveredTimeLabel}"`);
   assert.doesNotMatch(ctx.coveredTimeLabel, /min/i);
   assert.doesNotMatch(ctx.uncoveredTimeLabel, /min/i);
+});
+
+test("buildAfterHoursDrawerContext: expone intervalo multi-día con base y fallback explícitos", () => {
+  const ctx = buildAfterHoursDrawerContext(baseRow());
+  assert.equal(ctx.analysisStartLabel, "2026-03-10 22:00");
+  assert.equal(ctx.analysisEndLabel, "2026-03-11 00:30");
+  assert.equal(ctx.analysisIntervalBasisLabel, "Ejecución informada en formulario FieldBeat");
+  assert.equal(ctx.analysisFallbackUsed, false);
+  assert.equal(ctx.analysisFallbackReason, null);
 });
 
 test("buildAfterHoursDrawerContext: business_hours=null (data_basis=NONE) nunca muestra '0 h', muestra '—'", () => {

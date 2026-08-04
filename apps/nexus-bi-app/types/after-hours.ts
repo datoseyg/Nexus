@@ -140,8 +140,11 @@ export interface AfterHoursSummary extends AfterHoursPopulationCounts {
 
 export interface AfterHoursDetailRow extends AfterHoursContractualFields {
   fieldbeat_task_id: number;
-  start_time: string | null;
-  estimated_end_time: string | null; // nombre de campo JSON preservado por compatibilidad; la columna SQL fuente ahora es end_time_local (antes estimated_end_time_local), ver §6.4
+  analysis_start_time: string | null;
+  analysis_end_time: string | null;
+  analysis_interval_basis: "REPORTED_WORK_INTERVAL" | "DELIVERY_FALLBACK" | "TASK_TRANSITIONS" | "SCHEDULED_ESTIMATE" | "INSUFFICIENT_DATA";
+  analysis_fallback_used: boolean;
+  analysis_fallback_reason: string | null;
   reported_end_raw: string | null;
   calculation_method: string;
   client_name: string | null;

@@ -119,12 +119,12 @@ test("shapeReportRow: primary solo existe cuando code Y severity están presente
     report_quality_status: "REVIEW_REQUIRED",
     has_ticket_reported: false,
     ticket_accessible: null,
-    primary_code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY",
+    primary_code: "PART_AMBIGUOUS_MATCH",
     primary_severity: "Alta",
-    findings: [{ code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY", severity: "Alta" }],
+    findings: [{ code: "PART_AMBIGUOUS_MATCH", severity: "Alta" }],
     additional_participants: []
   });
-  assert.deepEqual(withPrimary.primary, { code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY", severity: "Alta" });
+  assert.deepEqual(withPrimary.primary, { code: "PART_AMBIGUOUS_MATCH", severity: "Alta" });
 
   const clean = shapeReportRow({
     fieldbeat_task_id: "900001",

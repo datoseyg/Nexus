@@ -198,6 +198,22 @@ before(async () => {
     fieldName: "NOMBRE DEL INGENIERO ADICIONAL", fieldIndex: 5, fieldValue: "MANUEL REYES,GONZALO LOPEZ",
     possibleValues: ROSTER
   });
+
+  // El resumen laboral consume exclusivamente el intervalo canónico ya
+  // materializado por working-hours. El fixture debe recorrer el mismo
+  // pipeline productivo: nunca reintroducir un parser SQL paralelo dentro
+  // de quality.fieldbeat_report_labor_summary.
+  process.env.WORKING_HOURS_DB_URL = TEST_DB_URL;
+  // @ts-expect-error El builder raíz es JavaScript ESM y no publica .d.ts.
+  const { runApply } = await import("../../../../src/working-hours/build-working-hours.js");
+  const previousCwd = process.cwd();
+  process.chdir(path.join(__dirname, "..", "..", "..", ".."));
+  try {
+    const applyResult = await runApply({ from: null, to: null });
+    assert.equal(applyResult.ok, true, "el builder canónico debe publicar los intervalos temporales del fixture");
+  } finally {
+    process.chdir(previousCwd);
+  }
 });
 
 afterAll(async () => {

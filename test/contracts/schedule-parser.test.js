@@ -52,12 +52,71 @@ test("Lun a Jue X - Vie Y -> FIXED_WINDOW, 5 ventanas (4 iguales + 1 distinta)",
   assert.equal(fri.endTime, "16:00");
 });
 
-test("'Horario hábil' -> queda en revisión, nunca se asume un horario", () => {
-  const r = parseAttentionSchedule({ attentionScheduleRaw: "Horario hábil" });
-  assert.equal(r.coverageType, "BUSINESS_HOURS_UNDEFINED");
-  assert.equal(r.parseStatus, "REVIEW_REQUIRED");
-  assert.equal(r.serviceWindowRows.length, 0);
-  assert.equal(r.issues[0].issueType, "AMBIGUOUS_BUSINESS_HOURS");
+test("'Horario hábil' -> Lun-Vie 08:30-17:30 sin festivos", () => {
+  const r = parseAttentionSchedule({
+    attentionScheduleRaw: "Horario hábil"
+  });
+
+  assert.equal(r.coverageType, "FIXED_WINDOW");
+  assert.equal(r.coverageCondition, null);
+  assert.equal(r.parseStatus, "OK");
+  assert.deepEqual(r.issues, []);
+
+  assert.deepEqual(r.serviceWindowRows, [
+    {
+      dayOfWeek: "MON",
+      startTime: "08:30",
+      endTime: "17:30",
+      allDay: false,
+      includesHolidays: false
+    },
+    {
+      dayOfWeek: "TUE",
+      startTime: "08:30",
+      endTime: "17:30",
+      allDay: false,
+      includesHolidays: false
+    },
+    {
+      dayOfWeek: "WED",
+      startTime: "08:30",
+      endTime: "17:30",
+      allDay: false,
+      includesHolidays: false
+    },
+    {
+      dayOfWeek: "THU",
+      startTime: "08:30",
+      endTime: "17:30",
+      allDay: false,
+      includesHolidays: false
+    },
+    {
+      dayOfWeek: "FRI",
+      startTime: "08:30",
+      endTime: "17:30",
+      allDay: false,
+      includesHolidays: false
+    }
+  ]);
+});
+
+test("normaliza variantes de 'Horario hábil'", () => {
+  for (const raw of [
+    "Horario hábil",
+    "HORARIO HÁBIL",
+    "horario habil",
+    "  Horario hábil  "
+  ]) {
+    const r = parseAttentionSchedule({
+      attentionScheduleRaw: raw
+    });
+
+    assert.equal(r.coverageType, "FIXED_WINDOW");
+    assert.equal(r.parseStatus, "OK");
+    assert.equal(r.serviceWindowRows.length, 5);
+    assert.deepEqual(r.issues, []);
+  }
 });
 
 test("'N/A' -> NOT_APPLICABLE, revisión, sin ventanas inventadas", () => {

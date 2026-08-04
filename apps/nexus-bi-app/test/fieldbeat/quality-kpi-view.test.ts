@@ -92,7 +92,7 @@ test("viewKpi4: porcentaje se calcula a nivel de reporte, nunca mezclado con gra
   assert.match(view.interpretation, /927/);
 });
 
-test("viewKpi5: cronología imposible fuerza tone attention aunque el porcentaje sea alto", () => {
+test("viewKpi5: una transición administrativa anterior a programación es descriptiva, no fuerza tono de error", () => {
   const kpi: Kpi5TemporalConsistency = {
     evaluableReports: 3741,
     consistentReports: 3722,
@@ -105,8 +105,8 @@ test("viewKpi5: cronología imposible fuerza tone attention aunque el porcentaje
     apparentCreationLagDisclaimer: "Proxy exploratorio"
   };
   const view = viewKpi5(kpi);
-  assert.equal(view.tone, "attention");
-  assert.match(view.interpretation, /19 con cronología imposible/);
+  assert.equal(view.tone, "neutral");
+  assert.match(view.interpretation, /19 con transición administrativa anterior a la programación \(dato descriptivo, no issue\)/);
 });
 
 test("viewKpi6: severidad Alta > 0 fuerza tone attention", () => {

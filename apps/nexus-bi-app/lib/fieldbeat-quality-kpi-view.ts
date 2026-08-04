@@ -109,15 +109,15 @@ export function viewKpi5(kpi: Kpi5TemporalConsistency): FieldbeatKpiCardViewMode
   const isZero = kpi.evaluableReports === 0;
   return {
     id: "kpi5",
-    title: "Consistencia temporal",
+    title: "Metadatos temporales del registro",
     valueLabel: pct(kpi.percentage),
     contextLabel: `${intFmt(kpi.consistentReports)} / ${intFmt(kpi.evaluableReports)} reportes con timestamps suficientes`,
     interpretation: isZero
       ? "No hay reportes con timestamps suficientes con los filtros actuales."
-      : `${intFmt(kpi.impossibleChronology)} con cronología imposible · ${intFmt(kpi.zeroDurationWarnings)} con duración cero · ${intFmt(kpi.nullDurationWarnings)} con duración sin registrar (advertencias).`,
-    tone: kpi.impossibleChronology > 0 ? "attention" : isZero ? "attention" : "neutral",
+      : `${intFmt(kpi.impossibleChronology)} con transición administrativa anterior a la programación (dato descriptivo, no issue) · ${intFmt(kpi.zeroDurationWarnings)} con duración cero · ${intFmt(kpi.nullDurationWarnings)} con duración sin registrar (advertencias).`,
+    tone: isZero ? "attention" : "neutral",
     isZeroDenominator: isZero,
-    drillDownLabel: "Ver cronologías imposibles"
+    drillDownLabel: "Ver metadatos temporales"
   };
 }
 

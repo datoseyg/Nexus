@@ -40,6 +40,7 @@ import { spawn } from "node:child_process";
 import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { assertPersistentLocalDatabase, persistentLocalDatabaseUrl } from "./lib/persistent-local-database.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(here, "..");
@@ -66,6 +67,15 @@ if (governanceResult.error) {
     "wrapper no las necesita). Generarlo con: node scripts/set-local-governance-role-passwords.mjs --url=<destino local>."
   );
 }
+
+// El destino analitico local es gobernado por el orquestador, no por los
+// archivos .env. Esto evita que un .env historico vuelva a dirigir imports
+// a Cloud o a la base desechable usada por tests.
+const persistentDatabaseUrl = persistentLocalDatabaseUrl(process.env);
+await assertPersistentLocalDatabase(persistentDatabaseUrl);
+process.env.WORKING_HOURS_DB_URL = persistentDatabaseUrl;
+process.env.HOLIDAYS_DB_URL = persistentDatabaseUrl;
+process.env.SUPABASE_DB_URL_DIRECT = persistentDatabaseUrl;
 
 const [cmd, ...args] = process.argv.slice(2);
 if (!cmd) {

@@ -4,7 +4,7 @@ import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
-import { AFTER_HOURS_VIEW, resolveEstimatedEndTime } from "@/lib/after-hours-metrics";
+import { AFTER_HOURS_VIEW } from "@/lib/after-hours-metrics";
 import { EQUIPMENT_CANONICAL_CTE, EQUIPMENT_MODEL_RESOLUTION_COLUMNS, equipmentContractCandidatesLateral } from "@/lib/explorer-sql";
 import { resolveRowModel } from "@/lib/after-hours-detail-view";
 import type {
@@ -24,17 +24,14 @@ export const runtime = "nodejs";
 // marts.fieldbeat_working_hours_analysis_current (nunca las tablas GOLD ni
 // el mart legado directo). Ver docs/AFTER_HOURS_METRICS.md.
 //
-// §6.4: branching temporal preservado exacto - EXACT_REPORTED_START_END
-// muestra reported_end_raw; el resto usa el fin normalizado. La columna
-// SQL fuente de ese "fin normalizado" cambió de nombre: el mart legado la
-// llamaba estimated_end_time_local, la vista nueva la expone como
-// end_time_local (sql/082) - el CAMPO JSON de salida sigue llamándose
-// estimated_end_time por compatibilidad con AfterHoursDetailTable.tsx, que
-// nunca cambia.
+// El intervalo expuesto es el intervalo canónico de análisis resuelto por
+// el pipeline. La API lo nombra explícitamente analysis_start_time /
+// analysis_end_time y adjunta base y fallback; nunca lo presenta como si
+// fuera por definición el horario reportado, planificado o una estimación.
 //
 // §11: data_basis=NONE nunca inventa 0 - las columnas de minutos ya vienen
 // NULL desde la vista (COALESCE nunca las convierte a 0, ver sql/082); el
-// intervalo (start_time/estimated_end_time) se preserva cuando el motivo
+// intervalo canónico se preserva cuando el motivo
 // no es terminal - eso ya lo resuelve la vista/Capa C (bicondicional real,
 // sql/081: start_time_utc IS NULL <=> reason terminal), esta ruta solo lee
 // el resultado, nunca recalcula la condición.
@@ -123,6 +120,9 @@ export async function GET(request: NextRequest) {
       contract_resolution_confidence: string | null;
       contract_resolution_label: string | null;
       confidence_model_version: string | null;
+      analysis_interval_basis: AfterHoursDetailRow["analysis_interval_basis"];
+      analysis_fallback_used: boolean;
+      analysis_fallback_reason: string | null;
       primary_equipment_key: string | null;
       participant_count: string | null;
       resolved_models: string[] | null;
@@ -159,6 +159,9 @@ export async function GET(request: NextRequest) {
           w.contract_resolution_confidence,
           w.contract_resolution_label,
           w.confidence_model_version,
+          w.analysis_interval_basis,
+          w.analysis_fallback_used,
+          w.analysis_fallback_reason,
           w.primary_equipment_key,
           ls.participant_count,
           (
@@ -199,8 +202,11 @@ export async function GET(request: NextRequest) {
     const mapped: AfterHoursDetailRow[] = rows.map(row => {
       return {
         fieldbeat_task_id: Number(row.fieldbeat_task_id),
-        start_time: row.start_time_local ? String(row.start_time_local) : null,
-        estimated_end_time: resolveEstimatedEndTime(row.calculation_method, row.reported_end_raw, row.end_time_local),
+        analysis_start_time: row.start_time_local ? String(row.start_time_local) : null,
+        analysis_end_time: row.end_time_local ? String(row.end_time_local) : null,
+        analysis_interval_basis: row.analysis_interval_basis,
+        analysis_fallback_used: row.analysis_fallback_used,
+        analysis_fallback_reason: row.analysis_fallback_reason,
         reported_end_raw: row.reported_end_raw,
         client_name: row.client_name,
         equipment_internal_ids: row.equipment_internal_ids,

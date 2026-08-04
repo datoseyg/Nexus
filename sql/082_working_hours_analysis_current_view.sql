@@ -46,7 +46,10 @@ SELECT
   COALESCE(c.start_time_utc, l.start_time_utc) AS start_time_utc,
   COALESCE(c.start_time_local, l.start_time_local) AS start_time_local,
   c.end_time_utc, c.end_time_local,
-  COALESCE(c.reported_end_raw, l.reported_end_raw) AS reported_end_raw,
+  -- Alias legado conservado en su posición para que CREATE OR REPLACE VIEW
+  -- sea compatible con instalaciones existentes. Consumidores nuevos usan
+  -- reported_work_end_raw, anexado al final con semántica explícita.
+  COALESCE(c.reported_work_end_raw, l.reported_end_raw) AS reported_end_raw,
 
   -- Derivación segundos -> minutos, una sola vez, acá:
   COALESCE(c.duration_seconds / 60.0, l.duration_minutes) AS duration_minutes,
@@ -80,7 +83,19 @@ SELECT
     ELSE 'NONE'
   END AS data_basis,
   c.calculated_at,   -- NOT NULL en Capa C siempre que exista fila (ver sql/081); NULL natural vía LEFT JOIN cuando c no existe (relleno transitorio del mart legado o NONE puro)
-  c.builder_run_id
+  c.builder_run_id,
+
+  -- Contrato temporal explícito (columnas anexadas: Postgres no permite
+  -- insertar/renombrar columnas intermedias mediante CREATE OR REPLACE).
+  c.analysis_interval_basis,
+  c.analysis_fallback_used,
+  c.analysis_fallback_reason,
+  c.reported_work_start_utc, c.reported_work_start_local, c.reported_work_start_raw, c.reported_work_start_parse_status,
+  c.reported_work_end_utc, c.reported_work_end_local,
+  COALESCE(c.reported_work_end_raw, l.reported_end_raw) AS reported_work_end_raw,
+  c.reported_work_end_parse_status,
+  c.delivered_at_utc, c.delivered_at_local, c.delivered_raw, c.delivered_parse_status,
+  c.temporal_issue_codes
 
 FROM processed.fieldbeat_tasks t
 LEFT JOIN marts.fieldbeat_working_hours_analysis_v2 c ON c.fieldbeat_task_id = t.fieldbeat_task_id

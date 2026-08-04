@@ -30,6 +30,23 @@ export function formatFieldbeatDateTime(value: string | null): string {
   return value ? formatDateTimeEsCl(value) : "Sin información";
 }
 
+export function formatFieldbeatDuration(minutes: number | null): string {
+  if (minutes === null) return "Sin información";
+  const rounded = Math.round(minutes);
+  const hours = Math.floor(rounded / 60);
+  const remaining = rounded % 60;
+  if (hours === 0) return `${remaining} min`;
+  return remaining === 0 ? `${hours} h` : `${hours} h ${remaining} min`;
+}
+
+export const ANALYSIS_INTERVAL_BASIS_LABEL: Record<string, string> = {
+  REPORTED_WORK_INTERVAL: "Ejecución informada en formulario FieldBeat",
+  DELIVERY_FALLBACK: "Entrega (fallback gobernado)",
+  TASK_TRANSITIONS: "Transiciones de estado (fallback gobernado)",
+  SCHEDULED_ESTIMATE: "Programación estimada",
+  INSUFFICIENT_DATA: "Datos temporales insuficientes"
+};
+
 // HOTFIX de integridad de datos FieldBeat (post-Phase 6) - fuente única de
 // verdad para las 5 superficies (drawer/PDF/CSV/Búsqueda/uso-reciente).
 // NO_MATCH NUNCA debe leerse como "no existe" - solo "sin correspondencia

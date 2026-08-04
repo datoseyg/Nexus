@@ -4,7 +4,7 @@
 // Conserva SIEMPRE contractual_attempt_status/_coverage_classification/
 // _reason_code, incluso cuando el resultado final es LEGACY_SCHEDULE o NONE.
 
-import { resolveInterval, calculateConfidence } from "./interval-resolver.js";
+import { resolveReportAnalysisInterval, calculateConfidence } from "./interval-resolver.js";
 import { resolveEquipmentContract } from "./contract-resolver.js";
 import { partitionInterval } from "./segment-boundaries.js";
 import { segmentLegacyCorrectedV2 } from "./legacy-global-schedule.js";
@@ -93,7 +93,28 @@ function buildContractSegments(startUtcMs, endUtcMs, resolution, holidayLookup) 
  * @returns {object} fila lista para persistir en Capa C + segmentos de Capa B + filas de bridge
  */
 export function buildTaskCoverage({ task, confidenceContext, equipmentInputs, holidayLookup, businessHoursCfg }) {
-  const interval = resolveInterval({ startTimeRaw: task.startTimeRaw, reportedStartRaw: task.reportedStartRaw, reportedEndRaw: task.reportedEndRaw, durationMinutes: task.durationMinutes });
+  const interval = resolveReportAnalysisInterval({
+    startTimeRaw: task.startTimeRaw,
+    reportedStartRaw: task.reportedStartRaw,
+    reportedEndRaw: task.reportedEndRaw,
+    deliveredRaw: task.deliveredRaw,
+    durationMinutes: task.durationMinutes
+  });
+  const temporal = {
+    analysisIntervalBasis: interval.analysisIntervalBasis,
+    analysisFallbackUsed: interval.analysisFallbackUsed,
+    analysisFallbackReason: interval.analysisFallbackReason,
+    reportedWorkStartAt: interval.reportedStart.value,
+    reportedWorkStartRaw: interval.reportedStart.rawValue,
+    reportedWorkStartParseStatus: interval.reportedStart.parseStatus,
+    reportedWorkEndAt: interval.reportedEnd.value,
+    reportedWorkEndRaw: interval.reportedEnd.rawValue,
+    reportedWorkEndParseStatus: interval.reportedEnd.parseStatus,
+    deliveredAt: interval.delivered.value,
+    deliveredRaw: interval.delivered.rawValue,
+    deliveredParseStatus: interval.delivered.parseStatus,
+    temporalIssues: interval.temporalIssues
+  };
   const confidence = calculateConfidence(
     { startTimeRaw: task.startTimeRaw, durationMinutes: task.durationMinutes, clientKey: task.clientKey, taskType: task.taskType, assignedTo: task.assignedTo },
     { businessHoursStatus: confidenceContext.businessHoursStatus, holidaysStatus: confidenceContext.holidaysStatus, reportedEvaluation: interval.reportedEvaluation }
@@ -102,6 +123,7 @@ export function buildTaskCoverage({ task, confidenceContext, equipmentInputs, ho
   // 1) Intervalo no resoluble -> NONE inmediato, sin segmentos de ningún tipo.
   if (isIntervalTerminal(interval.reasonCode)) {
     return {
+      ...temporal,
       dataBasis: "NONE", fallbackUsed: false,
       calculationStatus: "NOT_CALCULABLE", coverageClassification: "NOT_CALCULABLE", coverageReasonCode: interval.reasonCode,
       contractualAttemptStatus: "NOT_CALCULABLE", contractualCoverageClassification: "NOT_CALCULABLE", contractualReasonCode: interval.reasonCode,
@@ -119,7 +141,7 @@ export function buildTaskCoverage({ task, confidenceContext, equipmentInputs, ho
   // 2) Intento CONTRACTUAL, por equipo.
   const allSegments = [];
   const equipmentResults = equipmentInputs.map(eq => {
-    const resolution = resolveEquipmentContract({ fieldbeatEquipmentKey: eq.fieldbeatEquipmentKey, taskLocalDate: interval.startTimeUtc.toISOString().slice(0, 10), match: eq.match, versions: eq.versions, scheduleByVersionId: eq.scheduleByVersionId, windowsByScheduleId: eq.windowsByScheduleId });
+    const resolution = resolveEquipmentContract({ fieldbeatEquipmentKey: eq.fieldbeatEquipmentKey, taskLocalDate: localDateStringAt(startUtcMs), match: eq.match, versions: eq.versions, scheduleByVersionId: eq.scheduleByVersionId, windowsByScheduleId: eq.windowsByScheduleId });
     const segments = buildContractSegments(startUtcMs, endUtcMs, resolution, holidayLookup);
     for (const s of segments) allSegments.push({ ...s, fieldbeatEquipmentKey: eq.fieldbeatEquipmentKey, scheduleSource: "CONTRACT", contractEquipmentKey: resolution.contractEquipmentKey, contractVersionId: resolution.contractVersionId, scheduleId: resolution.scheduleId, coverageType: resolution.coverageType, parseStatus: resolution.parseStatus, matchStatus: resolution.matchStatus });
 
@@ -173,6 +195,7 @@ export function buildTaskCoverage({ task, confidenceContext, equipmentInputs, ho
     });
 
     return {
+      ...temporal,
       dataBasis: "CONTRACTUAL", fallbackUsed: false,
       calculationStatus: "CALCULATED", coverageClassification: contractualCoverageClassification, coverageReasonCode: contractualReasonCode,
       contractualAttemptStatus, contractualCoverageClassification, contractualReasonCode,
@@ -191,6 +214,7 @@ export function buildTaskCoverage({ task, confidenceContext, equipmentInputs, ho
 
   if (legacyAggregate.calculable) {
     return {
+      ...temporal,
       dataBasis: "LEGACY_SCHEDULE", fallbackUsed: true,
       calculationStatus: interval.method === "PARTIAL_ESTIMATE" ? "CALCULATED_WITH_WARNINGS" : "CALCULATED", coverageClassification: legacyAggregate.coverageClassification, coverageReasonCode: "WITHIN_LEGACY_SCHEDULE",
       contractualAttemptStatus, contractualCoverageClassification, contractualReasonCode,
@@ -204,6 +228,7 @@ export function buildTaskCoverage({ task, confidenceContext, equipmentInputs, ho
 
   // 4) Ambos fallan -> NONE (intervalo sí se resolvió, se conserva).
   return {
+    ...temporal,
     dataBasis: "NONE", fallbackUsed: false,
     calculationStatus: "NOT_CALCULABLE", coverageClassification: "NOT_CALCULABLE", coverageReasonCode: contractualReasonCode,
     contractualAttemptStatus, contractualCoverageClassification, contractualReasonCode,

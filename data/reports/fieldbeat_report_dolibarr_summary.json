@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-03T04:54:41.319Z",
-  "total_fieldbeat_reports": 3791,
+  "generated_at": "2026-08-03T22:08:40.652Z",
+  "total_fieldbeat_reports": 3794,
   "zendesk_join_status_breakdown": {
-    "NO_TICKET_REPORTED": 2560,
+    "NO_TICKET_REPORTED": 2561,
     "LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK": 929,
-    "LINKED_TO_ACCESSIBLE_ZENDESK": 302
+    "LINKED_TO_ACCESSIBLE_ZENDESK": 304
   },
   "report_quality_status_breakdown": {
-    "NO_USED_PARTS": 1968,
+    "NO_USED_PARTS": 1969,
     "REVIEW_REQUIRED": 117,
     "HAS_PLACEHOLDERS": 890,
-    "HAS_UNMATCHED_PARTS": 271,
-    "OK": 489,
+    "HAS_UNMATCHED_PARTS": 272,
+    "OK": 490,
     "HAS_AMBIGUOUS_PARTS": 56
   },
-  "total_used_parts": 2209,
-  "used_parts_global_source_count": 2209,
+  "total_used_parts": 2211,
+  "used_parts_global_source_count": 2211,
   "used_parts_totals_match_global": true,
-  "matched_used_parts": 938,
+  "matched_used_parts": 939,
   "placeholder_used_parts": 915,
-  "unmatched_used_parts": 300,
+  "unmatched_used_parts": 301,
   "ambiguous_used_parts": 56,
-  "match_rate": "42.46%",
-  "review_required_rate": "64.15%"
+  "match_rate": "42.47%",
+  "review_required_rate": "64.13%"
 }

@@ -1,2 +1,2 @@
 total_zendesk_tickets,tickets_with_fieldbeat_report,tickets_without_fieldbeat_report,tickets_with_multiple_fieldbeat_reports,tickets_with_used_parts,tickets_with_all_parts_matched,tickets_review_required,total_used_parts_in_ticket_scope,matched_used_parts,placeholder_used_parts,unmatched_used_parts,ambiguous_used_parts,ticket_fieldbeat_coverage_rate,used_parts_match_rate,review_required_rate
-658,236,422,40,117,62,60,209,144,37,23,5,35.87%,68.90%,35.41%
+659,238,421,40,118,63,60,210,145,37,23,5,36.12%,69.05%,35.24%

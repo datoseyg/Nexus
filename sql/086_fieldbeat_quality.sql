@@ -273,7 +273,7 @@ FROM raw;
 -- 8. Inconsistencias por reporte (grano: 1 fila por código disparado) -
 --    espejo EXACTO de classifyReportInconsistencies() en
 --    lib/fieldbeat-inconsistency-taxonomy.ts. Mismos códigos, misma
---    severidad, mismo priority_order de desempate (1..10, igual al orden de
+--    severidad, mismo priority_order de desempate (1..9, igual al orden de
 --    declaración en INCONSISTENCY_TAXONOMY).
 -- ============================================================================
 CREATE OR REPLACE VIEW quality.fieldbeat_report_inconsistencies AS
@@ -281,16 +281,15 @@ SELECT q.fieldbeat_task_id, f.code, f.severity, f.priority_order
 FROM quality.fieldbeat_report_quality q
 CROSS JOIN LATERAL (
   VALUES
-    ('TEMPORAL_IMPOSSIBLE_CHRONOLOGY'::text, 'Alta'::text, 1, q.chronology_impossible),
-    ('PART_AMBIGUOUS_MATCH', 'Alta', 2, q.part_ambiguous > 0),
-    ('TEAM_TEXT_AMBIGUOUS', 'Alta', 3, q.team_identification_status = 'TEXT_AMBIGUOUS'),
-    ('PART_NO_MATCH', 'Media', 4, q.part_no_match > 0),
-    ('TICKET_REPORTED_INACCESSIBLE', 'Media', 5, q.ticket_missing_or_restricted),
-    ('TEAM_MISSING', 'Media', 6, q.is_closed AND q.team_identification_status = 'MISSING'),
-    ('MIN_FIELDS_INCOMPLETE', 'Media', 7, q.is_closed AND NOT q.minimum_fields_complete),
-    ('PART_PLACEHOLDER_ONLY', 'Baja', 8, q.part_total_lines > 0 AND q.part_placeholders > 0 AND q.part_no_match = 0 AND q.part_ambiguous = 0),
-    ('FINISHED_ZERO_DURATION', 'Advertencia', 9, q.is_finished AND q.finished_zero_duration),
-    ('FINISHED_NULL_DURATION', 'Advertencia', 10, q.is_finished AND q.finished_null_duration)
+    ('PART_AMBIGUOUS_MATCH'::text, 'Alta'::text, 1, q.part_ambiguous > 0),
+    ('TEAM_TEXT_AMBIGUOUS', 'Alta', 2, q.team_identification_status = 'TEXT_AMBIGUOUS'),
+    ('PART_NO_MATCH', 'Media', 3, q.part_no_match > 0),
+    ('TICKET_REPORTED_INACCESSIBLE', 'Media', 4, q.ticket_missing_or_restricted),
+    ('TEAM_MISSING', 'Media', 5, q.is_closed AND q.team_identification_status = 'MISSING'),
+    ('MIN_FIELDS_INCOMPLETE', 'Media', 6, q.is_closed AND NOT q.minimum_fields_complete),
+    ('PART_PLACEHOLDER_ONLY', 'Baja', 7, q.part_total_lines > 0 AND q.part_placeholders > 0 AND q.part_no_match = 0 AND q.part_ambiguous = 0),
+    ('FINISHED_ZERO_DURATION', 'Advertencia', 8, q.is_finished AND q.finished_zero_duration),
+    ('FINISHED_NULL_DURATION', 'Advertencia', 9, q.is_finished AND q.finished_null_duration)
 ) AS f(code, severity, priority_order, triggered)
 WHERE f.triggered;
 

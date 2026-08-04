@@ -12,6 +12,8 @@ import { COLUMN } from "./field-map.js";
 import { sourceRowHash } from "./hash.js";
 import { loadKnownContractStartDates, resolveContractStartDate } from "./contract-start-date-resolver.js";
 import { loadClientIdentityAliases, buildClientIdentityAliasIndex } from "./client-identity-aliases.js";
+import { CONTRACT_TRANSFORM_VERSION } from "./transform-version.js";
+import { contractImportLockKey, findSuccessfulContractImport } from "./import-identity.js";
 
 function extractSheetNameFromFilename(filePath) {
   const base = filePath.split(/[\\/]/).pop() ?? filePath;
@@ -35,11 +37,12 @@ async function recordFailedImportStatus(queryable, meta, error) {
   try {
     await queryable.query(
       `INSERT INTO config.contract_import_runs
-         (source_filename, source_sha256, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'FAILED',$9)`,
+         (source_filename, source_sha256, transform_version, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'FAILED',$10)`,
       [
         meta.sourceFilename,
         meta.sourceSha256,
+        meta.transformVersion,
         meta.sourceSheet,
         meta.effectiveDate,
         meta.rowsRead,
@@ -154,6 +157,7 @@ export async function applyContracts(args) {
   const meta = {
     sourceFilename,
     sourceSha256,
+    transformVersion: CONTRACT_TRANSFORM_VERSION,
     sourceSheet,
     effectiveDate: args.effectiveDate,
     rowsRead: dataRows.length,
@@ -178,15 +182,15 @@ export async function applyContracts(args) {
     // Advisory lock transaccional derivado del SHA -evita carrera entre
     // procesos concurrentes importando el mismo archivo a la vez. Se
     // libera solo al COMMIT/ROLLBACK.
-    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [sourceSha256]);
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [contractImportLockKey(sourceSha256)]);
 
-    const alreadyImported = await client.query(
-      `SELECT import_id FROM config.contract_import_runs WHERE source_sha256 = $1 AND import_status = 'SUCCESS'`,
-      [sourceSha256]
-    );
-    if (alreadyImported.rows.length > 0) {
+    const alreadyImported = await findSuccessfulContractImport(client, {
+      sourceSha256,
+      transformVersion: CONTRACT_TRANSFORM_VERSION
+    });
+    if (alreadyImported) {
       await client.query("COMMIT");
-      return { alreadyImported: true, importId: alreadyImported.rows[0].import_id, results: [] };
+      return { alreadyImported: true, importId: alreadyImported.import_id, results: [] };
     }
 
     // Maestro processed.* obligatorio -FATAL si no está disponible.
@@ -205,10 +209,10 @@ export async function applyContracts(args) {
 
     const importInsert = await client.query(
       `INSERT INTO config.contract_import_runs
-         (source_filename, source_sha256, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'SUCCESS',$9)
+         (source_filename, source_sha256, transform_version, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'SUCCESS',$10)
        RETURNING import_id`,
-      [sourceFilename, sourceSha256, sourceSheet, args.effectiveDate, meta.rowsRead, meta.rowsAccepted, meta.rowsIgnored, meta.rowsErrored, JSON.stringify({ argv: process.argv.slice(2) })]
+      [sourceFilename, sourceSha256, CONTRACT_TRANSFORM_VERSION, sourceSheet, args.effectiveDate, meta.rowsRead, meta.rowsAccepted, meta.rowsIgnored, meta.rowsErrored, JSON.stringify({ argv: process.argv.slice(2) })]
     );
     const importId = importInsert.rows[0].import_id;
 

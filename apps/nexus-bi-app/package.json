@@ -7,9 +7,10 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "predev": "node ../../scripts/check-local-backend.mjs",
     "dev": "next dev",
-    "dev:local:setup": "node scripts/setup-local-dev-db.mjs",
-    "dev:local:teardown": "node scripts/teardown-local-dev-db.mjs",
+    "db:disposable:setup": "node scripts/setup-local-dev-db.mjs",
+    "db:disposable:teardown": "node scripts/teardown-local-dev-db.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",

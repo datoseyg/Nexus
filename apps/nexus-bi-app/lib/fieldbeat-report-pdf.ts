@@ -29,7 +29,8 @@ import {
   TEAM_IDENTIFICATION_STATUS_LABEL,
   CATALOG_MATCH_STATUS_LABEL,
   PARTICIPANT_ROLE_LABEL,
-  formatFieldbeatDateTime
+  formatFieldbeatDateTime,
+  ANALYSIS_INTERVAL_BASIS_LABEL
 } from "./fieldbeat-report-labels";
 import type { FieldbeatReportDetail } from "@/types/fieldbeat-report-detail";
 
@@ -133,11 +134,7 @@ function drawQualitySummarySection(doc: PDFKit.PDFDocument, detail: FieldbeatRep
     "Trazabilidad de repuestos",
     quality.partTotalLines === 0 ? "Sin repuestos" : quality.partFullyTraceable ? "Totalmente trazable" : "Con brechas"
   );
-  fieldLine(
-    doc,
-    "Consistencia temporal",
-    quality.hasSufficientTimestamps ? (quality.chronologyImpossible ? "Cronología imposible" : "Consistente") : "Sin información suficiente"
-  );
+  fieldLine(doc, "Campos temporales", detail.temporal.temporalIssues.length === 0 ? "Sin errores objetivos" : `${detail.temporal.temporalIssues.length} error(es) objetivo(s)`);
   fieldLine(doc, "Ticket", ticketQualityLabel(detail));
 }
 
@@ -167,15 +164,40 @@ function drawInconsistenciesSection(doc: PDFKit.PDFDocument, detail: FieldbeatRe
   }
 }
 
-function drawChronologySection(doc: PDFKit.PDFDocument, detail: FieldbeatReportDetail): void {
-  sectionTitle(doc, "Cronología");
-  const { chronology } = detail;
-  fieldLine(doc, "Creación", formatFieldbeatDateTime(chronology.createdAt));
-  fieldLine(doc, "Inicio", formatFieldbeatDateTime(chronology.startTime));
-  fieldLine(doc, "Última transición", formatFieldbeatDateTime(chronology.lastTransitionAt));
-  fieldLine(doc, "Duración", durationLabel(chronology.durationMinutes));
-  if (chronology.chronologyImpossible) {
-    paragraph(doc, "Cronología imposible: la última transición ocurre antes del inicio registrado.", { color: DANGER_COLOR, size: 9.5 });
+function drawTemporalSections(doc: PDFKit.PDFDocument, detail: FieldbeatReportDetail): void {
+  const { temporal } = detail;
+
+  sectionTitle(doc, "Planificación");
+  fieldLine(doc, "Fecha y hora programada", formatFieldbeatDateTime(temporal.scheduledAt.value));
+  fieldLine(doc, "Duración estimada", durationLabel(temporal.estimatedDurationMinutes));
+  fieldLine(doc, "Término estimado", formatFieldbeatDateTime(temporal.scheduledEstimatedEndAt.value));
+
+  sectionTitle(doc, "Ejecución informada");
+  fieldLine(doc, "Inicio del trabajo", formatFieldbeatDateTime(temporal.reportedWorkStartAt.value));
+  fieldLine(doc, "Término del trabajo", formatFieldbeatDateTime(temporal.reportedWorkEndAt.value));
+  fieldLine(doc, "Duración informada", durationLabel(temporal.reportedWorkDurationMinutes));
+  fieldLine(doc, "Fuente", "Formulario FieldBeat");
+
+  sectionTitle(doc, "Entrega");
+  fieldLine(doc, "Fecha y hora de entrega", formatFieldbeatDateTime(temporal.deliveredAt.value));
+  fieldLine(doc, "Diferencia respecto al término informado", durationLabel(temporal.deliveryDeltaMinutes));
+
+  sectionTitle(doc, "Actividad del registro en FieldBeat");
+  fieldLine(doc, "Reporte registrado", formatFieldbeatDateTime(temporal.reportRegisteredAt.value));
+  fieldLine(doc, "Primera transición registrada", formatFieldbeatDateTime(temporal.firstTransitionAt.value));
+  fieldLine(doc, "Última transición registrada", formatFieldbeatDateTime(temporal.lastTransitionAt.value));
+  fieldLine(doc, "Estado actual", detail.report.state ?? "Sin información");
+  paragraph(doc, "Estas fechas describen el registro dentro de FieldBeat y no necesariamente el período real de ejecución del trabajo.", { italic: true, color: INK_MUTED });
+
+  sectionTitle(doc, "Intervalo utilizado para análisis");
+  fieldLine(doc, "Inicio analizado", formatFieldbeatDateTime(temporal.analysisIntervalStartAt.value));
+  fieldLine(doc, "Término analizado", formatFieldbeatDateTime(temporal.analysisIntervalEndAt.value));
+  fieldLine(doc, "Duración analizada", durationLabel(temporal.analysisIntervalDurationMinutes));
+  fieldLine(doc, "Base temporal", ANALYSIS_INTERVAL_BASIS_LABEL[temporal.analysisIntervalBasis] ?? temporal.analysisIntervalBasis);
+  fieldLine(doc, "Fallback temporal utilizado", temporal.analysisFallbackUsed ? "Sí" : "No");
+  fieldLine(doc, "Motivo del fallback", temporal.analysisFallbackReason ?? "No aplica");
+  if (temporal.analysisIntervalBasis === "SCHEDULED_ESTIMATE") {
+    paragraph(doc, "No se encontró un intervalo informado completo y válido.", { color: WARNING_COLOR, size: 9.5 });
   }
 }
 
@@ -345,7 +367,7 @@ export async function generateFieldbeatReportPdf(detail: FieldbeatReportDetail):
     drawIdentitySection(doc, detail);
     drawQualitySummarySection(doc, detail);
     drawInconsistenciesSection(doc, detail);
-    drawChronologySection(doc, detail);
+    drawTemporalSections(doc, detail);
     drawTechnicianClientSection(doc, detail);
     drawParticipantsSection(doc, detail);
     drawLaborSummarySection(doc, detail);

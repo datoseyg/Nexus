@@ -11,7 +11,9 @@ import {
   CATALOG_MATCH_STATUS_LABEL,
   PARTICIPANT_ROLE_LABEL,
   PARTICIPANT_RESOLUTION_STATUS_LABEL,
-  formatFieldbeatDateTime
+  formatFieldbeatDateTime,
+  formatFieldbeatDuration,
+  ANALYSIS_INTERVAL_BASIS_LABEL
 } from "@/lib/fieldbeat-report-labels";
 import { formatModelCell } from "@/lib/explorer-entity-config";
 import { contractStatusLabel, spaTierLabel, partsCoverageLabel } from "@/lib/contracts-vocabulary";
@@ -174,10 +176,7 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
           <Field label="Campos mínimos" value={data.quality.minimumFieldsComplete ? "Completos" : "Incompletos"} />
           <Field label="Identificación de equipo" value={TEAM_IDENTIFICATION_STATUS_LABEL[data.equipment.status] ?? data.equipment.status} />
           <Field label="Trazabilidad de repuestos" value={data.quality.partTotalLines === 0 ? "Sin repuestos" : data.quality.partFullyTraceable ? "Totalmente trazable" : "Con brechas"} />
-          <Field
-            label="Consistencia temporal"
-            value={data.quality.hasSufficientTimestamps ? (data.quality.chronologyImpossible ? "Cronología imposible" : "Consistente") : "Sin información suficiente"}
-          />
+          <Field label="Campos temporales" value={data.temporal.temporalIssues.length === 0 ? "Sin errores objetivos" : `${data.temporal.temporalIssues.length} error(es) objetivo(s)`} />
           <Field
             label="Ticket"
             value={
@@ -244,26 +243,63 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
         )}
       </Section>
 
-      {/* 4. Cronología */}
-      <Section title="Cronología">
+      {/* Las cinco temporalidades FieldBeat se muestran separadas. Los
+          timestamps ya llegan normalizados por el pipeline; React no parsea
+          ni resuelve precedencias. 
+          
+          Se mantiene planificacion oculta por no aportar informaicón de utilidad*/}
+
+          
+          
+      {/*<Section title="Planificación">
         <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-          <Field label="Creación" value={formatDateTime(data.chronology.createdAt)} />
-          <Field label="Inicio" value={formatDateTime(data.chronology.startTime)} />
-          <Field label="Última transición" value={formatDateTime(data.chronology.lastTransitionAt)} />
-          <Field
-            label="Duración"
-            value={
-              data.chronology.durationMinutes === null
-                ? "Sin registrar"
-                : data.chronology.durationMinutes === 0
-                  ? "0 minutos (advertencia)"
-                  : `${data.chronology.durationMinutes.toLocaleString("es-CL")} min`
-            }
-          />
+          <Field label="Fecha y hora programada" value={formatDateTime(data.temporal.scheduledAt.value)} />
+          <Field label="Duración estimada" value={formatFieldbeatDuration(data.temporal.estimatedDurationMinutes)} />
+          <Field label="Término estimado" value={formatDateTime(data.temporal.scheduledEstimatedEndAt.value)} />
         </dl>
-        {data.chronology.chronologyImpossible && (
-          <p className="text-[12px] font-semibold" style={{ color: "var(--nx-danger-fg, #b3261e)" }}>
-            Cronología imposible: la última transición ocurre antes del inicio registrado.
+      </Section>*/}
+
+      <Section title="Ejecución informada">
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+          <Field label="Inicio del trabajo" value={formatDateTime(data.temporal.reportedWorkStartAt.value)} />
+          <Field label="Término del trabajo" value={formatDateTime(data.temporal.reportedWorkEndAt.value)} />
+          <Field label="Duración informada" value={formatFieldbeatDuration(data.temporal.reportedWorkDurationMinutes)} />
+          <Field label="Fuente" value="Formulario FieldBeat" />
+        </dl>
+      </Section>
+
+      <Section title="Entrega">
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+          <Field label="Fecha y hora de entrega" value={formatDateTime(data.temporal.deliveredAt.value)} />
+          <Field label="Diferencia respecto al término informado" value={data.temporal.deliveryDeltaMinutes === null ? "Sin información" : formatFieldbeatDuration(data.temporal.deliveryDeltaMinutes)} />
+        </dl>
+      </Section>
+
+      {/* se mantiene oculta tmb pq no aporta info deseable de momento, no es de utilidad para esta entrega
+      <Section title="Actividad del registro en FieldBeat">
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+          <Field label="Reporte registrado" value={formatDateTime(data.temporal.reportRegisteredAt.value)} />
+          <Field label="Primera transición registrada" value={formatDateTime(data.temporal.firstTransitionAt.value)} />
+          <Field label="Última transición registrada" value={formatDateTime(data.temporal.lastTransitionAt.value)} />
+          <Field label="Estado actual" value={data.report.state ?? "Sin información"} />
+        </dl>
+        <p className="text-[13px]" style={{ color: "var(--nx-text-secondary)" }}>
+          Estas fechas describen el registro dentro de FieldBeat y no necesariamente el período real de ejecución del trabajo.
+        </p>
+      </Section>
+      */}
+      <Section title="Intervalo utilizado para análisis">
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+          <Field label="Inicio analizado" value={formatDateTime(data.temporal.analysisIntervalStartAt.value)} />
+          <Field label="Término analizado" value={formatDateTime(data.temporal.analysisIntervalEndAt.value)} />
+          <Field label="Duración analizada" value={formatFieldbeatDuration(data.temporal.analysisIntervalDurationMinutes)} />
+          <Field label="Base temporal" value={ANALYSIS_INTERVAL_BASIS_LABEL[data.temporal.analysisIntervalBasis] ?? data.temporal.analysisIntervalBasis} />
+          <Field label="Fallback temporal utilizado" value={data.temporal.analysisFallbackUsed ? "Sí" : "No"} />
+          <Field label="Motivo del fallback" value={data.temporal.analysisFallbackReason ?? "No aplica"} />
+        </dl>
+        {data.temporal.analysisIntervalBasis === "SCHEDULED_ESTIMATE" && (
+          <p className="text-[13px] font-semibold" style={{ color: "var(--nx-warning-fg, #8a5a00)" }}>
+            No se encontró un intervalo informado completo y válido.
           </p>
         )}
       </Section>
@@ -313,26 +349,16 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
         )}
       </Section>
 
-      {/* 5c. Duración e intervención (HOTFIX de integridad de datos) - real
-          (declarada/transición validada) SEPARADA de la estimación de
-          agenda, NUNCA una sustituye a la otra ni se mezclan en horas-persona. */}
-      <Section title="Duración e intervención">
+      {/*
+      <Section title="Participación laboral">
         <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-          <Field
-            label="Duración real"
-            value={data.labor.actualReportDurationMinutes === null ? "Duración real no disponible" : `${data.labor.actualReportDurationMinutes.toLocaleString("es-CL")} min`}
-          />
-          <Field
-            label="Duración estimada (agenda)"
-            value={data.labor.scheduledEstimateMinutes === null ? "Sin registrar" : `${data.labor.scheduledEstimateMinutes.toLocaleString("es-CL")} min (estimado, no medido)`}
-          />
           <Field label="Participantes" value={data.labor.participantCount.toLocaleString("es-CL")} />
           <Field
             label="Minutos-persona"
             value={data.labor.totalLaborMinutes === null ? "Sin datos suficientes" : `${data.labor.totalLaborMinutes.toLocaleString("es-CL")} min-persona`}
           />
         </dl>
-      </Section>
+      </Section>*/}
 
       {/* 6. Equipos */}
       <Section title={`Equipos (${data.equipment.items.length})`}>
@@ -507,7 +533,7 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
         )}
       </Section>
 
-      {/* 8c/8d. Tiempos del reporte / Resolución contractual - EXCLUSIVOS de
+      {/* 8c/8d. Cobertura del intervalo analizado / Resolución contractual - EXCLUSIVOS de
           After-Hours (Sección 14.5.D/E del encargo), compuestos en el
           cliente desde la fila ya cargada por la tabla (ver
           lib/after-hours-detail-view.ts::buildAfterHoursDrawerContext).
@@ -515,22 +541,25 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
           (afterHoursContext queda undefined/null ahí). */}
       {afterHoursContext && (
         <>
-          <Section title="Tiempos del reporte">
+          <Section title="Cobertura del intervalo analizado">
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-              <Field label="Hora de inicio" value={afterHoursContext.startTime} />
-              <Field label="Hora de término" value={afterHoursContext.endTime} />
-              <Field label="Duración total" value={afterHoursContext.durationLabel} />
+              <Field label="Inicio analizado" value={afterHoursContext.analysisStartLabel} />
+              <Field label="Término analizado" value={afterHoursContext.analysisEndLabel} />
+              <Field label="Duración analizada" value={afterHoursContext.durationLabel} />
+              <Field label="Base temporal" value={afterHoursContext.analysisIntervalBasisLabel} />
+              <Field label="Fallback temporal utilizado" value={afterHoursContext.analysisFallbackUsed ? "Sí" : "No"} />
+              {afterHoursContext.analysisFallbackReason && <Field label="Motivo del fallback temporal" value={afterHoursContext.analysisFallbackReason} />}
               <Field label="Tiempo cubierto" value={afterHoursContext.coveredTimeLabel} />
               <Field label="Tiempo fuera de cobertura" value={afterHoursContext.uncoveredTimeLabel} />
               <Field label="· Día hábil fuera de horario" value={afterHoursContext.weekdayAfterHoursLabel} />
               <Field label="· Fin de semana" value={afterHoursContext.weekendLabel} />
-              <Field label="· Feriado" value={afterHoursContext.holidayLabel} />
+              {<Field label="· Feriado" value={afterHoursContext.holidayLabel} />}
             </dl>
           </Section>
 
           <Section title="Resolución contractual">
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-              <Field label="Base de cálculo" value={afterHoursContext.dataBasis.label} />
+              <Field label="Base contractual/horario aplicado" value={afterHoursContext.dataBasis.label} />
               <Field label="Clasificación" value={afterHoursContext.coverage.label} />
               <Field label="Motivo final" value={afterHoursContext.finalReason.label} />
               {afterHoursContext.contractualReason && <Field label="Motivo contractual" value={afterHoursContext.contractualReason.label} />}
@@ -548,13 +577,14 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
         </>
       )}
 
-      {/* 9. Auditoría */}
+      {/* 9. Auditoría  - se omite pq no aporta utilidad
       <Section title="Auditoría">
         <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
           <Field label="Versión de contrato" value={data.audit.contractVersion} />
           <Field label="Generado" value={formatDateTime(data.audit.generatedAt)} />
         </dl>
       </Section>
+      */}
     </div>
   );
 }

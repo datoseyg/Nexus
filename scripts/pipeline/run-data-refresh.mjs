@@ -62,14 +62,11 @@
 //   - src/working-hours/build-working-hours.js::runApply (mismo mecanismo
 //     real que `npm run working-hours:build -- apply --confirm`, invocado
 //     programáticamente - runApply({from:null,to:null}) SIEMPRE, sin
-//     importar el `mode` (INCREMENTAL/FULL) de este refresh: el builder no
-//     tiene un modo incremental seguro (runBuild lee TODAS las tareas de
-//     processed.fieldbeat_tasks siempre; publishResults hace TRUNCATE de
-//     marts.fieldbeat_working_hours_analysis_v2/_equipment_links/
-//     _contract_coverage_segments antes de reinsertar - usar --from/--to
-//     para "solo lo nuevo" truncaría igual la tabla completa y solo
-//     reinsertaría el subconjunto filtrado, BORRANDO el resto -mismo
-//     principio ya aplicado a REEVALUATE_RULES arriba, generalizado acá).
+//     importar el `mode` (INCREMENTAL/FULL) de este refresh: runBuild lee
+//     TODAS las tareas de processed.fieldbeat_tasks y publishResults hace
+//     UPSERT transaccional por fieldbeat_task_id. El refresh completo evita
+//     dejar filas antiguas sin reevaluar cuando cambian contratos, matches o
+//     calendarios, sin borrar las filas persistentes antes de publicar.
 //     runApply devuelve {ok:false} en vez de lanzar cuando la validación
 //     pre-publicación falla - este orquestador SIEMPRE revisa `.ok` y
 //     lanza si es false, para que una falla de Working-Hours nunca quede
@@ -98,8 +95,10 @@
 //     SUPABASE_DB_URL_DIRECT); para STAGING/PRODUCTION la etapa falla
 //     rápido y con mensaje claro (WORKING_HOURS_DB_URL ausente o rechazado)
 //     en vez de saltarse el módulo en silencio.
-//   - NUNCA dispara `contracts:import` ni `holidays:import` - VALIDATE_AFTER_HOURS
-//     (siguiente etapa) solo LEE config.current_holiday_calendar_coverage
+//   - NUNCA dispara `contracts:import` ni `holidays:import`. Después de
+//     SYNC_POSTGRES sí reevalúa de forma append-only los matches de los
+//     contratos ya importados contra el maestro FieldBeat recién cargado;
+//     luego VALIDATE_AFTER_HOURS solo LEE config.current_holiday_calendar_coverage
 //     para verificar que ya exista cobertura VALIDATED para cada año
 //     presente en processed.fieldbeat_tasks; si falta, la corrida falla con
 //     un mensaje explícito indicando qué año importar a mano (fecha
@@ -133,6 +132,7 @@ import { loadDuckDb } from "../../src/db/load-duckdb.js";
 import { assertDuckDbLoadComplete, assertDuckDbFreshAfterLoad } from "../../src/db/duckdb-freshness.js";
 import { migrateToSupabase } from "../../src/db/migrate-to-supabase.js";
 import { validateSupabase } from "../../src/db/validate-supabase.js";
+import { refreshContractEquipmentMatches } from "../../src/contracts/rematch-contracts.js";
 import { runApply as runWorkingHoursApply } from "../../src/working-hours/build-working-hours.js";
 import { findTaskYearsMissingHolidayCoverage } from "../../src/working-hours/db-writer.js";
 
@@ -340,6 +340,16 @@ export async function executeClaimedRefreshRun({
       if (!workingHoursDbUrl) {
         throw new Error("BUILD_WORKING_HOURS: falta WORKING_HOURS_DB_URL en el entorno - el módulo After-Hours no está habilitado para este entorno todavía.");
       }
+      const rematchResult = await withPool(
+        workingHoursDbUrl,
+        "pipeline-refresh-worker:contract-rematch",
+        pool => refreshContractEquipmentMatches(pool, { apply: true })
+      );
+      console.log(
+        `[run-data-refresh] contract-rematch total=${rematchResult.summary.total} ` +
+        `matched=${rematchResult.summary.matched} ambiguous=${rematchResult.summary.ambiguous} ` +
+        `unmatched=${rematchResult.summary.unmatched} applied=${rematchResult.applied}`
+      );
       prepareWorkingHoursWriteConfirmation(workingHoursDbUrl);
       const workingHoursResult = await runWorkingHoursApply({ from: null, to: null });
       assertWorkingHoursApplyOk(workingHoursResult);

@@ -13,7 +13,6 @@ import type { TeamIdentificationStatus } from "./fieldbeat-team-identification";
 export type InconsistencySeverity = "Alta" | "Media" | "Baja" | "Advertencia";
 
 export type InconsistencyCode =
-  | "TEMPORAL_IMPOSSIBLE_CHRONOLOGY"
   | "PART_AMBIGUOUS_MATCH"
   | "TEAM_TEXT_AMBIGUOUS"
   | "PART_NO_MATCH"
@@ -37,14 +36,6 @@ export interface InconsistencyDefinition {
 // misma severidad, el primero declarado gana. Nunca se reordena por
 // frecuencia (Gate C §14: "frecuencia no define severidad").
 export const INCONSISTENCY_TAXONOMY: readonly InconsistencyDefinition[] = [
-  {
-    code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY",
-    severity: "Alta",
-    condition: "last_transition_at < start_time",
-    explanation: "La última transición de estado ocurre antes del inicio registrado del reporte.",
-    suggestedAction: "Revisar el reporte en FieldBeat y corregir el timestamp erróneo en origen.",
-    universe: "Reportes con start_time y last_transition_at presentes"
-  },
   {
     code: "PART_AMBIGUOUS_MATCH",
     severity: "Alta",
@@ -149,7 +140,6 @@ export function classifyReportInconsistencies(input: ReportInconsistencyInput): 
     if (def) findings.push({ code, severity: def.severity });
   };
 
-  if (input.chronologyImpossible) push("TEMPORAL_IMPOSSIBLE_CHRONOLOGY");
   if (input.partMatchStatuses.includes("AMBIGUOUS_MATCH")) push("PART_AMBIGUOUS_MATCH");
   if (input.teamIdentification === "TEXT_AMBIGUOUS") push("TEAM_TEXT_AMBIGUOUS");
   if (input.partMatchStatuses.includes("NO_MATCH")) push("PART_NO_MATCH");

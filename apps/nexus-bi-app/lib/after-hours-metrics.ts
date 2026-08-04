@@ -270,17 +270,3 @@ export function mapGroupedRow(row: GroupedAggregateQueryRow): AfterHoursByDimens
     ...mapAggregateMetrics(row)
   };
 }
-
-/**
- * Branching temporal del endpoint detail (§6.4), extraído como función
- * pura para poder testearlo sin base de datos. Comportamiento preservado
- * exacto del mart legado: EXACT_REPORTED_START_END muestra el string
- * crudo reportado por el técnico (reported_end_raw); cualquier otro
- * método usa el fin normalizado por el pipeline (antes
- * estimated_end_time_local en el mart legado, ahora end_time_local en la
- * vista - ver sql/082, mismo valor semántico, columna renombrada).
- */
-export function resolveEstimatedEndTime(calculationMethod: string, reportedEndRaw: string | null, endTimeLocal: string | null): string | null {
-  if (calculationMethod === "EXACT_REPORTED_START_END") return reportedEndRaw;
-  return endTimeLocal ? String(endTimeLocal) : null;
-}

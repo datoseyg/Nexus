@@ -7,7 +7,7 @@
 //   node scripts/teardown-local-dev-db.mjs
 import { spawnSync } from "node:child_process";
 
-const CONTAINER_NAME = "nexus_bi_dev_local";
+const CONTAINER_NAME = "nexus_bi_test_disposable";
 
 function run(cmd, args) {
   return spawnSync(cmd, args, { encoding: "utf8" });
@@ -18,6 +18,12 @@ function main() {
   if (inspect.status !== 0) {
     console.log(`[teardown-local-dev-db] "${CONTAINER_NAME}" no existe - nada que limpiar.`);
     return;
+  }
+
+  const purpose = run("docker", ["inspect", "--format", "{{ index .Config.Labels \"com.eyg.nexus.database-purpose\" }}", CONTAINER_NAME]);
+  if (purpose.status !== 0 || purpose.stdout.trim() !== "disposable-test") {
+    console.error(`[teardown-local-dev-db] ABORT: "${CONTAINER_NAME}" no tiene la etiqueta disposable-test esperada.`);
+    process.exit(1);
   }
 
   console.log(`[teardown-local-dev-db] Deteniendo y eliminando "${CONTAINER_NAME}"...`);

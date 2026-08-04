@@ -67,6 +67,23 @@ function baseRow(overrides: Partial<ReportDetailQueryRow> = {}): ReportDetailQue
     start_time: "2026-03-10T14:00:00Z",
     last_transition_at: "2026-03-10T15:00:00Z",
     duration_minutes: 45,
+    scheduled_estimated_end_at: "2026-03-10T14:45:00Z",
+    analysis_start_at: "2026-03-10T14:00:00Z",
+    analysis_end_at: "2026-03-10T14:45:00Z",
+    analysis_duration_minutes: 45,
+    analysis_interval_basis: "SCHEDULED_ESTIMATE",
+    analysis_fallback_used: true,
+    analysis_fallback_reason: "REPORTED_INTERVAL_MISSING",
+    reported_work_start_at: null,
+    reported_work_start_raw: null,
+    reported_work_start_parse_status: "MISSING",
+    reported_work_end_at: null,
+    reported_work_end_raw: null,
+    reported_work_end_parse_status: "MISSING",
+    delivered_at: null,
+    delivered_raw: null,
+    delivered_parse_status: "MISSING",
+    temporal_issue_codes: [],
     chronology_impossible: false,
     has_sufficient_timestamps: true,
     finished_zero_duration: false,
@@ -363,14 +380,53 @@ test("shapeReportDetail: labor separa actualReportDurationMinutes (real) de sche
   assert.equal(detail.labor.totalLaborMinutes, 260);
 });
 
+test("shapeReportDetail: caso 3824 separa planificación, ejecución informada, entrega, registro e intervalo analizado", () => {
+  const detail = shapeReportDetail(baseRow({
+    fieldbeat_task_id: "3824",
+    created_at: "2026-07-31T23:01:39.237Z",
+    start_time: "2026-07-31T23:01:00.000Z",
+    scheduled_estimated_end_at: "2026-08-01T01:01:00.000Z",
+    last_transition_at: "2026-08-01T19:45:09.302Z",
+    duration_minutes: 120,
+    analysis_start_at: "2026-07-30T10:02:00.000Z",
+    analysis_end_at: "2026-08-01T03:13:00.000Z",
+    analysis_duration_minutes: 2471,
+    analysis_interval_basis: "REPORTED_WORK_INTERVAL",
+    analysis_fallback_used: false,
+    analysis_fallback_reason: null,
+    reported_work_start_at: "2026-07-30T10:02:00.000Z",
+    reported_work_start_raw: "30/07/2026 06:02",
+    reported_work_start_parse_status: "PARSED",
+    reported_work_end_at: "2026-08-01T03:13:00.000Z",
+    reported_work_end_raw: "31/07/2026 23:13",
+    reported_work_end_parse_status: "PARSED",
+    delivered_at: "2026-08-01T03:15:00.000Z",
+    delivered_raw: "31/07/2026 23:15",
+    delivered_parse_status: "PARSED",
+    temporal_issue_codes: []
+  }), false, NO_ISSUES);
+
+  assert.equal(detail.temporal.scheduledAt.value, "2026-07-31T23:01:00.000Z");
+  assert.equal(detail.temporal.estimatedDurationMinutes, 120);
+  assert.equal(detail.temporal.scheduledEstimatedEndAt.value, "2026-08-01T01:01:00.000Z");
+  assert.equal(detail.temporal.reportedWorkStartAt.rawValue, "30/07/2026 06:02");
+  assert.equal(detail.temporal.reportedWorkEndAt.rawValue, "31/07/2026 23:13");
+  assert.equal(detail.temporal.reportedWorkDurationMinutes, 2471);
+  assert.equal(detail.temporal.deliveredAt.rawValue, "31/07/2026 23:15");
+  assert.equal(detail.temporal.deliveryDeltaMinutes, 2);
+  assert.equal(detail.temporal.analysisIntervalBasis, "REPORTED_WORK_INTERVAL");
+  assert.equal(detail.temporal.analysisFallbackUsed, false);
+  assert.deepEqual(detail.temporal.temporalIssues, []);
+});
+
 test("shapeReportDetail: inconsistencias traen explanation/suggestedAction/universe de la taxonomía TS, isPrimary coincide con primary_code", () => {
   const detail = shapeReportDetail(
     baseRow({
       inconsistencies: [
-        { code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY", severity: "Alta", priority_order: 1 },
-        { code: "FINISHED_ZERO_DURATION", severity: "Advertencia", priority_order: 9 }
+        { code: "PART_AMBIGUOUS_MATCH", severity: "Alta", priority_order: 1 },
+        { code: "FINISHED_ZERO_DURATION", severity: "Advertencia", priority_order: 8 }
       ],
-      primary_code: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY"
+      primary_code: "PART_AMBIGUOUS_MATCH"
     }),
     false,
     NO_ISSUES
@@ -389,9 +445,9 @@ test("shapeReportDetail: sin inconsistencias, quality.totalInconsistencies=0 y a
   assert.equal(detail.quality.totalInconsistencies, 0);
 });
 
-test("shapeReportDetail: contractVersion 2.2.0 y generatedAt siempre presentes", () => {
+test("shapeReportDetail: contractVersion 3.0.0 y generatedAt siempre presentes", () => {
   const detail = shapeReportDetail(baseRow(), false, NO_ISSUES);
-  assert.equal(detail.contractVersion, "2.2.0");
+  assert.equal(detail.contractVersion, "3.0.0");
   assert.ok(detail.generatedAt);
   assert.equal(detail.audit.contractVersion, detail.contractVersion);
 });

@@ -27,11 +27,9 @@ test("reporte limpio no genera ningún finding", () => {
   assert.deepEqual(classifyReportInconsistencies(cleanReport()), []);
 });
 
-test("cronología imposible dispara TEMPORAL_IMPOSSIBLE_CHRONOLOGY (Alta)", () => {
+test("una transición administrativa anterior a la programación no genera issue temporal", () => {
   const findings = classifyReportInconsistencies(cleanReport({ chronologyImpossible: true }));
-  assert.equal(findings.length, 1);
-  assert.equal(findings[0].code, "TEMPORAL_IMPOSSIBLE_CHRONOLOGY");
-  assert.equal(findings[0].severity, "Alta");
+  assert.deepEqual(findings, []);
 });
 
 test("repuesto AMBIGUOUS_MATCH dispara PART_AMBIGUOUS_MATCH (Alta)", () => {
@@ -77,14 +75,14 @@ test("un reporte puede acumular varios findings simultáneos", () => {
   );
   assert.deepEqual(
     findings.map(f => f.code).sort(),
-    ["FINISHED_ZERO_DURATION", "MIN_FIELDS_INCOMPLETE", "TEMPORAL_IMPOSSIBLE_CHRONOLOGY"].sort()
+    ["FINISHED_ZERO_DURATION", "MIN_FIELDS_INCOMPLETE"].sort()
   );
 });
 
 test("primaryInconsistency elige la mayor severidad, no la primera generada", () => {
-  const findings = classifyReportInconsistencies(cleanReport({ finishedZeroDuration: true, chronologyImpossible: true }));
+  const findings = classifyReportInconsistencies(cleanReport({ finishedZeroDuration: true, minimumFieldsComplete: false }));
   const primary = primaryInconsistency(findings);
-  assert.equal(primary?.code, "TEMPORAL_IMPOSSIBLE_CHRONOLOGY");
+  assert.equal(primary?.code, "MIN_FIELDS_INCOMPLETE");
 });
 
 test("primaryInconsistency: empate de severidad se resuelve por orden de declaración en la taxonomía", () => {

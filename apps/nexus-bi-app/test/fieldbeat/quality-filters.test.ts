@@ -73,10 +73,10 @@ test("enum allowlist: valor conocido se acepta, valor desconocido se rechaza (nu
 });
 
 test("severity e inconsistencyCode usan la MISMA taxonomía que lib/fieldbeat-inconsistency-taxonomy.ts", () => {
-  const ok = parseFieldbeatQualityFilters(sp({ severity: "Alta", inconsistencyCode: "TEMPORAL_IMPOSSIBLE_CHRONOLOGY" }));
+  const ok = parseFieldbeatQualityFilters(sp({ severity: "Alta", inconsistencyCode: "PART_AMBIGUOUS_MATCH" }));
   assert.deepEqual(ok.errors, []);
   assert.equal(ok.filters.severity, "Alta");
-  assert.equal(ok.filters.inconsistencyCode, "TEMPORAL_IMPOSSIBLE_CHRONOLOGY");
+  assert.equal(ok.filters.inconsistencyCode, "PART_AMBIGUOUS_MATCH");
 
   const bad = parseFieldbeatQualityFilters(sp({ inconsistencyCode: "NOT_A_REAL_CODE" }));
   assert.equal(bad.errors.length, 1);

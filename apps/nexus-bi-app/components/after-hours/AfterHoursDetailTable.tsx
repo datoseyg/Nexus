@@ -116,8 +116,8 @@ export function AfterHoursDetailTable({
           {!loading && !error && rows.length > 0 && (
             <tbody>
               {rows.map(row => {
-                const start = splitDateTime(row.start_time);
-                const end = splitDateTime(row.estimated_end_time);
+                const start = splitDateTime(row.analysis_start_time);
+                const end = splitDateTime(row.analysis_end_time);
                 const total = totalAfterHoursHours(row);
                 const confidenceTier = getConfidenceTierLabel(row.confidence_label);
                 const diagnosis = buildDiagnosis({
@@ -210,7 +210,7 @@ export function AfterHoursDetailTable({
       {!loading && !error && rows.length > 0 && (
         <div className="flex flex-col gap-2.5 p-3 md:hidden">
           {rows.map(row => {
-            const start = splitDateTime(row.start_time);
+            const start = splitDateTime(row.analysis_start_time);
             const total = totalAfterHoursHours(row);
             const confidenceTier = getConfidenceTierLabel(row.confidence_label);
             const diagnosis = buildDiagnosis({

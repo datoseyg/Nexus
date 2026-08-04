@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-03T04:54:40.117Z",
-  "total_zendesk_tickets": 658,
-  "tickets_with_fieldbeat_report": 236,
-  "tickets_without_fieldbeat_report": 422,
+  "generated_at": "2026-08-03T22:08:39.452Z",
+  "total_zendesk_tickets": 659,
+  "tickets_with_fieldbeat_report": 238,
+  "tickets_without_fieldbeat_report": 421,
   "tickets_with_multiple_fieldbeat_reports": 40,
-  "tickets_with_used_parts": 117,
-  "total_bridge_relations": 1231,
+  "tickets_with_used_parts": 118,
+  "total_bridge_relations": 1233,
   "fieldbeat_links_without_zendesk_ticket": 929,
   "operational_join_status_breakdown": {
-    "SINGLE_FIELDBEAT_REPORT": 196,
-    "NO_FIELDBEAT_REPORT": 422,
+    "SINGLE_FIELDBEAT_REPORT": 198,
+    "NO_FIELDBEAT_REPORT": 421,
     "MULTIPLE_FIELDBEAT_REPORTS": 40
   }
 }

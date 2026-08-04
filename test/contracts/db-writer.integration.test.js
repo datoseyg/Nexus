@@ -129,6 +129,9 @@ test("integración db-writer (requiere CONTRACTS_TEST_DATABASE_URL)", { skip: !T
     const clientNameKeyDdl = await fs.readFile("sql/103_contract_client_name_key_nullable.sql", "utf8");
     await adminPool.query(clientNameKeyDdl);
 
+    const transformVersionDdl = await fs.readFile("sql/106_contract_import_transform_version.sql", "utf8");
+    await adminPool.query(transformVersionDdl);
+
     applyContracts = (await import("../../src/contracts/db-writer.js")).applyContracts;
   });
 

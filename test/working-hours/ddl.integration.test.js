@@ -572,6 +572,21 @@ test("estructural: Capa C no tiene columnas contract_valid_from/match_status/par
   assert.equal(r.rows.length, 0);
 });
 
+test("estructural: Capa C persiste procedencia temporal y campos normalizados/raw sin ambigüedad", { skip: !TEST_DB_URL }, async () => {
+  const expected = [
+    "analysis_interval_basis", "analysis_fallback_used", "analysis_fallback_reason",
+    "reported_work_start_utc", "reported_work_start_local", "reported_work_start_raw", "reported_work_start_parse_status",
+    "reported_work_end_utc", "reported_work_end_local", "reported_work_end_raw", "reported_work_end_parse_status",
+    "delivered_at_utc", "delivered_at_local", "delivered_raw", "delivered_parse_status", "temporal_issue_codes"
+  ];
+  const r = await adminPool.query(`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'marts' AND table_name = 'fieldbeat_working_hours_analysis_v2'
+      AND column_name = ANY($1::text[])
+  `, [expected]);
+  assert.deepEqual(r.rows.map(row => row.column_name).sort(), [...expected].sort());
+});
+
 // ============================================================
 // 5. Tabla puente
 // ============================================================

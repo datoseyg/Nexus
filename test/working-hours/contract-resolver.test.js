@@ -49,6 +49,18 @@ test("paso 2 -versión: validFrom=NULL (ETAPA 6.5.1, UNRESOLVED) nunca matchea, 
   assert.equal(r.reasonCode, "NO_CONTRACT_AT_TASK_DATE");
 });
 
+test("paso 2 -UNRESOLVED: sourceEffectiveDate gobierna tareas posteriores sin inventar validFrom", () => {
+  const match = { matchStatus: "MATCHED", matchMethod: "SERIAL_SUFFIX", contractEquipmentKey: "SN:1" };
+  const version = { contractVersionId: 1, validFrom: null, validTo: null, sourceEffectiveDate: "2026-01-01", contractStatusCode: "ACTIVE_AUTO_RENEW" };
+  const before = resolveEquipmentContract(base({ taskLocalDate: "2025-12-31", match, versions: [version] }));
+  const after = resolveEquipmentContract(base({ taskLocalDate: "2026-01-01", match, versions: [version] }));
+  assert.equal(before.reasonCode, "NO_CONTRACT_AT_TASK_DATE");
+  assert.equal(after.calculable, true);
+  assert.equal(after.contractVersionId, 1);
+  assert.equal(after.validFrom, null, "effective_date no se reetiqueta como vigencia contractual");
+  assert.equal(after.sourceEffectiveDate, "2026-01-01");
+});
+
 test("paso 2 -versión: con 2 versiones, una NULL y otra real, matchea la real e ignora la NULL", () => {
   const r = resolveEquipmentContract(base({
     match: { matchStatus: "MATCHED", matchMethod: "SERIAL_SUFFIX", contractEquipmentKey: "SN:1" },
@@ -82,10 +94,22 @@ test("paso 3 -estado: NO_CONTRACT -> NO_CONTRACT_STATUS", () => {
 test("paso 3 -estado: ON_DEMAND -> ON_DEMAND_UNDEFINED", () => {
   const r = resolveEquipmentContract(base({
     match: { matchStatus: "MATCHED", contractEquipmentKey: "SN:1" },
-    versions: [{ contractVersionId: 1, validFrom: "2020-01-01", validTo: null, contractStatusCode: "ON_DEMAND" }]
+    versions: [{ contractVersionId: 99, validFrom: "2020-01-01", validTo: null, contractStatusCode: "ON_DEMAND" }]
   }));
   assert.equal(r.calculable, false);
   assert.equal(r.reasonCode, "ON_DEMAND_UNDEFINED");
+});
+
+test("paso 3 -ON_DEMAND con FIXED_WINDOW explícito usa ventanas y conserva metadatos", () => {
+  const r = resolveEquipmentContract(base({
+    match: { matchStatus: "MATCHED", contractEquipmentKey: "SN:1" },
+    versions: [{ contractVersionId: 1, validFrom: "2020-01-01", validTo: null, contractStatusCode: "ON_DEMAND", requiresReview: true }]
+  }));
+  assert.equal(r.calculable, true);
+  assert.equal(r.reasonCode, "WITHIN_MATCHED_CONTRACT");
+  assert.equal(r.coverageType, "FIXED_WINDOW");
+  assert.equal(r.contractStatusCode, "ON_DEMAND");
+  assert.equal(r.requiresReview, true);
 });
 
 test("paso 3 -estado: DEINSTALLED -> CONTRACT_STATUS_DEINSTALLED", () => {

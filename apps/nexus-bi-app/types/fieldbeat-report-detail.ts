@@ -23,7 +23,10 @@ import type { ContractScheduleResult } from "@/types/contracts";
 // FieldbeatContractRelation gana `schedule` (ContractScheduleResult, ver
 // types/contracts.ts). Ningún consumidor 2.1.0 se rompe - el campo es
 // adicional.
-export const FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION = "2.2.0";
+// 3.0.0: el contrato temporal deja de exponer la bolsa ambigua `chronology`
+// y separa planificación, ejecución informada, entrega, actividad del
+// registro e intervalo canónico de análisis bajo `temporal`.
+export const FIELDBEAT_REPORT_DETAIL_CONTRACT_VERSION = "3.0.0";
 
 /** Fuente de un ítem de equipo - NUNCA promueve una ambigüedad a match
  * confirmado (ver lib/fieldbeat-equipment-derivation.ts). */
@@ -101,15 +104,43 @@ export interface FieldbeatReportIdentity {
   fieldbeatTaskDate: string | null;
 }
 
-export interface FieldbeatChronology {
-  createdAt: string | null;
-  startTime: string | null;
-  lastTransitionAt: string | null;
-  durationMinutes: number | null;
-  chronologyImpossible: boolean;
-  hasSufficientTimestamps: boolean;
-  finishedZeroDuration: boolean;
-  finishedNullDuration: boolean;
+export type AnalysisIntervalBasis =
+  | "REPORTED_WORK_INTERVAL"
+  | "DELIVERY_FALLBACK"
+  | "TASK_TRANSITIONS"
+  | "SCHEDULED_ESTIMATE"
+  | "INSUFFICIENT_DATA";
+
+export type TemporalFieldSource = "FORM_FIELD" | "TASK_METADATA" | "STATUS_HISTORY" | "DERIVED";
+export type TemporalParseStatus = "PARSED" | "MISSING" | "INVALID" | "AMBIGUOUS";
+
+export interface TemporalField {
+  value: string | null;
+  rawValue: string | null;
+  source: TemporalFieldSource;
+  sourceField: string | null;
+  parseStatus: TemporalParseStatus;
+}
+
+export interface ReportTemporalData {
+  reportRegisteredAt: TemporalField;
+  scheduledAt: TemporalField;
+  estimatedDurationMinutes: number | null;
+  scheduledEstimatedEndAt: TemporalField;
+  reportedWorkStartAt: TemporalField;
+  reportedWorkEndAt: TemporalField;
+  reportedWorkDurationMinutes: number | null;
+  deliveredAt: TemporalField;
+  deliveryDeltaMinutes: number | null;
+  firstTransitionAt: TemporalField;
+  lastTransitionAt: TemporalField;
+  analysisIntervalStartAt: TemporalField;
+  analysisIntervalEndAt: TemporalField;
+  analysisIntervalDurationMinutes: number | null;
+  analysisIntervalBasis: AnalysisIntervalBasis;
+  analysisFallbackUsed: boolean;
+  analysisFallbackReason: string | null;
+  temporalIssues: string[];
 }
 
 export interface FieldbeatTechnician {
@@ -309,7 +340,7 @@ export interface FieldbeatReportDetail {
   contractVersion: string;
   generatedAt: string;
   report: FieldbeatReportIdentity;
-  chronology: FieldbeatChronology;
+  temporal: ReportTemporalData;
   technician: FieldbeatTechnician | null;
   client: FieldbeatClient | null;
   equipment: FieldbeatEquipmentIdentification;

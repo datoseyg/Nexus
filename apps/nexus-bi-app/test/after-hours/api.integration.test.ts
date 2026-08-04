@@ -386,11 +386,11 @@ test("detail: data_basis=NONE nunca inventa 0 - minutos NULL, intervalo conserva
   const body = await res.json();
 
   const terminalRow = body.rows.find((r: { fieldbeat_task_id: number }) => r.fieldbeat_task_id === 800003);
-  assert.equal(terminalRow.start_time, null);
+  assert.equal(terminalRow.analysis_start_time, null);
   assert.equal(terminalRow.duration_hours, null);
 
   const resolvedNoneRow = body.rows.find((r: { fieldbeat_task_id: number }) => r.fieldbeat_task_id === 800004);
-  assert.notEqual(resolvedNoneRow.start_time, null, "intervalo se conserva pese a NONE, motivo no terminal");
+  assert.notEqual(resolvedNoneRow.analysis_start_time, null, "intervalo se conserva pese a NONE, motivo no terminal");
   assert.equal(resolvedNoneRow.business_hours, null, "minutos de cobertura siguen NULL, nunca 0 inventado");
   assert.equal(resolvedNoneRow.coverage_reason_code, "NO_EQUIPMENT");
 });
@@ -433,7 +433,8 @@ test("compatibilidad: los campos históricos del contrato (§3) siguen presentes
   for (const field of [
     "business_hours", "after_hours", "weekend_hours", "holiday_hours", "after_hours_rate",
     "confidence_score", "confidence_label", "confidence_factors", "calculation_method",
-    "reported_end_raw", "start_time", "duration_hours", "calculation_status"
+    "reported_end_raw", "analysis_start_time", "analysis_end_time", "analysis_interval_basis",
+    "analysis_fallback_used", "analysis_fallback_reason", "duration_hours", "calculation_status"
   ]) {
     assert.ok(field in row, `campo histórico ausente: ${field}`);
   }

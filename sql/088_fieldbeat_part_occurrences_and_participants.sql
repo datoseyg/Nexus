@@ -61,30 +61,6 @@ RETURNS BOOLEAN LANGUAGE SQL IMMUTABLE PARALLEL SAFE AS $$
   SELECT COALESCE(UPPER(TRIM(token)) ~ '^OTROS?\s*\(\s*COMENTE\s*\)$', false)
 $$;
 
--- Parsea "DD/MM/YYYY HH:mm" (formato real de HORA DE INICIO/TERMINO DEL
--- TRABAJO) interpretando el wall-clock como America/Santiago (zona IANA,
--- NUNCA un offset fijo - Chile ha cambiado sus reglas de horario de verano
--- varias veces históricamente; AT TIME ZONE con nombre de zona usa el
--- tzdata real de Postgres, que ya conoce esas reglas, sin necesidad de
--- codificarlas acá). STABLE (no IMMUTABLE): depende del tzdata del sistema,
--- que en teoría podría actualizarse entre versiones de Postgres.
--- Nunca lanza un error hacia el caller - un valor ausente/ambiguo/inválido
--- se resuelve a NULL (sin duración confiable), nunca tumba la query.
-CREATE OR REPLACE FUNCTION quality.parse_fieldbeat_santiago_timestamp(raw_value TEXT)
-RETURNS TIMESTAMPTZ
-LANGUAGE plpgsql
-STABLE
-AS $$
-BEGIN
-  IF raw_value IS NULL OR btrim(raw_value) = '' THEN
-    RETURN NULL;
-  END IF;
-  RETURN (to_timestamp(btrim(raw_value), 'DD/MM/YYYY HH24:MI')::timestamp) AT TIME ZONE 'America/Santiago';
-EXCEPTION WHEN OTHERS THEN
-  RETURN NULL;
-END;
-$$;
-
 -- ============================================================================
 -- 1. Mapa de identidad de ingenieros - AUTO_EVIDENCED (nunca "verificado
 --    manualmente" a menos que un humano lo revise después, ver columnas).
@@ -288,42 +264,14 @@ WHERE pa.fieldbeat_task_id IS NULL;
 --    duración real confiable.
 -- ============================================================================
 CREATE OR REPLACE VIEW quality.fieldbeat_report_labor_summary AS
-WITH declared_interval AS (
-  SELECT
-    t.fieldbeat_task_id,
-    quality.parse_fieldbeat_santiago_timestamp(sf.field_value) AS declared_start,
-    quality.parse_fieldbeat_santiago_timestamp(ef.field_value) AS declared_end
-  FROM processed.fieldbeat_tasks t
-  LEFT JOIN processed.fieldbeat_report_fields sf
-    ON sf.fieldbeat_task_id = t.fieldbeat_task_id AND sf.field_name = 'HORA DE INICIO DEL TRABAJO'
-  LEFT JOIN processed.fieldbeat_report_fields ef
-    ON ef.fieldbeat_task_id = t.fieldbeat_task_id AND ef.field_name = 'HORA DE TERMINO DEL TRABAJO'
-),
-declared_minutes AS (
-  SELECT
-    fieldbeat_task_id,
-    CASE
-      WHEN declared_start IS NOT NULL AND declared_end IS NOT NULL
-        AND declared_end > declared_start
-        -- Máximo razonable: 1200 min (20h) - cubre turnos largos inusuales,
-        -- rechaza intervalos de varios DÍAS (confirmado real en el
-        -- dataset, ej. una tarea con intervalo declarado que abarca desde
-        -- el 25/01 hasta el 03/02 - claramente no es una sesión de trabajo
-        -- única, nunca se usa como duración real).
-        AND EXTRACT(EPOCH FROM (declared_end - declared_start)) / 60 <= 1200
-      THEN EXTRACT(EPOCH FROM (declared_end - declared_start)) / 60
-      ELSE NULL
-    END AS minutes
-  FROM declared_interval
-),
-resolved_duration AS (
+WITH resolved_duration AS (
   SELECT
     t.fieldbeat_task_id,
     t.duration_minutes AS scheduled_estimate_minutes,
-    dm.minutes AS actual_report_duration_minutes,
-    CASE WHEN dm.minutes IS NOT NULL THEN 'FORM_DECLARED_INTERVAL' ELSE 'UNAVAILABLE' END AS actual_duration_source
+    CASE WHEN w.analysis_interval_basis = 'REPORTED_WORK_INTERVAL' THEN w.duration_minutes ELSE NULL END AS actual_report_duration_minutes,
+    CASE WHEN w.analysis_interval_basis = 'REPORTED_WORK_INTERVAL' THEN 'FORM_DECLARED_INTERVAL' ELSE 'UNAVAILABLE' END AS actual_duration_source
   FROM processed.fieldbeat_tasks t
-  LEFT JOIN declared_minutes dm ON dm.fieldbeat_task_id = t.fieldbeat_task_id
+  LEFT JOIN marts.fieldbeat_working_hours_analysis_current w ON w.fieldbeat_task_id = t.fieldbeat_task_id
 ),
 participant_counts AS (
   SELECT fieldbeat_task_id, count(*) AS participant_count
@@ -343,6 +291,11 @@ SELECT
   false AS individual_time_available -- FieldBeat nunca capta fichaje individual por participante hoy
 FROM resolved_duration rd
 LEFT JOIN participant_counts pc ON pc.fieldbeat_task_id = rd.fieldbeat_task_id;
+
+-- La resolución temporal vive exclusivamente en el builder FieldBeat. Esta
+-- función era un segundo parser con reglas divergentes y queda retirada una
+-- vez que la vista anterior ya no depende de ella.
+DROP FUNCTION IF EXISTS quality.parse_fieldbeat_santiago_timestamp(TEXT);
 
 -- ============================================================================
 -- 6. Ocurrencia canónica de repuesto - fuente ÚNICA compartida por FieldBeat,
