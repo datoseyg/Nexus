@@ -119,6 +119,17 @@ test("normaliza variantes de 'Horario hábil'", () => {
   }
 });
 
+test("fuente 2026-08-04: Días hábiles 08:00-18:00 excluye fines de semana y festivos", () => {
+  const r = parseAttentionSchedule({
+    attentionScheduleRaw: "Días hábiles de 08:00 a 18:00 (No incluye fines de semana ni festivos)"
+  });
+  assert.equal(r.coverageType, "FIXED_WINDOW");
+  assert.equal(r.parseStatus, "OK");
+  assert.deepEqual(r.serviceWindowRows.map(w => w.dayOfWeek), ["MON", "TUE", "WED", "THU", "FRI"]);
+  assert.ok(r.serviceWindowRows.every(w => w.startTime === "08:00" && w.endTime === "18:00"));
+  assert.ok(r.serviceWindowRows.every(w => w.includesHolidays === false));
+});
+
 test("'N/A' -> NOT_APPLICABLE, revisión, sin ventanas inventadas", () => {
   const r = parseAttentionSchedule({ attentionScheduleRaw: "N/A" });
   assert.equal(r.coverageType, "NOT_APPLICABLE");

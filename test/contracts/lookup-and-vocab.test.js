@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createLookupNormalizer } from "../../src/contracts/lookup-normalizer.js";
-import { normalizeContractStatus, normalizeHwRefresh } from "../../src/contracts/normalize-vocab-fields.js";
+import { normalizeContractStatus, normalizeHwRefresh, normalizePartsCoverage } from "../../src/contracts/normalize-vocab-fields.js";
 
 test("createLookupNormalizer: hit real, fallback UNKNOWN con issue, vacío sin issue", () => {
   const normalize = createLookupNormalizer({ map: { A: "CODE_A" }, fallbackCode: "UNKNOWN", issueType: "UNMAPPED_ENUM_VALUE" });
@@ -32,4 +32,9 @@ test("normalizeHwRefresh: comparte vocabulario YES/NO/SW_ONLY/CONDITIONAL_SW", (
   assert.equal(normalizeHwRefresh("No").code, "NO");
   assert.equal(normalizeHwRefresh("Sólo SW").code, "SW_ONLY");
   assert.equal(normalizeHwRefresh("Sólo si el nuevo SW lo requiere").code, "CONDITIONAL_SW");
+});
+
+test("normalizePartsCoverage: variantes sin tilde de la fuente 2026-08-04 conservan su semántica", () => {
+  assert.equal(normalizePartsCoverage("Todo Incluido").code, "FULL_COVERAGE");
+  assert.equal(normalizePartsCoverage("No Incluidos").code, "NOT_INCLUDED");
 });

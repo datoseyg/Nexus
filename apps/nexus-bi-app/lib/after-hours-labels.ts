@@ -100,7 +100,7 @@ const REASON_CODE_LABELS: Record<AfterHoursCoverageReasonCode, CodeLabel> = {
   WITHIN_LEGACY_SCHEDULE: {
     label: "Horario global de respaldo",
     shortLabel: "Horario global",
-    description: "Se usó el horario laboral general (8h30 - 17h30) porque el intento de relacionar un contrato no fue posible para esta instancia de trabajo.",
+    description: "Se usó el horario laboral general (Lunes a Viernes 8h00 - 18h00) porque el intento de relacionar un contrato no fue posible para esta instancia de trabajo.",
     severity: "info"
   },
   MULTIPLE_EQUIPMENT_SAME_COVERAGE: {
@@ -137,6 +137,12 @@ const REASON_CODE_LABELS: Record<AfterHoursCoverageReasonCode, CodeLabel> = {
     label: "Sin contrato en esa fecha",
     shortLabel: "Sin contrato",
     description: "El equipo no tenía un contrato vigente en la fecha en que ocurrió la tarea.",
+    severity: "neutral"
+  },
+  NO_CONTRACT: {
+    label: "Sin contrato de atención",
+    shortLabel: "Sin contrato",
+    description: "El equipo está explícitamente registrado sin contrato de atención; se utiliza el horario global como fallback.",
     severity: "neutral"
   },
   NO_CONTRACT_STATUS: {

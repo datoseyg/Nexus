@@ -68,7 +68,12 @@ export function buildEquipmentRecord(classifiedRow, effectiveDate, clientNameNor
 
   const attentionScheduleRaw = String(row[COLUMN.HORARIOS_ATENCION] ?? "").trim() || null;
   const schedule = parseAttentionSchedule({ attentionScheduleRaw });
-  issues.addAll(schedule.issues);
+  // N/A es ausencia explícita de horario contractual cuando el propio
+  // estado declara NO_CONTRACT; no es información faltante. El parser se
+  // mantiene agnóstico y el dominio combina ambas señales aquí.
+  const explicitNoContractWithoutSchedule = contractStatus.code === "NO_CONTRACT"
+    && schedule.coverageType === "NOT_APPLICABLE";
+  if (!explicitNoContractWithoutSchedule) issues.addAll(schedule.issues);
 
   const partsCoverage = normalizePartsCoverage(row[COLUMN.SITUACION_REPUESTOS]);
   issues.addAll(partsCoverage.issues);

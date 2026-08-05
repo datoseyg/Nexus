@@ -82,13 +82,13 @@ test("paso 2 -versión: valid_to excluye la fecha (rango [from,to) exclusivo)", 
   assert.equal(r.reasonCode, "NO_CONTRACT_AT_TASK_DATE");
 });
 
-test("paso 3 -estado: NO_CONTRACT -> NO_CONTRACT_STATUS", () => {
+test("paso 3 -estado: NO_CONTRACT -> motivo explícito NO_CONTRACT", () => {
   const r = resolveEquipmentContract(base({
     match: { matchStatus: "MATCHED", contractEquipmentKey: "SN:1" },
     versions: [{ contractVersionId: 1, validFrom: "2020-01-01", validTo: null, contractStatusCode: "NO_CONTRACT" }]
   }));
   assert.equal(r.calculable, false);
-  assert.equal(r.reasonCode, "NO_CONTRACT_STATUS");
+  assert.equal(r.reasonCode, "NO_CONTRACT");
 });
 
 test("paso 3 -estado: ON_DEMAND -> ON_DEMAND_UNDEFINED", () => {

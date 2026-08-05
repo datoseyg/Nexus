@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { loadDryRunDatabaseState } from "../../src/contracts/dry-run-db-state.js";
+import { CONTRACT_TRANSFORM_VERSION } from "../../src/contracts/transform-version.js";
 
 test("dry-run conectado resuelve duplicado y versionAction sin escribir ni consultar por fila", async () => {
   const queries = [];
@@ -47,11 +48,11 @@ test("dry-run conectado resuelve duplicado y versionAction sin escribir ni consu
   assert.deepEqual(state.alreadyImported, {
     isDuplicate: true,
     priorImportId: 41,
-    transformVersion: "contracts-v2-business-hours-0830"
+    transformVersion: CONTRACT_TRANSFORM_VERSION
   });
   assert.equal(state.versionActions.get("SN:154325"), "UNCHANGED");
   assert.equal(state.versionActions.get("SN:NEW"), "NEW");
   assert.equal(queries.length, 2, "el peek usa dos consultas batch fijas, nunca N+1");
-  assert.deepEqual(queries[0].params, ["source-sha", "contracts-v2-business-hours-0830"]);
+  assert.deepEqual(queries[0].params, ["source-sha", CONTRACT_TRANSFORM_VERSION]);
   assert.deepEqual(queries[1].params, [["SN:154325", "SN:NEW"]]);
 });

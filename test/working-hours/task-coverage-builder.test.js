@@ -137,6 +137,19 @@ test("equipo con estado DEINSTALLED -> no calculable, cae a LEGACY_SCHEDULE pres
   assert.equal(r.contractualReasonCode, "CONTRACT_STATUS_DEINSTALLED");
 });
 
+test("NO_CONTRACT + N/A usa horario global con motivo NO_CONTRACT explícito", () => {
+  const equipment = contractualEquipment("EQ-105614", { statusCode: "NO_CONTRACT" });
+  equipment.scheduleByVersionId = new Map([[1, { scheduleId: 1, coverageType: "NOT_APPLICABLE", parseStatus: "REVIEW_REQUIRED" }]]);
+  equipment.windowsByScheduleId = new Map([[1, []]]);
+  const r = run({ equipmentInputs: [equipment] });
+  assert.equal(r.dataBasis, "LEGACY_SCHEDULE");
+  assert.equal(r.fallbackUsed, true);
+  assert.equal(r.contractualReasonCode, "NO_CONTRACT");
+  assert.equal(r.coverageReasonCode, "WITHIN_LEGACY_SCHEDULE");
+  assert.equal(r.equipmentLinks[0].contractVersionId, 1);
+  assert.equal(r.equipmentLinks[0].scheduleId, null);
+});
+
 test("equipo CRITICAL_ONLY_24X7 sin señal de criticidad -> CRITICALITY_UNKNOWN, nunca se asume crítico ni no-crítico", () => {
   const r = run({ equipmentInputs: [contractualEquipment("EQ-1", { coverageType: "CRITICAL_ONLY_24X7" })] });
   assert.equal(r.contractualReasonCode, "CRITICALITY_UNKNOWN");
