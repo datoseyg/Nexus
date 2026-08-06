@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { kpi1, kpi2, kpi3, kpi4, kpi5, teamEvolution } = await computeQualityBundle(filters);
+    const { kpi1, kpi2, kpi3, kpi4, kpi5, equipmentEvolution } = await computeQualityBundle(filters);
 
     const body: FieldbeatQualityResponse = {
       meta: {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       kpi3,
       kpi4,
       kpi5,
-      teamEvolution,
+      equipmentEvolution,
       historicalAliasLimitation: HISTORICAL_ALIAS_LIMITATION_MESSAGE
     };
 

@@ -13,7 +13,7 @@
 import type {
   Kpi1StructuralCompleteness,
   Kpi2TicketLinkage,
-  Kpi3TeamIdentification,
+  Kpi3equipmentIdentification,
   Kpi4PartsTraceability,
   Kpi5TemporalConsistency,
   Kpi6InformationInconsistencies
@@ -72,7 +72,7 @@ export function viewKpi2(kpi: Kpi2TicketLinkage): FieldbeatKpiCardViewModel {
   };
 }
 
-export function viewKpi3(kpi: Kpi3TeamIdentification): FieldbeatKpiCardViewModel {
+export function viewKpi3(kpi: Kpi3equipmentIdentification): FieldbeatKpiCardViewModel {
   const isZero = kpi.denominator === 0;
   return {
     id: "kpi3",

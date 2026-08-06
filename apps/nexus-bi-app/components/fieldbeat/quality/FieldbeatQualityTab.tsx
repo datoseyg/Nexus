@@ -50,7 +50,7 @@ export function FieldbeatQualityTab({ query, onMeta }: FieldbeatQualityTabProps)
 
   const cards = data ? [viewKpi1(data.kpi1), viewKpi2(data.kpi2), viewKpi3(data.kpi3), viewKpi4(data.kpi4), viewKpi5(data.kpi5)] : [];
 
-  const labels = data?.teamEvolution.map(p => periodLabel(p.period)) ?? [];
+  const labels = data?.equipmentEvolution.map(p => periodLabel(p.period)) ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,14 +78,14 @@ export function FieldbeatQualityTab({ query, onMeta }: FieldbeatQualityTabProps)
           </div>
 
           <ChartCard
-            title="Identificación de equipos - estructurado vs. texto"
+            title="Identificación de equipos"
             subtitle="Evolución mensual, universo cerrado."
             size="line"
-            available={data.teamEvolution.length > 0}
+            available={data.equipmentEvolution.length > 0}
             unavailableReason="Sin datos suficientes para graficar la evolución."
             accessibleData={{
               labels,
-              values: data.teamEvolution.map(p => p.structured.percentage ?? 0),
+              values: data.equipmentEvolution.map(p => p.structured.percentage ?? 0),
               unitLabel: "meses",
               valueSuffix: "% estructurado"
             }}
@@ -94,10 +94,10 @@ export function FieldbeatQualityTab({ query, onMeta }: FieldbeatQualityTabProps)
               data={{
                 labels,
                 datasets: [
-                  { label: "Estructurado", data: data.teamEvolution.map(p => p.structured.percentage ?? 0), borderColor: DASHBOARD_PALETTE.green, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 },
-                  { label: "Texto confiable", data: data.teamEvolution.map(p => p.textConfident.percentage ?? 0), borderColor: DASHBOARD_PALETTE.teal, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 },
-                  { label: "Ambiguo", data: data.teamEvolution.map(p => p.textAmbiguous.percentage ?? 0), borderColor: DASHBOARD_PALETTE.warning, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 },
-                  { label: "Ausente", data: data.teamEvolution.map(p => p.missing.percentage ?? 0), borderColor: DASHBOARD_PALETTE.danger, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 }
+                  { label: "Estructurado", data: data.equipmentEvolution.map(p => p.structured.percentage ?? 0), borderColor: DASHBOARD_PALETTE.green, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 },
+                  { label: "Texto confiable", data: data.equipmentEvolution.map(p => p.textConfident.percentage ?? 0), borderColor: DASHBOARD_PALETTE.teal, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 },
+                  { label: "Ambiguo", data: data.equipmentEvolution.map(p => p.textAmbiguous.percentage ?? 0), borderColor: DASHBOARD_PALETTE.warning, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 },
+                  { label: "Ausente", data: data.equipmentEvolution.map(p => p.missing.percentage ?? 0), borderColor: DASHBOARD_PALETTE.danger, backgroundColor: "transparent", tension: 0.2, pointRadius: 2 }
                 ]
               }}
               options={{

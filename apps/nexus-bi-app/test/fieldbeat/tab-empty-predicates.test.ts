@@ -10,7 +10,7 @@ function overviewFixture(overrides: { kpi1Den?: number; kpi3Den?: number; kpi5Ev
     meta: { generatedAt: "", contractVersion: "", effectiveDateFrom: null, effectiveDateTo: null, filtersApplied: {} },
     kpi1: { numerator: 0, denominator: overrides.kpi1Den ?? 0, percentage: null, missingTechnician: 0, missingClient: 0, missingEquipment: 0, multipleMissing: 0, drillDownFilter: { qualityStatus: null, note: "" } },
     kpi2: { reportsWithAccessibleTicket: 0, reportsWithMissingOrRestrictedTicket: 0, reportsWithoutReportedTicket: 0, evaluableReports: 0, percentage: null, distributionByTicketCount: [], drillDownFilter: { ticketStatus: "missing_or_restricted" } },
-    kpi3: { numerator: 0, denominator: overrides.kpi3Den ?? 0, percentage: null, structured: 0, textConfident: 0, textAmbiguous: 0, missing: 0, notApplicable: 0, sumMatchesDenominator: true, drillDownFilter: { teamIdentificationStatus: "MISSING" } },
+    kpi3: { numerator: 0, denominator: overrides.kpi3Den ?? 0, percentage: null, structured: 0, textConfident: 0, textAmbiguous: 0, missing: 0, notApplicable: 0, sumMatchesDenominator: true, drillDownFilter: { equipmentIdentificationStatus: "MISSING" } },
     kpi4: { reportGrain: { universe: 0, fullyTraceable: 0, containsPlaceholder: 0, containsNoMatch: 0, containsAmbiguous: 0, combinedProblems: 0 }, lineGrain: { totalLines: 0, directMatches: 0, historicalAliasMatches: 0, descriptionMatches: 0, ambiguous: 0, placeholders: 0, noMatch: 0 }, historicalAliasLimitation: "" },
     kpi5: { evaluableReports: overrides.kpi5Eval ?? 0, consistentReports: 0, impossibleChronology: 0, zeroDurationWarnings: 0, nullDurationWarnings: 0, percentage: null, apparentCreationLagMedian: null, apparentCreationLagP90: null, apparentCreationLagDisclaimer: "" },
     evolution: [],
@@ -34,7 +34,7 @@ function qualityFixture(overrides: { kpi1Den?: number; kpi3Den?: number; kpi4Uni
     kpi3: { ...o.kpi3, denominator: overrides.kpi3Den ?? 0 },
     kpi4: { ...o.kpi4, reportGrain: { ...o.kpi4.reportGrain, universe: overrides.kpi4Universe ?? 0 } },
     kpi5: o.kpi5,
-    teamEvolution: [],
+    equipmentEvolution: [],
     historicalAliasLimitation: ""
   };
 }

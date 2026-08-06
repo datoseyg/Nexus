@@ -11,12 +11,12 @@ export const EQUIPMENT_SOURCE_LABEL: Record<string, string> = {
   TEXT_AMBIGUOUS_CANDIDATE: "Candidato ambiguo"
 };
 
-// Etiqueta de data.equipment.status (TeamIdentificationStatus - el status
+// Etiqueta de data.equipment.status (equipmentIdentificationStatus - el status
 // del REPORTE) - distinto de EQUIPMENT_SOURCE_LABEL (la fuente de cada
 // ITEM individual). Ver comentario histórico en git blame de
 // FieldbeatReportDetailContent.tsx sobre el bug real de Phase 5 (lookup
 // contra el mapa equivocado).
-export const TEAM_IDENTIFICATION_STATUS_LABEL: Record<string, string> = {
+export const EQUIPMENT_IDENTIFICATION_STATUS_LABEL: Record<string, string> = {
   STRUCTURED_IDENTIFIED: "Estructurado",
   TEXT_CONFIDENT_IDENTIFIED: "Recuperado de texto",
   TEXT_AMBIGUOUS: "Ambiguo (sin confirmar)",

@@ -24,6 +24,7 @@ import {
   highlightColors,
   withAlpha
 } from "@/lib/dashboard-formatters";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_GHOST } from "@/components/ui/interactive";
 
 interface FilterOptions {
   clientes: string[];
@@ -168,7 +169,7 @@ function DonutPanel({
               <button
                 type="button"
                 onClick={() => onEntryClick(entry.label)}
-                className="flex w-full items-center gap-2 rounded text-left text-[13px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
+                className={`flex w-full items-center gap-2 rounded px-1 text-left text-[13px] ${BUTTON_GHOST}`}
                 style={{ color: "var(--nx-text-secondary)" }}
               >
                 <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: entry.color }} aria-hidden="true" />
@@ -506,8 +507,9 @@ export function OperationalDashboardTab() {
           </span>
           <button
             type="button"
-            className="rounded-[var(--nx-radius-button)] px-3 text-[12.5px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-            style={{ background: "var(--nx-page-bg)", color: "var(--nx-text-secondary)", minHeight: 44 }}
+            aria-expanded={!filtersCollapsed}
+            className={`rounded-[var(--nx-radius-button)] bg-[var(--nx-page-bg)] px-3 text-[12.5px] font-semibold ${BUTTON_GHOST}`}
+            style={{ color: "var(--nx-text-secondary)", minHeight: 44 }}
             onClick={() => setFiltersCollapsed(v => !v)}
           >
             {filtersCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
@@ -558,8 +560,8 @@ export function OperationalDashboardTab() {
         <button
           type="button"
           onClick={handleDownloadReport}
-          className="inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--nx-radius-button)] border px-4 text-[13px] font-semibold transition-colors hover:bg-[var(--nx-accent-indigo)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-          style={{ borderColor: "var(--nx-accent-indigo)", color: "var(--nx-accent-indigo)", background: "#ffffff", minHeight: 44 }}
+          className={`inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--nx-radius-button)] border bg-white text-[var(--nx-accent-indigo)] px-4 text-[13px] font-semibold cursor-pointer hover:bg-[var(--nx-accent-indigo)] hover:text-white active:bg-[var(--nx-accent-indigo-hover)] disabled:cursor-not-allowed disabled:opacity-50 ${BASE_TRANSITION} ${FOCUS_RING}`}
+          style={{ borderColor: "var(--nx-accent-indigo)", minHeight: 44 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 3v12m0 0-4-4m4 4 4-4" />

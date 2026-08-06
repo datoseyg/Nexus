@@ -2,6 +2,7 @@ import { SidebarBrand } from "@/components/layout/SidebarBrand";
 import { SidebarNavigation } from "@/components/layout/SidebarNavigation";
 import { UserSessionControls } from "@/components/layout/UserSessionControls";
 import { DataRefreshControl } from "@/components/data-refresh/DataRefreshControl";
+import { BUTTON_CHROME } from "@/components/ui/interactive";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -37,8 +38,8 @@ export function Sidebar({ collapsed, onToggleCollapse, pendingReviewCount, userL
           onClick={onToggleCollapse}
           aria-expanded={!collapsed}
           aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-[var(--nx-radius-button)] py-2 text-[13px] font-semibold"
-          style={{ color: "var(--nx-sidebar-text-secondary)", background: "rgba(255,255,255,0.06)" }}
+          className={`mt-2 flex w-full items-center justify-center gap-2 rounded-[var(--nx-radius-button)] bg-white/[0.06] py-2 text-[13px] font-semibold ${BUTTON_CHROME}`}
+          style={{ color: "var(--nx-sidebar-text-secondary)" }}
         >
           <svg
             width="16"

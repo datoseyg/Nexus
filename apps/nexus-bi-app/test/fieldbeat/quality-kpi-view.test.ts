@@ -4,7 +4,7 @@ import { viewKpi1, viewKpi2, viewKpi3, viewKpi4, viewKpi5, viewKpi6 } from "../.
 import type {
   Kpi1StructuralCompleteness,
   Kpi2TicketLinkage,
-  Kpi3TeamIdentification,
+  Kpi3equipmentIdentification,
   Kpi4PartsTraceability,
   Kpi5TemporalConsistency,
   Kpi6InformationInconsistencies
@@ -63,7 +63,7 @@ test("viewKpi2: sin tickets informados es denominador cero", () => {
 });
 
 test("viewKpi3: desglose exhaustivo aparece en la interpretación", () => {
-  const kpi: Kpi3TeamIdentification = {
+  const kpi: Kpi3equipmentIdentification = {
     numerator: 3115,
     denominator: 3609,
     percentage: 86.31,
@@ -73,7 +73,7 @@ test("viewKpi3: desglose exhaustivo aparece en la interpretación", () => {
     missing: 494,
     notApplicable: 0,
     sumMatchesDenominator: true,
-    drillDownFilter: { teamIdentificationStatus: "MISSING" }
+    drillDownFilter: { equipmentIdentificationStatus: "MISSING" }
   };
   const view = viewKpi3(kpi);
   assert.match(view.interpretation, /Estructurado: 3\.099/);

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-03T22:08:41.286Z",
+  "generated_at": "2026-08-06T07:10:59.809Z",
   "inputs_used": [
     "data/marts/FieldBeat_Report_Dolibarr_Operational_View.csv",
     "data/marts/Used_Parts_Dolibarr_Match.csv"
@@ -11,11 +11,11 @@
     },
     {
       "file": "data/gold/GOLD_Client_Parts_Consumption.csv",
-      "row_count": 926
+      "row_count": 928
     },
     {
       "file": "data/gold/GOLD_Client_Report_Volume_By_Period.csv",
-      "row_count": 926
+      "row_count": 928
     },
     {
       "file": "data/gold/GOLD_Equipment_Parts_Consumption.csv",
@@ -27,8 +27,8 @@
     }
   ],
   "used_parts_cross_check": {
-    "used_parts_summed_from_reports": 2211,
-    "used_parts_global_source_count": 2211,
+    "used_parts_summed_from_reports": 2216,
+    "used_parts_global_source_count": 2216,
     "matches": true
   }
 }

@@ -8,16 +8,16 @@
 // por completar la lista.
 
 import type { HistoricalPartMatchStatus } from "./fieldbeat-parts-history";
-import type { TeamIdentificationStatus } from "./fieldbeat-team-identification";
+import type { equipmentIdentificationStatus } from "./fieldbeat-equipment-identification";
 
 export type InconsistencySeverity = "Alta" | "Media" | "Baja" | "Advertencia";
 
 export type InconsistencyCode =
   | "PART_AMBIGUOUS_MATCH"
-  | "TEAM_TEXT_AMBIGUOUS"
+  | "EQUIPMENT_TEXT_AMBIGUOUS"
   | "PART_NO_MATCH"
   | "TICKET_REPORTED_INACCESSIBLE"
-  | "TEAM_MISSING"
+  | "EQUIPMENT_MISSING"
   | "MIN_FIELDS_INCOMPLETE"
   | "PART_PLACEHOLDER_ONLY"
   | "FINISHED_ZERO_DURATION"
@@ -45,7 +45,7 @@ export const INCONSISTENCY_TAXONOMY: readonly InconsistencyDefinition[] = [
     universe: "Reportes con al menos un repuesto"
   },
   {
-    code: "TEAM_TEXT_AMBIGUOUS",
+    code: "EQUIPMENT_TEXT_AMBIGUOUS",
     severity: "Alta",
     condition: "Identificación de equipo = TEXT_AMBIGUOUS y no existe alternativa estructurada",
     explanation: "La descripción menciona más de un equipo candidato del mismo cliente, sin campo estructurado que lo resuelva.",
@@ -62,14 +62,14 @@ export const INCONSISTENCY_TAXONOMY: readonly InconsistencyDefinition[] = [
   },
   {
     code: "TICKET_REPORTED_INACCESSIBLE",
-    severity: "Media",
+    severity: "Baja",
     condition: "zendesk_join_status = LINKED_TO_MISSING_OR_RESTRICTED_ZENDESK",
     explanation: "El reporte informa un ticket de Zendesk, pero ese ticket no existe o no es accesible.",
     suggestedAction: "Confirmar el número de ticket con el técnico o revisar permisos de acceso en Zendesk.",
     universe: "Reportes con ticket informado (zendesk_join_status != NO_TICKET_REPORTED)"
   },
   {
-    code: "TEAM_MISSING",
+    code: "EQUIPMENT_MISSING",
     severity: "Media",
     condition: "Identificación de equipo = MISSING",
     explanation: "El reporte cerrado no identifica ningún equipo, ni en campo estructurado ni de forma recuperable en la descripción.",
@@ -121,7 +121,7 @@ export interface ReportInconsistencyInput {
   chronologyImpossible: boolean;
   finishedZeroDuration: boolean;
   finishedNullDuration: boolean;
-  teamIdentification: TeamIdentificationStatus;
+  equipmentIdentification: equipmentIdentificationStatus;
   hasTicketReported: boolean;
   ticketAccessible: boolean | null;
   minimumFieldsComplete: boolean;
@@ -141,10 +141,10 @@ export function classifyReportInconsistencies(input: ReportInconsistencyInput): 
   };
 
   if (input.partMatchStatuses.includes("AMBIGUOUS_MATCH")) push("PART_AMBIGUOUS_MATCH");
-  if (input.teamIdentification === "TEXT_AMBIGUOUS") push("TEAM_TEXT_AMBIGUOUS");
+  if (input.equipmentIdentification === "TEXT_AMBIGUOUS") push("EQUIPMENT_TEXT_AMBIGUOUS");
   if (input.partMatchStatuses.includes("NO_MATCH")) push("PART_NO_MATCH");
   if (input.hasTicketReported && input.ticketAccessible === false) push("TICKET_REPORTED_INACCESSIBLE");
-  if (input.isClosed && input.teamIdentification === "MISSING") push("TEAM_MISSING");
+  if (input.isClosed && input.equipmentIdentification === "MISSING") push("EQUIPMENT_MISSING");
   if (input.isClosed && !input.minimumFieldsComplete) push("MIN_FIELDS_INCOMPLETE");
   if (
     input.partMatchStatuses.length > 0 &&

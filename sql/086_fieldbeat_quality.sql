@@ -10,7 +10,7 @@
 --
 -- Reglas espejadas 1:1 desde:
 --   lib/fieldbeat-terminal-states.ts       -> quality.is_terminal_task_state()
---   lib/fieldbeat-team-identification.ts   -> quality.fieldbeat_team_identification
+--   lib/fieldbeat-equipment-identification.ts   -> quality.fieldbeat_equipment_identification
 --   lib/fieldbeat-parts-history.ts         -> quality.fieldbeat_used_part_match
 --   lib/fieldbeat-inconsistency-taxonomy.ts -> quality.fieldbeat_report_inconsistencies
 --
@@ -60,7 +60,7 @@ $$;
 
 -- ============================================================================
 -- 2. Tokens de descripción - misma tokenización que
---    tokenizeDescription() en lib/fieldbeat-team-identification.ts:
+--    tokenizeDescription() en lib/fieldbeat-equipment-identification.ts:
 --    minúsculas, split por no-alfanumérico EXCEPTO el guion (los
 --    internal_id reales usan guion: "Linac-153935", "TPS-UC" - partirlos
 --    ahí los volvía irrecuperables de texto libre), descarta tokens < 3
@@ -74,13 +74,13 @@ WHERE length(token) >= 3;
 
 -- ============================================================================
 -- 3. Identificación de equipo por reporte - mismas 4 ramas alcanzables que
---    classifyTeamIdentification() (NOT_APPLICABLE nunca se infiere acá,
+--    classifyequipmentIdentification() (NOT_APPLICABLE nunca se infiere acá,
 --    igual que en TS - solo existe vía evidencia explícita, que hoy no hay
 --    fuente de datos para suministrar en SQL).
 --    Candidatos scoped al mismo client_key del reporte (nunca la flota
 --    completa) para no inflar colisiones artificialmente.
 -- ============================================================================
-CREATE OR REPLACE VIEW quality.fieldbeat_team_identification AS
+CREATE OR REPLACE VIEW quality.fieldbeat_equipment_identification AS
 WITH reports AS (
   SELECT v.fieldbeat_task_id, v.client_key, v.equipment_internal_ids
   FROM marts.fieldbeat_report_dolibarr_operational_view v
@@ -109,7 +109,7 @@ SELECT
     WHEN ma.matched_count = 1 THEN 'TEXT_CONFIDENT_IDENTIFIED'
     WHEN ma.matched_count > 1 THEN 'TEXT_AMBIGUOUS'
     ELSE 'MISSING'
-  END AS team_identification_status,
+  END AS equipment_identification_status,
   ma.matched_candidate_ids
 FROM reports r
 LEFT JOIN matches_agg ma ON ma.fieldbeat_task_id = r.fieldbeat_task_id;
@@ -244,7 +244,7 @@ WITH raw AS (
     t.created_in AS origen,
     (v.technician_names IS NOT NULL AND v.technician_names <> '') AS has_technician,
     (v.client_key IS NOT NULL AND v.client_key <> '') AS has_client,
-    ti.team_identification_status,
+    ti.equipment_identification_status,
     tl.has_ticket_reported,
     tl.accessible_ticket_count,
     (tl.has_ticket_reported AND tl.accessible_ticket_count > 0) AS ticket_accessible,
@@ -259,14 +259,14 @@ WITH raw AS (
     COALESCE(ps.fully_traceable, false) AS part_fully_traceable
   FROM processed.fieldbeat_tasks t
   JOIN marts.fieldbeat_report_dolibarr_operational_view v ON v.fieldbeat_task_id = t.fieldbeat_task_id
-  LEFT JOIN quality.fieldbeat_team_identification ti ON ti.fieldbeat_task_id = t.fieldbeat_task_id
+  LEFT JOIN quality.fieldbeat_equipment_identification ti ON ti.fieldbeat_task_id = t.fieldbeat_task_id
   LEFT JOIN quality.fieldbeat_ticket_linkage tl ON tl.fieldbeat_task_id = t.fieldbeat_task_id
   LEFT JOIN quality.fieldbeat_report_parts_summary ps ON ps.fieldbeat_task_id = t.fieldbeat_task_id
 )
 SELECT
   raw.*,
   (has_technician AND has_client) AS minimum_fields_complete,
-  (has_technician AND has_client AND team_identification_status IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED')) AS structurally_complete
+  (has_technician AND has_client AND equipment_identification_status IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED')) AS structurally_complete
 FROM raw;
 
 -- ============================================================================
@@ -282,10 +282,10 @@ FROM quality.fieldbeat_report_quality q
 CROSS JOIN LATERAL (
   VALUES
     ('PART_AMBIGUOUS_MATCH'::text, 'Alta'::text, 1, q.part_ambiguous > 0),
-    ('TEAM_TEXT_AMBIGUOUS', 'Alta', 2, q.team_identification_status = 'TEXT_AMBIGUOUS'),
+    ('EQUIPMENT_TEXT_AMBIGUOUS', 'Alta', 2, q.equipment_identification_status = 'TEXT_AMBIGUOUS'),
     ('PART_NO_MATCH', 'Media', 3, q.part_no_match > 0),
-    ('TICKET_REPORTED_INACCESSIBLE', 'Media', 4, q.ticket_missing_or_restricted),
-    ('TEAM_MISSING', 'Media', 5, q.is_closed AND q.team_identification_status = 'MISSING'),
+    ('TICKET_REPORTED_INACCESSIBLE', 'Baja', 4, q.ticket_missing_or_restricted),
+    ('EQUIPMENT_MISSING', 'Media', 5, q.is_closed AND q.equipment_identification_status = 'MISSING'),
     ('MIN_FIELDS_INCOMPLETE', 'Media', 6, q.is_closed AND NOT q.minimum_fields_complete),
     ('PART_PLACEHOLDER_ONLY', 'Baja', 7, q.part_total_lines > 0 AND q.part_placeholders > 0 AND q.part_no_match = 0 AND q.part_ambiguous = 0),
     ('FINISHED_ZERO_DURATION', 'Advertencia', 8, q.is_finished AND q.finished_zero_duration),

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveRowModel, isAfterHoursRowSelected, buildAfterHoursDrawerContext } from "../../lib/after-hours-detail-view.ts";
+import { resolveRowModel, isAfterHoursRowSelected, buildAfterHoursDrawerContext, parseReportIdInput } from "../../lib/after-hours-detail-view.ts";
 import type { AfterHoursDetailRow } from "../../types/after-hours.ts";
 
 // Sección 14.2 del encargo NEXUS V3 After-Hours - resolveRowModel traduce
@@ -19,6 +19,46 @@ test("resolveRowModel: 2+ modelos distintos (tarea multi-equipo) -> ambos listad
   const result = resolveRowModel(["Platform", "VersaHD"]);
   assert.equal(result.model, "Platform / VersaHD");
   assert.equal(result.model_resolution_status, "RESOLVED");
+});
+
+// Buscador de reporte (encabezado de AfterHoursDetailTable) - normalización
+// de la entrada de texto a un entero positivo seguro, o null si no es
+// válida. Nunca parseInt permisivo (parseInt("38a11") sería un falso
+// positivo real de 38).
+test("parseReportIdInput: acepta un número plano", () => {
+  assert.equal(parseReportIdInput("3811"), 3811);
+});
+
+test("parseReportIdInput: acepta '#' inicial, con o sin espacio posterior", () => {
+  assert.equal(parseReportIdInput("#3811"), 3811);
+  assert.equal(parseReportIdInput("# 3811"), 3811);
+});
+
+test("parseReportIdInput: recorta espacios exteriores", () => {
+  assert.equal(parseReportIdInput("  3811  "), 3811);
+  assert.equal(parseReportIdInput("  #3811  "), 3811);
+});
+
+test("parseReportIdInput: rechaza cadena vacía o solo '#'", () => {
+  assert.equal(parseReportIdInput(""), null);
+  assert.equal(parseReportIdInput("   "), null);
+  assert.equal(parseReportIdInput("#"), null);
+});
+
+test("parseReportIdInput: rechaza dígitos mezclados con letras (nunca un parseInt permisivo)", () => {
+  assert.equal(parseReportIdInput("38a11"), null);
+  assert.equal(parseReportIdInput("3811abc"), null);
+});
+
+test("parseReportIdInput: rechaza signo negativo, cero, y decimales", () => {
+  assert.equal(parseReportIdInput("-3811"), null);
+  assert.equal(parseReportIdInput("0"), null);
+  assert.equal(parseReportIdInput("1.5"), null);
+});
+
+test("parseReportIdInput: rechaza un segundo '#' no inicial (solo se elimina UN '#' inicial)", () => {
+  assert.equal(parseReportIdInput("##3811"), null);
+  assert.equal(parseReportIdInput("38#11"), null);
 });
 
 // Sección 14.4 del encargo - selección visual de fila.

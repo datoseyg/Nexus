@@ -10,6 +10,7 @@ import { PlaceholdersSection } from "./PlaceholdersSection";
 import { ReportsReviewSection } from "./ReportsReviewSection";
 import { TicketLinksReviewSection } from "./TicketLinksReviewSection";
 import { correctionTypeLabel, actorTypeLabel } from "@/lib/audit-vocabulary";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_PAGINATION } from "@/components/ui/interactive";
 
 interface CorreccionesSectionProps {
   clientes: string[];
@@ -154,7 +155,8 @@ function VersionsHistory() {
                   setCorrectionType(correctionType === option ? "" : option);
                   setPage(1);
                 }}
-                className="rounded-full border px-3 py-1 text-xs font-semibold"
+                aria-pressed={correctionType === option}
+                className={`rounded-full border cursor-pointer px-3 py-1 text-xs font-semibold hover:bg-[rgba(74,85,212,0.06)] active:bg-[rgba(74,85,212,0.12)] ${BASE_TRANSITION} ${FOCUS_RING}`}
                 style={{
                   borderColor: correctionType === option ? "var(--nx-accent-indigo)" : "var(--nx-border)",
                   color: correctionType === option ? "var(--nx-accent-indigo)" : "var(--nx-text-secondary)"
@@ -184,14 +186,22 @@ function VersionsHistory() {
               <span>
                 Página {data.page} de {data.totalPages}
               </span>
-              <button type="button" onClick={() => setPage(p => p - 1)} disabled={page <= 1} className="rounded border px-2" style={{ borderColor: "var(--nx-border)" }}>
+              <button
+                type="button"
+                onClick={() => setPage(p => p - 1)}
+                disabled={page <= 1}
+                aria-label="Página anterior"
+                className={`rounded border px-2 ${BUTTON_PAGINATION}`}
+                style={{ borderColor: "var(--nx-border)" }}
+              >
                 ‹
               </button>
               <button
                 type="button"
                 onClick={() => setPage(p => p + 1)}
                 disabled={page >= data.totalPages}
-                className="rounded border px-2"
+                aria-label="Página siguiente"
+                className={`rounded border px-2 ${BUTTON_PAGINATION}`}
                 style={{ borderColor: "var(--nx-border)" }}
               >
                 ›
@@ -284,11 +294,10 @@ export function CorreccionesSection({ clientes, maquinas, role, capabilities }: 
               aria-selected={active}
               aria-controls={`corrections-subtabpanel-${tab.key}`}
               onClick={() => setSubTab(tab.key)}
-              className="shrink-0 whitespace-nowrap rounded-t-lg px-3 py-1.5 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              className={`shrink-0 whitespace-nowrap rounded-t-lg cursor-pointer px-3 py-1.5 text-xs font-semibold hover:bg-[rgba(74,85,212,0.06)] active:bg-[rgba(74,85,212,0.12)] ${BASE_TRANSITION} ${FOCUS_RING}`}
               style={{
                 color: active ? "var(--nx-accent-indigo)" : "var(--nx-text-secondary)",
-                borderBottom: active ? "2px solid var(--nx-accent-indigo)" : "2px solid transparent",
-                outlineColor: "var(--nx-focus-ring-color)"
+                borderBottom: active ? "2px solid var(--nx-accent-indigo)" : "2px solid transparent"
               }}
             >
               {tab.label}

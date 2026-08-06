@@ -8,30 +8,30 @@
 // §2.3) - solo lo acepta como evidencia ya demostrada, provista por quien
 // llama.
 
-export type TeamIdentificationStatus =
+export type equipmentIdentificationStatus =
   | "STRUCTURED_IDENTIFIED"
   | "TEXT_CONFIDENT_IDENTIFIED"
   | "TEXT_AMBIGUOUS"
   | "MISSING"
   | "NOT_APPLICABLE";
 
-export interface TeamIdentificationCandidate {
+export interface equipmentIdentificationCandidate {
   /** Identificador de equipo tal como aparece en processed.fieldbeat_equipments (internal_id o equipment_key), scoped al mismo client_key del reporte. */
   id: string;
   label?: string;
 }
 
-export interface TeamIdentificationInput {
+export interface equipmentIdentificationInput {
   structuredEquipmentIds: readonly string[];
   description: string | null;
   /** Candidatos de equipo del MISMO cliente - nunca la flota completa, para no inflar colisiones. */
-  candidates: readonly TeamIdentificationCandidate[];
+  candidates: readonly equipmentIdentificationCandidate[];
   /** Motivo de NOT_APPLICABLE ya demostrado por una regla de dominio explícita - nunca inferido acá. */
   notApplicableReason?: string | null;
 }
 
-export interface TeamIdentificationResult {
-  status: TeamIdentificationStatus;
+export interface equipmentIdentificationResult {
+  status: equipmentIdentificationStatus;
   matchedCandidateIds: readonly string[];
   evidence: string | null;
 }
@@ -55,7 +55,7 @@ export function tokenizeDescription(description: string): readonly string[] {
     .filter(token => token.length >= MIN_TOKEN_LENGTH);
 }
 
-export function classifyTeamIdentification(input: TeamIdentificationInput): TeamIdentificationResult {
+export function classifyequipmentIdentification(input: equipmentIdentificationInput): equipmentIdentificationResult {
   if (input.structuredEquipmentIds.length > 0) {
     return {
       status: "STRUCTURED_IDENTIFIED",

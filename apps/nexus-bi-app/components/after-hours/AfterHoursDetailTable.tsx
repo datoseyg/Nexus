@@ -1,13 +1,15 @@
 "use client";
 
+import { useId, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { AfterHoursEmptyBlock } from "./AfterHoursEmptyBlock";
 import { buildDiagnosis, getConfidenceTierLabel } from "@/lib/after-hours-labels";
-import { formatHoursOrDash, isAfterHoursRowSelected, splitDateTime, totalAfterHoursHours } from "@/lib/after-hours-detail-view";
+import { formatHoursOrDash, isAfterHoursRowSelected, parseReportIdInput, splitDateTime, totalAfterHoursHours } from "@/lib/after-hours-detail-view";
 import { formatModelCell } from "@/lib/explorer-entity-config";
 import type { AfterHoursDetailRow } from "@/types/after-hours";
+import { BASE_TRANSITION, BUTTON_PAGINATION, BUTTON_SECONDARY, BUTTON_SORT, BUTTON_TEXT, FOCUS_RING } from "@/components/ui/interactive";
 
-export type DetailSortColumn = "start_time" | "duration" | "after_hours_rate" | "confidence_score";
+export type DetailSortColumn = "start_time" | "duration" | "after_hours_rate" | "confidence_score" | "fieldbeat_task_id";
 export type DetailSortDir = "asc" | "desc";
 
 interface AfterHoursDetailTableProps {
@@ -27,6 +29,12 @@ interface AfterHoursDetailTableProps {
    * para React key/drawer (fieldbeat_task_id), comparada acá solo para el
    * resaltado visual de la fila abierta. */
   selectedTaskId: number | null;
+  /** Buscador de N.º de reporte (encabezado) - número YA validado y
+   * actualmente aplicado (fuente de verdad en AfterHoursShell, misma
+   * ubicación que detailPage/sortBy: el fetch de detalle depende de este
+   * valor). null = sin filtro por reporte. */
+  reportIdFilter: number | null;
+  onReportIdFilterChange: (reportId: number | null) => void;
 }
 
 // Sección 14.2 del encargo - N.º de reporte (fieldbeat_task_id, misma
@@ -38,7 +46,7 @@ interface AfterHoursDetailTableProps {
 // código crudo (equipment_internal_ids), sin cambiar el valor mostrado.
 const COLUMNS: Array<{ key: string; label: string; sortKey?: DetailSortColumn }> = [
   { key: "date", label: "Fecha", sortKey: "start_time" },
-  { key: "reportNumber", label: "N.º de reporte" },
+  { key: "reportNumber", label: "Reporte", sortKey: "fieldbeat_task_id" },
   { key: "technician", label: "Técnico" },
   { key: "client", label: "Cliente" },
   { key: "equipment", label: "ID del equipo" },
@@ -52,6 +60,12 @@ const COLUMNS: Array<{ key: string; label: string; sortKey?: DetailSortColumn }>
 ];
 
 const SKELETON_WIDTHS = [90, 75, 85, 60, 80];
+
+// Input del buscador de reporte - mismo lenguaje visual que FORM_CONTROL
+// (components/ui/interactive.ts) pero sin su min-h-11 forzado (el
+// encabezado de esta tabla ya usa controles compactos, ver BUTTON_PAGINATION
+// más abajo) y sin cursor-pointer (es texto libre, no un selector).
+const REPORT_SEARCH_INPUT_CLASS = `${BASE_TRANSITION} ${FOCUS_RING} border border-[var(--nx-border)] bg-white hover:border-indigo-300 disabled:cursor-not-allowed disabled:opacity-50`;
 
 // Tabla "Registros detectados fuera de horario" (ETAPA 6.6D §11, ampliada
 // Sección 14 del encargo NEXUS V3 After-Hours) - columnas del prototipo +
@@ -74,8 +88,38 @@ export function AfterHoursDetailTable({
   sortDir,
   onSortChange,
   onRowClick,
-  selectedTaskId
+  selectedTaskId,
+  reportIdFilter,
+  onReportIdFilterChange
 }: AfterHoursDetailTableProps) {
+  // Draft de escritura, local a este componente (no dispara fetch por sí
+  // solo - reportIdFilter, en AfterHoursShell, es lo único que lo hace, y
+  // solo al enviar el formulario/Limpiar). reportSearchError es
+  // exclusivamente de validación de ENTRADA (formato); el caso "0
+  // resultados para un reportIdFilter válido" se resuelve más abajo, en el
+  // bloque de estado vacío, a partir de reportIdFilter + rows, no de este
+  // estado.
+  const [reportSearchInput, setReportSearchInput] = useState("");
+  const [reportSearchError, setReportSearchError] = useState<string | null>(null);
+  const reportSearchInputId = useId();
+  const reportSearchErrorId = useId();
+
+  function applyReportSearch() {
+    const parsed = parseReportIdInput(reportSearchInput);
+    if (parsed === null) {
+      setReportSearchError("Ingresa un número de reporte válido, por ejemplo 3811 o #3811.");
+      return;
+    }
+    setReportSearchError(null);
+    onReportIdFilterChange(parsed);
+  }
+
+  function handleClearReportSearch() {
+    setReportSearchInput("");
+    setReportSearchError(null);
+    onReportIdFilterChange(null);
+  }
+
   return (
     <div className="mb-2 overflow-hidden rounded-[var(--nx-radius-card)]" style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }}>
       <div className="flex flex-wrap items-center gap-3 border-b px-4.5 py-3.5" style={{ borderColor: "var(--nx-border)" }}>
@@ -85,6 +129,56 @@ export function AfterHoursDetailTable({
         {totalRows > 0 && (
           <span className="text-[12.5px]" style={{ color: "var(--nx-text-muted)" }}>
             {totalRows.toLocaleString("es-CL")} registros
+          </span>
+        )}
+
+        {/* Buscador exacto por N.º de reporte (fieldbeat_task_id) - solo
+            afecta esta tabla (reportIdFilter vive en AfterHoursShell, se
+            pasa como `extra.reportId` a buildAfterHoursQuery SOLO para
+            detailQuery, nunca para filtersQuery) - nunca un filtro general
+            de After-Hours. Sin debounce: solo aplica al enviar el form
+            (submit/Enter) o al click en Buscar. */}
+        <form
+          role="search"
+          onSubmit={event => {
+            event.preventDefault();
+            applyReportSearch();
+          }}
+          className="ml-auto flex flex-wrap items-center gap-1.5"
+        >
+          <label htmlFor={reportSearchInputId} className="sr-only">
+            Buscar reporte por número
+          </label>
+          <input
+            id={reportSearchInputId}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="Buscar reporte"
+            value={reportSearchInput}
+            onChange={event => setReportSearchInput(event.target.value)}
+            aria-invalid={reportSearchError ? true : undefined}
+            aria-describedby={reportSearchError ? reportSearchErrorId : undefined}
+            className={`w-32 rounded px-2.5 py-1.5 text-[12.5px] ${REPORT_SEARCH_INPUT_CLASS}`}
+            style={{ color: "var(--nx-text-primary)" }}
+          />
+          <button type="submit" className={`rounded border px-2.5 py-1.5 text-[12.5px] font-semibold ${BUTTON_SECONDARY}`} style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-primary)" }}>
+            Buscar
+          </button>
+          {reportIdFilter !== null && (
+            <button
+              type="button"
+              onClick={handleClearReportSearch}
+              className={`text-[12.5px] underline ${BUTTON_TEXT}`}
+              style={{ color: "var(--nx-text-muted)" }}
+            >
+              Limpiar
+            </button>
+          )}
+        </form>
+        {reportSearchError && (
+          <span id={reportSearchErrorId} role="alert" className="w-full text-[12px]" style={{ color: "var(--nx-danger-fg, #c0392b)" }}>
+            {reportSearchError}
           </span>
         )}
       </div>
@@ -102,7 +196,7 @@ export function AfterHoursDetailTable({
                   style={{ color: "var(--nx-text-secondary)" }}
                 >
                   {col.sortKey ? (
-                    <button type="button" onClick={() => onSortChange(col.sortKey!)} className="inline-flex items-center gap-1">
+                    <button type="button" onClick={() => onSortChange(col.sortKey!)} className={`inline-flex items-center gap-1 px-1 ${BUTTON_SORT}`}>
                       {col.label}
                       {sortBy === col.sortKey && <span aria-hidden="true">{sortDir === "asc" ? "↑" : "↓"}</span>}
                     </button>
@@ -278,7 +372,14 @@ export function AfterHoursDetailTable({
       )}
       {!loading && !error && rows.length === 0 && (
         <div className="border-t" style={{ borderColor: "var(--nx-border)" }}>
-          <AfterHoursEmptyBlock title="Sin registros para este filtro" description="Ajusta los filtros aplicados para ver resultados." />
+          {reportIdFilter !== null ? (
+            <AfterHoursEmptyBlock
+              title={`No se encontró el reporte #${reportIdFilter}`}
+              description="El reporte no pertenece a los registros fuera de horario o no cumple los demás filtros activos."
+            />
+          ) : (
+            <AfterHoursEmptyBlock title="Sin registros para este filtro" description="Ajusta los filtros aplicados para ver resultados." />
+          )}
         </div>
       )}
 
@@ -291,7 +392,7 @@ export function AfterHoursDetailTable({
             type="button"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="rounded border px-2 py-1 text-[12.5px] disabled:opacity-40"
+            className={`rounded border px-2 py-1 text-[12.5px] ${BUTTON_PAGINATION}`}
             style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)" }}
           >
             ‹ Anterior
@@ -300,7 +401,7 @@ export function AfterHoursDetailTable({
             type="button"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="rounded border px-2 py-1 text-[12.5px] disabled:opacity-40"
+            className={`rounded border px-2 py-1 text-[12.5px] ${BUTTON_PAGINATION}`}
             style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)" }}
           >
             Siguiente ›

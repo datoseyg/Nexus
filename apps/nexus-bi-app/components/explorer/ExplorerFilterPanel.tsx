@@ -3,6 +3,7 @@
 import { explorerFiltersFor, type ExplorerFilterDef, type ExplorerFilterOption } from "@/lib/explorer-filters-config";
 import type { ExplorerFilters } from "@/lib/explorer-url-state";
 import type { ExplorerEntity } from "@/types/explorer";
+import { BUTTON_TEXT } from "@/components/ui/interactive";
 
 interface ExplorerFilterPanelProps {
   entity: ExplorerEntity;
@@ -71,7 +72,7 @@ export function ExplorerFilterPanel({ entity, filters, onChange, onClear, hasAct
         )}
 
         {hasActiveFilters && (
-          <button type="button" onClick={onClear} className="ml-auto text-xs font-semibold underline" style={{ color: "var(--nx-text-secondary)" }}>
+          <button type="button" onClick={onClear} className={`ml-auto text-xs font-semibold underline ${BUTTON_TEXT}`} style={{ color: "var(--nx-text-secondary)" }}>
             Limpiar filtros
           </button>
         )}

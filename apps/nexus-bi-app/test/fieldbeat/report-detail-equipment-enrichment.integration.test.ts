@@ -174,7 +174,7 @@ before(async () => {
   // equipment_internal_ids DEBE estar poblado en el mart para que
   // deriveEquipmentItems() (identidad, sin tocar por este cambio) produzca
   // el ítem base que el enriquecimiento nuevo luego adorna - un mart vacío
-  // deja team_identification_status=MISSING y items=[] sin importar qué
+  // deja equipment_identification_status=MISSING y items=[] sin importar qué
   // haya en processed.fieldbeat_task_equipments (bug real encontrado al
   // correr esta suite: 0 ítems en vez de 1, corregido acá).
   await insertMartRow(adminPool, TASK_STRUCTURED_SINGLE, "NEXUS-AH-SINGLE");

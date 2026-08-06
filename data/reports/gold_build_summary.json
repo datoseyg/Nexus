@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-03T22:08:40.941Z",
+  "generated_at": "2026-08-06T07:10:59.478Z",
   "inputs_used": [
     "data/marts/Ticket_FieldBeat_Dolibarr_Operational_View.csv",
     "data/marts/Ticket_FieldBeat_Report_Detail.csv",
@@ -53,11 +53,11 @@
       "tickets_failed_by_error": 291
     },
     "dolibarr_parts_match": {
-      "total_used_parts": 2211,
-      "matched_count": 939,
+      "total_used_parts": 2216,
+      "matched_count": 943,
       "placeholder_values_count": 915,
       "ambiguous_count": 56,
-      "match_rate": "42.47%"
+      "match_rate": "42.55%"
     }
   },
   "scope_warning": "GOLD v1 representa únicamente el universo Zendesk accesible con las credenciales actuales. Existen FieldBeat tasks vinculadas a tickets Zendesk no accesibles o no existentes que quedan fuera del mart ticket-céntrico.",

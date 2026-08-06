@@ -1,3 +1,5 @@
+import { BASE_TRANSITION, FOCUS_RING } from "@/components/ui/interactive";
+
 export interface FilterChipItem {
   key: string;
   label: string;
@@ -31,8 +33,8 @@ export function FilterChips({ items, onRemove }: FilterChipsProps) {
           </span>
           <button
             type="button"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-            style={{ background: "rgba(255,255,255,0.16)", color: "#ffffff" }}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.16] hover:bg-white/[0.28] active:bg-white/[0.36] ${BASE_TRANSITION} ${FOCUS_RING}`}
+            style={{ color: "#ffffff" }}
             onClick={() => onRemove(item.key)}
             aria-label={`Quitar filtro ${item.label}`}
           >

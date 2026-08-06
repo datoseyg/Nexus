@@ -1,5 +1,7 @@
 "use client";
 
+import { BUTTON_PRIMARY } from "@/components/ui/interactive";
+
 interface ExplorerEntitySummaryProps {
   title: string;
   description: string;
@@ -33,7 +35,7 @@ export function ExplorerEntitySummary({ title, description, totalRows, activeFil
           type="button"
           onClick={onExport}
           disabled={exporting}
-          className="flex shrink-0 items-center gap-1.5 rounded-[var(--nx-radius-button)] px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className={`flex shrink-0 items-center gap-1.5 rounded-[var(--nx-radius-button)] px-3.5 py-2 text-sm font-semibold text-white ${BUTTON_PRIMARY}`}
           style={{ background: "var(--nx-accent-indigo)" }}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

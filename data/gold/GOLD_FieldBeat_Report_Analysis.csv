@@ -1,2 +1,2 @@
 total_fieldbeat_reports,reports_no_ticket_reported,reports_linked_to_accessible_zendesk,reports_linked_to_missing_or_restricted_zendesk,reports_with_used_parts,reports_ok,reports_review_required,total_used_parts,matched_used_parts,placeholder_used_parts,unmatched_used_parts,ambiguous_used_parts,zendesk_link_rate,used_parts_match_rate,review_required_rate
-3794,2561,304,929,1825,490,1335,2211,939,915,301,56,8.01%,42.47%,64.13%
+3797,2562,304,931,1826,490,1336,2216,943,915,302,56,8.01%,42.55%,64.03%

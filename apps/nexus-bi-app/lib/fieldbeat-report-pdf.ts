@@ -26,7 +26,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
   EQUIPMENT_SOURCE_LABEL,
-  TEAM_IDENTIFICATION_STATUS_LABEL,
+  EQUIPMENT_IDENTIFICATION_STATUS_LABEL,
   CATALOG_MATCH_STATUS_LABEL,
   PARTICIPANT_ROLE_LABEL,
   formatFieldbeatDateTime,
@@ -128,7 +128,7 @@ function drawQualitySummarySection(doc: PDFKit.PDFDocument, detail: FieldbeatRep
   const { quality, equipment } = detail;
   fieldLine(doc, "Completitud estructural", quality.structurallyComplete ? "Cumple" : "No cumple");
   fieldLine(doc, "Campos mínimos", quality.minimumFieldsComplete ? "Completos" : "Incompletos");
-  fieldLine(doc, "Identificación de equipo", TEAM_IDENTIFICATION_STATUS_LABEL[equipment.status] ?? equipment.status);
+  fieldLine(doc, "Identificación de equipo", EQUIPMENT_IDENTIFICATION_STATUS_LABEL[equipment.status] ?? equipment.status);
   fieldLine(
     doc,
     "Trazabilidad de repuestos",
@@ -241,7 +241,7 @@ function drawEquipmentSection(doc: PDFKit.PDFDocument, detail: FieldbeatReportDe
   const { equipment } = detail;
   sectionTitle(doc, `Equipos (${equipment.items.length})`);
   if (equipment.items.length === 0) {
-    paragraph(doc, `${TEAM_IDENTIFICATION_STATUS_LABEL[equipment.status] ?? "Sin equipo identificado"}.`);
+    paragraph(doc, `${EQUIPMENT_IDENTIFICATION_STATUS_LABEL[equipment.status] ?? "Sin equipo identificado"}.`);
     return;
   }
   for (const item of equipment.items) {

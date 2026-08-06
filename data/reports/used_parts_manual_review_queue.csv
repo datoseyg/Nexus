@@ -56,6 +56,7 @@ Leadscrew Assy",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y 
 CF25HA1,CF25HA-1,2,1517|1521,520423,Obturador de Camara de Video (FUJIFILM)|Obturador de cámara de video (Fujifilm),NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
 P1094996,P1094996,2,1730|1936,,Módulo de Corte de etiquetas|Modulo de corte Zebra Printer,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
 BJ3324003,BJ3324.003,2,5290|3094,709670|9100,Guía de Onda|G/O TB-6U,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
+1564279,1564279,2,3238|3830,9418,"PCB ASSY LED CONTROL|pcb assy, led control ",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
 1070431110777111,"107043-11
 107771-11",1,951,,"Computador TCS HP 5810 RP5
 DVD instalación y Servicio Oncentra TCS",MATCHED,REF_LIKE,Revisar manualmente.,,,
@@ -502,7 +503,6 @@ AEA006,AEA006,1,3054,,Cable de comunicación R485.,NO_MATCH,NONE,Sin match en Do
 15349581024201,1534958-1024201,1,3215,,"Kit Spare leaf MO
 Reflector ",MATCHED,REF_LIKE,Revisar manualmente.,,,
 SHA12369,SHA12-369,1,3228,9410,Magnetic Contactor,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
-1564279,1564279,1,3238,9418,PCB ASSY LED CONTROL,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
 1572432,1572432,1,3250,9407,"FRU, PROGRAMMED, LCU",NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
 45133326702,45133326702,1,3271,9464,PCB RTU,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,
 1565345,1565345,1,3290,,DLG Slide Brake,NO_MATCH,NONE,Sin match en Dolibarr. Buscar producto correcto y agregar alias manual.,,,

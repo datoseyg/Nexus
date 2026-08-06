@@ -7,7 +7,7 @@ import { useAfterHoursSection } from "@/lib/use-after-hours-section";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
 import {
   EQUIPMENT_SOURCE_LABEL,
-  TEAM_IDENTIFICATION_STATUS_LABEL,
+  EQUIPMENT_IDENTIFICATION_STATUS_LABEL,
   CATALOG_MATCH_STATUS_LABEL,
   PARTICIPANT_ROLE_LABEL,
   PARTICIPANT_RESOLUTION_STATUS_LABEL,
@@ -34,7 +34,7 @@ function contractAppliedSource(afterHoursContext: AfterHoursDrawerContext | null
     case "CONTRACTUAL":
       return { label: "Horario contractual del equipo" };
     case "LEGACY_SCHEDULE":
-      return { label: "Horario global de respaldo", reason: afterHoursContext.finalReason.label };
+      return { label: "Para el cálculo se usó el horario laboral general (Lunes a Viernes 8h00 - 18h00) dado que se ha detectado una excepcionalidad con este Reporte, revisar motivos más abajo.", reason: afterHoursContext.finalReason.label };
     case "NONE":
       return { label: "Sin horario calculable" };
     default:
@@ -174,7 +174,7 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
         <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
           <Field label="Completitud estructural" value={data.quality.structurallyComplete ? "Cumple" : "No cumple"} />
           <Field label="Campos mínimos" value={data.quality.minimumFieldsComplete ? "Completos" : "Incompletos"} />
-          <Field label="Identificación de equipo" value={TEAM_IDENTIFICATION_STATUS_LABEL[data.equipment.status] ?? data.equipment.status} />
+          <Field label="Identificación de equipo" value={EQUIPMENT_IDENTIFICATION_STATUS_LABEL[data.equipment.status] ?? data.equipment.status} />
           <Field label="Trazabilidad de repuestos" value={data.quality.partTotalLines === 0 ? "Sin repuestos" : data.quality.partFullyTraceable ? "Totalmente trazable" : "Con brechas"} />
           <Field label="Campos temporales" value={data.temporal.temporalIssues.length === 0 ? "Sin errores objetivos" : `${data.temporal.temporalIssues.length} error(es) objetivo(s)`} />
           <Field
@@ -364,7 +364,7 @@ export function FieldbeatReportDetailContent({ reportId, onMeta, capabilities, a
       <Section title={`Equipos (${data.equipment.items.length})`}>
         {data.equipment.items.length === 0 ? (
           <p className="text-[13px]" style={{ color: "var(--nx-text-secondary)" }}>
-            {TEAM_IDENTIFICATION_STATUS_LABEL[data.equipment.status] ?? "Sin equipo identificado"}.
+            {EQUIPMENT_IDENTIFICATION_STATUS_LABEL[data.equipment.status] ?? "Sin equipo identificado"}.
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">

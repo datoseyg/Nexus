@@ -12,6 +12,7 @@ import { ErrorBanner } from "@/components/ErrorBanner";
 import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 import type { Grain } from "@/lib/dashboard-filters";
 import { DASHBOARD_PALETTE_SEQUENCE, formatDateTimeEsCl, formatMinutesAsHhMm, formatNumberEsCl } from "@/lib/dashboard-formatters";
+import { BUTTON_PRIMARY, BUTTON_GHOST } from "@/components/ui/interactive";
 
 interface UptimeSummary {
   kpis: {
@@ -234,7 +235,7 @@ export function UptimeDowntimeTab() {
       <div className="mb-4 flex justify-end">
         <button
           type="button"
-          className={`rounded-[var(--nx-radius-button)] px-3 py-2 text-[12.5px] font-semibold ${FOCUS_RING}`}
+          className={`rounded-[var(--nx-radius-button)] px-3 py-2 text-[12.5px] font-semibold ${BUTTON_PRIMARY}`}
           style={{ background: "var(--nx-accent-indigo)", color: "#ffffff", minHeight: 40 }}
           onClick={() => setRefreshKey(k => k + 1)}
         >
@@ -263,8 +264,9 @@ export function UptimeDowntimeTab() {
           </span>
           <button
             type="button"
-            className={`rounded-[var(--nx-radius-button)] px-3 text-[12.5px] font-semibold ${FOCUS_RING}`}
-            style={{ background: "var(--nx-page-bg)", color: "var(--nx-text-secondary)", minHeight: 44 }}
+            aria-expanded={!filtersCollapsed}
+            className={`rounded-[var(--nx-radius-button)] bg-[var(--nx-page-bg)] px-3 text-[12.5px] font-semibold ${BUTTON_GHOST}`}
+            style={{ color: "var(--nx-text-secondary)", minHeight: 44 }}
             onClick={() => setFiltersCollapsed(v => !v)}
           >
             {filtersCollapsed ? "Mostrar filtros" : "Ocultar filtros"}

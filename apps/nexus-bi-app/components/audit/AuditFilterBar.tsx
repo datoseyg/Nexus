@@ -1,3 +1,5 @@
+import { BUTTON_GHOST } from "@/components/ui/interactive";
+
 export interface AuditFilterValues {
   cliente?: string;
   maquina?: string;
@@ -80,7 +82,7 @@ export function AuditFilterBar({ clientes, maquinas, values, onChange, onClear, 
       <button
         type="button"
         onClick={onClear}
-        className="rounded-full border px-3 py-1.5 text-xs font-medium"
+        className={`rounded-full border px-3 py-1.5 text-xs font-medium ${BUTTON_GHOST}`}
         style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-secondary)" }}
       >
         Limpiar filtros

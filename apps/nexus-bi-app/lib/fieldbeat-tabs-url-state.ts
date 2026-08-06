@@ -19,7 +19,7 @@ export const FIELDBEAT_TABS = ["overview", "quality", "crossings", "reports"] as
 export type FieldbeatTab = (typeof FIELDBEAT_TABS)[number];
 export const DEFAULT_FIELDBEAT_TAB: FieldbeatTab = "overview";
 
-export const EVOLUTION_SERIES = ["completeness", "inconsistencies", "traceability", "teamIdentification"] as const;
+export const EVOLUTION_SERIES = ["completeness", "inconsistencies", "traceability", "equipmentIdentification"] as const;
 export type EvolutionSeriesKey = (typeof EVOLUTION_SERIES)[number];
 export const DEFAULT_EVOLUTION_SERIES: EvolutionSeriesKey = "inconsistencies";
 

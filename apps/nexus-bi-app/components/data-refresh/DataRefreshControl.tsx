@@ -6,6 +6,7 @@ import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { dispatchDataRefreshSucceeded } from "@/lib/data-refresh-events";
 import { ACTIVE_STATUSES, queuedFeedback, shouldContinuePolling, shouldNotifySucceeded } from "@/lib/data-refresh-polling";
 import type { DataRefreshMode, DataRefreshRunDetail, DataRefreshRunSummary, DataRefreshStatus } from "@/types/data-refresh";
+import { BUTTON_CHROME } from "@/components/ui/interactive";
 
 // Mecanismo de actualización manual de datos (requisitos 1/2/3.5 NEXUS V3) -
 // montado UNA sola vez en components/layout/Sidebar.tsx, nunca duplicado
@@ -270,8 +271,8 @@ export function DataRefreshControl({ capabilities, compact }: { capabilities: st
           type="button"
           onClick={handleIncremental}
           disabled={busy || isActive}
-          className="flex w-full items-center justify-center gap-2 rounded-[var(--nx-radius-button)] px-2.5 py-2 text-[12px] font-semibold disabled:opacity-50"
-          style={{ color: "var(--nx-sidebar-text-secondary)", background: "rgba(255,255,255,0.06)" }}
+          className={`flex w-full items-center justify-center gap-2 rounded-[var(--nx-radius-button)] bg-white/[0.06] px-2.5 py-2 text-[12px] font-semibold ${BUTTON_CHROME}`}
+          style={{ color: "var(--nx-sidebar-text-secondary)" }}
         >
           <span className={compact ? "sr-only" : undefined}>{isActive ? "Actualización en curso…" : "Actualizar ahora"}</span>
           <span className={compact ? undefined : "sr-only"}>↻</span>
@@ -283,7 +284,7 @@ export function DataRefreshControl({ capabilities, compact }: { capabilities: st
           type="button"
           onClick={() => setConfirmOpen(true)}
           disabled={busy || isActive}
-          className={compact ? "sr-only" : "text-[10px] font-medium underline disabled:opacity-50"}
+          className={compact ? "sr-only" : `rounded-[var(--nx-radius-chip)] text-[10px] font-medium underline ${BUTTON_CHROME}`}
           style={{ color: "var(--nx-sidebar-text-secondary)" }}
         >
           Actualización completa (FULL)…

@@ -91,7 +91,7 @@ function baseRow(overrides: Partial<ReportDetailQueryRow> = {}): ReportDetailQue
     technician_names: "jperez",
     has_technician: true,
     has_client: true,
-    team_identification_status: "STRUCTURED_IDENTIFIED",
+    equipment_identification_status: "STRUCTURED_IDENTIFIED",
     equipment_internal_ids: "EQ-901",
     matched_candidate_ids: null,
     structurally_complete: true,

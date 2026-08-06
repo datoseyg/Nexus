@@ -138,7 +138,7 @@ Mouse (01)|ampolleta Osram  de 12v 75w|n/C|Grasa EP-2, limpia contacto, wd-40|Li
 wd-40
 aire comprimido 
 limpia contacto",63,0,63,0,0,,,PLACEHOLDER_VALUE,PLACEHOLDER_REJECTED,true
-1564298,1564298,"(02) PCB Assy, DLG, Diaphragms|PCB DLG and DIAPHRAGM|pcb assy, DLG and Diaphragm  drive |pcb dlg/diafragmas cant 1|PCB Assy, DLG and Diaphragm|Diaphragm/DLG PCB|pcb assy, dlg, diaphragm|pcb assy, dlg and diaphragm|PCB dlg/diaphragm drive|PCB assy, DLG Diaphragm drive|DLG AND DIAPHRAGM DRIVE|pcb assy, dlg, diaphragm drive|PCB ASSY, DLG AND DIAPHRAGM|PCB ASSY, DLG AND DIAPHRAGM DRIVE|PCB assy DLG Diaphragm Drive|pcb assy, dlg and diaphragm |PCB ASSY, DLG AND DIAPHRAGM DRIVE |diaphragm / DLG PCB|PCB Assy, DLG and DIAPHRAGM Drive|PCB DLG Drive|PCB ASSYS, DLG AND DIAPHRAGM DRIVE|Diaphragm /DLG PCB|DLG / Diafragma PCB|PCB ASSY, DLG, DIAPHRAGM DRIVE",35,35,0,0,0,1564298,11039,MATCHED,REF_EXACT,false
+1564298,1564298,"(02) PCB Assy, DLG, Diaphragms|PCB DLG and DIAPHRAGM|pcb assy, DLG and Diaphragm  drive |pcb dlg/diafragmas cant 1|PCB Assy, DLG and Diaphragm|Diaphragm/DLG PCB|pcb assy, dlg, diaphragm|pcb assy, dlg and diaphragm|PCB dlg/diaphragm drive|PCB assy, DLG Diaphragm drive|DLG AND DIAPHRAGM DRIVE|pcb assy, dlg, diaphragm drive|PCB ASSY, DLG AND DIAPHRAGM|PCB ASSY, DLG AND DIAPHRAGM DRIVE|PCB assy DLG Diaphragm Drive|pcb assy, dlg and diaphragm |PCB ASSY, DLG AND DIAPHRAGM DRIVE |diaphragm / DLG PCB|PCB Assy, DLG and DIAPHRAGM Drive|PCB DLG Drive|PCB ASSYS, DLG AND DIAPHRAGM DRIVE|Diaphragm /DLG PCB|DLG / Diafragma PCB|PCB ASSY, DLG, DIAPHRAGM DRIVE|pcb assy, DLG and Diaphram ",36,36,0,0,0,1564298,11039,MATCHED,REF_EXACT,false
 1517657,1517657|1517657.,"Leaf Motor Drive Board de Banco Y12|2 PCB Leaf Motor Drive|PCB Drive motors.|PCB Assy, Leaf motor drive|1 Pc  leaf motor drive Y2|PCB leaf motor drive Cant: 2 NR| PCB Assy, Leaf Motor Drive|PCB assy leaf motor drive|PCB Assy, Leaf Motor Drive |PCB assy, Leaf Motor  cant 3|PCB ASSY, LEAF MOTOR DRIVE|PCB LEAF MOTOR DRIVE|PCB assy, Leaf Motor Drive|pcb assy, leaf motor drive|PCB ASSY,  LEAF MOTOR DRIVE|PCB assy Leaf Motor Drive|PCB, Assy, Leaf Motor Drive |PCB ASSY, LEAF MOTOR DRIVE |PCB, LEAF MOTOR DRIVE|pcb assy, Leaf Motor Drive|pcb assy leaf motor driver",28,28,0,0,0,1517657,10701,MATCHED,REF_EXACT|REF_NORMALIZED_EXACT,false
 1502613,1502613,"Laser ODI|laser ODI lamp|mod kit, láser odi lamp|telemetro laser|Telemetro Laser|Mod Kit, Laser ODI Lamp|Mod Kit, Laser ODI Lamp |mod kit, laser odi lamp - cant =1|MOD KIT, LASER ODI LAMP|Láser ODI Spare KIT|Laser ODI Spares Kit|Spares Kit, distance meter|mod kit, láser ODI lámp |Spares Kit, distance|Distance Meter|mod kit, láser ODI lamp |spare kit, distance meter |MOD kit, Láser ODI Lámp|mot kit, laser ODI Lamp|láser ODI kit",26,26,0,0,0,1502613,10994,MATCHED,REF_EXACT,false
 45133304800,4513 330 4800|45133304800,Electron Gun Assy|Gun assy|Electron Gun.  Número de serie 0247768.|ELECTRON GUN ASSY      (1)|Electron gun subassembly.|Gun Assy|Electrón Gun Assy|electron Gun Assy cantidad 1|electrón gun assy (cantidad 1)|ElectronGun Assy|Electron GUN Assy|electron gun assy|Electrón Gun Haz|Electron Gun|ELECTRON GUN ASSY|Electron GUN subassembly|SL ELECTRON GUN ASSY,23,23,0,0,0,45133304800,10375,MATCHED,REF_NORMALIZED_EXACT|REF_EXACT,false
@@ -179,16 +179,16 @@ NOAPLICA,no aplica|No aplica|NO APLICA,no aplica|no hay|Limpia Contacto|Insumo|N
 1547237,1547237,"kit, luminus proj assy and pcb led control|Kit, Luminus Proj Assy an PCB |Kit, Luminus Proj Assy and PCB, Assy Led Control|kit, luminus proj assy and PCB assy, LED CONTROL |kit, luminus proj assy and PCB assy, LED control|KIT, LUMINUS PORJ ASSY AND PCB ASSY, LED CONTROL|KIT, LUMINUS PROJ ASSY AND PCB ASSY, LED CONTROL",7,0,0,0,7,,,AMBIGUOUS_MATCH,REF_LIKE,true
 1557545,1557545,"Camera, DX9|CAMERA DX9|CAMARA, DX9|camera|Camera DX9|CAMERA, DX9",7,7,0,0,0,1557545,12192,MATCHED,REF_EXACT,false
 1565836,1565836,"kit spares, DLG brake|kit spare dlg braker|kit spare DLG brake|Kit spares, DLG Brake |KIT, SPARES, DLG BRAKE|kit spares DLG brakert|KIT, SPARE DLG BRAKE",7,7,0,0,0,1565836,10983,MATCHED,REF_EXACT,false
+1565768,1565768,"pcb assy camera ccu|PCB ASSY, CAM AGILITY |pcb assy can|pcb CCU|PCB ASSY, CAM CID8726DX9|camera CCU PCB| amara, CCU PCB",7,7,0,0,0,1565768,10151,MATCHED,REF_EXACT,false
 1568178,1568178,"Programmed, pcb assy,sib|PROGRAMED, PCB ASSY, SIB|SIB PCB|PROGRAMMED PCB ASSY, SIB|Programmed, PCB ASSY,   SIB|SIB pcb|PROG,PCB ASSY,SIB",7,7,0,0,0,1568178,10821,MATCHED,REF_EXACT,false
+1564361,1564361,"programemed pcb assy router|programmed PCB assy Router|PROGRAMMED PCB ASSY, ROUTER|PROGRAMED PCB ASSY, ROUTER|PROGRAMMED PCB ASSY, ROUTE|programmed pcb assy, router",7,7,0,0,0,1564361,11038,MATCHED,REF_EXACT,false
 1014474,1014474,Cable asst Sw1/Sw2 to Sk13A7|cable assy sw1/sw2|CABLE ASSY SW1/SW2|cable assy SW1 SW2|Cable assy sw1/sw2|cable assy sw1/sw2 to sk13A7,6,6,0,0,0,1014474,11677,MATCHED,REF_EXACT,false
 1015076,1015076,"Cable Rectractile SK26B|cable retractile|Cable, retractile, MLC (SK25BB-SK26B)|cable, retráctile, MLC sk25bb - sk26b|CABLE RETRACTILE (SK25BB-SK26B)|cable retractile, (SK25BB-SK26B)",6,6,0,0,0,1015076,10957,MATCHED,REF_EXACT,false
 1015075,1015075,"Cable Retractile SK26A|cable retractile|Cable, retractile, MLC (SK25AA-SK26A)|cable, retráctile  MLC sk25aa - sk26a |CABLE RETRACTILE (SK25AA-SK26A)|Cable, retractile MLC (SK25AA-SK26A)",6,6,0,0,0,1015075,10958,MATCHED,REF_EXACT,false
 4513341184601H,4513341184601H,"cable assy, pl5 to S  (1)|Cable Assy PL5|Cable Assy, PL5 to SK5A|cable assy, PL5 to SK5A|cable assy, pl5 to sk5A|CABLE ASSY, PL5 TO SK5A",6,6,0,0,0,45133411846,11694,MATCHED,REF_LIKE,true
 1022378,1022378,"diode assembly, fru cantidad 1|DIODE ASSEMBLY, FRU|Assy diode reverse|DIODE (SEMIKRON)",6,6,0,0,0,1022378,11627,MATCHED,REF_EXACT,false
 1522567,1522567,RF output windows cant=1|Output Window|RF OUTPUT Window|RF OUTPUT WINDOW|RF OUTPUT WINDOWS|RF Output Window,6,6,0,0,0,1522567,12044,MATCHED,REF_EXACT,false
-1565768,1565768,"pcb assy camera ccu|PCB ASSY, CAM AGILITY |pcb assy can|pcb CCU|PCB ASSY, CAM CID8726DX9|camera CCU PCB",6,6,0,0,0,1565768,10151,MATCHED,REF_EXACT,false
 COMPLETARSOLOPORINGENIERODESERVICIO,completar solo por ingeniero de servicio.,completar solo por ingeniero de servicio.,6,0,0,6,0,,,NO_MATCH,NONE,true
-1564361,1564361,"programemed pcb assy router|programmed PCB assy Router|PROGRAMMED PCB ASSY, ROUTER|PROGRAMED PCB ASSY, ROUTER|PROGRAMMED PCB ASSY, ROUTE",6,6,0,0,0,1564361,11038,MATCHED,REF_EXACT,false
 4714201102,4714201102.|4714201102,"Magnetròn MG5193.|Magnetron MG5193 
 S/N 22390742G|MAGNETRON MG5193|Magnetron|Magnetròn  MG5193 Serie 25458133G",5,5,0,0,0,4714201102,11286,MATCHED,REF_NORMALIZED_EXACT|REF_EXACT,false
 45133502026,45133502026|45133502026.,"X RAY TUBE Assembly|X Ray tube.|Assembly, Xray Tube|assembly, xrays tube|Tubo de RX",5,5,0,0,0,45133502026_usado,12138,MATCHED,REF_LIKE,true
@@ -247,6 +247,7 @@ BJ485322302,BJ4853.223.02.|BJ4853.223.02,Cable assy SK25F.|Cable Assy SK25F.|Cab
 1509023,1509023,"cable assembly, area 60 to area 70|cable assembly, area 60 to 16|cable assembly, area 60 ",3,3,0,0,0,1509023,12216,MATCHED,REF_EXACT,false
 1007099,1007099,Longitudinal PCB limit switch assembly|ASSEMBLY LIMIT SWITCH|assembly limit swich,3,3,0,0,0,1007099,11641,MATCHED,REF_EXACT,false
 4513341220301G,4513341220301G,"CABLE, T-GUARD AND LAT MOTOR|Cable, T - Guard and L|cable T-GUARD and LAT motor",3,3,0,0,0,4513341220301G,11693,MATCHED,REF_EXACT,false
+1554784,1554784,camera cable,3,3,0,0,0,1554784,11159,MATCHED,REF_EXACT,false
 1569678,1569678,"solenoid m switch kit, arm assy|SOLENOID MICROSWITCH KIT, ARM ASSEMBLY|FCO hardware modkit (solenpid microswitch for imaging Arms",3,3,0,0,0,1569678,12244,MATCHED,REF_EXACT,false
 1556286,1556286,diaphragm brakes spare kit|FRU Assembly wegde|Fru assembly Wedge,3,0,0,3,0,,,NO_MATCH,NONE,true
 1572991,1572991,FRU Z MTR BRUSH SET (E CRAFT)|FRU Z MOTOR BRUSH SET,3,3,0,0,0,1572991,10978,MATCHED,REF_EXACT,false
@@ -300,7 +301,6 @@ P1094996,P1094996,Módulo de Corte de etiquetas|Modulo de corte Zebra Printer,2,
 1509024,1509024,"cable assy, Area 60 to plgipi|cable assy, area 60 to PLGIPI1 ",2,2,0,0,0,1509024,12212,MATCHED,REF_EXACT,false
 T0001098801NR2,T00010988-01-NR2|T00010988-01-NR-2,Soporte Jeringa 20ml|Soporte de jeringa 50ml,2,2,0,0,0,T00010988-01-NR2,11900,MATCHED,REF_EXACT|REF_NORMALIZED_EXACT,false
 BJ3324003,BJ3324.003,Guía de Onda|G/O TB-6U,2,0,0,2,0,,,NO_MATCH,NONE,true
-1554784,1554784,camera cable,2,2,0,0,0,1554784,11159,MATCHED,REF_EXACT,false
 45133308244,45133308244,"CABLE ASSEMBLY|Cable, Varían IPCU to Varían ion pump",2,2,0,0,0,45133308244,12053,MATCHED,REF_EXACT,false
 45133308730,45133308730,HH RECEIVER UNIT|H.H.C RECIEVER UNIT Mk2,2,2,0,0,0,45133308730,12139,MATCHED,REF_EXACT,false
 45133318990,45133318990,FRU X-BRAKE|FRU - BRAKE ASSY - x,2,2,0,0,0,45133318990,11161,MATCHED,REF_EXACT,false
@@ -310,6 +310,7 @@ BJ3324003,BJ3324.003,Guía de Onda|G/O TB-6U,2,0,0,2,0,,,NO_MATCH,NONE,true
 1515219,1515219,Gasket 70mm falange copper|gasket 70mm flange,2,2,0,0,0,1515219,11752,MATCHED,REF_EXACT,false
 1532592,1532592,BMDM spares kit|BMDM fru kit,2,2,0,0,0,1532592,12268,MATCHED,REF_EXACT,false
 45133326590,45133326590,CAMERA LENS ASSEMBLY|Camera Lens Assembly,2,2,0,0,0,45133326590,11568,MATCHED,REF_EXACT,false
+1564279,1564279,"PCB ASSY LED CONTROL|pcb assy, led control ",2,0,0,2,0,,,NO_MATCH,NONE,true
 1567203,1567203,"Prog. PCB ASSY MTU|PROGRAMMED ASSY, MTU",2,2,0,0,0,1567203,11005,MATCHED,REF_EXACT,false
 1569146,1569146,"PCB ARM CONTROLBOARD|Fru, KV ACB programmed ",2,2,0,0,0,1569146,10386,MATCHED,REF_EXACT,false
 1070431110777111,"107043-11
@@ -872,7 +873,6 @@ Reflector ",1,1,0,0,0,1534958,11034,MATCHED,REF_LIKE,true
 SHA12369,SHA12-369,Magnetic Contactor,1,0,0,1,0,,,NO_MATCH,NONE,true
 45133317853,45133317853,"PCB INTERCONNECT PCB 840 A
 RTU P/N 45133326702",1,1,0,0,0,45133317853,11016,MATCHED,REF_EXACT,false
-1564279,1564279,PCB ASSY LED CONTROL,1,0,0,1,0,,,NO_MATCH,NONE,true
 1572432,1572432,"FRU, PROGRAMMED, LCU",1,0,0,1,0,,,NO_MATCH,NONE,true
 039991002,03-999-1002,HexaPOD Evo Controller 48V evo,1,1,0,0,0,03-999-1002,12130,MATCHED,REF_EXACT,false
 45133326702,45133326702,PCB RTU,1,0,0,1,0,,,NO_MATCH,NONE,true

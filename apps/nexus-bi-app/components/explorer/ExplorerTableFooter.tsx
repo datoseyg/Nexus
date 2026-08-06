@@ -1,5 +1,7 @@
 "use client";
 
+import { BUTTON_PAGINATION } from "@/components/ui/interactive";
+
 interface ExplorerTableFooterProps {
   page: number;
   totalPages: number;
@@ -24,7 +26,7 @@ export function ExplorerTableFooter({ page, totalPages, pageSize, onPageChange, 
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
           aria-label="Página anterior"
-          className="flex h-8 w-8 items-center justify-center rounded border disabled:opacity-40"
+          className={`flex h-8 w-8 items-center justify-center rounded border ${BUTTON_PAGINATION}`}
           style={{ borderColor: "var(--nx-border)" }}
         >
           ‹
@@ -34,7 +36,7 @@ export function ExplorerTableFooter({ page, totalPages, pageSize, onPageChange, 
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           aria-label="Página siguiente"
-          className="flex h-8 w-8 items-center justify-center rounded border disabled:opacity-40"
+          className={`flex h-8 w-8 items-center justify-center rounded border ${BUTTON_PAGINATION}`}
           style={{ borderColor: "var(--nx-border)" }}
         >
           ›

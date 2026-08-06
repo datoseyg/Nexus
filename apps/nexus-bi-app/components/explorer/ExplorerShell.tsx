@@ -19,6 +19,7 @@ import type { TableDensity } from "@/components/ui/ResponsiveTableShell";
 import type { ExplorerEntity, ExplorerListResponse, ExplorerLoadState } from "@/types/explorer";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
 import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
+import { BUTTON_GHOST, BUTTON_DESTRUCTIVE } from "@/components/ui/interactive";
 
 interface ExplorerShellProps {
   role: "gerencia" | "administracion";
@@ -331,7 +332,7 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
             type="button"
             onClick={() => setHelpOpen(v => !v)}
             aria-expanded={helpOpen}
-            className="rounded-full border px-3 py-1.5 text-xs font-semibold"
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${BUTTON_GHOST}`}
             style={{ borderColor: "var(--nx-border)", color: "var(--nx-accent-indigo)" }}
           >
             {helpOpen ? "Ocultar detalle" : "Qué incluye esta vista"}
@@ -394,7 +395,7 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="mt-2.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+                className={`mt-2.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${BUTTON_DESTRUCTIVE}`}
                 style={{ borderColor: "var(--nx-danger-fg, #c0392b)", color: "var(--nx-danger-fg, #c0392b)" }}
               >
                 Reintentar
@@ -420,7 +421,7 @@ export function ExplorerShell({ role, capabilities }: ExplorerShellProps) {
               <button
                 type="button"
                 onClick={() => handleFilterChange("client", "")}
-                className="mt-2.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+                className={`mt-2.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${BUTTON_GHOST}`}
                 style={{ borderColor: "var(--nx-border)", color: "var(--nx-accent-indigo)" }}
               >
                 Limpiar filtro de cliente

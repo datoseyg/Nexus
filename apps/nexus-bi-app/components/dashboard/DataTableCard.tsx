@@ -1,4 +1,5 @@
 import { ResponsiveTableShell } from "@/components/ui/ResponsiveTableShell";
+import { BUTTON_PAGINATION } from "@/components/ui/interactive";
 
 export interface DataTableColumn<Row> {
   key: string;
@@ -34,12 +35,12 @@ interface DataTableCardProps<Row> {
 
 const PAGE_BUTTON_STYLE: React.CSSProperties = {
   border: "1px solid var(--nx-border)",
-  background: "#ffffff",
   color: "var(--nx-text-primary)",
   borderRadius: "var(--nx-radius-button)",
   minWidth: 44,
   minHeight: 44
 };
+const PAGE_BUTTON_CLASS = `bg-white ${BUTTON_PAGINATION}`;
 
 function cellStyle<Row>(col: DataTableColumn<Row>): React.CSSProperties | undefined {
   if (!col.minWidthPx && !col.wrap && !col.breakWord) return undefined;
@@ -89,7 +90,7 @@ export function DataTableCard<Row extends object>({
           <button
             type="button"
             style={PAGE_BUTTON_STYLE}
-            className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)] disabled:opacity-40"
+            className={PAGE_BUTTON_CLASS}
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
             aria-label="Página anterior"
@@ -99,7 +100,7 @@ export function DataTableCard<Row extends object>({
           <button
             type="button"
             style={PAGE_BUTTON_STYLE}
-            className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)] disabled:opacity-40"
+            className={PAGE_BUTTON_CLASS}
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
             aria-label="Página siguiente"

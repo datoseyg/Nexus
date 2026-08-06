@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { FIELDBEAT_TABS, type FieldbeatTab } from "@/lib/fieldbeat-tabs-url-state";
+import { BASE_TRANSITION, FOCUS_RING } from "@/components/ui/interactive";
 
 interface FieldbeatQualityTabsProps {
   active: FieldbeatTab;
@@ -63,12 +64,11 @@ export function FieldbeatQualityTabs({ active, onChange }: FieldbeatQualityTabsP
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(tab)}
             onKeyDown={event => handleKeyDown(event, index)}
-            className="rounded-[var(--nx-radius-button)] px-3.5 py-1.5 text-[13.5px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-            style={
+            className={`rounded-[var(--nx-radius-button)] cursor-pointer px-3.5 py-1.5 text-[13.5px] font-semibold ${BASE_TRANSITION} ${FOCUS_RING} ${
               isActive
-                ? { background: "var(--nx-accent-indigo)", color: "#fff" }
-                : { background: "transparent", color: "var(--nx-text-secondary)", border: "1px solid var(--nx-border)" }
-            }
+                ? "bg-[var(--nx-accent-indigo)] text-white hover:bg-[var(--nx-accent-indigo-hover)] active:bg-[var(--nx-accent-indigo-hover)]"
+                : "border border-[var(--nx-border)] bg-transparent text-[var(--nx-text-secondary)] hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-900 active:bg-indigo-100"
+            }`}
           >
             {TAB_LABELS[tab]}
           </button>

@@ -19,9 +19,9 @@ import { NextRequest } from "next/server.js";
 import { assertDisposableTarget, printConnectionPreflight } from "../../../../src/lib/db-safety.js";
 import { setAuthorizationProviderForTests } from "../../lib/auth/authorization.ts";
 import {
-  classifyTeamIdentification,
-  type TeamIdentificationCandidate
-} from "../../lib/fieldbeat-team-identification.ts";
+  classifyequipmentIdentification,
+  type equipmentIdentificationCandidate
+} from "../../lib/fieldbeat-equipment-identification.ts";
 import { classifyHistoricalPartMatch, type PartAlias } from "../../lib/fieldbeat-parts-history.ts";
 import { classifyReportInconsistencies, primaryInconsistency } from "../../lib/fieldbeat-inconsistency-taxonomy.ts";
 
@@ -212,7 +212,7 @@ before(async () => {
   });
   await insertMartRow({ id: 900008, equipmentInternalIds: "EQ-901", technicianNames: "" });
 
-  // 900009: DOS códigos Alta simultáneos (PART_AMBIGUOUS_MATCH + TEAM_TEXT_AMBIGUOUS) - desempate estable.
+  // 900009: DOS códigos Alta simultáneos (PART_AMBIGUOUS_MATCH + EQUIPMENT_TEXT_AMBIGUOUS) - desempate estable.
   await insertTask({ id: 900009, state: "FINISHED", description: "Visita con EQ-901 y EQ-902 mencionados" });
   await insertMartRow({ id: 900009, equipmentInternalIds: "" });
   await insertPartLine({ taskId: 900009, usedPartId: "PART-900009-A", matchStatus: "AMBIGUOUS_MATCH" });
@@ -464,7 +464,7 @@ test("KPI6: reporte con inconsistencias múltiples (Alta+Advertencia+Media) tien
   assert.equal(body.kpi6.totalSecondaryIssues >= 1, true, "900008 aporta un finding secundario además del principal");
 });
 
-test("KPI6: desempate estable - PART_AMBIGUOUS_MATCH gana sobre TEAM_TEXT_AMBIGUOUS cuando ambos son Alta (900009)", { skip: !TEST_DB_URL }, async () => {
+test("KPI6: desempate estable - PART_AMBIGUOUS_MATCH gana sobre EQUIPMENT_TEXT_AMBIGUOUS cuando ambos son Alta (900009)", { skip: !TEST_DB_URL }, async () => {
   const rows = await adminPool.query(
     `SELECT code, severity FROM quality.fieldbeat_report_primary_inconsistency WHERE fieldbeat_task_id = 900009`
   );
@@ -524,12 +524,12 @@ test("filters: incluye los nuevos campos aditivos (tecnicos, severities, inconsi
 
 // === Equivalencia SQL <-> funciones puras TypeScript ===
 
-test("equivalencia: quality.fieldbeat_team_identification coincide con classifyTeamIdentification() para los fixtures 900001-900004,900009", { skip: !TEST_DB_URL }, async () => {
+test("equivalencia: quality.fieldbeat_equipment_identification coincide con classifyequipmentIdentification() para los fixtures 900001-900004,900009", { skip: !TEST_DB_URL }, async () => {
   const equipmentRows = await adminPool.query<{ internal_id: string }>(
     `SELECT internal_id FROM processed.fieldbeat_equipments WHERE client_key = $1`,
     [CLIENT_KEY]
   );
-  const candidates: TeamIdentificationCandidate[] = equipmentRows.rows.map(r => ({ id: r.internal_id }));
+  const candidates: equipmentIdentificationCandidate[] = equipmentRows.rows.map(r => ({ id: r.internal_id }));
 
   const taskRows = await adminPool.query<{ fieldbeat_task_id: number; description: string | null }>(
     `SELECT fieldbeat_task_id, description FROM processed.fieldbeat_tasks WHERE fieldbeat_task_id IN (900001,900002,900003,900004,900009)`
@@ -537,16 +537,16 @@ test("equivalencia: quality.fieldbeat_team_identification coincide con classifyT
   const martRows = await adminPool.query<{ fieldbeat_task_id: number; equipment_internal_ids: string }>(
     `SELECT fieldbeat_task_id, equipment_internal_ids FROM marts.fieldbeat_report_dolibarr_operational_view WHERE fieldbeat_task_id IN (900001,900002,900003,900004,900009)`
   );
-  const sqlRows = await adminPool.query<{ fieldbeat_task_id: number; team_identification_status: string }>(
-    `SELECT fieldbeat_task_id, team_identification_status FROM quality.fieldbeat_team_identification WHERE fieldbeat_task_id IN (900001,900002,900003,900004,900009)`
+  const sqlRows = await adminPool.query<{ fieldbeat_task_id: number; equipment_identification_status: string }>(
+    `SELECT fieldbeat_task_id, equipment_identification_status FROM quality.fieldbeat_equipment_identification WHERE fieldbeat_task_id IN (900001,900002,900003,900004,900009)`
   );
 
   const martById = new Map(martRows.rows.map(r => [r.fieldbeat_task_id, r.equipment_internal_ids]));
-  const sqlById = new Map(sqlRows.rows.map(r => [r.fieldbeat_task_id, r.team_identification_status]));
+  const sqlById = new Map(sqlRows.rows.map(r => [r.fieldbeat_task_id, r.equipment_identification_status]));
 
   for (const task of taskRows.rows) {
     const structuredIds = (martById.get(task.fieldbeat_task_id) ?? "").split("|").filter(Boolean);
-    const tsResult = classifyTeamIdentification({
+    const tsResult = classifyequipmentIdentification({
       structuredEquipmentIds: structuredIds,
       description: task.description,
       candidates
@@ -604,7 +604,7 @@ test("equivalencia: primaryInconsistency() en TS coincide con quality.fieldbeat_
     chronology_impossible: boolean;
     finished_zero_duration: boolean;
     finished_null_duration: boolean;
-    team_identification_status: import("../../lib/fieldbeat-team-identification.ts").TeamIdentificationStatus;
+    equipment_identification_status: import("../../lib/fieldbeat-equipment-identification.ts").equipmentIdentificationStatus;
     has_ticket_reported: boolean;
     ticket_accessible: boolean;
     ticket_missing_or_restricted: boolean;
@@ -615,7 +615,7 @@ test("equivalencia: primaryInconsistency() en TS coincide con quality.fieldbeat_
     part_total_lines: number;
   }>(
     `SELECT fieldbeat_task_id, is_closed, is_finished, chronology_impossible, finished_zero_duration, finished_null_duration,
-            team_identification_status, has_ticket_reported, ticket_accessible, ticket_missing_or_restricted,
+            equipment_identification_status, has_ticket_reported, ticket_accessible, ticket_missing_or_restricted,
             minimum_fields_complete, part_ambiguous, part_no_match, part_placeholders, part_total_lines
      FROM quality.fieldbeat_report_quality WHERE fieldbeat_task_id = ANY($1)`,
     [ids]
@@ -638,7 +638,7 @@ test("equivalencia: primaryInconsistency() en TS coincide con quality.fieldbeat_
       chronologyImpossible: r.chronology_impossible,
       finishedZeroDuration: r.finished_zero_duration,
       finishedNullDuration: r.finished_null_duration,
-      teamIdentification: r.team_identification_status,
+      equipmentIdentification: r.equipment_identification_status,
       hasTicketReported: r.has_ticket_reported,
       ticketAccessible: r.has_ticket_reported ? r.ticket_accessible : null,
       minimumFieldsComplete: r.minimum_fields_complete,

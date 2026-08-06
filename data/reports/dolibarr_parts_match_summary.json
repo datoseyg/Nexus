@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-03T22:08:40.021Z",
-  "total_used_parts": 2211,
-  "matched_count": 939,
-  "no_match_count": 301,
+  "generated_at": "2026-08-06T07:10:58.594Z",
+  "total_used_parts": 2216,
+  "matched_count": 943,
+  "no_match_count": 302,
   "ambiguous_count": 56,
   "placeholder_values_count": 915,
   "manual_alias_match_count": 0,
-  "review_required_count": 1418,
-  "match_rate": "42.47%",
-  "placeholder_rate": "41.38%",
+  "review_required_count": 1419,
+  "match_rate": "42.55%",
+  "placeholder_rate": "41.29%",
   "ambiguous_rate": "2.53%",
   "match_status_breakdown": {
-    "MATCHED": 939,
+    "MATCHED": 943,
     "PLACEHOLDER_VALUE": 915,
-    "NO_MATCH": 301,
+    "NO_MATCH": 302,
     "AMBIGUOUS_MATCH": 56
   },
   "match_method_breakdown": {
     "REF_LIKE": 200,
     "PLACEHOLDER_REJECTED": 915,
-    "REF_EXACT": 763,
-    "NONE": 301,
+    "REF_EXACT": 767,
+    "NONE": 302,
     "REF_NORMALIZED_EXACT": 32
   }
 }

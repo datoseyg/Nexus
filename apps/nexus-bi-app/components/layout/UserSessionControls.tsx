@@ -7,6 +7,7 @@ import {
   INITIAL_LOGOUT_STATE,
   type LogoutActionState,
 } from "@/app/login/action-state";
+import { BUTTON_CHROME } from "@/components/ui/interactive";
 
 function LogoutButton({ compact }: { compact: boolean }) {
   const { pending } = useFormStatus();
@@ -15,8 +16,8 @@ function LogoutButton({ compact }: { compact: boolean }) {
       type="submit"
       disabled={pending}
       aria-label={pending ? "Cerrando sesión" : "Cerrar sesión"}
-      className="flex w-full items-center gap-2 rounded-[var(--nx-radius-button)] px-2.5 py-2 text-[12px] font-semibold disabled:opacity-60"
-      style={{ color: "var(--nx-sidebar-text-secondary)", background: "rgba(255,255,255,0.06)" }}
+      className={`flex w-full items-center gap-2 rounded-[var(--nx-radius-button)] bg-white/[0.06] px-2.5 py-2 text-[12px] font-semibold ${BUTTON_CHROME}`}
+      style={{ color: "var(--nx-sidebar-text-secondary)" }}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M10 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H10" />

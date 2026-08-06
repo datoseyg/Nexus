@@ -71,7 +71,7 @@ async function queryTaskTypeMissingField(filters: FieldbeatQualityFilters): Prom
       SELECT unnest(ARRAY[
         CASE WHEN NOT u.has_technician THEN 'Técnico' END,
         CASE WHEN NOT u.has_client THEN 'Cliente' END,
-        CASE WHEN u.team_identification_status NOT IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED') THEN 'Equipo' END
+        CASE WHEN u.equipment_identification_status NOT IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED') THEN 'Equipo' END
       ]) AS missing_field
     ) mf
     WHERE u.is_closed AND mf.missing_field IS NOT NULL

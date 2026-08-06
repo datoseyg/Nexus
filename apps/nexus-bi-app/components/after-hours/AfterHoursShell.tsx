@@ -90,11 +90,17 @@ export function AfterHoursShell() {
   const [sortBy, setSortBy] = useState<DetailSortColumn>("start_time");
   const [sortDir, setSortDir] = useState<DetailSortDir>("desc");
   const [selectedRow, setSelectedRow] = useState<AfterHoursDetailRow | null>(null);
+  // Buscador de N.º de reporte (encabezado de AfterHoursDetailTable) -
+  // número YA validado y aplicado (AfterHoursDetailTable.tsx valida el
+  // texto crudo antes de llamar a handleReportIdFilterChange). Vive acá,
+  // no en AfterHoursFilterState: solo afecta detailQuery (vía extra.reportId
+  // más abajo), nunca filtersQuery - no es un filtro general de la página.
+  const [reportIdFilter, setReportIdFilter] = useState<number | null>(null);
 
   const filtersQuery = useMemo(() => buildAfterHoursQuery(filters), [filters]);
   const detailQuery = useMemo(
-    () => buildAfterHoursQuery(filters, { page: detailPage, pageSize: PAGE_SIZE, sortBy, sortDir }),
-    [filters, detailPage, sortBy, sortDir]
+    () => buildAfterHoursQuery(filters, { page: detailPage, pageSize: PAGE_SIZE, sortBy, sortDir, reportId: reportIdFilter ?? undefined }),
+    [filters, detailPage, sortBy, sortDir, reportIdFilter]
   );
 
   const summary = useAfterHoursSection<AfterHoursSummary>("/api/dashboard/after-hours/summary", filtersQuery, isSummaryEmpty);
@@ -129,6 +135,16 @@ export function AfterHoursShell() {
 
   function handleFiltersChange(next: AfterHoursFilterState) {
     setFilters(next);
+    setDetailPage(1);
+  }
+
+  // Al aplicar o limpiar el buscador de reporte, siempre vuelve a página 1
+  // (mismo criterio que el resto de los cambios de filtro de esta pantalla)
+  // y conserva sortBy/sortDir/filters intactos - reportIdFilter es
+  // ortogonal a ellos, se combina con AND en el backend (ver
+  // buildReportIdCondition), nunca los reemplaza.
+  function handleReportIdFilterChange(reportId: number | null) {
+    setReportIdFilter(reportId);
     setDetailPage(1);
   }
 
@@ -321,6 +337,8 @@ export function AfterHoursShell() {
           onSortChange={handleSortChange}
           onRowClick={setSelectedRow}
           selectedTaskId={selectedRow?.fieldbeat_task_id ?? null}
+          reportIdFilter={reportIdFilter}
+          onReportIdFilterChange={handleReportIdFilterChange}
         />
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { FilterBar } from "@/components/ui/FilterBar";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_TEXT } from "@/components/ui/interactive";
 import { buildQuickRanges, activeQuickRangeKey as computeActiveQuickRangeKey, type QuickRange } from "@/lib/after-hours-filter-state";
 import type { FieldbeatQualityFilters } from "@/lib/fieldbeat-quality-filters";
 import type { FieldbeatQualityFilterOptions } from "@/types/fieldbeat-quality";
@@ -96,11 +97,12 @@ export function FieldbeatQualityFilterBar({ filters, onChange, onClear, filterOp
           key={range.key}
           type="button"
           onClick={() => selectRange(range)}
-          className="rounded-[var(--nx-radius-chip)] px-3 py-1.5 text-[13px] font-semibold"
-          style={{
-            background: activeQuickRangeKey === range.key ? "var(--nx-sidebar-bg)" : "var(--nx-page-bg)",
-            color: activeQuickRangeKey === range.key ? "#fff" : "var(--nx-text-primary)"
-          }}
+          aria-pressed={activeQuickRangeKey === range.key}
+          className={`rounded-[var(--nx-radius-chip)] cursor-pointer px-3 py-1.5 text-[13px] font-semibold ${BASE_TRANSITION} ${FOCUS_RING} ${
+            activeQuickRangeKey === range.key
+              ? "bg-[var(--nx-sidebar-bg)] text-white hover:bg-[#242a3d] active:bg-[#10131c]"
+              : "bg-[var(--nx-page-bg)] text-[var(--nx-text-primary)] hover:bg-indigo-50 hover:text-indigo-900 active:bg-indigo-100"
+          }`}
         >
           {range.label}
         </button>
@@ -195,7 +197,7 @@ export function FieldbeatQualityFilterBar({ filters, onChange, onClear, filterOp
       moreFiltersOpen={moreFiltersOpen}
       onToggleMoreFilters={onToggleMoreFilters}
       actions={
-        <button type="button" onClick={onClear} className="text-[13px] underline" style={{ color: "var(--nx-text-muted)" }}>
+        <button type="button" onClick={onClear} className={`text-[13px] underline ${BUTTON_TEXT}`} style={{ color: "var(--nx-text-muted)" }}>
           Limpiar filtros
         </button>
       }
@@ -212,7 +214,13 @@ export function FieldbeatQualityFilterBar({ filters, onChange, onClear, filterOp
                 style={{ background: "var(--nx-sidebar-bg)", color: "#fff" }}
               >
                 {chip.label}
-                <button type="button" onClick={REMOVE_HANDLERS[chip.id]} aria-label={`Quitar filtro: ${chip.label}`} style={{ color: "var(--nx-sidebar-text-secondary)" }}>
+                <button
+                  type="button"
+                  onClick={REMOVE_HANDLERS[chip.id]}
+                  aria-label={`Quitar filtro: ${chip.label}`}
+                  className={`cursor-pointer rounded-full ${BASE_TRANSITION} ${FOCUS_RING} hover:bg-white/20 active:bg-white/30`}
+                  style={{ color: "var(--nx-sidebar-text-secondary)" }}
+                >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6L6 18" />
                   </svg>

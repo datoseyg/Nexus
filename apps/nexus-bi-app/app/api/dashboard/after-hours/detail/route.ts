@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
-import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
+import { buildAfterHoursMartConditions, buildReportIdCondition, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
 import { AFTER_HOURS_VIEW } from "@/lib/after-hours-metrics";
 import { EQUIPMENT_CANONICAL_CTE, EQUIPMENT_MODEL_RESOLUTION_COLUMNS, equipmentContractCandidatesLateral } from "@/lib/explorer-sql";
 import { resolveRowModel } from "@/lib/after-hours-detail-view";
@@ -72,6 +72,19 @@ export async function GET(request: NextRequest) {
 
     const pusher = createParamPusher();
     const conditions = buildAfterHoursMartConditions(filters, "w", pusher);
+
+    // Buscador exacto por N.º de reporte (fieldbeat_task_id) - ver comentario
+    // de cabecera de buildReportIdCondition (lib/after-hours-filters.ts) para
+    // por qué vive separado de AfterHoursFilters. Ausente -> comportamiento
+    // idéntico al de antes (result=null, no se toca `conditions`).
+    const reportIdResult = buildReportIdCondition(searchParams.get("reportId"), "w", pusher);
+    if (reportIdResult && "errorMessage" in reportIdResult) {
+      return NextResponse.json({ error: reportIdResult.errorMessage }, { status: 400 });
+    }
+    if (reportIdResult && "condition" in reportIdResult) {
+      conditions.push(reportIdResult.condition);
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const baseFrom = `FROM ${AFTER_HOURS_VIEW} w ${whereClause}`;

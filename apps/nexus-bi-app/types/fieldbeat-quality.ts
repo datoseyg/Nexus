@@ -4,7 +4,7 @@
 // nuevas devuelven agregados ya calculados en SQL (COUNT/FILTER), nunca
 // filas crudas, así que no hay ambigüedad de precisión que preservar.
 import type { InconsistencyCode, InconsistencySeverity } from "@/lib/fieldbeat-inconsistency-taxonomy";
-import type { TeamIdentificationStatus } from "@/lib/fieldbeat-team-identification";
+import type { equipmentIdentificationStatus } from "@/lib/fieldbeat-equipment-identification";
 import type { KnownReportQualityStatus } from "./fieldbeat";
 
 export const FIELDBEAT_QUALITY_CONTRACT_VERSION = "2.0.0";
@@ -58,7 +58,7 @@ export interface Kpi2TicketLinkage {
   drillDownFilter: { ticketStatus: "accessible" | "missing_or_restricted" };
 }
 
-export interface Kpi3TeamIdentification {
+export interface Kpi3equipmentIdentification {
   numerator: number; // structured + textConfident
   denominator: number;
   percentage: number | null;
@@ -68,7 +68,7 @@ export interface Kpi3TeamIdentification {
   missing: number;
   notApplicable: number;
   sumMatchesDenominator: boolean; // invariante explícita, nunca oculta
-  drillDownFilter: { teamIdentificationStatus: TeamIdentificationStatus };
+  drillDownFilter: { equipmentIdentificationStatus: equipmentIdentificationStatus };
 }
 
 export interface Kpi4PartsTraceability {
@@ -122,7 +122,7 @@ export interface Kpi6InformationInconsistencies {
 // periodo (nunca se recarga al cambiar la serie seleccionada - el payload
 // de /overview ya las trae todas). "inconsistencies" usa el mismo universo
 // evaluable que KPI6 (todos los reportes con fecha, no solo cerrados);
-// "completeness"/"teamIdentification" usan el universo cerrado (KPI1/KPI3);
+// "completeness"/"equipmentIdentification" usan el universo cerrado (KPI1/KPI3);
 // "traceability" usa el universo con repuestos (KPI4). Nunca actividad
 // bruta - siempre un numerador/denominador de calidad.
 export interface FieldbeatQualityEvolutionMetric {
@@ -136,13 +136,13 @@ export interface FieldbeatQualityEvolutionPoint {
   completeness: FieldbeatQualityEvolutionMetric;
   inconsistencies: FieldbeatQualityEvolutionMetric;
   traceability: FieldbeatQualityEvolutionMetric;
-  teamIdentification: FieldbeatQualityEvolutionMetric;
+  equipmentIdentification: FieldbeatQualityEvolutionMetric;
 }
 
 // §8 - evolución estructurado-vs-texto para la pestaña Calidad. Liviana
-// (solo team_identification_status), vive en /quality (y por herencia en
+// (solo equipment_identification_status), vive en /quality (y por herencia en
 // /overview, que extiende FieldbeatQualityCoreKpis).
-export interface FieldbeatTeamIdentificationEvolutionPoint {
+export interface FieldbeatequipmentIdentificationEvolutionPoint {
   period: string;
   structured: FieldbeatQualityEvolutionMetric;
   textConfident: FieldbeatQualityEvolutionMetric;
@@ -154,7 +154,7 @@ export interface FieldbeatOverviewResponse {
   meta: FieldbeatQualityUniverseMetadata;
   kpi1: Kpi1StructuralCompleteness;
   kpi2: Kpi2TicketLinkage;
-  kpi3: Kpi3TeamIdentification;
+  kpi3: Kpi3equipmentIdentification;
   kpi4: Kpi4PartsTraceability;
   kpi5: Kpi5TemporalConsistency;
   evolution: FieldbeatQualityEvolutionPoint[];
@@ -165,9 +165,9 @@ export interface FieldbeatQualityResponse {
   meta: FieldbeatQualityUniverseMetadata;
   kpi1: Kpi1StructuralCompleteness;
   kpi2: Kpi2TicketLinkage;
-  kpi3: Kpi3TeamIdentification;
+  kpi3: Kpi3equipmentIdentification;
   kpi4: Kpi4PartsTraceability;
   kpi5: Kpi5TemporalConsistency;
-  teamEvolution: FieldbeatTeamIdentificationEvolutionPoint[];
+  equipmentEvolution: FieldbeatequipmentIdentificationEvolutionPoint[];
   historicalAliasLimitation: string;
 }

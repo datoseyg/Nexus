@@ -103,7 +103,7 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
       q.technician_names,
       q.has_technician,
       q.has_client,
-      q.team_identification_status,
+      q.equipment_identification_status,
       q.equipment_internal_ids,
       ti.matched_candidate_ids,
       q.structurally_complete,
@@ -116,7 +116,7 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
         -- Enriquecimiento de modelo/familia/serie/contrato por equipo
         -- (Sección 14 del encargo NEXUS V3 After-Hours) - NUNCA reemplaza la
         -- identidad ya resuelta por deriveEquipmentItems()/matched_candidate_ids
-        -- (eso sigue siendo team_identification_status), solo la enriquece
+        -- (eso sigue siendo equipment_identification_status), solo la enriquece
         -- por internal_id normalizado. Precedencia estructurada real:
         -- processed.fieldbeat_task_equipments (1 fila por par tarea-equipo,
         -- medido: 82.7% de las tareas la tienen) es SIEMPRE la fuente
@@ -255,7 +255,7 @@ export function buildReportDetailQuery(fieldbeatTaskId: string): ReportDetailQue
       ) AS inconsistencies,
       (SELECT pi.code FROM quality.fieldbeat_report_primary_inconsistency pi WHERE pi.fieldbeat_task_id = q.fieldbeat_task_id) AS primary_code
     FROM quality.fieldbeat_report_quality q
-    LEFT JOIN quality.fieldbeat_team_identification ti ON ti.fieldbeat_task_id = q.fieldbeat_task_id
+    LEFT JOIN quality.fieldbeat_equipment_identification ti ON ti.fieldbeat_task_id = q.fieldbeat_task_id
     LEFT JOIN marts.fieldbeat_working_hours_analysis_current w ON w.fieldbeat_task_id = q.fieldbeat_task_id
     WHERE q.fieldbeat_task_id = $1
   `;
@@ -335,7 +335,7 @@ export interface ReportDetailQueryRow {
   technician_names: string | null;
   has_technician: boolean;
   has_client: boolean;
-  team_identification_status: import("./fieldbeat-team-identification").TeamIdentificationStatus;
+  equipment_identification_status: import("./fieldbeat-equipment-identification").equipmentIdentificationStatus;
   equipment_internal_ids: string | null;
   matched_candidate_ids: string[] | null;
   structurally_complete: boolean;
@@ -378,7 +378,7 @@ function shapeContractRelation(c: RawContractRelationRow, scheduleByVersionId: M
 }
 
 // Combina la identidad de equipo YA resuelta por deriveEquipmentItems()
-// (team_identification_status/matched_candidate_ids - nunca tocada acá) con
+// (equipment_identification_status/matched_candidate_ids - nunca tocada acá) con
 // el enriquecimiento de modelo/familia/serie/contrato de equipment_enrichment
 // (fuente independiente, ver comentario en buildReportDetailQuery). Ambas
 // listas pueden diverger en casos raros (ítem de texto ambiguo sin ninguna
@@ -462,7 +462,7 @@ export function shapeReportDetail(
   const equipment = mergeEquipmentEnrichment(
     deriveEquipmentItems({
       equipmentInternalIds: row.equipment_internal_ids,
-      teamIdentificationStatus: row.team_identification_status,
+      equipmentIdentificationStatus: row.equipment_identification_status,
       matchedCandidateIds: row.matched_candidate_ids
     }),
     row.equipment_enrichment ?? [],
@@ -529,7 +529,7 @@ export function shapeReportDetail(
     },
     technician: row.has_technician && row.technician_names ? { name: row.technician_names } : null,
     client: row.has_client && row.client_key && row.client_name ? { clientKey: row.client_key, clientName: row.client_name } : null,
-    equipment: { status: row.team_identification_status, items: equipment, rawEquipmentReference: row.equipment_internal_ids },
+    equipment: { status: row.equipment_identification_status, items: equipment, rawEquipmentReference: row.equipment_internal_ids },
     tickets: (row.tickets ?? []).map(shapeTicket),
     parts: (row.parts ?? []).map(shapePartOccurrence),
     // Responsable principal SIEMPRE primero (sortParticipants) - nunca
@@ -546,7 +546,7 @@ export function shapeReportDetail(
       minimumFieldsComplete: row.minimum_fields_complete,
       hasTechnician: row.has_technician,
       hasClient: row.has_client,
-      teamIdentificationStatus: row.team_identification_status,
+      equipmentIdentificationStatus: row.equipment_identification_status,
       partFullyTraceable: row.part_fully_traceable,
       partTotalLines: Number(row.part_total_lines),
       hasSufficientTimestamps: row.has_sufficient_timestamps,

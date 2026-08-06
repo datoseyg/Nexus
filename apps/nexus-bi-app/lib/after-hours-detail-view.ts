@@ -44,6 +44,22 @@ export function isAfterHoursRowSelected(taskId: number, selectedTaskId: number |
   return selectedTaskId !== null && taskId === selectedTaskId;
 }
 
+// Buscador de reporte (encabezado de AfterHoursDetailTable) - normaliza lo
+// que el usuario escribe ("3811", "#3811", "# 3811") a un entero positivo
+// seguro, o null si la entrada no es válida. Nunca usa parseInt permisivo
+// (parseInt("38a11") = 38 sería un falso positivo real) - valida la cadena
+// completa con regex antes de convertir con Number(). Tras trim(), elimina
+// solo un "#" inicial y los espacios inmediatamente posteriores; el resto
+// debe ser dígitos puros sin signo ni ceros a la izquierda (fieldbeat_task_id
+// nunca es 0 ni negativo).
+export function parseReportIdInput(raw: string): number | null {
+  const trimmed = raw.trim();
+  const withoutHash = trimmed.startsWith("#") ? trimmed.slice(1).trimStart() : trimmed;
+  if (!/^[1-9]\d*$/.test(withoutHash)) return null;
+  const value = Number(withoutHash);
+  return Number.isSafeInteger(value) ? value : null;
+}
+
 // Sección 14 del encargo NEXUS V3 After-Hours - traduce el arreglo
 // resolved_models (ARRAY_AGG DISTINCT, ya sin nulls) que trae la fila de
 // app/api/dashboard/after-hours/detail/route.ts a {model, model_resolution_status}.

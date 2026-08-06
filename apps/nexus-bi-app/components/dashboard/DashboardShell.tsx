@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { BASE_TRANSITION, FOCUS_RING } from "@/components/ui/interactive";
 import { OperationalDashboardTab } from "./OperationalDashboardTab";
 import { UptimeDowntimeTab } from "./UptimeDowntimeTab";
 
@@ -67,9 +68,10 @@ export function DashboardShell() {
                 key={tab.key}
                 type="button"
                 aria-current={active ? "page" : undefined}
-                className="whitespace-nowrap rounded-t-[var(--nx-radius-button)] px-5 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
+                className={`whitespace-nowrap rounded-t-[var(--nx-radius-button)] px-5 text-sm font-bold ${BASE_TRANSITION} ${FOCUS_RING} ${
+                  active ? "bg-[var(--nx-page-bg)]" : "bg-transparent hover:bg-[rgba(74,85,212,0.06)]"
+                }`}
                 style={{
-                  background: active ? "var(--nx-page-bg)" : "transparent",
                   color: active ? "var(--nx-text-primary)" : "var(--nx-text-secondary)",
                   minHeight: 44
                 }}

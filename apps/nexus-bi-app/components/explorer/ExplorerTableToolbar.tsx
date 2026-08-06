@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ExplorerColumn } from "@/lib/explorer-entity-config";
 import type { TableDensity } from "@/components/ui/ResponsiveTableShell";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_GHOST } from "@/components/ui/interactive";
 
 interface ExplorerTableToolbarProps {
   query: string;
@@ -59,7 +60,7 @@ export function ExplorerTableToolbar({
             type="button"
             onClick={() => setColumnsOpen(v => !v)}
             aria-expanded={columnsOpen}
-            className="rounded-[var(--nx-radius-chip)] border px-3 py-1.5 text-xs font-semibold"
+            className={`rounded-[var(--nx-radius-chip)] border px-3 py-1.5 text-xs font-semibold ${BUTTON_GHOST}`}
             style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-primary)" }}
           >
             Columnas visibles
@@ -90,11 +91,11 @@ export function ExplorerTableToolbar({
             type="button"
             onClick={() => onDensityChange(option)}
             aria-pressed={density === option}
-            className="rounded-[var(--nx-radius-chip)] px-2.5 py-1 text-xs font-semibold"
-            style={{
-              background: density === option ? "var(--nx-sidebar-bg)" : "transparent",
-              color: density === option ? "var(--nx-sidebar-text-primary)" : "var(--nx-text-secondary)"
-            }}
+            className={`rounded-[var(--nx-radius-chip)] cursor-pointer px-2.5 py-1 text-xs font-semibold ${BASE_TRANSITION} ${FOCUS_RING} ${
+              density === option
+                ? "bg-[var(--nx-sidebar-bg)] text-white hover:bg-[#242a3d]"
+                : "bg-transparent text-[var(--nx-text-secondary)] hover:bg-indigo-50 hover:text-indigo-900"
+            }`}
           >
             {option === "comfortable" ? "Normal" : "Compacta"}
           </button>

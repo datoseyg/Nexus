@@ -1,4 +1,5 @@
 import { EygBrand } from "@/components/brand/EygBrand";
+import { BUTTON_CHROME } from "@/components/ui/interactive";
 
 interface MobileTopBarProps {
   mobileOpen: boolean;
@@ -24,7 +25,7 @@ export function MobileTopBar({ mobileOpen, onOpenMenu, menuButtonRef, mobileSide
         aria-label="Abrir menú"
         aria-expanded={mobileOpen}
         aria-controls={mobileSidebarId}
-        className="flex h-9 w-9 items-center justify-center rounded-[var(--nx-radius-button)]"
+        className={`flex h-9 w-9 items-center justify-center rounded-[var(--nx-radius-button)] ${BUTTON_CHROME}`}
         style={{ color: "var(--nx-sidebar-text-primary)" }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">

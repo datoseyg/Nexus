@@ -14,7 +14,7 @@ function cleanReport(overrides: Partial<ReportInconsistencyInput> = {}): ReportI
     chronologyImpossible: false,
     finishedZeroDuration: false,
     finishedNullDuration: false,
-    teamIdentification: "STRUCTURED_IDENTIFIED",
+    equipmentIdentification: "STRUCTURED_IDENTIFIED",
     hasTicketReported: false,
     ticketAccessible: null,
     minimumFieldsComplete: true,
@@ -45,11 +45,11 @@ test("ticket informado pero inaccesible dispara TICKET_REPORTED_INACCESSIBLE, ti
   assert.deepEqual(noTicket, []);
 });
 
-test("equipo MISSING en reporte cerrado dispara TEAM_MISSING, pero no en reporte abierto", () => {
-  const closedMissing = classifyReportInconsistencies(cleanReport({ teamIdentification: "MISSING" }));
-  assert.deepEqual(closedMissing.map(f => f.code), ["TEAM_MISSING"]);
+test("equipo MISSING en reporte cerrado dispara EQUIPMENT_MISSING, pero no en reporte abierto", () => {
+  const closedMissing = classifyReportInconsistencies(cleanReport({ equipmentIdentification: "MISSING" }));
+  assert.deepEqual(closedMissing.map(f => f.code), ["EQUIPMENT_MISSING"]);
 
-  const openMissing = classifyReportInconsistencies(cleanReport({ isClosed: false, teamIdentification: "MISSING" }));
+  const openMissing = classifyReportInconsistencies(cleanReport({ isClosed: false, equipmentIdentification: "MISSING" }));
   assert.deepEqual(openMissing, []);
 });
 
@@ -87,9 +87,9 @@ test("primaryInconsistency elige la mayor severidad, no la primera generada", ()
 
 test("primaryInconsistency: empate de severidad se resuelve por orden de declaración en la taxonomía", () => {
   const findings = classifyReportInconsistencies(
-    cleanReport({ teamIdentification: "TEXT_AMBIGUOUS", partMatchStatuses: ["AMBIGUOUS_MATCH"] })
+    cleanReport({ equipmentIdentification: "TEXT_AMBIGUOUS", partMatchStatuses: ["AMBIGUOUS_MATCH"] })
   );
-  // Ambos Alta: PART_AMBIGUOUS_MATCH está declarado antes que TEAM_TEXT_AMBIGUOUS en INCONSISTENCY_TAXONOMY.
+  // Ambos Alta: PART_AMBIGUOUS_MATCH está declarado antes que EQUIPMENT_TEXT_AMBIGUOUS en INCONSISTENCY_TAXONOMY.
   assert.equal(primaryInconsistency(findings)?.code, "PART_AMBIGUOUS_MATCH");
 });
 
@@ -104,7 +104,7 @@ test("todo código generado por el clasificador existe en INCONSISTENCY_TAXONOMY
       chronologyImpossible: true,
       finishedZeroDuration: true,
       finishedNullDuration: true,
-      teamIdentification: "TEXT_AMBIGUOUS",
+      equipmentIdentification: "TEXT_AMBIGUOUS",
       hasTicketReported: true,
       ticketAccessible: false,
       minimumFieldsComplete: false,

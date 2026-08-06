@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { StatusBadge, severityBadge, issueStatusBadge } from "@/components/ui/StatusBadge";
 import { entityTypeLabel, correctionTypeLabel, actorTypeLabel } from "@/lib/audit-vocabulary";
 import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
+import { CARD_INTERACTIVE, BUTTON_GHOST } from "@/components/ui/interactive";
 
 interface KpisResponse {
   byStatus: Array<{ status: string; n: string }>;
@@ -43,8 +44,8 @@ function HeroCard({ label, value, subtext, onClick }: { label: string; value: nu
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col gap-1 rounded-[var(--nx-radius-card)] p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-      style={{ background: "var(--nx-sidebar-bg)", boxShadow: "var(--nx-shadow-card-dark, var(--nx-shadow-shell))", outlineColor: "var(--nx-focus-ring-color)" }}
+      className={`flex flex-col gap-1 rounded-[var(--nx-radius-card)] p-4 text-left ${CARD_INTERACTIVE}`}
+      style={{ background: "var(--nx-sidebar-bg)", boxShadow: "var(--nx-shadow-card-dark, var(--nx-shadow-shell))" }}
     >
       <span className="text-xs font-semibold" style={{ color: "var(--nx-sidebar-text-secondary)" }}>
         {label}
@@ -75,8 +76,8 @@ function ExceptionCard({
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col gap-1 rounded-[var(--nx-radius-card)] p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-      style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)", borderTop: `3px solid ${borderColor}`, outlineColor: "var(--nx-focus-ring-color)" }}
+      className={`flex flex-col gap-1 rounded-[var(--nx-radius-card)] p-4 text-left ${CARD_INTERACTIVE}`}
+      style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)", borderTop: `3px solid ${borderColor}` }}
     >
       <span className="text-xs font-semibold" style={{ color: "var(--nx-text-secondary)" }}>
         {label}
@@ -96,8 +97,8 @@ function MiniStat({ label, value, onClick }: { label: string; value: number; onC
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col gap-0.5 rounded-[var(--nx-radius-card)] px-3.5 py-2.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-      style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)", outlineColor: "var(--nx-focus-ring-color)" }}
+      className={`flex flex-col gap-0.5 rounded-[var(--nx-radius-card)] px-3.5 py-2.5 text-left ${CARD_INTERACTIVE}`}
+      style={{ background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }}
     >
       <span className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
         {label}
@@ -131,7 +132,7 @@ function ChartCard({ question, subtitle, children }: { question: string; subtitl
 function BarRow({ label, value, total, color, onClick }: { label: string; value: number; total: number; color: string; onClick: () => void }) {
   const width = pct(value, total);
   return (
-    <button type="button" onClick={onClick} className="mb-2.5 block w-full text-left last:mb-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ outlineColor: "var(--nx-focus-ring-color)" }}>
+    <button type="button" onClick={onClick} className={`mb-2.5 block w-full rounded-[var(--nx-radius-chip)] px-1 text-left last:mb-0 ${BUTTON_GHOST}`}>
       <div className="mb-1 flex items-center justify-between gap-2 text-sm" style={{ color: "var(--nx-text-primary)" }}>
         <span className="truncate-title">{label}</span>
         <span className="tabular-nums shrink-0 font-semibold" style={{ color: "var(--nx-text-secondary)" }}>

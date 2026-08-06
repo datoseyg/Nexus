@@ -27,12 +27,12 @@ import { INCONSISTENCY_TAXONOMY, type InconsistencyCode, type InconsistencySever
 import type {
   Kpi1StructuralCompleteness,
   Kpi2TicketLinkage,
-  Kpi3TeamIdentification,
+  Kpi3equipmentIdentification,
   Kpi4PartsTraceability,
   Kpi5TemporalConsistency,
   Kpi6InformationInconsistencies,
   FieldbeatQualityEvolutionPoint,
-  FieldbeatTeamIdentificationEvolutionPoint
+  FieldbeatequipmentIdentificationEvolutionPoint
 } from "@/types/fieldbeat-quality";
 
 export const HISTORICAL_ALIAS_LIMITATION_MESSAGE = "Equivalencias históricas disponibles solo cuando existe alias validado";
@@ -74,21 +74,21 @@ const CORE_KPI_CTES = `
       COUNT(*) FILTER (WHERE is_closed AND structurally_complete) AS numerator,
       COUNT(*) FILTER (WHERE is_closed AND NOT has_technician) AS missing_technician,
       COUNT(*) FILTER (WHERE is_closed AND NOT has_client) AS missing_client,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status NOT IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED')) AS missing_equipment,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status NOT IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED')) AS missing_equipment,
       COUNT(*) FILTER (WHERE is_closed AND (
         (NOT has_technician)::int + (NOT has_client)::int +
-        (team_identification_status NOT IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED'))::int
+        (equipment_identification_status NOT IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED'))::int
       ) >= 2) AS multiple_missing
     FROM universe
   ),
   kpi3 AS (
     SELECT
       COUNT(*) FILTER (WHERE is_closed) AS denominator,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'STRUCTURED_IDENTIFIED') AS structured,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'TEXT_CONFIDENT_IDENTIFIED') AS text_confident,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'TEXT_AMBIGUOUS') AS text_ambiguous,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'MISSING') AS missing,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'NOT_APPLICABLE') AS not_applicable
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'STRUCTURED_IDENTIFIED') AS structured,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'TEXT_CONFIDENT_IDENTIFIED') AS text_confident,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'TEXT_AMBIGUOUS') AS text_ambiguous,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'MISSING') AS missing,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'NOT_APPLICABLE') AS not_applicable
     FROM universe
   ),
   kpi4 AS (
@@ -162,24 +162,24 @@ const TICKET_KPI_SELECT_COLUMNS = `
 // `universe`, sin depender de la cadena cara de KPI6) así que vive en
 // AMBOS bundles (quality Y overview podrían usarla; hoy solo /quality la
 // expone, ver tipo FieldbeatQualityResponse).
-const TEAM_EVOLUTION_CTES = `
-  team_evolution AS (
+const EQUIPMENT_EVOLUTION_CTES = `
+  equipment_evolution AS (
     SELECT
       TO_CHAR(fieldbeat_task_date, 'YYYY-MM') AS period,
       COUNT(*) FILTER (WHERE is_closed) AS closed_den,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'STRUCTURED_IDENTIFIED') AS structured_n,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'TEXT_CONFIDENT_IDENTIFIED') AS text_confident_n,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'TEXT_AMBIGUOUS') AS text_ambiguous_n,
-      COUNT(*) FILTER (WHERE is_closed AND team_identification_status = 'MISSING') AS missing_n
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'STRUCTURED_IDENTIFIED') AS structured_n,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'TEXT_CONFIDENT_IDENTIFIED') AS text_confident_n,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'TEXT_AMBIGUOUS') AS text_ambiguous_n,
+      COUNT(*) FILTER (WHERE is_closed AND equipment_identification_status = 'MISSING') AS missing_n
     FROM universe
     WHERE fieldbeat_task_date IS NOT NULL
     GROUP BY 1
     ORDER BY 1
   )
 `;
-const TEAM_EVOLUTION_SELECT_COLUMN = `(SELECT COALESCE(json_agg(team_evolution), '[]'::json) FROM team_evolution) AS team_evolution`;
+const equipment_evolution_SELECT_COLUMN = `(SELECT COALESCE(json_agg(equipment_evolution), '[]'::json) FROM equipment_evolution) AS equipment_evolution`;
 
-interface TeamEvolutionRow {
+interface equipmentEvolutionRow {
   period: string;
   closed_den: string;
   structured_n: string;
@@ -188,7 +188,7 @@ interface TeamEvolutionRow {
   missing_n: string;
 }
 
-function shapeTeamEvolution(rows: TeamEvolutionRow[]): FieldbeatTeamIdentificationEvolutionPoint[] {
+function shapeequipmentEvolution(rows: equipmentEvolutionRow[]): FieldbeatequipmentIdentificationEvolutionPoint[] {
   return rows.map(r => {
     const den = n(r.closed_den);
     return {
@@ -284,11 +284,11 @@ function shapeKpi1(row: Kpi1Row): Kpi1StructuralCompleteness {
     missingClient: n(row.missing_client),
     missingEquipment: n(row.missing_equipment),
     multipleMissing: n(row.multiple_missing),
-    drillDownFilter: { qualityStatus: null, note: "Usar severity=Media + inconsistencyCode=MIN_FIELDS_INCOMPLETE|TEAM_MISSING para el detalle" }
+    drillDownFilter: { qualityStatus: null, note: "Usar severity=Media + inconsistencyCode=MIN_FIELDS_INCOMPLETE|EQUIPMENT_MISSING para el detalle" }
   };
 }
 
-function shapeKpi3(row: Kpi3Row): Kpi3TeamIdentification {
+function shapeKpi3(row: Kpi3Row): Kpi3equipmentIdentification {
   const denominator = n(row.denominator);
   const structured = n(row.structured);
   const textConfident = n(row.text_confident);
@@ -306,7 +306,7 @@ function shapeKpi3(row: Kpi3Row): Kpi3TeamIdentification {
     missing,
     notApplicable,
     sumMatchesDenominator: structured + textConfident + textAmbiguous + missing + notApplicable === denominator,
-    drillDownFilter: { teamIdentificationStatus: "MISSING" }
+    drillDownFilter: { equipmentIdentificationStatus: "MISSING" }
   };
 }
 
@@ -352,10 +352,10 @@ function shapeKpi5(row: Kpi5Row): Kpi5TemporalConsistency {
 export interface FieldbeatQualityCoreKpis {
   kpi1: Kpi1StructuralCompleteness;
   kpi2: Kpi2TicketLinkage;
-  kpi3: Kpi3TeamIdentification;
+  kpi3: Kpi3equipmentIdentification;
   kpi4: Kpi4PartsTraceability;
   kpi5: Kpi5TemporalConsistency;
-  teamEvolution: FieldbeatTeamIdentificationEvolutionPoint[];
+  equipmentEvolution: FieldbeatequipmentIdentificationEvolutionPoint[];
 }
 
 /**
@@ -369,8 +369,8 @@ export async function computeQualityBundle(filters: FieldbeatQualityFilters): Pr
   const sql = `
     WITH ${CORE_KPI_CTES.replace("__WHERE__", whereSql)},
     ${TICKET_KPI_CTES},
-    ${TEAM_EVOLUTION_CTES}
-    SELECT ${CORE_KPI_SELECT_COLUMNS}, ${TICKET_KPI_SELECT_COLUMNS}, ${TEAM_EVOLUTION_SELECT_COLUMN}
+    ${EQUIPMENT_EVOLUTION_CTES}
+    SELECT ${CORE_KPI_SELECT_COLUMNS}, ${TICKET_KPI_SELECT_COLUMNS}, ${equipment_evolution_SELECT_COLUMN}
   `;
   const rows = await runQuery<{
     kpi1: Kpi1Row;
@@ -379,7 +379,7 @@ export async function computeQualityBundle(filters: FieldbeatQualityFilters): Pr
     kpi5: Kpi5Row;
     kpi2_summary: Kpi2SummaryRow;
     kpi2_distribution: Kpi2DistributionRow[];
-    team_evolution: TeamEvolutionRow[];
+    equipment_evolution: equipmentEvolutionRow[];
   }>(sql, params);
   const row = rows[0];
   return {
@@ -387,7 +387,7 @@ export async function computeQualityBundle(filters: FieldbeatQualityFilters): Pr
     kpi2: shapeKpi2(row.kpi2_summary, row.kpi2_distribution),
     kpi3: shapeKpi3(row.kpi3),
     kpi4: shapeKpi4(row.kpi4),
-    teamEvolution: shapeTeamEvolution(row.team_evolution),
+    equipmentEvolution: shapeequipmentEvolution(row.equipment_evolution),
     kpi5: shapeKpi5(row.kpi5)
   };
 }
@@ -409,7 +409,7 @@ export async function computeOverviewBundle(filters: FieldbeatQualityFilters): P
   const sql = `
     WITH ${CORE_KPI_CTES.replace("__WHERE__", whereSql)},
     ${TICKET_KPI_CTES},
-    ${TEAM_EVOLUTION_CTES},
+    ${EQUIPMENT_EVOLUTION_CTES},
     affected AS MATERIALIZED (
       SELECT DISTINCT ri.fieldbeat_task_id
       FROM quality.fieldbeat_report_inconsistencies ri
@@ -450,7 +450,7 @@ export async function computeOverviewBundle(filters: FieldbeatQualityFilters): P
         COUNT(*) AS total_den,
         COUNT(*) FILTER (WHERE u.is_closed) AS closed_den,
         COUNT(*) FILTER (WHERE u.is_closed AND u.structurally_complete) AS completeness_num,
-        COUNT(*) FILTER (WHERE u.is_closed AND u.team_identification_status IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED')) AS team_id_num,
+        COUNT(*) FILTER (WHERE u.is_closed AND u.equipment_identification_status IN ('STRUCTURED_IDENTIFIED', 'TEXT_CONFIDENT_IDENTIFIED')) AS equipment_id_num,
         COUNT(*) FILTER (WHERE u.part_total_lines > 0) AS parts_den,
         COUNT(*) FILTER (WHERE u.part_total_lines > 0 AND u.part_fully_traceable) AS traceability_num,
         COUNT(*) FILTER (WHERE a.fieldbeat_task_id IS NOT NULL) AS inconsistencies_num
@@ -466,7 +466,7 @@ export async function computeOverviewBundle(filters: FieldbeatQualityFilters): P
       (SELECT row_to_json(kpi6_summary) FROM kpi6_summary) AS kpi6_summary,
       (SELECT COALESCE(json_agg(kpi6_distribution), '[]'::json) FROM kpi6_distribution) AS kpi6_distribution,
       (SELECT COALESCE(json_agg(evolution), '[]'::json) FROM evolution) AS evolution,
-      ${TEAM_EVOLUTION_SELECT_COLUMN}
+      ${equipment_evolution_SELECT_COLUMN}
   `;
 
   const rows = await runQuery<{
@@ -493,12 +493,12 @@ export async function computeOverviewBundle(filters: FieldbeatQualityFilters): P
       total_den: string;
       closed_den: string;
       completeness_num: string;
-      team_id_num: string;
+      equipment_id_num: string;
       parts_den: string;
       traceability_num: string;
       inconsistencies_num: string;
     }>;
-    team_evolution: TeamEvolutionRow[];
+    equipment_evolution: equipmentEvolutionRow[];
   }>(sql, params);
 
   const row = rows[0];
@@ -538,9 +538,9 @@ export async function computeOverviewBundle(filters: FieldbeatQualityFilters): P
         completeness: { numerator: n(e.completeness_num), denominator: closedDen, percentage: percentage(n(e.completeness_num), closedDen) },
         inconsistencies: { numerator: n(e.inconsistencies_num), denominator: totalDen, percentage: percentage(n(e.inconsistencies_num), totalDen) },
         traceability: { numerator: n(e.traceability_num), denominator: partsDen, percentage: percentage(n(e.traceability_num), partsDen) },
-        teamIdentification: { numerator: n(e.team_id_num), denominator: closedDen, percentage: percentage(n(e.team_id_num), closedDen) }
+        equipmentIdentification: { numerator: n(e.equipment_id_num), denominator: closedDen, percentage: percentage(n(e.equipment_id_num), closedDen) }
       };
     }),
-    teamEvolution: shapeTeamEvolution(row.team_evolution)
+    equipmentEvolution: shapeequipmentEvolution(row.equipment_evolution)
   };
 }

@@ -15,6 +15,7 @@ import { AUDIT_TABS, DEFAULT_AUDIT_TAB, auditTabLabel, buildAuditTabQuery, readA
 import { evaluationRunStatusLabel } from "@/lib/audit-vocabulary";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
 import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_GHOST } from "@/components/ui/interactive";
 
 interface AuditManualReviewShellProps {
   role: "gerencia" | "administracion";
@@ -117,7 +118,7 @@ export function AuditManualReviewShell({ role, capabilities }: AuditManualReview
               type="button"
               onClick={() => setHelpOpen(v => !v)}
               aria-expanded={helpOpen}
-              className="rounded-full border px-3 py-1.5 text-xs font-semibold"
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${BUTTON_GHOST}`}
               style={{ borderColor: "var(--nx-border)", color: "var(--nx-accent-indigo)" }}
             >
               {helpOpen ? "Ocultar detalle" : "Qué incluye esta vista"}
@@ -150,11 +151,10 @@ export function AuditManualReviewShell({ role, capabilities }: AuditManualReview
                 aria-selected={active}
                 aria-controls={`audit-tabpanel-${tab}`}
                 onClick={() => setTab(tab)}
-                className="shrink-0 whitespace-nowrap rounded-t-lg px-3.5 py-2.5 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                className={`shrink-0 whitespace-nowrap rounded-t-lg cursor-pointer px-3.5 py-2.5 text-sm font-semibold hover:bg-[rgba(74,85,212,0.06)] active:bg-[rgba(74,85,212,0.12)] ${BASE_TRANSITION} ${FOCUS_RING}`}
                 style={{
                   color: active ? "var(--nx-accent-indigo)" : "var(--nx-text-primary)",
-                  borderBottom: active ? "2.5px solid var(--nx-accent-indigo)" : "2.5px solid transparent",
-                  outlineColor: "var(--nx-focus-ring-color)"
+                  borderBottom: active ? "2.5px solid var(--nx-accent-indigo)" : "2.5px solid transparent"
                 }}
               >
                 {auditTabLabel(tab)}

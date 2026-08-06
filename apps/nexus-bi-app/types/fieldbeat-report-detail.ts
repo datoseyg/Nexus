@@ -1,5 +1,5 @@
 import type { InconsistencyCode, InconsistencySeverity } from "@/lib/fieldbeat-inconsistency-taxonomy";
-import type { TeamIdentificationStatus } from "@/lib/fieldbeat-team-identification";
+import type { equipmentIdentificationStatus } from "@/lib/fieldbeat-equipment-identification";
 import type { HistoricalPartMatchStatus } from "@/lib/fieldbeat-parts-history";
 import type { ContractScheduleResult } from "@/types/contracts";
 
@@ -67,12 +67,12 @@ export interface FieldbeatContractRelation {
  * equipo minado de texto libre, sin selección estructurada en FieldBeat) -
  * nunca se mezclan silenciosamente, ver buildReportDetailQuery. Deliberadamente
  * un campo propio, no inferido de `source` (que viene de una fuente distinta,
- * quality.fieldbeat_team_identification, sin correlación 1:1 demostrada). */
+ * quality.fieldbeat_equipment_identification, sin correlación 1:1 demostrada). */
 export type FieldbeatEquipmentResolutionSource = "TASK_EQUIPMENT_LINK" | "TEXT_FALLBACK";
 
 /** Identidad de un equipo de reporte - exactamente lo que
  * deriveEquipmentItems() (lib/fieldbeat-equipment-derivation.ts) puede
- * determinar desde team_identification_status/matched_candidate_ids, sin
+ * determinar desde equipment_identification_status/matched_candidate_ids, sin
  * saber nada de modelo/contrato. Separado de FieldbeatEquipmentItem a
  * propósito: esa función nunca debe requerir conocer el enriquecimiento de
  * modelo/contrato para poder tipar su retorno. */
@@ -153,7 +153,7 @@ export interface FieldbeatClient {
 }
 
 export interface FieldbeatEquipmentIdentification {
-  status: TeamIdentificationStatus;
+  status: equipmentIdentificationStatus;
   items: FieldbeatEquipmentItem[];
   /** Valor crudo del que se derivaron los candidatos (equipment_internal_ids,
    * pipe-delimited) - expuesto SOLO para que Administración pueda corregir la
@@ -294,7 +294,7 @@ export interface FieldbeatQualityDetail {
   minimumFieldsComplete: boolean;
   hasTechnician: boolean;
   hasClient: boolean;
-  teamIdentificationStatus: TeamIdentificationStatus;
+  equipmentIdentificationStatus: equipmentIdentificationStatus;
   partFullyTraceable: boolean;
   partTotalLines: number;
   hasSufficientTimestamps: boolean;

@@ -9,6 +9,7 @@ import { REPORTS_PAGE_SIZES } from "@/lib/fieldbeat-reports-queries";
 import { triggerBlobDownload } from "@/lib/csv-export";
 import { FIELDBEAT_REPORTS_FOCUS_FALLBACK_ID } from "./FieldbeatReportDetailDrawer";
 import type { FieldbeatReportRow, FieldbeatReportsDirection, FieldbeatReportsResponse, FieldbeatReportsSortKey, FieldbeatReportsView } from "@/types/fieldbeat-reports";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_TEXT, BUTTON_PRIMARY, BUTTON_PAGINATION, BUTTON_SORT } from "@/components/ui/interactive";
 
 interface FieldbeatReportsTabProps {
   query: string;
@@ -172,12 +173,11 @@ export function FieldbeatReportsTab({
                 onClick={() => {
                   if (!isActive) onViewChange(v);
                 }}
-                className="rounded-[var(--nx-radius-chip)] px-3 py-1.5 text-[12.5px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-                style={
+                className={`rounded-[var(--nx-radius-chip)] cursor-pointer px-3 py-1.5 text-[12.5px] font-semibold ${BASE_TRANSITION} ${FOCUS_RING} ${
                   isActive
-                    ? { background: "var(--nx-accent-indigo)", color: "#fff" }
-                    : { background: "var(--nx-page-bg)", color: "var(--nx-text-secondary)", border: "1px solid var(--nx-border)" }
-                }
+                    ? "bg-[var(--nx-accent-indigo)] text-white hover:bg-[var(--nx-accent-indigo-hover)] active:bg-[var(--nx-accent-indigo-hover)]"
+                    : "border border-[var(--nx-border)] bg-[var(--nx-page-bg)] text-[var(--nx-text-secondary)] hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-900 active:bg-indigo-100"
+                }`}
               >
                 {v === "exceptions" ? "Excepciones" : "Todos los reportes"}
               </button>
@@ -202,8 +202,8 @@ export function FieldbeatReportsTab({
             />
             <button
               type="submit"
-              className="rounded-[var(--nx-radius-chip)] px-3 py-1.5 text-[12.5px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-              style={{ background: "var(--nx-page-bg)", color: "var(--nx-text-secondary)", border: "1px solid var(--nx-border)" }}
+              className={`rounded-[var(--nx-radius-chip)] cursor-pointer bg-[var(--nx-page-bg)] px-3 py-1.5 text-[12.5px] font-semibold hover:bg-indigo-50 hover:text-indigo-900 active:bg-indigo-100 ${BASE_TRANSITION} ${FOCUS_RING}`}
+              style={{ color: "var(--nx-text-secondary)", border: "1px solid var(--nx-border)" }}
             >
               Buscar
             </button>
@@ -214,7 +214,7 @@ export function FieldbeatReportsTab({
                   setSearchDraft("");
                   onSearchChange(null);
                 }}
-                className="text-[12px] underline"
+                className={`text-[12px] underline ${BUTTON_TEXT}`}
                 style={{ color: "var(--nx-text-muted)" }}
               >
                 Limpiar búsqueda
@@ -226,7 +226,7 @@ export function FieldbeatReportsTab({
             type="button"
             onClick={handleExport}
             disabled={exporting}
-            className="rounded-[var(--nx-radius-chip)] px-3 py-1.5 text-[12.5px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)] disabled:opacity-60"
+            className={`rounded-[var(--nx-radius-chip)] px-3 py-1.5 text-[12.5px] font-semibold ${BUTTON_PRIMARY}`}
             style={{ background: "var(--nx-accent-indigo)", color: "#fff" }}
           >
             {exporting ? "Exportando…" : "Exportar CSV"}
@@ -246,7 +246,7 @@ export function FieldbeatReportsTab({
           <button
             type="button"
             onClick={retry}
-            className="rounded-[var(--nx-radius-chip)] px-3.5 py-1.5 text-[13px] font-semibold"
+            className={`rounded-[var(--nx-radius-chip)] px-3.5 py-1.5 text-[13px] font-semibold ${BUTTON_PRIMARY}`}
             style={{ background: "var(--nx-accent-indigo)", color: "#fff" }}
           >
             Reintentar
@@ -290,7 +290,7 @@ export function FieldbeatReportsTab({
                   onClick={() => onPageChange(page - 1)}
                   disabled={!data.hasPrevious}
                   aria-label="Página anterior"
-                  className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)] disabled:opacity-40"
+                  className={BUTTON_PAGINATION}
                   style={{ border: "1px solid var(--nx-border)", borderRadius: "var(--nx-radius-button)", minWidth: 36, minHeight: 36 }}
                 >
                   ‹
@@ -303,7 +303,7 @@ export function FieldbeatReportsTab({
                   onClick={() => onPageChange(page + 1)}
                   disabled={!data.hasNext}
                   aria-label="Página siguiente"
-                  className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)] disabled:opacity-40"
+                  className={BUTTON_PAGINATION}
                   style={{ border: "1px solid var(--nx-border)", borderRadius: "var(--nx-radius-button)", minWidth: 36, minHeight: 36 }}
                 >
                   ›
@@ -324,7 +324,7 @@ export function FieldbeatReportsTab({
                       type="button"
                       onClick={() => handleSort(col.key)}
                       aria-sort={sort === col.key ? (direction === "asc" ? "ascending" : "descending") : "none"}
-                      className="flex items-center gap-1 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
+                      className={`flex items-center gap-1 px-1 font-semibold ${BUTTON_SORT}`}
                       style={{ color: "var(--nx-text-secondary)" }}
                     >
                       {col.label}
@@ -371,12 +371,11 @@ export function FieldbeatReportsTab({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => onSelectReport(isSelected ? null : row.fieldbeatTaskId)}
-                        className="rounded-[var(--nx-radius-chip)] px-2.5 py-1 text-[11.5px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
-                        style={
+                        className={`rounded-[var(--nx-radius-chip)] cursor-pointer px-2.5 py-1 text-[11.5px] font-semibold ${BASE_TRANSITION} ${FOCUS_RING} ${
                           isSelected
-                            ? { background: "var(--nx-accent-indigo)", color: "#fff" }
-                            : { background: "var(--nx-page-bg)", color: "var(--nx-text-secondary)", border: "1px solid var(--nx-border)" }
-                        }
+                            ? "bg-[var(--nx-accent-indigo)] text-white hover:bg-[var(--nx-accent-indigo-hover)] active:bg-[var(--nx-accent-indigo-hover)]"
+                            : "border border-[var(--nx-border)] bg-[var(--nx-page-bg)] text-[var(--nx-text-secondary)] hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-900 active:bg-indigo-100"
+                        }`}
                       >
                         {isSelected ? "Seleccionado" : "Seleccionar"}
                       </button>

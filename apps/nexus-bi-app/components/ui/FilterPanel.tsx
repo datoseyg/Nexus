@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BUTTON_GHOST } from "@/components/ui/interactive";
 
 interface FilterPanelProps {
   children: React.ReactNode;
@@ -27,8 +28,9 @@ export function FilterPanel({ children, sticky = true, title = "Filtros" }: Filt
         <button
           type="button"
           onClick={() => setCollapsed(v => !v)}
-          className="rounded-full border px-3 py-1 text-xs font-medium"
-          style={{ borderColor: "var(--eyg-border)", color: "var(--text-secondary)", background: "var(--eyg-card)" }}
+          aria-expanded={!collapsed}
+          className={`rounded-full border px-3 py-1 text-xs font-medium bg-[var(--eyg-card)] ${BUTTON_GHOST}`}
+          style={{ borderColor: "var(--eyg-border)", color: "var(--text-secondary)" }}
         >
           {collapsed ? "Mostrar filtros" : "Ocultar filtros"}
         </button>

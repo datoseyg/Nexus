@@ -19,6 +19,7 @@ import {
   type BandejaUrlFilters
 } from "@/lib/audit-bandeja-url-state";
 import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_TEXT, BUTTON_SECONDARY, BUTTON_PAGINATION, BUTTON_PRIMARY } from "@/components/ui/interactive";
 
 // Bug real (revisión visual, 2026-07-30): la Bandeja no distinguía
 // "actualmente detectada" de "status histórico" - una incidencia
@@ -220,11 +221,10 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
                 type="button"
                 aria-pressed={filters.status === option}
                 onClick={() => setFilter("status", filters.status === option ? "" : option)}
-                className="rounded-full border px-3 py-1 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                className={`rounded-full border cursor-pointer px-3 py-1 text-xs font-semibold hover:bg-[rgba(74,85,212,0.06)] active:bg-[rgba(74,85,212,0.12)] ${BASE_TRANSITION} ${FOCUS_RING}`}
                 style={{
                   borderColor: filters.status === option ? "var(--nx-accent-indigo)" : "var(--nx-border)",
-                  color: filters.status === option ? "var(--nx-accent-indigo)" : "var(--nx-text-secondary)",
-                  outlineColor: "var(--nx-focus-ring-color)"
+                  color: filters.status === option ? "var(--nx-accent-indigo)" : "var(--nx-text-secondary)"
                 }}
               >
                 {issueStatusBadge(option).label}
@@ -235,11 +235,10 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
               aria-pressed={filters.detection === "all"}
               onClick={() => setFilter("detection", filters.detection === "all" ? "" : "all")}
               title="Por defecto la Bandeja solo muestra incidencias que la regla sigue detectando ahora - activa esto para ver también las que ya no se detectan (ej. reclasificadas)."
-              className="rounded-full border px-3 py-1 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              className={`rounded-full border cursor-pointer px-3 py-1 text-xs font-semibold hover:bg-[rgba(74,85,212,0.06)] active:bg-[rgba(74,85,212,0.12)] ${BASE_TRANSITION} ${FOCUS_RING}`}
               style={{
                 borderColor: filters.detection === "all" ? "var(--nx-accent-indigo)" : "var(--nx-border)",
-                color: filters.detection === "all" ? "var(--nx-accent-indigo)" : "var(--nx-text-secondary)",
-                outlineColor: "var(--nx-focus-ring-color)"
+                color: filters.detection === "all" ? "var(--nx-accent-indigo)" : "var(--nx-text-secondary)"
               }}
             >
               Incluir ya no vigentes
@@ -251,7 +250,7 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
             type="button"
             onClick={handleExport}
             disabled={exporting}
-            className="rounded-full border px-3 py-1.5 text-xs font-semibold"
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${BUTTON_SECONDARY}`}
             style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-primary)" }}
           >
             {exporting ? "Exportando…" : "Exportar CSV"}
@@ -274,14 +273,14 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
                     type="button"
                     onClick={() => removeFilterChip(chip.key)}
                     aria-label={`Quitar filtro ${chip.label}`}
-                    className="flex h-6 w-6 items-center justify-center rounded-full text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-                    style={{ color: "var(--nx-sidebar-text-secondary)", outlineColor: "var(--nx-focus-ring-color)" }}
+                    className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-sm hover:bg-white/20 active:bg-white/30 ${BASE_TRANSITION} ${FOCUS_RING}`}
+                    style={{ color: "var(--nx-sidebar-text-secondary)" }}
                   >
                     ×
                   </button>
                 </span>
               ))}
-              <button type="button" onClick={clearAllFilters} className="text-xs underline" style={{ color: "var(--nx-text-secondary)" }}>
+              <button type="button" onClick={clearAllFilters} className={`text-xs underline ${BUTTON_TEXT}`} style={{ color: "var(--nx-text-secondary)" }}>
                 Limpiar todos
               </button>
             </>
@@ -411,7 +410,8 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
                 type="button"
                 onClick={() => pushState({ page: page - 1 }, false)}
                 disabled={page <= 1}
-                className="rounded border px-2"
+                aria-label="Página anterior"
+                className={`rounded border px-2 ${BUTTON_PAGINATION}`}
                 style={{ borderColor: "var(--nx-border)" }}
               >
                 ‹
@@ -420,7 +420,8 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
                 type="button"
                 onClick={() => pushState({ page: page + 1 }, false)}
                 disabled={page >= data.totalPages}
-                className="rounded border px-2"
+                aria-label="Página siguiente"
+                className={`rounded border px-2 ${BUTTON_PAGINATION}`}
                 style={{ borderColor: "var(--nx-border)" }}
               >
                 ›
@@ -475,7 +476,7 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
                     <button
                       type="button"
                       onClick={() => setSelectedIssueId(row.id)}
-                      className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-white ${BUTTON_PRIMARY}`}
                       style={{ background: "var(--nx-accent-indigo)" }}
                     >
                       {rec.actionLabel}
@@ -515,7 +516,7 @@ export function IssuesBandejaSection({ role, capabilities }: IssuesBandejaSectio
                 <button
                   type="button"
                   onClick={() => setSelectedIssueId(row.id)}
-                  className="w-full rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+                  className={`w-full rounded-full px-3 py-1.5 text-xs font-semibold text-white ${BUTTON_PRIMARY}`}
                   style={{ background: "var(--nx-accent-indigo)" }}
                 >
                   {rec.actionLabel}

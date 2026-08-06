@@ -9,6 +9,7 @@ import { ReviewCaseDetailDrawer } from "./ReviewCaseDetailDrawer";
 import { triggerBlobDownload } from "@/lib/csv-export";
 import { hasCapability } from "@/lib/auth/capabilities-shared";
 import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
+import { CARD_INTERACTIVE, BUTTON_SECONDARY, BUTTON_PRIMARY, BUTTON_PAGINATION } from "@/components/ui/interactive";
 
 interface ReviewCasesSectionProps {
   role: "gerencia" | "administracion";
@@ -42,12 +43,11 @@ function HeaderStat({ label, value, active, onClick }: { label: string; value: n
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className="flex flex-col gap-0.5 rounded-[var(--nx-radius-card)] px-3.5 py-2.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+      className={`flex flex-col gap-0.5 rounded-[var(--nx-radius-card)] px-3.5 py-2.5 text-left ${CARD_INTERACTIVE}`}
       style={{
         background: "var(--nx-card-bg)",
         boxShadow: "var(--nx-shadow-card)",
-        border: active ? "2px solid var(--nx-accent-indigo)" : "1px solid transparent",
-        outlineColor: "var(--nx-focus-ring-color)"
+        border: active ? "2px solid var(--nx-accent-indigo)" : "1px solid transparent"
       }}
     >
       <span className="text-xs" style={{ color: "var(--nx-text-secondary)" }}>
@@ -154,7 +154,7 @@ export function ReviewCasesSection({ role, capabilities }: ReviewCasesSectionPro
               type="button"
               onClick={handleExport}
               disabled={exporting}
-              className="rounded-full border px-3 py-1.5 text-xs font-semibold"
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${BUTTON_SECONDARY}`}
               style={{ borderColor: "var(--nx-border)", color: "var(--nx-text-primary)" }}
             >
               {exporting ? "Exportando…" : "Exportar CSV"}
@@ -169,7 +169,7 @@ export function ReviewCasesSection({ role, capabilities }: ReviewCasesSectionPro
                   setSelectedCaseId(null);
                   setCreateOpen(true);
                 }}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold text-white ${BUTTON_PRIMARY}`}
                 style={{ background: "var(--nx-accent, #4a55d4)" }}
               >
                 Nuevo caso
@@ -203,14 +203,22 @@ export function ReviewCasesSection({ role, capabilities }: ReviewCasesSectionPro
               <span>
                 Página {data.page} de {data.totalPages}
               </span>
-              <button type="button" onClick={() => setPage(p => p - 1)} disabled={page <= 1} className="rounded border px-2" style={{ borderColor: "var(--nx-border)" }}>
+              <button
+                type="button"
+                onClick={() => setPage(p => p - 1)}
+                disabled={page <= 1}
+                aria-label="Página anterior"
+                className={`rounded border px-2 ${BUTTON_PAGINATION}`}
+                style={{ borderColor: "var(--nx-border)" }}
+              >
                 ‹
               </button>
               <button
                 type="button"
                 onClick={() => setPage(p => p + 1)}
                 disabled={page >= data.totalPages}
-                className="rounded border px-2"
+                aria-label="Página siguiente"
+                className={`rounded border px-2 ${BUTTON_PAGINATION}`}
                 style={{ borderColor: "var(--nx-border)" }}
               >
                 ›

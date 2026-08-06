@@ -37,7 +37,7 @@ export const ENTITY_IDENTITY: Record<ExplorerEntity, ExplorerEntityIdentity> = {
   equipment: {
     entityType: "equipment",
     resolutionStatus: "DIRECT",
-    resolutionNote: "processed.fieldbeat_equipments.internal_id es la fuente estructurada. Equipos mencionados solo como texto libre en un reporte (sin match estructurado) no aparecen acá - ver quality.fieldbeat_team_identification para esa vista aparte."
+    resolutionNote: "processed.fieldbeat_equipments.internal_id es la fuente estructurada. Equipos mencionados solo como texto libre en un reporte (sin match estructurado) no aparecen acá - ver quality.fieldbeat_equipment_identification para esa vista aparte."
   },
   technicians: {
     entityType: "technicians",

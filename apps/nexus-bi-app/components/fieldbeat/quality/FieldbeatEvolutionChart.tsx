@@ -25,14 +25,14 @@ const SERIES_LABELS: Record<EvolutionSeriesKey, string> = {
   completeness: "Completitud estructural",
   inconsistencies: "Reportes con inconsistencias",
   traceability: "Trazabilidad de repuestos",
-  teamIdentification: "Identificación de equipos"
+  equipmentIdentification: "Identificación de equipos"
 };
 
 const SERIES_COLORS: Record<EvolutionSeriesKey, string> = {
   completeness: DASHBOARD_PALETTE.green,
   inconsistencies: DASHBOARD_PALETTE.orange,
   traceability: DASHBOARD_PALETTE.teal,
-  teamIdentification: DASHBOARD_PALETTE.info
+  equipmentIdentification: DASHBOARD_PALETTE.info
 };
 
 export function FieldbeatEvolutionChart({ points, selected, onSelectedChange, loading }: FieldbeatEvolutionChartProps) {

@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classifyTeamIdentification, tokenizeDescription } from "../../lib/fieldbeat-team-identification.ts";
+import { classifyequipmentIdentification, tokenizeDescription } from "../../lib/fieldbeat-equipment-identification.ts";
 
 test("campo estructurado presente gana siempre, incluso con texto ambiguo", () => {
-  const result = classifyTeamIdentification({
+  const result = classifyequipmentIdentification({
     structuredEquipmentIds: ["monaco06"],
     description: "revision de monaco06 y monaco07",
     candidates: [{ id: "monaco06" }, { id: "monaco07" }]
@@ -13,7 +13,7 @@ test("campo estructurado presente gana siempre, incluso con texto ambiguo", () =
 });
 
 test("un único candidato recuperado del texto es TEXT_CONFIDENT_IDENTIFIED", () => {
-  const result = classifyTeamIdentification({
+  const result = classifyequipmentIdentification({
     structuredEquipmentIds: [],
     description: "revision de monaco06 por alerta de ciberseguridad",
     candidates: [{ id: "monaco06" }, { id: "monaco09" }]
@@ -23,7 +23,7 @@ test("un único candidato recuperado del texto es TEXT_CONFIDENT_IDENTIFIED", ()
 });
 
 test("dos candidatos mencionados en el texto es TEXT_AMBIGUOUS", () => {
-  const result = classifyTeamIdentification({
+  const result = classifyequipmentIdentification({
     structuredEquipmentIds: [],
     description: "revision de monaco06 y monaco09 en la misma visita",
     candidates: [{ id: "monaco06" }, { id: "monaco09" }]
@@ -33,7 +33,7 @@ test("dos candidatos mencionados en el texto es TEXT_AMBIGUOUS", () => {
 });
 
 test("sin estructurado, sin match de texto y sin motivo NOT_APPLICABLE es MISSING", () => {
-  const result = classifyTeamIdentification({
+  const result = classifyequipmentIdentification({
     structuredEquipmentIds: [],
     description: "Apoyo remoto Andes Salud",
     candidates: [{ id: "monaco06" }]
@@ -43,17 +43,17 @@ test("sin estructurado, sin match de texto y sin motivo NOT_APPLICABLE es MISSIN
 
 test("descripción vacía o null es MISSING, nunca lanza", () => {
   assert.equal(
-    classifyTeamIdentification({ structuredEquipmentIds: [], description: null, candidates: [{ id: "monaco06" }] }).status,
+    classifyequipmentIdentification({ structuredEquipmentIds: [], description: null, candidates: [{ id: "monaco06" }] }).status,
     "MISSING"
   );
   assert.equal(
-    classifyTeamIdentification({ structuredEquipmentIds: [], description: "   ", candidates: [{ id: "monaco06" }] }).status,
+    classifyequipmentIdentification({ structuredEquipmentIds: [], description: "   ", candidates: [{ id: "monaco06" }] }).status,
     "MISSING"
   );
 });
 
 test("NOT_APPLICABLE solo se acepta cuando el caller ya lo demuestra explícitamente", () => {
-  const result = classifyTeamIdentification({
+  const result = classifyequipmentIdentification({
     structuredEquipmentIds: [],
     description: "diagnostico remoto sin visita a sitio",
     candidates: [],
@@ -64,7 +64,7 @@ test("NOT_APPLICABLE solo se acepta cuando el caller ya lo demuestra explícitam
 });
 
 test("candidatos cortos (<3 chars) no generan match para evitar ruido", () => {
-  const result = classifyTeamIdentification({
+  const result = classifyequipmentIdentification({
     structuredEquipmentIds: [],
     description: "cambio de ps unidad principal",
     candidates: [{ id: "ps" }]
@@ -79,7 +79,7 @@ test("tokenizeDescription separa por no-alfanumérico (guion incluido como parte
 });
 
 test("tokenizeDescription preserva códigos de equipo con guion como un solo token recuperable", () => {
-  const result = classifyTeamIdentification({
+  const result = classifyequipmentIdentification({
     structuredEquipmentIds: [],
     description: "cambio de tubo en Linac-153935 turno tarde",
     candidates: [{ id: "Linac-153935" }, { id: "TPS-UC" }]
