@@ -4,6 +4,7 @@ import { requireAuthenticatedUser } from "@/lib/auth/authorization";
 import { safeReturnTo } from "@/lib/auth/return-to";
 import { LoginForm } from "./LoginForm";
 import styles from "./login.module.css";
+import { EygBrand } from "@/components/brand/EygBrand";
 
 export const dynamic = "force-dynamic";
 
@@ -33,35 +34,48 @@ export default async function LoginPage({
     <main className={styles.page}>
       <section className={styles.portal} aria-labelledby="login-title">
         <div className={styles.context}>
-          <div className={styles.brandLine}>
-            <Brand />
-            <span>EyG Medical Systems</span>
-          </div>
+  <div className={styles.brandHeader}>
+    <div className={styles.brandMark}>
+      <EygBrand
+        variant="full"
+        priority
+        className={styles.brandImage}
+      />
+    </div>
+  </div>
 
-          <div className={styles.contextCopy}>
-            <p className={styles.eyebrow}>Portal empresarial</p>
-            <h1 id="login-title">NEXUS</h1>
-            <p>
-              Información operacional de servicio técnico, soporte y repuestos en un entorno protegido.
-            </p>
-          </div>
+  <div className={styles.contextCopy}>
 
-          <div className={styles.dataRail} aria-hidden="true">
-            <span>Servicio técnico</span>
-            <span>Soporte</span>
-            <span>Repuestos</span>
-            <i />
-          </div>
-        </div>
+    <h1 id="login-title">NEXUS</h1>
+
+    <div className={styles.presentationCopy}>
+      <p className={styles.description}>
+        Plataforma que integra y relaciona en un solo lugar la información de
+        EyG Medical Systems, conectando sus principales sistemas:
+        <span className={styles.platforms}>
+          FieldBeat, Dolibarr y Zendesk.
+        </span>
+      </p>
+
+      <p className={styles.definition}>
+        Nexus es el nexo entre la información, la operación y la toma de
+        decisiones del negocio.
+      </p>
+    </div>
+  </div>
+
+  <p className={styles.tagline}>
+    Preguntar a los datos nunca fue tan fácil.
+  </p>
+</div>
 
         <div className={styles.accessPanel}>
           <div className={styles.accessCopy}>
-            <p className={styles.eyebrow}>Acceso controlado</p>
-            <h2>Ingresa a NEXUS</h2>
-            <p>Utiliza la identidad asignada por EyG para consultar la información disponible.</p>
+            <h2>Entra a NEXUS</h2>
+            <p>Ingresar credenciales de acceso:</p>
           </div>
           <LoginForm returnTo={safeReturnTo(requestedReturnTo)} />
-          <p className={styles.securityNote}>La sesión se valida antes de acceder a páginas y datos.</p>
+          <p className={styles.securityNote}>La sesión se valida antes de acceder a páginas y datos por motivos de seguridad.</p>
         </div>
       </section>
     </main>

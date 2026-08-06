@@ -1,5 +1,5 @@
 {
-  "run_id": "29e984c5-b487-4ed5-9cb6-e810013d54c5",
-  "target": "127.0.0.1:55480/nexus_bi_dev_local",
-  "migrated_at": "2026-08-06T07:11:22.284Z"
+  "run_id": "4fcd608d-9f7c-4a94-9978-6ad87810c590",
+  "target": "localhost:55482/nexus_bi_dev_v3_clean_disposable",
+  "migrated_at": "2026-08-06T08:00:06.625Z"
 }

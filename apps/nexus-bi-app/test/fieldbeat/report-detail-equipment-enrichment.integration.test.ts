@@ -228,8 +228,8 @@ before(async () => {
   );
 
   const importRun = await adminPool.query(
-    `INSERT INTO config.contract_import_runs (source_filename, source_sha256, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status)
-     VALUES ('nexus-ah-test-fixture.csv', 'nexus-ah-test-sha-' || gen_random_uuid()::text, CURRENT_DATE, 3, 3, 0, 0, 'SUCCESS')
+    `INSERT INTO config.contract_import_runs (source_filename, source_sha256, transform_version, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status)
+     VALUES ('nexus-ah-test-fixture.csv', 'nexus-ah-test-sha-' || gen_random_uuid()::text, 'contracts-v3-parts-accent-variants', CURRENT_DATE, 3, 3, 0, 0, 'SUCCESS')
      RETURNING import_id`
   );
   const importId = importRun.rows[0].import_id;

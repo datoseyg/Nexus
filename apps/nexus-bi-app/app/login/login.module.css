@@ -257,11 +257,54 @@
   }
 
   .context {
-    min-height: 275px;
-    gap: 45px;
-    padding: 28px 24px 32px;
-  }
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 650px;
+  padding: 52px 54px 48px;
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    radial-gradient(
+      circle at 88% 10%,
+      rgba(91, 105, 235, 0.26) 0%,
+      rgba(91, 105, 235, 0.08) 28%,
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      #151a2c 0%,
+      #171d35 52%,
+      #131827 100%
+    );
+}
 
+.context::before {
+  content: "";
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  right: -185px;
+  bottom: -190px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  box-shadow:
+    0 0 70px rgba(91, 105, 235, 0.12),
+    inset 0 0 50px rgba(255, 255, 255, 0.025);
+  pointer-events: none;
+}
+
+.context::after {
+  content: "";
+  position: absolute;
+  width: 230px;
+  height: 230px;
+  right: -125px;
+  bottom: -130px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+}
   .contextCopy h1 {
     font-size: 54px;
   }
@@ -278,7 +321,142 @@
   .accessPanel {
     padding: 36px 24px 44px;
   }
+
+  .brandHeader {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
+
+.brandMark {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow:
+    0 5px 12px rgba(0, 0, 0, 0.24),
+    0 0 15px rgba(120, 255, 158, 0.08);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.brandMark:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.28),
+    0 0 20px rgba(120, 255, 158, 0.14);
+}
+
+.brandImage {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
+.companyName {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+}
+
+.contextCopy {
+  position: relative;
+  z-index: 2;
+  max-width: 530px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  color: #aeb8ff;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.contextCopy h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(68px, 7vw, 94px);
+  font-weight: 850;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  text-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(174, 184, 255, 0.08);
+}
+
+.presentationCopy {
+  position: relative;
+  max-width: 500px;
+  margin-top: 68px;
+  padding: 2px 0 2px 24px;
+}
+
+.presentationCopy::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    #b8c0ff 0%,
+    rgba(184, 192, 255, 0.45) 55%,
+    rgba(184, 192, 255, 0.08) 100%
+  );
+  box-shadow: 0 0 14px rgba(174, 184, 255, 0.28);
+}
+
+.description {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  font-weight: 450;
+  line-height: 1.72;
+  letter-spacing: 0.008em;
+  text-wrap: pretty;
+}
+
+.platforms {
+  display: block;
+  margin-top: 11px;
+  color: #ffffff;
+  font-size: 15.5px;
+  font-weight: 750;
+  letter-spacing: 0.018em;
+  text-shadow: 0 0 18px rgba(174, 184, 255, 0.15);
+}
+
+.definition {
+  max-width: 465px;
+  margin: 26px 0 0;
+  color: rgba(255, 255, 255, 0.97);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+}
+
+.definition strong {
+  color: #bbc3ff;
+  font-weight: 800;
+}
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   .field input,

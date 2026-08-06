@@ -110,7 +110,7 @@ const SECTIONS: NavSection[] = [
     ]
   },
   {
-    label: "Control de calidad",
+    label: "[DEMO] Control de calidad",
     items: [
       {
         href: "/audit/manual-review",
