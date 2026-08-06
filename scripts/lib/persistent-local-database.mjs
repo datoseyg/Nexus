@@ -1,11 +1,15 @@
 import pg from "pg";
 
+// Promovida de nexus_bi_dev_local (55480) a nexus_bi_dev_local_v3 (55482):
+// la base 55480 se conserva intacta como rollback (ver procedimiento en el
+// informe de la tarea de promoción), pero deja de ser el destino que
+// dev-local.mjs / with-local-pipeline-env.mjs resuelven por defecto.
 export const PERSISTENT_LOCAL_DATABASE = Object.freeze({
-  container: "nexus_bi_dev_local",
-  database: "nexus_bi_dev_local",
-  volume: "nexus_bi_dev_local_data",
+  container: "nexus_bi_dev_v3_clean",
+  database: "nexus_bi_dev_local_v3",
+  volume: "nexus_bi_dev_v3_clean_data",
   host: "127.0.0.1",
-  port: 55480,
+  port: 55482,
   user: "postgres",
   marker: "NEXUS_PERSISTENT_DEVELOPMENT:v1"
 });
