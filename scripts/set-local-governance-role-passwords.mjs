@@ -55,6 +55,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { isLikelyDisposableName, isSupabaseCloudHost, describeConnectionTarget, PROTECTED_DATABASE_NAMES } from "../src/lib/db-safety.js";
+import { PERSISTENT_LOCAL_DATABASE } from "./lib/persistent-local-database.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
@@ -118,17 +119,38 @@ async function main() {
   if (PROTECTED_DATABASE_NAMES.has(target.database) || isSupabaseCloudHost(target.host)) {
     throw new Error(`ABORT: "${target.database}"@"${target.host}" es un entorno protegido - este script nunca corre ahí, sin excepción.`);
   }
-  if (!isLikelyDisposableName(target.database)) {
-    throw new Error(`ABORT: "${target.database}" no termina en _test/_disposable - este script se niega a operar sobre un nombre que no se autoidentifica como desechable.`);
+  const isCanonicalPersistentDevelopment =
+    ["127.0.0.1", "localhost"].includes(target.host) &&
+    Number(target.port) === PERSISTENT_LOCAL_DATABASE.port &&
+    target.database === PERSISTENT_LOCAL_DATABASE.database;
+
+  if (!isLikelyDisposableName(target.database) && !isCanonicalPersistentDevelopment) {
+    throw new Error(
+      `ABORT: "${target.database}" no es desechable ni el destino persistente canónico de desarrollo de Nexus.`
+    );
   }
 
-  console.log(`[set-local-governance-role-passwords] destino confirmado local/desechable: host=${target.host} port=${target.port} database=${target.database}`);
+  const targetKind = isCanonicalPersistentDevelopment ? "local/persistente" : "local/desechable";
+  console.log(`[set-local-governance-role-passwords] destino confirmado ${targetKind}: host=${target.host} port=${target.port} database=${target.database}`);
 
   const client = new pg.Client({ connectionString: baseUrl, application_name: "set-local-governance-role-passwords" });
   await client.connect();
 
   const envUpdates = {};
   try {
+    if (isCanonicalPersistentDevelopment) {
+      const markerResult = await client.query(
+        `SELECT shobj_description(oid, 'pg_database') AS marker
+         FROM pg_database
+         WHERE datname = current_database()`
+      );
+      if (markerResult.rows[0]?.marker !== PERSISTENT_LOCAL_DATABASE.marker) {
+        throw new Error(
+          `ABORT: la base persistente no tiene la marca esperada "${PERSISTENT_LOCAL_DATABASE.marker}".`
+        );
+      }
+    }
+
     for (const { role, envVar } of GOVERNANCE_ROLES) {
       const roleExists = await client.query("SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = $1", [role]);
       if (roleExists.rowCount === 0) {
