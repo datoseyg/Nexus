@@ -735,7 +735,23 @@ test("reports: vista 'exceptions' (default) reconcilia EXACTAMENTE con kpi6.affe
 
   assert.equal(reportsBody.view, "exceptions", "exceptions es la vista default cuando no se pide reportsView");
   assert.equal(reportsBody.totalRows, overviewBody.kpi6.affectedReports, "misma base SQL: universe + primary_inconsistency IS NOT NULL");
-  assert.equal(reportsBody.totalRows, 10);
+  // 9, no 10: de los 20 fixtures (900001-900020), exactamente 9 tienen fila
+  // en quality.fieldbeat_report_inconsistencies (900003 EQUIPMENT_TEXT_AMBIGUOUS,
+  // 900004 EQUIPMENT_MISSING, 900006 FINISHED_ZERO_DURATION, 900007
+  // FINISHED_NULL_DURATION, 900008 MIN_FIELDS_INCOMPLETE, 900009
+  // PART_AMBIGUOUS_MATCH, 900011 TICKET_REPORTED_INACCESSIBLE, 900013
+  // PART_NO_MATCH, 900015 PART_PLACEHOLDER_ONLY - confirmado por consulta
+  // directa a quality.fieldbeat_report_primary_inconsistency). El 10 previo
+  // era una expectativa hardcodeada obsoleta que aparentemente contaba
+  // también a 900005 ("cronología imposible") como si generara una
+  // inconsistencia - 900005 nunca tuvo fila en fieldbeat_report_inconsistencies:
+  // la cronología imposible es kpi5 (temporal, chronology_impossible en
+  // computeOverviewBundle), un eje de calidad completamente separado de la
+  // taxonomía de inconsistencias que alimenta kpi6/exceptions - nunca
+  // debió contarse acá. La aserción de arriba (línea 737) ya prueba que
+  // Reports y KPI6 reconcilian ENTRE SÍ bajo cualquier valor; este 9 fija
+  // además que ese valor reconciliado es el semánticamente correcto.
+  assert.equal(reportsBody.totalRows, 9);
   for (const row of reportsBody.rows) {
     assert.ok(row.primary, `fila ${row.fieldbeatTaskId} en 'exceptions' debe tener primary no-null`);
   }
