@@ -63,7 +63,7 @@ const SORT_COLUMNS: Array<{ key: FieldbeatReportsSortKey; label: string }> = [
   { key: "date", label: "Fecha" },
   { key: "severity", label: "Severidad" },
   { key: "client", label: "Cliente" },
-  { key: "technician", label: "Técnico" },
+  { key: "technician", label: "Técnico Reportante" },
   { key: "taskType", label: "Tipo de tarea" },
   { key: "id", label: "ID" }
 ];

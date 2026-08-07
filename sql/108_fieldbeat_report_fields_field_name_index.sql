@@ -1,0 +1,24 @@
+-- Regresión de rendimiento de la bandeja de Reportes FieldBeat
+-- (lib/fieldbeat-reports-queries.ts) - índice físico identificado tras
+-- reestructurar esa consulta para enriquecer solo la página visible en vez
+-- de todo el universo filtrado (ver informe de esa tarea).
+--
+-- Root cause de la parte de este índice: quality.fieldbeat_report_participants
+-- (sql/088) deriva de processed.fieldbeat_report_fields filtrando siempre
+-- por el mismo literal (field_name = 'NOMBRE DEL INGENIERO ADICIONAL') en
+-- sus 3 ramas (roster, structured_candidates, free_text_candidates) - sin
+-- índice, cada una hacía Parallel Seq Scan sobre las 67.093 filas de la
+-- tabla para quedarse con solo 3.822 (5.7%). Confirmado con EXPLAIN ANALYZE
+-- BUFFERS antes/después de este índice (ver informe): Seq Scan -> Bitmap
+-- Index Scan, sin cambiar ningún resultado (mismas 3.822 filas, mismo
+-- costo de las funciones normalize/regexp downstream, que son las que de
+-- verdad dominan el tiempo restante - este índice no las reemplaza, no
+-- podía dado que sql/088 no se toca).
+--
+-- (field_name, fieldbeat_task_id) y no un índice parcial WHERE field_name =
+-- '...' a propósito: cubre cualquier filtro futuro por field_name sin
+-- incrustar un literal de negocio en la definición del índice, y el
+-- segundo campo sirve directo al JOIN por fieldbeat_task_id que sigue
+-- inmediatamente después en las 3 ramas de la vista.
+CREATE INDEX IF NOT EXISTS idx_fieldbeat_report_fields_name_task
+  ON processed.fieldbeat_report_fields (field_name, fieldbeat_task_id);

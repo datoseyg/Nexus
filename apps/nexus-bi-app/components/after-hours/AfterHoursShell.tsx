@@ -102,6 +102,15 @@ export function AfterHoursShell() {
     () => buildAfterHoursQuery(filters, { page: detailPage, pageSize: PAGE_SIZE, sortBy, sortDir, reportId: reportIdFilter ?? undefined }),
     [filters, detailPage, sortBy, sortDir, reportIdFilter]
   );
+  // Descargar CSV (botón en AfterHoursDetailTable) - MISMOS filtros/reportId
+  // que detailQuery, construidos con la MISMA función (buildAfterHoursQuery,
+  // nunca una segunda implementación de serialización de filtros), pero SIN
+  // page/pageSize: la exportación siempre cubre el universo filtrado
+  // completo, nunca solo la página visible.
+  const exportQuery = useMemo(
+    () => buildAfterHoursQuery(filters, { reportId: reportIdFilter ?? undefined }),
+    [filters, reportIdFilter]
+  );
 
   const summary = useAfterHoursSection<AfterHoursSummary>("/api/dashboard/after-hours/summary", filtersQuery, isSummaryEmpty);
   const byPeriod = useAfterHoursSection<{ rows: AfterHoursByDimensionRow[] }>("/api/dashboard/after-hours/by-period", filtersQuery, isByDimensionEmpty);
@@ -339,6 +348,7 @@ export function AfterHoursShell() {
           selectedTaskId={selectedRow?.fieldbeat_task_id ?? null}
           reportIdFilter={reportIdFilter}
           onReportIdFilterChange={handleReportIdFilterChange}
+          exportQuery={exportQuery}
         />
       </div>
 

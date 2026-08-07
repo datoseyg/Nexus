@@ -97,12 +97,29 @@ export interface BuildReportsQueryOptions {
 }
 
 /**
- * CTE `filtered` compartida por el listado paginado y el export CSV -
- * ninguno de los dos re-implementa el WHERE/JOIN por su cuenta. El
- * llamador agrega LIMIT/OFFSET (listado, + COUNT(*) OVER() para
- * metadata en 1 solo round-trip) o ninguno (export, hasta MAX_EXPORT_ROWS).
+ * CTE `base` compartida por el listado paginado y el export CSV - ninguno
+ * de los dos re-implementa el WHERE/JOIN por su cuenta.
+ *
+ * Regresión de rendimiento corregida acá (una página de 25 filas tardaba
+ * >30s / minutos, ver informe de esta tarea): la versión anterior calculaba
+ * `findings` y `additionalParticipants` (dos subqueries correlacionadas
+ * sobre quality.fieldbeat_report_inconsistencies/fieldbeat_report_participants,
+ * esta última una vista cara con UNION ALL + regexp_split_to_table sobre
+ * processed.fieldbeat_report_fields) para TODO el universo filtrado ANTES
+ * de aplicar LIMIT/OFFSET - EXPLAIN mostraba un costo de ~308.5M en esa CTE
+ * para "Todos" sin filtros (3797 filas), y tanto "Todos" como "Excepciones"
+ * excedían 30s reales (statement_timeout) porque el filtro
+ * `primary_code IS NOT NULL` de "Excepciones" se aplicaba DESPUÉS del
+ * cálculo caro, no antes.
+ *
+ * `base` es liviana a propósito: SIN findings/participantes, con el filtro
+ * de vista (exceptions/all) ya aplicado en su propio WHERE. Los llamadores
+ * paginan/acotan sobre `base` y enriquecen SOLO esas filas (ver
+ * buildReportsListingQuery/buildReportsExportQuery) - las VIEW de
+ * sql/086/sql/088 y sus reglas de negocio no se tocan, todo el ahorro viene
+ * de reducir CUÁNTAS filas las evalúan.
  */
-export function buildReportsFilteredCte({ filters, view, search, sort, direction }: BuildReportsQueryOptions): {
+export function buildReportsBaseCte({ filters, view, search, sort, direction }: BuildReportsQueryOptions): {
   cteSql: string;
   orderBySql: string;
   params: unknown[];
@@ -114,8 +131,14 @@ export function buildReportsFilteredCte({ filters, view, search, sort, direction
     conditions.push(`(CAST(u.fieldbeat_task_id AS TEXT) = ${pusher.push(search)} OR CAST(u.fieldbeat_task_id AS TEXT) LIKE ${pusher.push(`${search}%`)})`);
   }
 
+  // "Excepciones" ahora filtra en el MISMO WHERE que el resto de las
+  // condiciones (sobre pi.code, la expresión fuente - no sobre el alias
+  // `primary_code`, que en este nivel de SELECT todavía no existe) - ya no
+  // hay una capa `view_filtered` separada que lo aplique después de pagar
+  // el enriquecimiento caro.
+  if (view === "exceptions") conditions.push("pi.code IS NOT NULL");
+
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-  const viewCondition = view === "exceptions" ? "WHERE primary_code IS NOT NULL" : "";
   const dir = direction === "asc" ? "ASC" : "DESC";
   const sortColumn = SORT_COLUMN_SQL[sort];
   // Empate estable por id (nunca "orden indefinido" entre páginas) - mismo
@@ -123,7 +146,7 @@ export function buildReportsFilteredCte({ filters, view, search, sort, direction
   const orderBySql = `ORDER BY ${sortColumn} ${dir} NULLS LAST, fieldbeat_task_id ASC`;
 
   const cteSql = `
-    filtered AS MATERIALIZED (
+    base AS (
       SELECT
         u.fieldbeat_task_id,
         u.fieldbeat_task_date,
@@ -137,33 +160,61 @@ export function buildReportsFilteredCte({ filters, view, search, sort, direction
         u.ticket_accessible,
         pi.code AS primary_code,
         pi.severity AS primary_severity,
-        ${severityRankCaseExpr()} AS severity_rank,
-        (
-          SELECT COALESCE(json_agg(json_build_object('code', ri.code, 'severity', ri.severity) ORDER BY ri.priority_order), '[]'::json)
-          FROM quality.fieldbeat_report_inconsistencies ri
-          WHERE ri.fieldbeat_task_id = u.fieldbeat_task_id
-        ) AS findings,
-        -- HOTFIX de integridad de datos FieldBeat (Stage 10, columna
-        -- aditiva) - participantes adicionales (nunca el responsable
-        -- principal, ya cubierto por technician_names/u.technician_names).
-        -- Fuente ÚNICA canónica: quality.fieldbeat_report_participants
-        -- (sql/088), nunca reimplementa acá la lógica de resolución.
-        (
-          SELECT COALESCE(json_agg(pp.raw_name ORDER BY pp.raw_name), '[]'::json)
-          FROM quality.fieldbeat_report_participants pp
-          WHERE pp.fieldbeat_task_id = u.fieldbeat_task_id AND pp.is_primary = false
-        ) AS additional_participants
+        ${severityRankCaseExpr()} AS severity_rank
       FROM quality.fieldbeat_report_quality u
       LEFT JOIN quality.fieldbeat_report_primary_inconsistency pi ON pi.fieldbeat_task_id = u.fieldbeat_task_id
       ${whereSql}
-    ),
-    view_filtered AS MATERIALIZED (
-      SELECT * FROM filtered
-      ${viewCondition}
     )
   `;
 
   return { cteSql, orderBySql, params: pusher.params };
+}
+
+/**
+ * Enriquecimiento (findings/additionalParticipants) restringido a los
+ * fieldbeat_task_id de `idSourceCte` (25-100 filas para el listado, hasta
+ * MAX_EXPORT_ROWS para el CSV) - nunca al universo completo. Comparado
+ * empíricamente contra LEFT JOIN LATERAL acotado a la misma página (ver
+ * informe de esta tarea, ambas estrategias acotadas son rápidas para 25-100
+ * filas, pero esta - agregación agrupada con IN - fue la más eficiente en
+ * EXPLAIN ANALYZE BUFFERS, especialmente contra
+ * quality.fieldbeat_report_participants).
+ */
+function buildEnrichmentCte(idSourceCte: string): string {
+  return `
+    findings_agg AS (
+      SELECT ri.fieldbeat_task_id,
+             COALESCE(json_agg(json_build_object('code', ri.code, 'severity', ri.severity) ORDER BY ri.priority_order), '[]'::json) AS findings
+      FROM quality.fieldbeat_report_inconsistencies ri
+      WHERE ri.fieldbeat_task_id IN (SELECT fieldbeat_task_id FROM ${idSourceCte})
+      GROUP BY ri.fieldbeat_task_id
+    ),
+    -- HOTFIX de integridad de datos FieldBeat (Stage 10, columna aditiva) -
+    -- participantes adicionales (nunca el responsable principal, ya
+    -- cubierto por technician_names/u.technician_names). Fuente ÚNICA
+    -- canónica: quality.fieldbeat_report_participants (sql/088), nunca
+    -- reimplementa acá la lógica de resolución.
+    participants_agg AS (
+      SELECT pp.fieldbeat_task_id,
+             COALESCE(json_agg(pp.raw_name ORDER BY pp.raw_name), '[]'::json) AS additional_participants
+      FROM quality.fieldbeat_report_participants pp
+      WHERE pp.fieldbeat_task_id IN (SELECT fieldbeat_task_id FROM ${idSourceCte}) AND pp.is_primary = false
+      GROUP BY pp.fieldbeat_task_id
+    )
+  `;
+}
+
+function enrichedSelectSql(pagedCteName: string, orderBySql: string): string {
+  return `
+    SELECT
+      p.*,
+      COALESCE(f.findings, '[]'::json) AS findings,
+      COALESCE(pa.additional_participants, '[]'::json) AS additional_participants
+    FROM ${pagedCteName} p
+    LEFT JOIN findings_agg f ON f.fieldbeat_task_id = p.fieldbeat_task_id
+    LEFT JOIN participants_agg pa ON pa.fieldbeat_task_id = p.fieldbeat_task_id
+    ${orderBySql}
+  `;
 }
 
 interface ReportsQueryRow {
@@ -209,19 +260,27 @@ export interface ReportsListingQueryResult {
   params: unknown[];
 }
 
-/** 1 round-trip: COUNT(*) OVER() (evaluado sobre todo `view_filtered`,
- * antes del LIMIT/OFFSET por semántica estándar de SQL) entrega el total
- * en la misma consulta que trae la página - mismo principio que
- * computeOverviewBundle/computeQualityBundle (Phase 3 §1.1). */
+/** 1 round-trip: COUNT(*) OVER() (evaluado sobre `base` ya filtrada por
+ * vista/exceptions, antes del LIMIT/OFFSET por semántica estándar de SQL)
+ * entrega el total en la misma consulta que trae la página - mismo
+ * principio que computeOverviewBundle/computeQualityBundle (Phase 3 §1.1).
+ * `paged` se materializa explícitamente (§7 del informe de esta tarea):
+ * se referencia 3 veces más abajo (2 subqueries de findings_agg/
+ * participants_agg + el FROM final) y NUNCA debe volver a evaluarse `base`
+ * completa para ninguna de ellas - solo sus 25-100 filas ya paginadas. */
 export function buildReportsListingQuery(options: BuildReportsQueryOptions, page: number, pageSize: number): ReportsListingQueryResult {
-  const { cteSql, orderBySql, params } = buildReportsFilteredCte(options);
+  const { cteSql, orderBySql, params } = buildReportsBaseCte(options);
   const offset = (page - 1) * pageSize;
   const sql = `
-    WITH ${cteSql}
-    SELECT *, COUNT(*) OVER() AS total_count
-    FROM view_filtered
-    ${orderBySql}
-    LIMIT ${pageSize} OFFSET ${offset}
+    WITH ${cteSql},
+    paged AS MATERIALIZED (
+      SELECT *, COUNT(*) OVER() AS total_count
+      FROM base
+      ${orderBySql}
+      LIMIT ${pageSize} OFFSET ${offset}
+    ),
+    ${buildEnrichmentCte("paged")}
+    ${enrichedSelectSql("paged", orderBySql)}
   `;
   return { sql, params };
 }
@@ -229,15 +288,23 @@ export function buildReportsListingQuery(options: BuildReportsQueryOptions, page
 /** Sin LIMIT/OFFSET de usuario - tope defensivo fijo (MAX_EXPORT_ROWS,
  * nunca "todo sin límite" - mismo espíritu que MAX_RAW_PAIRS en
  * crossings). El CSV documenta cuántas filas exportó vs. cuántas
- * matchean, nunca trunca en silencio (ver route.ts). */
+ * matchean, nunca trunca en silencio (ver route.ts). Misma arquitectura
+ * "acotar primero, enriquecer después" que el listado (§13 del informe:
+ * estrategia física distinta es aceptable acá porque exporta el universo
+ * completo, nunca solo una página) - `capped` acota a MAX_EXPORT_ROWS antes
+ * de que findings_agg/participants_agg toquen una sola fila. */
 export function buildReportsExportQuery(options: BuildReportsQueryOptions): ReportsListingQueryResult {
-  const { cteSql, orderBySql, params } = buildReportsFilteredCte(options);
+  const { cteSql, orderBySql, params } = buildReportsBaseCte(options);
   const sql = `
-    WITH ${cteSql}
-    SELECT *, COUNT(*) OVER() AS total_count
-    FROM view_filtered
-    ${orderBySql}
-    LIMIT ${MAX_EXPORT_ROWS}
+    WITH ${cteSql},
+    capped AS MATERIALIZED (
+      SELECT *, COUNT(*) OVER() AS total_count
+      FROM base
+      ${orderBySql}
+      LIMIT ${MAX_EXPORT_ROWS}
+    ),
+    ${buildEnrichmentCte("capped")}
+    ${enrichedSelectSql("capped", orderBySql)}
   `;
   return { sql, params };
 }

@@ -7,7 +7,7 @@ import {
   parseReportsSort,
   parseReportsDirection,
   parseReportsSearch,
-  buildReportsFilteredCte,
+  buildReportsBaseCte,
   buildReportsListingQuery,
   buildReportsExportQuery,
   shapeReportRow,
@@ -68,28 +68,33 @@ test("parseReportsSearch: recorta a solo dígitos, string vacío tras recortar -
 
 const BASE_OPTIONS = { filters: {}, view: "exceptions" as const, search: null, sort: "date" as const, direction: "desc" as const };
 
-test("buildReportsFilteredCte: vista 'exceptions' agrega WHERE primary_code IS NOT NULL; 'all' no filtra por inconsistencia", () => {
-  const exceptions = buildReportsFilteredCte(BASE_OPTIONS);
-  assert.match(exceptions.cteSql, /WHERE primary_code IS NOT NULL/);
+// Regresión de rendimiento (ver informe): el filtro de "exceptions" ahora
+// vive en el MISMO WHERE que el resto de las condiciones de `base` (sobre
+// `pi.code`, la expresión fuente - el alias `primary_code` no existe
+// todavía en ese nivel de SELECT), nunca en una capa separada aplicada
+// DESPUÉS del enriquecimiento caro.
+test("buildReportsBaseCte: vista 'exceptions' agrega pi.code IS NOT NULL al WHERE de base; 'all' no filtra por inconsistencia", () => {
+  const exceptions = buildReportsBaseCte(BASE_OPTIONS);
+  assert.match(exceptions.cteSql, /WHERE.*pi\.code IS NOT NULL/s);
 
-  const all = buildReportsFilteredCte({ ...BASE_OPTIONS, view: "all" });
-  assert.doesNotMatch(all.cteSql, /primary_code IS NOT NULL/);
+  const all = buildReportsBaseCte({ ...BASE_OPTIONS, view: "all" });
+  assert.doesNotMatch(all.cteSql, /pi\.code IS NOT NULL/);
 });
 
-test("buildReportsFilteredCte: búsqueda por ID agrega condición exacta-o-prefijo parametrizada, nunca interpolada", () => {
-  const { cteSql, params } = buildReportsFilteredCte({ ...BASE_OPTIONS, search: "9000" });
+test("buildReportsBaseCte: búsqueda por ID agrega condición exacta-o-prefijo parametrizada, nunca interpolada", () => {
+  const { cteSql, params } = buildReportsBaseCte({ ...BASE_OPTIONS, search: "9000" });
   assert.match(cteSql, /CAST\(u\.fieldbeat_task_id AS TEXT\) = \$\d+ OR CAST\(u\.fieldbeat_task_id AS TEXT\) LIKE \$\d+/);
   assert.ok(params.includes("9000"));
   assert.ok(params.includes("9000%"));
 });
 
-test("buildReportsFilteredCte: sort/direction se reflejan en ORDER BY con empate estable por id", () => {
-  const { orderBySql } = buildReportsFilteredCte({ ...BASE_OPTIONS, sort: "severity", direction: "asc" });
+test("buildReportsBaseCte: sort/direction se reflejan en ORDER BY con empate estable por id", () => {
+  const { orderBySql } = buildReportsBaseCte({ ...BASE_OPTIONS, sort: "severity", direction: "asc" });
   assert.match(orderBySql, /ORDER BY severity_rank ASC NULLS LAST, fieldbeat_task_id ASC/);
 });
 
-test("buildReportsFilteredCte: filtros comunes (client/severity/etc.) se delegan a buildFieldbeatQualityConditions, nunca reimplementados acá", () => {
-  const { cteSql, params } = buildReportsFilteredCte({ ...BASE_OPTIONS, filters: { client: "ACME", severity: "Alta" } });
+test("buildReportsBaseCte: filtros comunes (client/severity/etc.) se delegan a buildFieldbeatQualityConditions, nunca reimplementados acá", () => {
+  const { cteSql, params } = buildReportsBaseCte({ ...BASE_OPTIONS, filters: { client: "ACME", severity: "Alta" } });
   assert.match(cteSql, /u\.client_name = \$\d+/);
   assert.ok(params.includes("ACME"));
   assert.ok(params.includes("Alta"));
@@ -101,9 +106,9 @@ test("buildReportsListingQuery: agrega LIMIT/OFFSET y COUNT(*) OVER() para metad
   assert.match(sql, /LIMIT 25 OFFSET 25/, "página 2 de 25 -> offset 25");
 });
 
-test("buildReportsExportQuery: sin OFFSET de usuario, tope fijo MAX_EXPORT_ROWS", () => {
+test("buildReportsExportQuery: sin OFFSET de usuario, tope fijo MAX_EXPORT_ROWS acotando `capped` antes del enriquecimiento", () => {
   const { sql } = buildReportsExportQuery(BASE_OPTIONS);
-  assert.match(sql.trim(), new RegExp(`LIMIT ${MAX_EXPORT_ROWS}$`));
+  assert.match(sql, new RegExp(`LIMIT ${MAX_EXPORT_ROWS}\\b`));
   assert.doesNotMatch(sql, /OFFSET/);
 });
 
@@ -192,11 +197,18 @@ test("shapeReportRow: sin participantes adicionales, additionalParticipants es [
   assert.deepEqual(row.additionalParticipants, []);
 });
 
-test("buildReportsFilteredCte: incluye additional_participants vía subquery contra quality.fieldbeat_report_participants (is_primary=false), fuente canónica única", () => {
-  const { cteSql } = buildReportsFilteredCte(BASE_OPTIONS);
-  assert.match(cteSql, /quality\.fieldbeat_report_participants/);
-  assert.match(cteSql, /is_primary\s*=\s*false/);
-  assert.match(cteSql, /additional_participants/);
+// Regresión de rendimiento (ver informe): el enriquecimiento de
+// participantes se movió de `base` (evaluado para TODO el universo
+// filtrado) a una agregación restringida a los fieldbeat_task_id ya
+// paginados (buildEnrichmentCte) - la fuente canónica sigue siendo
+// exactamente la misma vista, is_primary=false sin cambios, solo se
+// verifica en el SQL final del listado, no en `base` por sí sola.
+test("buildReportsListingQuery: incluye additional_participants vía agregación contra quality.fieldbeat_report_participants (is_primary=false) restringida a la página, fuente canónica única", () => {
+  const { sql } = buildReportsListingQuery(BASE_OPTIONS, 1, 25);
+  assert.match(sql, /quality\.fieldbeat_report_participants/);
+  assert.match(sql, /is_primary\s*=\s*false/);
+  assert.match(sql, /additional_participants/);
+  assert.match(sql, /fieldbeat_task_id IN \(SELECT fieldbeat_task_id FROM paged\)/, "restringido a la página, nunca al universo completo");
 });
 
 test("isExportOverLimit: exactamente MAX_EXPORT_ROWS es aceptable, MAX_EXPORT_ROWS+1 se rechaza", () => {

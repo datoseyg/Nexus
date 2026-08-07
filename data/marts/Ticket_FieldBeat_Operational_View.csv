@@ -658,3 +658,4 @@ zendesk_ticket_id,subject,status,priority,has_fieldbeat_report,fieldbeat_report_
 10262,Falla reflector/MLC Infinity,closed,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10293,Iso mecánico del colimador.,open,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
 10316,Versa | Problemas en tubo de RX,new,urgent,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT
+10325,Solicitud reparación manilla EPID y  arreglo a MLC,new,high,false,0,false,,,,,,,,,false,0,,NO_FIELDBEAT_REPORT

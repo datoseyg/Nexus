@@ -47,7 +47,11 @@ test("todos los Route Handlers están protegidos por el mecanismo correcto", asy
   // NEXUS V3 - Mecanismo de actualización manual de datos agregó 2 rutas
   // nuevas (77 -> 79): POST+GET /api/data-refresh/runs (encolar/listar) y
   // GET /api/data-refresh/runs/[id] (detalle + etapas).
-  assert.equal(routes.length, 79);
+  // NEXUS V3 - Exportación CSV de After-Hours agregó 1 ruta nueva (79 -> 80):
+  // GET /api/dashboard/after-hours/export (mismo patrón que
+  // /api/dashboard/fieldbeat/reports/export, requireAuthenticatedUser +
+  // NexusAuthorizationError explícito).
+  assert.equal(routes.length, 80);
 
   for (const path of routes) {
     const contents = await source(path);

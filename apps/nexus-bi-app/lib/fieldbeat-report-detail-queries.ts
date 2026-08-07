@@ -3,9 +3,11 @@
 // (nunca reimplementa una regla de negocio acá). 1 round-trip: el reporte
 // es una sola fila de quality.fieldbeat_report_quality, con
 // tickets/repuestos/inconsistencias como columnas JSON vía subqueries
-// correlacionadas (mismo idioma que buildReportsFilteredCte en
-// fieldbeat-reports-queries.ts) - nunca un JOIN plano que multiplique
-// equipos × tickets × repuestos.
+// correlacionadas - seguro acá porque es 1 sola fila (a diferencia de
+// fieldbeat-reports-queries.ts::buildReportsBaseCte, que dejó de usar este
+// patrón para un LISTADO de miles de filas por la regresión de rendimiento
+// corregida en esa tarea) - nunca un JOIN plano que multiplique equipos ×
+// tickets × repuestos.
 import { INCONSISTENCY_TAXONOMY, type InconsistencyCode, type InconsistencySeverity } from "./fieldbeat-inconsistency-taxonomy";
 import { deriveEquipmentItems } from "./fieldbeat-equipment-derivation";
 import { shapePartOccurrence, type RawPartOccurrenceRow } from "./fieldbeat-part-occurrence";

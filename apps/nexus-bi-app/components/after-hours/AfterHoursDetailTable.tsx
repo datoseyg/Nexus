@@ -2,12 +2,14 @@
 
 import { useId, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ErrorBanner } from "@/components/ErrorBanner";
 import { AfterHoursEmptyBlock } from "./AfterHoursEmptyBlock";
 import { buildDiagnosis, getConfidenceTierLabel } from "@/lib/after-hours-labels";
 import { formatHoursOrDash, isAfterHoursRowSelected, parseReportIdInput, splitDateTime, totalAfterHoursHours } from "@/lib/after-hours-detail-view";
 import { formatModelCell } from "@/lib/explorer-entity-config";
+import { triggerBlobDownload } from "@/lib/csv-export";
 import type { AfterHoursDetailRow } from "@/types/after-hours";
-import { BASE_TRANSITION, BUTTON_PAGINATION, BUTTON_SECONDARY, BUTTON_SORT, BUTTON_TEXT, FOCUS_RING } from "@/components/ui/interactive";
+import { BASE_TRANSITION, BUTTON_PAGINATION, BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_SORT, BUTTON_TEXT, FOCUS_RING } from "@/components/ui/interactive";
 
 export type DetailSortColumn = "start_time" | "duration" | "after_hours_rate" | "confidence_score" | "fieldbeat_task_id";
 export type DetailSortDir = "asc" | "desc";
@@ -35,6 +37,10 @@ interface AfterHoursDetailTableProps {
    * valor). null = sin filtro por reporte. */
   reportIdFilter: number | null;
   onReportIdFilterChange: (reportId: number | null) => void;
+  /** Query ya serializada (AfterHoursShell.tsx, buildAfterHoursQuery) con los
+   * MISMOS filtros/reportId que detailQuery pero SIN page/pageSize - la
+   * exportación cubre siempre el universo filtrado completo. */
+  exportQuery: string;
 }
 
 // Sección 14.2 del encargo - N.º de reporte (fieldbeat_task_id, misma
@@ -90,7 +96,8 @@ export function AfterHoursDetailTable({
   onRowClick,
   selectedTaskId,
   reportIdFilter,
-  onReportIdFilterChange
+  onReportIdFilterChange,
+  exportQuery
 }: AfterHoursDetailTableProps) {
   // Draft de escritura, local a este componente (no dispara fetch por sí
   // solo - reportIdFilter, en AfterHoursShell, es lo único que lo hace, y
@@ -103,6 +110,46 @@ export function AfterHoursDetailTable({
   const [reportSearchError, setReportSearchError] = useState<string | null>(null);
   const reportSearchInputId = useId();
   const reportSearchErrorId = useId();
+
+  // Botón "Descargar CSV" - mismo patrón que FieldbeatReportsTab.tsx::handleExport
+  // (fetch en vez de <a href> plano: el servidor puede responder JSON en vez
+  // de CSV - 200 sin resultados, 413 sobre el límite, 401/403/400 - y esa
+  // respuesta nunca debe dispararse como descarga). `exporting` previene
+  // descargas simultáneas (guard explícito + disabled del botón).
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function handleExport() {
+    if (exporting) return;
+    // totalRows ya refleja el mismo universo filtrado que exportQuery (el
+    // conteo del listado paginado no excluye nada que la exportación
+    // incluya) - evita una ida y vuelta de red para el caso vacío, que de
+    // todos modos el servidor también rechaza como no-CSV por seguridad.
+    if (totalRows === 0) {
+      setExportError("No hay registros para exportar con los filtros aplicados.");
+      return;
+    }
+    setExportError(null);
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/dashboard/after-hours/export?${exportQuery}`);
+      const contentType = res.headers.get("Content-Type") ?? "";
+      if (!res.ok || !contentType.includes("text/csv")) {
+        const body = await res.json().catch(() => null);
+        setExportError(body?.error ?? `No fue posible exportar (HTTP ${res.status}).`);
+        return;
+      }
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const filenameMatch = /filename="([^"]+)"/.exec(disposition);
+      const filename = filenameMatch?.[1] ?? `nexus_fuera_de_horario_${new Date().toISOString().slice(0, 10)}.csv`;
+      const blob = await res.blob();
+      triggerBlobDownload(blob, filename);
+    } catch {
+      setExportError("No fue posible exportar - revisa tu conexión e inténtalo de nuevo.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function applyReportSearch() {
     const parsed = parseReportIdInput(reportSearchInput);
@@ -176,10 +223,29 @@ export function AfterHoursDetailTable({
             </button>
           )}
         </form>
+
+        {/* Descargar CSV - misma fuente/filtros/reportId que la tabla
+            (exportQuery, ver AfterHoursShell.tsx), pero SIN paginar - el
+            archivo cubre todo el universo filtrado, no solo esta página. */}
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          className={`rounded border px-2.5 py-1.5 text-[12.5px] font-semibold ${BUTTON_PRIMARY}`}
+          style={{ background: "var(--nx-accent-indigo, #4f46e5)", color: "#fff", borderColor: "transparent" }}
+        >
+          {exporting ? "Descargando…" : "Descargar CSV"}
+        </button>
+
         {reportSearchError && (
           <span id={reportSearchErrorId} role="alert" className="w-full text-[12px]" style={{ color: "var(--nx-danger-fg, #c0392b)" }}>
             {reportSearchError}
           </span>
+        )}
+        {exportError && (
+          <div role="alert" className="w-full">
+            <ErrorBanner message={exportError} />
+          </div>
         )}
       </div>
 

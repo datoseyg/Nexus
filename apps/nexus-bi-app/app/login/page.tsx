@@ -35,27 +35,32 @@ export default async function LoginPage({
       <section className={styles.portal} aria-labelledby="login-title">
         <div className={styles.context}>
           <div className={styles.brandLine}>
-            <EygBrand variant="mark" priority className="h-7 w-7" />
+            <EygBrand variant="large" priority className="h-full w-auto max-w-full" />
           </div>
 
           <div className={styles.contextCopy}>
             <h1 id="login-title">NEXUS</h1>
             <p>
-              Proyecto que integra y relaciona la información de EyG Medical Systems en un sólo lugar,
-              unificando las principales plataformas (FieldBeat, Dolibarr, Zendesk) y ofrec
+              Este sistema integra y relaciona la información de EyG Medical Systems en un sólo lugar,
+              unificando las principales plataformas (FieldBeat, Dolibarr, Zendesk) ofreciendo a su vez distintas herramientas
+              tanto de uso operacional como general y administrativo.
             </p>
+            
+            <p>
+              " Preguntarle a los datos nunca fue tan rápido "
+              </p>
           </div>
 
         </div>
 
         <div className={styles.accessPanel}>
           <div className={styles.accessCopy}>
-            <p className={styles.eyebrow}>Acceso controlado</p>
+            <p className={styles.eyebrow}>Inicio de sesión</p>
             <h2>Entra a NEXUS</h2>
             <p>Ingresar credenciales de acceso.</p>
           </div>
           <LoginForm returnTo={safeReturnTo(requestedReturnTo)} />
-          <p className={styles.securityNote}>La sesión se valida antes de acceder a páginas y datos.</p>
+          <p className={styles.securityNote}>La sesión se tiene que validar antes de acceder a páginas y datos.</p>
         </div>
       </section>
     </main>
