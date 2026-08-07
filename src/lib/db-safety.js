@@ -18,7 +18,12 @@ export const PROTECTED_DATABASE_NAMES = new Set([
 
 // Prefijo de host que identifica Supabase cloud -cualquier host que termine
 // así se trata como protegido sin excepción, sin importar el nombre de base.
-const SUPABASE_CLOUD_HOST_SUFFIX = ".supabase.co";
+const SUPABASE_CLOUD_HOST_SUFFIXES = [".supabase.co", ".supabase.com"];
+
+export function isSupabaseCloudHost(host) {
+  const normalizedHost = String(host ?? "").toLowerCase().replace(/\.$/, "");
+  return SUPABASE_CLOUD_HOST_SUFFIXES.some(suffix => normalizedHost.endsWith(suffix));
+}
 
 const MARKER_PATTERN = /^DISPOSABLE_TEST:(.+)$/;
 
@@ -63,7 +68,7 @@ export function evaluateDisposableTarget({
   if (protectedNames.has(databaseName)) {
     return { ok: false, reason: `ABORT: "${databaseName}" está en la lista de entornos protegidos -nunca recibe fixtures, sin excepción` };
   }
-  if (host && host.endsWith(SUPABASE_CLOUD_HOST_SUFFIX)) {
+  if (isSupabaseCloudHost(host)) {
     return { ok: false, reason: `ABORT: host "${host}" es Supabase cloud -nunca recibe fixtures` };
   }
 
@@ -214,7 +219,7 @@ export function assertWriteConfirmed(connectionString, opts = {}) {
   const confirmationEnvVarName = opts.confirmationEnvVarName ?? "CONFIRM_WRITE_TARGET";
   const target = printConnectionPreflight(connectionString, opts);
 
-  if (PROTECTED_DATABASE_NAMES.has(target.database) || target.host.endsWith(SUPABASE_CLOUD_HOST_SUFFIX)) {
+  if (PROTECTED_DATABASE_NAMES.has(target.database) || isSupabaseCloudHost(target.host)) {
     if (!opts.allowProtectedWithDualConfirmation) {
       throw new WriteConfirmationRequiredError(
         `ABORT: "${target.database}"@"${target.host}" es un entorno protegido -escrituras productivas contra este destino no están habilitadas en esta etapa, ninguna confirmación las autoriza.`
@@ -244,6 +249,92 @@ export function assertWriteConfirmed(connectionString, opts = {}) {
   if (confirmation !== expectedToken) {
     throw new WriteConfirmationRequiredError(
       `ABORT: "${target.database}"@"${target.host}:${target.port}" no se reconoce como desechable (sin sufijo _test/_disposable) -para escribir ahí se requiere ${confirmationEnvVarName}="${expectedToken}" (host:puerto/base EXACTOS, no una bandera genérica ni solo el nombre de la base). No se ejecutó ninguna escritura.`
+    );
+  }
+
+  return target;
+}
+
+// NEXUS V3 - Protección Nexus V2/V3 (mecanismo de actualización de datos).
+// isSupabaseCloudHost/PROTECTED_DATABASE_NAMES distinguen únicamente "¿es
+// Supabase cloud?" -nunca "¿CUÁL proyecto Supabase?". Nexus V2 (producción
+// actual) y Nexus V3 (este trabajo) son dos proyectos Supabase DISTINTOS que
+// terminan en el MISMO sufijo de host (.supabase.co), así que
+// assertWriteConfirmed por sí solo no basta para evitar que una connection
+// string mal copiada (apuntando por error al proyecto V2) pase sus dos
+// tokens de confirmación igual -los tokens confirman host:puerto/base, no
+// identidad de proyecto.
+const DIRECT_HOST_PROJECT_REF_PATTERN = /^db\.([a-z0-9]+)\.supabase\.co$/i;
+// Convención real de Supabase para el pooler compartido (IPv4 fallback,
+// mismo host para todos los proyectos de una región): el project ref viaja
+// en el USUARIO ("postgres.<project-ref>"), nunca en el host.
+const POOLER_USER_PROJECT_REF_PATTERN = /^[^.]+\.([a-z0-9]+)$/;
+
+/**
+ * Extrae el project ref de un destino Supabase cloud, desde el host
+ * (conexión directa) o desde el usuario (pooler compartido) -nunca asume
+ * uno u otro, intenta ambos patrones reales documentados en
+ * docs/RUNBOOK_SUPABASE_NETLIFY.md.
+ * @param {{ host: string, user: string }} target
+ * @returns {string | null}
+ */
+export function parseSupabaseProjectRef(target) {
+  const directMatch = DIRECT_HOST_PROJECT_REF_PATTERN.exec(String(target?.host ?? "").toLowerCase());
+  if (directMatch) return directMatch[1];
+  if (isSupabaseCloudHost(target?.host)) {
+    const poolerMatch = POOLER_USER_PROJECT_REF_PATTERN.exec(String(target?.user ?? ""));
+    if (poolerMatch) return poolerMatch[1];
+  }
+  return null;
+}
+
+export class UnknownSupabaseProjectError extends Error {
+  constructor(reason) {
+    super(reason);
+    this.name = "UnknownSupabaseProjectError";
+  }
+}
+
+/**
+ * Capa ADICIONAL sobre assertWriteConfirmed, nunca un reemplazo -se llama
+ * DESPUÉS de que assertWriteConfirmed ya exigió sus tokens de confirmación.
+ * Exige que el project ref resuelto del destino coincida EXACTO con
+ * process.env[expectedProjectRefEnvVar] (SUPABASE_PROJECT_REF_V3 por
+ * defecto) -así una connection string que por error apunte al proyecto
+ * Nexus V2 (mismo sufijo .supabase.co, tokens de confirmación igual de
+ * "válidos" en forma) queda bloqueada por identidad de proyecto, no solo
+ * por host:puerto/base. Nunca aplica a un destino que no sea Supabase cloud
+ * (local desechable, etc.) -esta capa es específicamente sobre distinguir
+ * proyectos Supabase entre sí.
+ * @param {string} connectionString
+ * @param {{ expectedProjectRefEnvVar?: string }} [opts]
+ * @returns {{ host: string, port: string, database: string, user: string }}
+ */
+export function assertKnownSupabaseProject(connectionString, opts = {}) {
+  const expectedProjectRefEnvVar = opts.expectedProjectRefEnvVar ?? "SUPABASE_PROJECT_REF_V3";
+  const target = describeConnectionTarget(connectionString);
+
+  if (!isSupabaseCloudHost(target.host)) {
+    return target;
+  }
+
+  const expectedRef = process.env[expectedProjectRefEnvVar];
+  if (!expectedRef) {
+    throw new UnknownSupabaseProjectError(
+      `ABORT: falta ${expectedProjectRefEnvVar} en el entorno -no se puede confirmar que "${target.host}" sea el proyecto Supabase V3 esperado, nunca se asume por defecto.`
+    );
+  }
+
+  const actualRef = parseSupabaseProjectRef(target);
+  if (!actualRef) {
+    throw new UnknownSupabaseProjectError(
+      `ABORT: no se pudo extraer el project ref de host "${target.host}"/usuario "${target.user}" -formato de conexión Supabase no reconocido, nunca se asume que es el proyecto correcto.`
+    );
+  }
+
+  if (actualRef !== expectedRef) {
+    throw new UnknownSupabaseProjectError(
+      `ABORT: el project ref del destino ("${actualRef}") no coincide con ${expectedProjectRefEnvVar} ("${expectedRef}") -este destino podría ser Nexus V2 u otro proyecto Supabase; nunca se escribe ahí sin la confirmación exacta de proyecto.`
     );
   }
 

@@ -11,7 +11,7 @@
       ],
       "scope": "CLIENT_IDENTITY",
       "source_type": "USER_CONFIRMED",
-      "source_reference": "Project owner confirmation, ETAPA 6.5.2B1 (2026-07-17)",
+      "source_reference": "(2026-07-17)",
       "approved": true,
       "approved_at": "2026-07-17",
       "notes": "Equivalencia válida para matching de identidad del cliente; no define vigencia contractual, sede ni cobertura. Comparación de variantes de mayúsculas/tildes/espacios se hace vía el mismo plegado (fold) que usa fieldbeat-matcher.js, no requiere una entrada por cada variante de capitalización."
@@ -23,7 +23,48 @@
       ],
       "scope": "CLIENT_IDENTITY",
       "source_type": "USER_CONFIRMED",
-      "source_reference": "Project owner confirmation, ETAPA 6.5.2B1 (2026-07-17)",
+      "source_reference": "(2026-07-17)",
+      "approved": true,
+      "approved_at": "2026-07-17",
+      "notes": "Equivalencia válida para matching de identidad del cliente; no define vigencia contractual, sede ni cobertura."
+    },
+    {
+      "canonical_name": "Hospital Carlos Van Buren",
+      "aliases": [
+        "Van Buren",
+        "HCVB",
+        "Carlos Van Buren"
+      ],
+      "scope": "CLIENT_IDENTITY",
+      "source_type": "USER_CONFIRMED",
+      "source_reference": "(2026-07-17)",
+      "approved": true,
+      "approved_at": "2026-07-17",
+      "notes": "Equivalencia válida para matching de identidad del cliente; no define vigencia contractual, sede ni cobertura."
+    },
+    {
+      "canonical_name": "Fundación Arturo López Pérez",
+      "aliases": [
+        "Arturo López Pérez",
+        "FALP",
+        "Arturo López",
+        "fundacion arturo lopez perez"
+      ],
+      "scope": "CLIENT_IDENTITY",
+      "source_type": "USER_CONFIRMED",
+      "source_reference": "(2026-07-17)",
+      "approved": true,
+      "approved_at": "2026-07-17",
+      "notes": "Equivalencia válida para matching de identidad del cliente; no define vigencia contractual, sede ni cobertura."
+    },
+    {
+      "canonical_name": "Torre Médica - Rancagua",
+      "aliases": [
+        "Dr. Pérez"
+      ],
+      "scope": "CLIENT_IDENTITY",
+      "source_type": "USER_CONFIRMED",
+      "source_reference": "(2026-07-17)",
       "approved": true,
       "approved_at": "2026-07-17",
       "notes": "Equivalencia válida para matching de identidad del cliente; no define vigencia contractual, sede ni cobertura."

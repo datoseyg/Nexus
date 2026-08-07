@@ -2,8 +2,16 @@
 
 import { useMemo } from "react";
 import { FilterBar } from "@/components/ui/FilterBar";
+import { BASE_TRANSITION, FOCUS_RING, BUTTON_TEXT } from "@/components/ui/interactive";
 import { getDataBasisLabel, getReasonCodeLabel, getWeekdayLabel, WEEKDAY_ORDER } from "@/lib/after-hours-labels";
-import { activeQuickRangeKey as computeActiveQuickRangeKey, buildFilterChips, buildQuickRanges, type AfterHoursFilterState, type QuickRange } from "@/lib/after-hours-filter-state";
+import {
+  activeQuickRangeKey as computeActiveQuickRangeKey,
+  buildFilterChips,
+  buildQuickRanges,
+  isValidAfterHoursDateRange,
+  type AfterHoursFilterState,
+  type QuickRange
+} from "@/lib/after-hours-filter-state";
 import { optionKeysAsc } from "@/lib/after-hours-filter-options";
 import type { AfterHoursByDimensionRow, AfterHoursDataBasis, AfterHoursSummary } from "@/types/after-hours";
 
@@ -62,6 +70,11 @@ export function AfterHoursFilters({
   const activeQuickRangeKey = useMemo(() => computeActiveQuickRangeKey(quickRanges, filters), [quickRanges, filters.from, filters.to]);
   const technicianKeys = useMemo(() => optionKeysAsc(technicianOptions), [technicianOptions]);
   const clientKeys = useMemo(() => optionKeysAsc(clientOptions), [clientOptions]);
+  // Sección 1 del encargo - activeQuickRangeKey ya devuelve null exactamente
+  // cuando from/to no calzan con ningún preset (nunca cuando ambos están
+  // vacíos - ese caso es "all") - por construcción, ese es el estado CUSTOM.
+  const isCustomRange = activeQuickRangeKey === null;
+  const dateRangeValid = isValidAfterHoursDateRange(filters.from, filters.to);
 
   function set<K extends keyof AfterHoursFilterState>(key: K, value: AfterHoursFilterState[K]) {
     onChange({ ...filters, [key]: value });
@@ -92,21 +105,66 @@ export function AfterHoursFilters({
   const chips = buildFilterChips(filters).map(chip => ({ ...chip, onRemove: REMOVE_HANDLERS[chip.id] }));
 
   return (
+    <>
     <FilterBar
-      quickAccess={quickRanges.map(range => (
-        <button
-          key={range.key}
-          type="button"
-          onClick={() => selectRange(range)}
-          className="rounded-[var(--nx-radius-chip)] px-3 py-1.5 text-[13px] font-semibold"
-          style={{
-            background: activeQuickRangeKey === range.key ? "var(--nx-sidebar-bg)" : "var(--nx-page-bg)",
-            color: activeQuickRangeKey === range.key ? "#fff" : "var(--nx-text-primary)"
-          }}
-        >
-          {range.label}
-        </button>
-      ))}
+      quickAccess={
+        <>
+          {quickRanges.map(range => (
+            <button
+              key={range.key}
+              type="button"
+              onClick={() => selectRange(range)}
+              aria-pressed={activeQuickRangeKey === range.key}
+              className={`rounded-[var(--nx-radius-chip)] cursor-pointer px-3 py-1.5 text-[13px] font-semibold ${BASE_TRANSITION} ${FOCUS_RING} ${
+                activeQuickRangeKey === range.key
+                  ? "bg-[var(--nx-sidebar-bg)] text-white hover:bg-[#242a3d] active:bg-[#10131c]"
+                  : "bg-[var(--nx-page-bg)] text-[var(--nx-text-primary)] hover:bg-indigo-50 hover:text-indigo-900 active:bg-indigo-100"
+              }`}
+            >
+              {range.label}
+            </button>
+          ))}
+          {isCustomRange && (
+            <span
+              className="rounded-[var(--nx-radius-chip)] px-3 py-1.5 text-[13px] font-semibold"
+              style={{ background: "var(--nx-sidebar-bg)", color: "#fff" }}
+            >
+              CUSTOM
+            </span>
+          )}
+          {/* Desde/Hasta - mismo patrón visual que el panel de filtros del
+              Explorador (components/explorer/ExplorerFilterPanel.tsx):
+              label + input type="date" con borde --nx-border. "Desde solo",
+              "Hasta solo" y "Desde + Hasta" son todos válidos - ningún campo
+              es obligatorio ni depende del otro para aplicarse. */}
+          <label className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--nx-text-secondary)" }}>
+            Desde
+            <input
+              type="date"
+              aria-label="Fecha desde"
+              value={filters.from ?? ""}
+              onChange={e => set("from", e.target.value || undefined)}
+              className="rounded-[var(--nx-radius-chip)] border px-2.5 py-1.5 text-[13px]"
+              style={{ borderColor: dateRangeValid ? "var(--nx-border)" : "var(--nx-danger-fg, #c0392b)", background: "var(--nx-card-bg)", color: "var(--nx-text-primary)" }}
+              aria-invalid={!dateRangeValid}
+              aria-describedby={!dateRangeValid ? "after-hours-date-range-error" : undefined}
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--nx-text-secondary)" }}>
+            Hasta
+            <input
+              type="date"
+              aria-label="Fecha hasta"
+              value={filters.to ?? ""}
+              onChange={e => set("to", e.target.value || undefined)}
+              className="rounded-[var(--nx-radius-chip)] border px-2.5 py-1.5 text-[13px]"
+              style={{ borderColor: dateRangeValid ? "var(--nx-border)" : "var(--nx-danger-fg, #c0392b)", background: "var(--nx-card-bg)", color: "var(--nx-text-primary)" }}
+              aria-invalid={!dateRangeValid}
+              aria-describedby={!dateRangeValid ? "after-hours-date-range-error" : undefined}
+            />
+          </label>
+        </>
+      }
       moreFilters={
         <>
           <select
@@ -181,7 +239,7 @@ export function AfterHoursFilters({
       moreFiltersOpen={moreFiltersOpen}
       onToggleMoreFilters={onToggleMoreFilters}
       actions={
-        <button type="button" onClick={onClear} className="text-[13px] underline" style={{ color: "var(--nx-text-muted)" }}>
+        <button type="button" onClick={onClear} className={`text-[13px] underline ${BUTTON_TEXT}`} style={{ color: "var(--nx-text-muted)" }}>
           Limpiar filtros
         </button>
       }
@@ -198,7 +256,13 @@ export function AfterHoursFilters({
                 style={{ background: "var(--nx-sidebar-bg)", color: "#fff" }}
               >
                 {chip.label}
-                <button type="button" onClick={chip.onRemove} aria-label={`Quitar filtro: ${chip.label}`} style={{ color: "var(--nx-sidebar-text-secondary)" }}>
+                <button
+                  type="button"
+                  onClick={chip.onRemove}
+                  aria-label={`Quitar filtro: ${chip.label}`}
+                  className={`cursor-pointer rounded-full ${BASE_TRANSITION} ${FOCUS_RING} hover:bg-white/20 active:bg-white/30`}
+                  style={{ color: "var(--nx-sidebar-text-secondary)" }}
+                >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6L6 18" />
                   </svg>
@@ -209,8 +273,12 @@ export function AfterHoursFilters({
         )
       }
     >
-      <select aria-label="Técnico" value={filters.technician ?? ""} onChange={e => set("technician", e.target.value || undefined)} style={selectStyle(!!filters.technician)}>
-        <option value="">Técnico: Todos {technicianOptions ? `(${technicianKeys.length})` : ""}</option>
+      {/* HOTFIX auditoría After-Hours (§5): filtra por responsable principal
+          (assigned_to) - este pipeline nunca tuvo participantes adicionales,
+          el aria-label lo deja explícito para no implicar "cualquiera que
+          haya trabajado la tarea". */}
+      <select aria-label="Técnico responsable" value={filters.technician ?? ""} onChange={e => set("technician", e.target.value || undefined)} style={selectStyle(!!filters.technician)}>
+        <option value="">Técnico responsable: Todos {technicianOptions ? `(${technicianKeys.length})` : ""}</option>
         {technicianKeys.map(t => (
           <option key={t} value={t}>
             {t}
@@ -245,5 +313,11 @@ export function AfterHoursFilters({
         ))}
       </select>
     </FilterBar>
+    {!dateRangeValid && (
+      <p id="after-hours-date-range-error" role="alert" className="mt-1.5 text-[13px]" style={{ color: "var(--nx-danger-fg, #c0392b)" }}>
+        La fecha Desde debe ser anterior o igual a Hasta.
+      </p>
+    )}
+    </>
   );
 }

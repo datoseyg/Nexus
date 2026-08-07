@@ -9,11 +9,8 @@ export const runtime = "nodejs";
 
 const TABLE = quoteQualifiedAdminTable("audit", "pipeline_runs");
 
-// Pensado para que src/db/*.js y src/qa/*.js posteen acá al arrancar/
-// terminar una corrida (POST al empezar con status STARTED, PATCH al
-// terminar - ver [id]/route.ts). No hay wiring todavía desde el pipeline
-// Node existente hacia este endpoint HTTP - eso es trabajo de integración
-// aparte, fuera de esta migración (la capa CRUD queda lista para usarse).
+// GET se conserva para inspección histórica (Gate B, Familia 9/B19) - el
+// POST/PATCH/DELETE de escritura quedan retirados más abajo/en [id]/route.ts.
 export async function GET(request: NextRequest) {
   const authError = requireAdminToken(request);
   if (authError) return authError;
@@ -44,25 +41,21 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const authError = requireAdminToken(request);
-  if (authError) return authError;
-
-  try {
-    const body = await request.json();
-    const { stage, metadata } = body ?? {};
-
-    if (!stage) {
-      return NextResponse.json({ error: "Falta el campo requerido: stage", code: "VALIDATION_ERROR" }, { status: 400 });
-    }
-
-    const rows = await runQuery(
-      `INSERT INTO ${TABLE} (stage, status, metadata) VALUES ($1, 'STARTED', $2) RETURNING *`,
-      [stage, metadata ? JSON.stringify(metadata) : null]
-    );
-
-    return NextResponse.json({ row: serializeRows(rows)[0] }, { status: 201 });
-  } catch (error) {
-    return handleApiError(error);
-  }
+// Gate B (Familia 9/B19) - retirado: sin consumidor real confirmado
+// (comentario original de este archivo ya documentaba "no hay wiring todavía
+// desde el pipeline Node existente hacia este endpoint HTTP"). El único
+// escritor real de audit.pipeline_runs es src/working-hours/build-working-hours.js,
+// que escribe DIRECTO vía SQL (bypass de esta capa HTTP por completo) - la
+// TABLA sigue viva y en uso, solo esta ruta HTTP queda retirada. Si en el
+// futuro se necesita instrumentar pipelines vía HTTP, usa una identidad de
+// servicio dedicada (B11/B12), nunca x-nexus-admin-token como credencial
+// universal.
+export async function POST() {
+  return NextResponse.json(
+    {
+      error: "Este endpoint ya no acepta escrituras - sin consumidor real; audit.pipeline_runs sigue escrita directamente por el pipeline de horas trabajadas vía SQL, no por esta ruta.",
+      code: "ENDPOINT_RETIRED"
+    },
+    { status: 410 }
+  );
 }

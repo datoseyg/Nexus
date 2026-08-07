@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export type EygBrandVariant = "full" | "mark";
+export type EygBrandVariant = "full" | "mark" | "large";
 
 interface EygBrandProps {
   /** "full" = logotipo horizontal completo (icono + "E&G Medical Systems").
@@ -27,7 +27,8 @@ interface EygBrandProps {
 // layout shift, dejando que el propio <Image> calcule el aspect-ratio.
 const VARIANTS: Record<EygBrandVariant, { src: string; width: number; height: number }> = {
   full: { src: "/brand/eyg-logo.webp", width: 366, height: 232 },
-  mark: { src: "/brand/eyg-mark.webp", width: 187, height: 210 }
+  mark: { src: "/brand/eyg-mark.webp", width: 187, height: 210 },
+  large: { src: "/brand/eyg-logo.webp", width: 1200, height: 720 },
 };
 
 export function EygBrand({ variant, className, priority = false, sizes }: EygBrandProps) {

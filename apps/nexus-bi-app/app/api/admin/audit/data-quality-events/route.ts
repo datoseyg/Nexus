@@ -8,7 +8,6 @@ import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
 export const runtime = "nodejs";
 
 const TABLE = quoteQualifiedAdminTable("audit", "data_quality_events");
-const SEVERITIES = ["INFO", "WARNING", "ERROR"];
 
 export async function GET(request: NextRequest) {
   const authError = requireAdminToken(request);
@@ -52,37 +51,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const authError = requireAdminToken(request);
-  if (authError) return authError;
-
-  try {
-    const body = await request.json();
-    const { run_id, entity_type, entity_id, issue_type, severity, details } = body ?? {};
-
-    if (!entity_type || !entity_id || !issue_type) {
-      return NextResponse.json(
-        { error: "Faltan campos requeridos: entity_type, entity_id, issue_type", code: "VALIDATION_ERROR" },
-        { status: 400 }
-      );
-    }
-
-    if (severity && !SEVERITIES.includes(severity)) {
-      return NextResponse.json(
-        { error: `severity debe ser uno de: ${SEVERITIES.join(", ")}`, code: "VALIDATION_ERROR" },
-        { status: 400 }
-      );
-    }
-
-    const rows = await runQuery(
-      `INSERT INTO ${TABLE} (run_id, entity_type, entity_id, issue_type, severity, details)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [run_id ?? null, entity_type, entity_id, issue_type, severity ?? "WARNING", details ? JSON.stringify(details) : null]
-    );
-
-    return NextResponse.json({ row: serializeRows(rows)[0] }, { status: 201 });
-  } catch (error) {
-    return handleApiError(error);
-  }
+// Gate B (Familia 9/B19) - retirado: audit.data_quality_events no puede
+// seguir siendo simultáneamente log de auditoría y tabla CRUD (B21.3 lo
+// exigía desde Gate A). governance.command_events (append-only, impuesto
+// por grants - B3/B59) ya cumple ese rol para toda escritura nueva, y la
+// Auditoría gobernada (Familias 1-8) no depende de esta tabla para nada -
+// confirmado sin consumidores reales del POST (ningún componente/ruta la
+// invoca). GET se conserva para inspección histórica del legado.
+export async function POST() {
+  return NextResponse.json(
+    {
+      error: "Este endpoint ya no acepta escrituras - el historial de eventos gobernado vive en governance.command_events (append-only, sin escritura CRUD posible desde ninguna ruta).",
+      code: "ENDPOINT_RETIRED"
+    },
+    { status: 410 }
+  );
 }

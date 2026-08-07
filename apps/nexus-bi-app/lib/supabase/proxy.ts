@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { evaluateAuthentication } from "@/lib/auth/authorization-core";
 import { hasSupabaseAuthCookie } from "@/lib/auth/session-cookie";
 import { readSupabasePublicConfig } from "./config";
+import {
+  createInfrastructureErrorResponse,
+  reportSupabaseRuntimeError
+} from "./runtime-error";
 
 function copyAuthResponse(source: NextResponse, target: NextResponse): NextResponse {
   for (const cookie of source.cookies.getAll()) {
@@ -46,7 +50,25 @@ export async function updateSession(request: NextRequest): Promise<{
     }
   });
 
-  const { data, error } = await supabase.auth.getUser();
+  let data;
+  let error;
+  try {
+    ({ data, error } = await supabase.auth.getUser());
+  } catch (runtimeError) {
+    const incident = reportSupabaseRuntimeError(runtimeError, {
+      subsystem: "auth-proxy",
+      backendUrl: url
+    });
+    if (!incident) throw runtimeError;
+    return {
+      response: createInfrastructureErrorResponse({
+        requestId: incident.requestId,
+        backendUrl: url,
+        requestPath: request.nextUrl.pathname
+      }),
+      isAuthorized: false
+    };
+  }
   const decision = evaluateAuthentication({ user: data.user, error });
   return { response, isAuthorized: decision.ok };
 }

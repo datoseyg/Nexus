@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BUTTON_CHROME } from "@/components/ui/interactive";
 
 interface NavItem {
   href: string;
@@ -40,6 +41,34 @@ const SECTIONS: NavSection[] = [
           <svg {...ICON_PROPS}>
             <path d="M3 11.5 12 4l9 7.5" />
             <path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9" />
+          </svg>
+        )
+      },
+      {
+        href: "/search",
+        label: "Búsqueda",
+        icon: (
+          <svg {...ICON_PROPS}>
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="m20 20-4.35-4.35" />
+          </svg>
+        )
+      },
+    ]
+  },
+  {
+    label: "Exploración de Datos",
+    muted: true,
+    items: [
+      {
+        href: "/explorer",
+        label: "Explorador",
+        feature: "explorer",
+        icon: (
+          <svg {...ICON_PROPS}>
+            <ellipse cx="12" cy="5.5" rx="7.5" ry="2.8" />
+            <path d="M4.5 5.5v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6" />
+            <path d="M4.5 11.5v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6" />
           </svg>
         )
       }
@@ -81,45 +110,17 @@ const SECTIONS: NavSection[] = [
     ]
   },
   {
-    label: "Calidad de datos",
+    label: "[DEMO] Control de calidad",
     items: [
       {
         href: "/audit/manual-review",
-        label: "Auditoría",
+        label: "Auditoría de datos",
         auditBadge: true,
         feature: "audit",
         icon: (
           <svg {...ICON_PROPS}>
             <path d="M12 3.5 19 6.5v5c0 4.5-3 7.7-7 8.9-4-1.2-7-4.4-7-8.9v-5Z" />
             <path d="m9 12 2 2 4-4" />
-          </svg>
-        )
-      }
-    ]
-  },
-  {
-    label: "Herramientas internas",
-    muted: true,
-    items: [
-      {
-        href: "/explorer",
-        label: "Explorador",
-        feature: "explorer",
-        icon: (
-          <svg {...ICON_PROPS}>
-            <ellipse cx="12" cy="5.5" rx="7.5" ry="2.8" />
-            <path d="M4.5 5.5v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6" />
-            <path d="M4.5 11.5v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6" />
-          </svg>
-        )
-      },
-      {
-        href: "/search",
-        label: "Búsqueda",
-        icon: (
-          <svg {...ICON_PROPS}>
-            <circle cx="10.5" cy="10.5" r="6.5" />
-            <path d="m20 20-4.35-4.35" />
           </svg>
         )
       }
@@ -173,14 +174,20 @@ export function SidebarNavigation({ collapsed, pendingReviewCount, onNavigate, f
                     href={item.href}
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
-                    className="flex items-center gap-2.5 rounded-[var(--nx-radius-button)] px-2.5 py-2 text-[13px] font-semibold"
+                    className={`flex items-center gap-2.5 rounded-[var(--nx-radius-button)] px-2.5 py-2 text-[13px] font-semibold ${active ? "" : BUTTON_CHROME}`}
                     style={{
                       color: active ? "var(--nx-sidebar-text-primary)" : section.muted ? "var(--nx-sidebar-text-muted)" : "var(--nx-sidebar-text-secondary)",
+                      // Sin `background` inline cuando está inactivo (a diferencia de antes,
+                      // que fijaba "transparent" acá mismo): un `style.background` con
+                      // cualquier valor - incluido "transparent" - tiene más especificidad
+                      // que la clase `hover:bg-*` de BUTTON_CHROME y la anula en silencio.
+                      // La rama activa no necesita hover, así que conserva su gradiente/rgba
+                      // inline intacto.
                       background: active
                         ? section.muted
                           ? "rgba(255,255,255,0.08)"
                           : "linear-gradient(135deg, var(--nx-accent-green), var(--nx-accent-green-light))"
-                        : "transparent"
+                        : undefined
                     }}
                   >
                     {item.icon}

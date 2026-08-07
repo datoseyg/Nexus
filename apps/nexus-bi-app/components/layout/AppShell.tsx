@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileTopBar } from "@/components/layout/MobileTopBar";
 import { MobileSidebar } from "@/components/layout/MobileSidebar";
+import { DataRefreshEpochProvider } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 const COLLAPSE_STORAGE_KEY = "nx-sidebar-collapsed";
 
@@ -20,6 +21,7 @@ interface AppShellProps {
   children: React.ReactNode;
   userLabel: string | null;
   features: { audit: boolean; explorer: boolean };
+  capabilities: string[];
 }
 
 // Orquestador raíz del shell de navegación (montado una sola vez en
@@ -38,7 +40,7 @@ interface AppShellProps {
 // el usuario navega de nuevo antes de que responda, para que una
 // respuesta tardía de una ruta anterior no pise el conteo de la ruta
 // actual.
-export function AppShell({ children, userLabel, features }: AppShellProps) {
+export function AppShell({ children, userLabel, features, capabilities }: AppShellProps) {
   const pathname = usePathname();
   const publicRoute = pathname === "/login";
   const [collapsed, setCollapsed] = useState(false);
@@ -81,7 +83,13 @@ export function AppShell({ children, userLabel, features }: AppShellProps) {
   if (publicRoute || !userLabel) return children;
 
   return (
-    <>
+    // Un solo DataRefreshEpochProvider para todo el árbol autenticado - así
+    // DataRefreshControl (dentro de Sidebar) y cualquier vista bajo
+    // {children} comparten el mismo epoch sin importarse entre sí. Nunca se
+    // monta en /login (ver el return temprano de arriba) - no hay
+    // DataRefreshControl ahí que pueda emitir el evento, ni nada que
+    // necesite escucharlo.
+    <DataRefreshEpochProvider>
       <div className="flex min-h-screen" inert={mobileOpen}>
         <Sidebar
           collapsed={collapsed}
@@ -89,6 +97,7 @@ export function AppShell({ children, userLabel, features }: AppShellProps) {
           pendingReviewCount={pendingReviewCount}
           userLabel={userLabel}
           features={features}
+          capabilities={capabilities}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <MobileTopBar
@@ -109,6 +118,6 @@ export function AppShell({ children, userLabel, features }: AppShellProps) {
         userLabel={userLabel}
         features={features}
       />
-    </>
+    </DataRefreshEpochProvider>
   );
 }

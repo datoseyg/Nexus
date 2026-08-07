@@ -84,17 +84,23 @@ export async function GET(request: NextRequest) {
     const ultimoClienteConditions = [
       ...buildMartDateConditions(filters, "m", ultimoClientePusher),
       ...buildMartIdentityConditions(filters, "m", ultimoClientePusher),
-      `client_name != ''`
+      `TRIM(client_name) != ''`,
+      `fieldbeat_task_date IS NOT NULL`
     ];
     const ultimoClienteSub = buildUsedPartsFilterSubquery(filters, "m", ultimoClientePusher);
     if (ultimoClienteSub) ultimoClienteConditions.push(ultimoClienteSub);
 
-    const ultimoClienteRows = await runQuery<{ client_name: string }>(
+    const ultimoClienteRows = await runQuery<{
+      client_name: string;
+      fieldbeat_task_date: string;
+    }>(
       `
-        SELECT client_name
+        SELECT
+          client_name,
+          CAST(fieldbeat_task_date AS VARCHAR) AS fieldbeat_task_date
         FROM marts.fieldbeat_report_dolibarr_operational_view m
         ${whereFrom(ultimoClienteConditions)}
-        ORDER BY fieldbeat_task_date DESC
+        ORDER BY fieldbeat_task_date DESC NULLS LAST, fieldbeat_task_id DESC
         LIMIT 1
       `,
       ultimoClientePusher.params
@@ -121,7 +127,8 @@ export async function GET(request: NextRequest) {
       repuestosUsados,
       pctConTicketReportado: totalRegistros > 0 ? (conTicketReportado / totalRegistros) * 100 : 0,
       pctConTicketAccesible: totalRegistros > 0 ? (conTicketAccesible / totalRegistros) * 100 : 0,
-      ultimoCliente: ultimoClienteRows[0]?.client_name ?? null
+      ultimoCliente: ultimoClienteRows[0]?.client_name ?? null,
+      ultimoClienteFecha: ultimoClienteRows[0]?.fieldbeat_task_date ?? null
     };
 
     // --- Distribución de Estados (TICKETS Zendesk, no task_state de

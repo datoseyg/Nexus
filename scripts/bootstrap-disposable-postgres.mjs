@@ -19,20 +19,32 @@
 import pg from "pg";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { isLikelyDisposableName, describeConnectionTarget, PROTECTED_DATABASE_NAMES, seedDisposableMarker } from "../src/lib/db-safety.js";
+import { isLikelyDisposableName, isSupabaseCloudHost, describeConnectionTarget, PROTECTED_DATABASE_NAMES, seedDisposableMarker } from "../src/lib/db-safety.js";
 
 function parseArgs(argv) {
   const url = argv.find(a => a.startsWith("--url="))?.slice("--url=".length);
   const sqlFiles = argv.filter(a => a.startsWith("--sql=")).map(a => a.slice("--sql=".length));
-  return { url, sqlFiles };
+  // HOTFIX de integridad de datos FieldBeat (Stage 9) - --run-id opcional:
+  // reaplicar sql/*.sql DENTRO de una sesión ya establecida (ver
+  // test/fieldbeat/sql-migration-idempotency.integration.test.ts) debe
+  // PRESERVAR el run_id vigente de esa sesión, nunca sembrar uno nuevo -
+  // antes, cada reaplicación reescribía silenciosamente el COMMENT ON
+  // DATABASE con un UUID recién generado, lo que invalidaba
+  // assertDisposableTarget() para CUALQUIER suite que corriera después
+  // (defecto real, expuesto al agregar test/search/ - antes invisible
+  // porque sql-migration-idempotency era la última suite alfabética).
+  // Sin --run-id (ej. la primera creación de la base desechable), el
+  // comportamiento es EXACTAMENTE el de siempre: genera uno nuevo.
+  const runId = argv.find(a => a.startsWith("--run-id="))?.slice("--run-id=".length);
+  return { url, sqlFiles, runId };
 }
 
 async function main() {
-  const { url, sqlFiles } = parseArgs(process.argv.slice(2));
+  const { url, sqlFiles, runId: requestedRunId } = parseArgs(process.argv.slice(2));
   if (!url) throw new Error("Falta --url=postgresql://...");
 
   const target = describeConnectionTarget(url);
-  if (PROTECTED_DATABASE_NAMES.has(target.database) || target.host.endsWith(".supabase.co")) {
+  if (PROTECTED_DATABASE_NAMES.has(target.database) || isSupabaseCloudHost(target.host)) {
     throw new Error(`ABORT: "${target.database}"@"${target.host}" es un entorno protegido -este script nunca siembra la marca ahí, sin excepción.`);
   }
   if (!isLikelyDisposableName(target.database)) {
@@ -46,7 +58,7 @@ async function main() {
       const ddl = await readFile(file, "utf8");
       await client.query(ddl);
     }
-    const runId = randomUUID();
+    const runId = requestedRunId ?? randomUUID();
     await seedDisposableMarker(client, runId);
     console.log(`[bootstrap] destino: host=${target.host} port=${target.port} database=${target.database} user=${target.user}`);
     console.log(`[bootstrap] marca DISPOSABLE_TEST sembrada, run_id=${runId}`);

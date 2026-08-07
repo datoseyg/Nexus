@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error";
 import { clampPage, clampPageSize } from "@/lib/sql-guardrails";
-import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
-import { AFTER_HOURS_VIEW, resolveEstimatedEndTime } from "@/lib/after-hours-metrics";
+import { buildAfterHoursMartConditions, buildReportIdCondition, createParamPusher, parseAfterHoursFilters } from "@/lib/after-hours-filters";
+import { AFTER_HOURS_VIEW } from "@/lib/after-hours-metrics";
+import { EQUIPMENT_CANONICAL_CTE, EQUIPMENT_MODEL_RESOLUTION_COLUMNS, equipmentContractCandidatesLateral } from "@/lib/explorer-sql";
+import { resolveRowModel } from "@/lib/after-hours-detail-view";
 import type {
   AfterHoursCalculationStatus,
   AfterHoursContractualAttemptStatus,
@@ -22,20 +24,28 @@ export const runtime = "nodejs";
 // marts.fieldbeat_working_hours_analysis_current (nunca las tablas GOLD ni
 // el mart legado directo). Ver docs/AFTER_HOURS_METRICS.md.
 //
-// §6.4: branching temporal preservado exacto - EXACT_REPORTED_START_END
-// muestra reported_end_raw; el resto usa el fin normalizado. La columna
-// SQL fuente de ese "fin normalizado" cambió de nombre: el mart legado la
-// llamaba estimated_end_time_local, la vista nueva la expone como
-// end_time_local (sql/082) - el CAMPO JSON de salida sigue llamándose
-// estimated_end_time por compatibilidad con AfterHoursDetailTable.tsx, que
-// nunca cambia.
+// El intervalo expuesto es el intervalo canónico de análisis resuelto por
+// el pipeline. La API lo nombra explícitamente analysis_start_time /
+// analysis_end_time y adjunta base y fallback; nunca lo presenta como si
+// fuera por definición el horario reportado, planificado o una estimación.
 //
 // §11: data_basis=NONE nunca inventa 0 - las columnas de minutos ya vienen
 // NULL desde la vista (COALESCE nunca las convierte a 0, ver sql/082); el
-// intervalo (start_time/estimated_end_time) se preserva cuando el motivo
+// intervalo canónico se preserva cuando el motivo
 // no es terminal - eso ya lo resuelve la vista/Capa C (bicondicional real,
 // sql/081: start_time_utc IS NULL <=> reason terminal), esta ruta solo lee
 // el resultado, nunca recalcula la condición.
+//
+// HOTFIX de integridad de datos FieldBeat (auditoría After-Hours, §5 del
+// plan): `assigned_to` es y siempre fue el único responsable principal -
+// esta vista/pipeline (sql/082) nunca leyó "NOMBRE DEL INGENIERO ADICIONAL",
+// así que no puede (ni debe) repartir/multiplicar sus minutos de cobertura
+// contractual entre participantes (eso rompería la reconciliación contra el
+// mart de contratos, que se mide por tarea, no por persona). `participant_count`
+// se agrega acá como campo ADITIVO e INFORMATIVO (fuente única:
+// quality.fieldbeat_report_labor_summary, sql/088) para que la fila deje de
+// implicar silenciosamente que assigned_to es la única persona que trabajó
+// la tarea - nunca altera duration_hours/business_hours/after_hours.
 
 const ALLOWED_SORT_COLUMNS: Record<string, string> = {
   start_time: "w.start_time_local",
@@ -62,9 +72,26 @@ export async function GET(request: NextRequest) {
 
     const pusher = createParamPusher();
     const conditions = buildAfterHoursMartConditions(filters, "w", pusher);
+
+    // Buscador exacto por N.º de reporte (fieldbeat_task_id) - ver comentario
+    // de cabecera de buildReportIdCondition (lib/after-hours-filters.ts) para
+    // por qué vive separado de AfterHoursFilters. Ausente -> comportamiento
+    // idéntico al de antes (result=null, no se toca `conditions`).
+    const reportIdResult = buildReportIdCondition(searchParams.get("reportId"), "w", pusher);
+    if (reportIdResult && "errorMessage" in reportIdResult) {
+      return NextResponse.json({ error: reportIdResult.errorMessage }, { status: 400 });
+    }
+    if (reportIdResult && "condition" in reportIdResult) {
+      conditions.push(reportIdResult.condition);
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const baseFrom = `FROM ${AFTER_HOURS_VIEW} w ${whereClause}`;
+    // JOIN aditivo únicamente para la fila detallada (participant_count,
+    // §5 del hotfix) - baseFrom se preserva sin cambios para el COUNT(*), que
+    // no necesita el join (1:1 por fieldbeat_task_id, no altera totalRows).
+    const rowsFrom = `FROM ${AFTER_HOURS_VIEW} w LEFT JOIN quality.fieldbeat_report_labor_summary ls ON ls.fieldbeat_task_id = w.fieldbeat_task_id ${whereClause}`;
 
     const countRows = await runQuery<{ n: string }>(`SELECT COUNT(*) AS n ${baseFrom}`, pusher.params);
     const totalRows = Number(countRows[0]?.n ?? 0);
@@ -106,9 +133,15 @@ export async function GET(request: NextRequest) {
       contract_resolution_confidence: string | null;
       contract_resolution_label: string | null;
       confidence_model_version: string | null;
+      analysis_interval_basis: AfterHoursDetailRow["analysis_interval_basis"];
+      analysis_fallback_used: boolean;
+      analysis_fallback_reason: string | null;
       primary_equipment_key: string | null;
+      participant_count: string | null;
+      resolved_models: string[] | null;
     }>(
       `
+        ${EQUIPMENT_CANONICAL_CTE}
         SELECT
           w.fieldbeat_task_id,
           w.start_time_local,
@@ -139,8 +172,40 @@ export async function GET(request: NextRequest) {
           w.contract_resolution_confidence,
           w.contract_resolution_label,
           w.confidence_model_version,
-          w.primary_equipment_key
-        ${baseFrom}
+          w.analysis_interval_basis,
+          w.analysis_fallback_used,
+          w.analysis_fallback_reason,
+          w.primary_equipment_key,
+          ls.participant_count,
+          (
+            -- Columna "Modelo" (Sección 14 del encargo NEXUS V3 After-Hours) -
+            -- MISMA precedencia estructurada que buildReportDetailQuery
+            -- (lib/fieldbeat-report-detail-queries.ts): processed.
+            -- fieldbeat_task_equipments primero, texto (w.equipment_internal_ids)
+            -- solo como fallback gobernado cuando esa tabla no tiene ninguna
+            -- fila para la tarea. DISTINCT non-null - una tarea con 2+ equipos
+            -- de modelos distintos conserva ambos (formateados " / " en
+            -- lib/explorer-entity-config.ts::formatModelCell), nunca elige uno.
+            SELECT ARRAY_AGG(DISTINCT item.model) FILTER (WHERE item.model IS NOT NULL)
+            FROM (
+              SELECT
+                ce.internal_id,
+                ${EQUIPMENT_MODEL_RESOLUTION_COLUMNS}
+              FROM (
+                SELECT te.equipment_internal_id AS raw_internal_id
+                FROM processed.fieldbeat_task_equipments te
+                WHERE te.fieldbeat_task_id = w.fieldbeat_task_id
+                UNION ALL
+                SELECT TRIM(unnested.value)
+                FROM UNNEST(STRING_TO_ARRAY(COALESCE(w.equipment_internal_ids, ''), '|')) AS unnested(value)
+                WHERE TRIM(unnested.value) <> ''
+                  AND NOT EXISTS (SELECT 1 FROM processed.fieldbeat_task_equipments te2 WHERE te2.fieldbeat_task_id = w.fieldbeat_task_id)
+              ) eq
+              JOIN canonical_equipment ce ON ce.internal_id = UPPER(TRIM(eq.raw_internal_id))
+              ${equipmentContractCandidatesLateral("ca.fieldbeat_equipment_key = ANY(ce.source_equipment_keys)")}
+            ) item
+          ) AS resolved_models
+        ${rowsFrom}
         ORDER BY ${sortColumn} ${sortDir} NULLS LAST
         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}
       `,
@@ -150,8 +215,11 @@ export async function GET(request: NextRequest) {
     const mapped: AfterHoursDetailRow[] = rows.map(row => {
       return {
         fieldbeat_task_id: Number(row.fieldbeat_task_id),
-        start_time: row.start_time_local ? String(row.start_time_local) : null,
-        estimated_end_time: resolveEstimatedEndTime(row.calculation_method, row.reported_end_raw, row.end_time_local),
+        analysis_start_time: row.start_time_local ? String(row.start_time_local) : null,
+        analysis_end_time: row.end_time_local ? String(row.end_time_local) : null,
+        analysis_interval_basis: row.analysis_interval_basis,
+        analysis_fallback_used: row.analysis_fallback_used,
+        analysis_fallback_reason: row.analysis_fallback_reason,
         reported_end_raw: row.reported_end_raw,
         client_name: row.client_name,
         equipment_internal_ids: row.equipment_internal_ids,
@@ -179,7 +247,13 @@ export async function GET(request: NextRequest) {
         contract_resolution_confidence: row.contract_resolution_confidence !== null ? Number(row.contract_resolution_confidence) : null,
         contract_resolution_label: row.contract_resolution_label,
         confidence_model_version: row.confidence_model_version,
-        primary_equipment_key: row.primary_equipment_key
+        primary_equipment_key: row.primary_equipment_key,
+        ...resolveRowModel(row.resolved_models),
+        // Aditivo (auditoría After-Hours §5) - informativo, nunca altera
+        // duration_hours/business_hours/after_hours (ver comentario de
+        // cabecera del archivo). NULL solo si assigned_to está vacío (la
+        // vista de participantes no genera fila sin un responsable principal).
+        participant_count: row.participant_count !== null ? Number(row.participant_count) : null
       };
     });
 

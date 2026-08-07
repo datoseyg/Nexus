@@ -11,11 +11,8 @@ import {
   buildMachineDetailSummaryQuery,
   buildPartDetailRelatedQuery,
   buildPartDetailSummaryQuery,
-  buildReportDetailRelatedQuery,
-  buildReportDetailSummaryQuery,
   buildTicketDetailRelatedQuery,
   buildTicketDetailSummaryQuery,
-  getReportFieldsAvailability,
   mapClientRow,
   mapMachineRow,
   mapPartRow,
@@ -79,26 +76,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(response);
     }
 
+    // HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) - entity
+    // "reports" eliminado: Search ya nunca solicita este detalle (el click en
+    // un resultado de reportes abre directo el drawer canónico vía
+    // fieldbeatTaskId, ver SearchDashboard.tsx) - buildReportDetailSummaryQuery/
+    // buildReportDetailRelatedQuery retirados junto con esta rama. Rechazo
+    // EXPLÍCITO (nunca cae silenciosamente al catch-all de "parts" de más
+    // abajo - "reports" sigue siendo un SearchEntity válido para otros usos,
+    // ver types/search.ts, así que parseDetailParams no lo bloquea solo).
     if (entity === "reports") {
-      assertNumericIdFormat(key, "fieldbeatTaskId");
-      const summaryQuery = buildReportDetailSummaryQuery(key);
-      const summaryRows = await runQuery<Record<string, unknown>>(summaryQuery.sql, summaryQuery.params);
-      if (summaryRows.length === 0) return notFound();
-      const reportFieldsAvailable = await getReportFieldsAvailability();
-      const relatedQuery = buildReportDetailRelatedQuery(key, reportFieldsAvailable);
-      const relatedRows = await runQuery<{ fields: Array<{ field_name: string; field_value: string }>; parts: unknown[] }>(
-        relatedQuery.sql,
-        relatedQuery.params
-      );
-      const related = relatedRows[0];
-      const summary: SearchReportResult = mapReportRow(serializeRows(summaryRows)[0]);
-      const response: SearchDetailResponse = {
-        entity: "reports",
-        summary,
-        fields: (related?.fields ?? []).map(f => ({ label: f.field_name, value: f.field_value })),
-        parts: (related?.parts ?? []).map(p => mapPartRow(p as Record<string, unknown>))
-      };
-      return NextResponse.json(response);
+      return NextResponse.json({ error: "El detalle de reportes ya no se sirve acá - usa el drawer canónico.", code: "ENTITY_RETIRED" }, { status: 400 });
     }
 
     if (entity === "tickets") {
@@ -120,7 +107,16 @@ export async function GET(request: NextRequest) {
     const partsKey = parsePartsKey(key);
     const summaryQuery = buildPartDetailSummaryQuery(partsKey);
     const summaryRows = await runQuery<Record<string, unknown>>(summaryQuery.sql, summaryQuery.params);
-    if (summaryRows.length === 0 || (summaryRows[0].dolibarr_ref == null && summaryRows[0].raw_part_identifier == null)) return notFound();
+    // HOTFIX de integridad de datos FieldBeat (Stage 9) - "no encontrado" se
+    // detecta por used_part_id (SIEMPRE presente cuando alguna fila real
+    // matcheó, ver MAX(m.used_part_id) en buildPartDetailSummaryQuery), NUNCA
+    // por dolibarr_ref/raw_part_identifier ambos nulos - un repuesto sin
+    // código real (identidad raw-occurrence:<used_part_id>) es un caso
+    // VÁLIDO donde ambos son legítimamente null, no "no encontrado". La
+    // consulta es un agregado sin GROUP BY - summaryRows.length siempre es 1
+    // (MAX/SUM/COUNT sobre cero filas devuelve NULL/0), por eso el chequeo
+    // real es sobre el contenido, no sobre el largo del array.
+    if (summaryRows.length === 0 || summaryRows[0].used_part_id == null) return notFound();
     const relatedQuery = buildPartDetailRelatedQuery(partsKey);
     const relatedRows = await runQuery<{ recent_usages: unknown[] }>(relatedQuery.sql, relatedQuery.params);
     // No se reutiliza mapReportRow() acá: la subconsulta de usos recientes

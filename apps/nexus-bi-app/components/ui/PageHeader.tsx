@@ -14,15 +14,15 @@ export function PageHeader({ title, description, actions, eyebrow }: PageHeaderP
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         {eyebrow && (
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--eyg-green-dark)" }}>
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--nx-accent-green)" }}>
             {eyebrow}
           </p>
         )}
-        <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
+        <h1 className="text-2xl font-semibold" style={{ color: "var(--nx-text-primary)" }}>
           {title}
         </h1>
         {description && (
-          <p className="mt-1 max-w-3xl text-sm" style={{ color: "var(--text-secondary)" }}>
+          <p className="mt-1 max-w-3xl text-sm" style={{ color: "var(--nx-text-secondary)" }}>
             {description}
           </p>
         )}

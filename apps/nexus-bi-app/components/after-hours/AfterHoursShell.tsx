@@ -13,9 +13,10 @@ import { AfterHoursTechnicianClientCard } from "./AfterHoursTechnicianClientCard
 import { AfterHoursConfidenceSection } from "./AfterHoursConfidenceSection";
 import { AfterHoursEmptyBlock } from "./AfterHoursEmptyBlock";
 import { AfterHoursDetailTable, type DetailSortColumn, type DetailSortDir } from "./AfterHoursDetailTable";
-import { AfterHoursDrawer } from "./AfterHoursDrawer";
+import { FieldbeatReportDetailDrawer } from "@/components/fieldbeat/quality/FieldbeatReportDetailDrawer";
 import { useAfterHoursSection } from "@/lib/use-after-hours-section";
 import { buildAfterHoursQuery } from "@/lib/after-hours-query";
+import { buildAfterHoursDrawerContext } from "@/lib/after-hours-detail-view";
 import { isTechnicianClientResponseEmpty, isWeekdayHourResponseEmpty, isWeekdayResponseEmpty } from "@/lib/after-hours-weekday-view";
 import type {
   AfterHoursByDimensionRow,
@@ -89,11 +90,26 @@ export function AfterHoursShell() {
   const [sortBy, setSortBy] = useState<DetailSortColumn>("start_time");
   const [sortDir, setSortDir] = useState<DetailSortDir>("desc");
   const [selectedRow, setSelectedRow] = useState<AfterHoursDetailRow | null>(null);
+  // Buscador de N.º de reporte (encabezado de AfterHoursDetailTable) -
+  // número YA validado y aplicado (AfterHoursDetailTable.tsx valida el
+  // texto crudo antes de llamar a handleReportIdFilterChange). Vive acá,
+  // no en AfterHoursFilterState: solo afecta detailQuery (vía extra.reportId
+  // más abajo), nunca filtersQuery - no es un filtro general de la página.
+  const [reportIdFilter, setReportIdFilter] = useState<number | null>(null);
 
   const filtersQuery = useMemo(() => buildAfterHoursQuery(filters), [filters]);
   const detailQuery = useMemo(
-    () => buildAfterHoursQuery(filters, { page: detailPage, pageSize: PAGE_SIZE, sortBy, sortDir }),
-    [filters, detailPage, sortBy, sortDir]
+    () => buildAfterHoursQuery(filters, { page: detailPage, pageSize: PAGE_SIZE, sortBy, sortDir, reportId: reportIdFilter ?? undefined }),
+    [filters, detailPage, sortBy, sortDir, reportIdFilter]
+  );
+  // Descargar CSV (botón en AfterHoursDetailTable) - MISMOS filtros/reportId
+  // que detailQuery, construidos con la MISMA función (buildAfterHoursQuery,
+  // nunca una segunda implementación de serialización de filtros), pero SIN
+  // page/pageSize: la exportación siempre cubre el universo filtrado
+  // completo, nunca solo la página visible.
+  const exportQuery = useMemo(
+    () => buildAfterHoursQuery(filters, { reportId: reportIdFilter ?? undefined }),
+    [filters, reportIdFilter]
   );
 
   const summary = useAfterHoursSection<AfterHoursSummary>("/api/dashboard/after-hours/summary", filtersQuery, isSummaryEmpty);
@@ -117,8 +133,27 @@ export function AfterHoursShell() {
 
   const rangeLabel = useMemo(() => formatRangeLabel(filters), [filters]);
 
+  // Sección 14 del encargo NEXUS V3 After-Hours - misma identidad
+  // (fieldbeat_task_id) que ya usa React key/el título del drawer canónico/
+  // el Explorador. reportId conduce el fetch del drawer canónico
+  // (FieldbeatReportDetailDrawer -> /api/dashboard/fieldbeat/reports/[id]) -
+  // afterHoursContext SOLO aporta los campos temporales/contractuales
+  // propios de After-Hours desde la fila YA cargada por la tabla (cero
+  // fetch adicional para esa parte).
+  const reportId = selectedRow ? String(selectedRow.fieldbeat_task_id) : null;
+
   function handleFiltersChange(next: AfterHoursFilterState) {
     setFilters(next);
+    setDetailPage(1);
+  }
+
+  // Al aplicar o limpiar el buscador de reporte, siempre vuelve a página 1
+  // (mismo criterio que el resto de los cambios de filtro de esta pantalla)
+  // y conserva sortBy/sortDir/filters intactos - reportIdFilter es
+  // ortogonal a ellos, se combina con AND en el backend (ver
+  // buildReportIdCondition), nunca los reemplaza.
+  function handleReportIdFilterChange(reportId: number | null) {
+    setReportIdFilter(reportId);
     setDetailPage(1);
   }
 
@@ -241,8 +276,8 @@ export function AfterHoursShell() {
         </div>
         <div className="mb-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
           <AfterHoursRankingCard
-            question="¿Qué técnicos registran más actividad?"
-            subtitle={summary.data ? `${summary.data.distinct_technicians} técnicos identificados` : "Cargando…"}
+            question="¿Qué técnicos responsables registran más actividad?"
+            subtitle={summary.data ? `${summary.data.distinct_technicians} responsables principales identificados` : "Cargando…"}
             rows={byTechnician.data?.rows ?? []}
             status={byTechnician.status}
             error={byTechnician.error}
@@ -310,10 +345,25 @@ export function AfterHoursShell() {
           sortDir={sortDir}
           onSortChange={handleSortChange}
           onRowClick={setSelectedRow}
+          selectedTaskId={selectedRow?.fieldbeat_task_id ?? null}
+          reportIdFilter={reportIdFilter}
+          onReportIdFilterChange={handleReportIdFilterChange}
+          exportQuery={exportQuery}
         />
       </div>
 
-      <AfterHoursDrawer row={selectedRow} onClose={() => setSelectedRow(null)} />
+      {/* Sección 14 del encargo NEXUS V3 After-Hours - reutiliza EL MISMO
+          drawer canónico que Explorador/Búsqueda/FieldBeat Calidad, nunca
+          un segundo sistema de detalle de reportes (ver AfterHoursDrawer.tsx,
+          eliminado). explorerHref usa la MISMA identidad (key=fieldbeat_task_id)
+          que ExplorerShell.tsx ya lee de la URL para el resto de las
+          entidades - ver Sección 14.6 del encargo. */}
+      <FieldbeatReportDetailDrawer
+        reportId={reportId}
+        onClose={() => setSelectedRow(null)}
+        afterHoursContext={selectedRow ? buildAfterHoursDrawerContext(selectedRow) : null}
+        explorerHref={reportId ? `/explorer?entity=reports&key=${reportId}` : undefined}
+      />
     </div>
   );
 }

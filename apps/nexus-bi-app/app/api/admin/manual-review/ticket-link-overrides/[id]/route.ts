@@ -1,90 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
-import { runQuery, serializeRows } from "@/lib/db";
-import { handleApiError } from "@/lib/api-error";
-import { requireAdminToken } from "@/lib/auth";
-import { quoteQualifiedAdminTable } from "@/lib/admin-guardrails";
-import { logManualReviewAction } from "@/lib/admin-audit-log";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const TABLE = quoteQualifiedAdminTable("manual_review", "ticket_link_overrides");
-const OVERRIDE_TYPES = ["CONFIRMED_NO_TICKET", "CORRECTED", "DUPLICATE"];
-const PATCHABLE_FIELDS = ["raw_linked_zendesk_ticket_id", "corrected_zendesk_ticket_id", "override_type", "reason"] as const;
-
-interface RouteParams {
-  params: Promise<{ id: string }>;
+// Gate B (B19) - retirado: la reversión gobernada de un vínculo de ticket
+// vive ahora en governance.fn_reverse_correction (sql/092, DELETE real sobre
+// manual_review.ticket_link_overrides - misma semántica "revertir a no
+// resuelto" que este endpoint ya tenía), vía sesión + capacidad
+// correction:reverse. Confirmado sin consumidores reales (Gate A) y con el
+// reemplazo probado de punta a punta antes de este retiro.
+function retired() {
+  return NextResponse.json(
+    {
+      error: "Este endpoint ya no acepta escrituras - la reversión de un vínculo de ticket usa el comando gobernado (correction:reverse).",
+      code: "ENDPOINT_RETIRED"
+    },
+    { status: 410 }
+  );
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  const authError = requireAdminToken(request);
-  if (authError) return authError;
-
-  try {
-    const { id } = await params;
-    const body = await request.json();
-
-    if (body?.override_type && !OVERRIDE_TYPES.includes(body.override_type)) {
-      return NextResponse.json(
-        { error: `override_type debe ser uno de: ${OVERRIDE_TYPES.join(", ")}`, code: "VALIDATION_ERROR" },
-        { status: 400 }
-      );
-    }
-
-    const updates: string[] = [];
-    const values: unknown[] = [];
-
-    for (const field of PATCHABLE_FIELDS) {
-      if (body && Object.prototype.hasOwnProperty.call(body, field)) {
-        values.push(body[field]);
-        updates.push(`${field} = $${values.length}`);
-      }
-    }
-
-    if (updates.length === 0) {
-      return NextResponse.json({ error: "No hay campos para actualizar", code: "VALIDATION_ERROR" }, { status: 400 });
-    }
-
-    values.push(id);
-
-    const rows = await runQuery(
-      `UPDATE ${TABLE} SET ${updates.join(", ")} WHERE id = $${values.length} RETURNING *`,
-      values
-    );
-
-    if (rows.length === 0) {
-      return NextResponse.json({ error: `No existe manual_review.ticket_link_overrides con id ${id}`, code: "NOT_FOUND" }, { status: 404 });
-    }
-
-    const updated = serializeRows(rows)[0];
-    await logManualReviewAction({ entityId: `ticket_link_overrides:${id}`, issueType: "UPDATED", details: updated });
-
-    return NextResponse.json({ row: updated });
-  } catch (error) {
-    return handleApiError(error);
-  }
+export async function PATCH() {
+  return retired();
 }
 
-// Sin columna `active` acá (a diferencia de part_aliases) - DELETE es
-// borrado real. Quitar un override revierte esa tarea a "sin corregir",
-// que es un estado legítimo (vuelve a aparecer en la cola de revisión).
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const authError = requireAdminToken(request);
-  if (authError) return authError;
-
-  try {
-    const { id } = await params;
-
-    const rows = await runQuery(`DELETE FROM ${TABLE} WHERE id = $1 RETURNING *`, [id]);
-
-    if (rows.length === 0) {
-      return NextResponse.json({ error: `No existe manual_review.ticket_link_overrides con id ${id}`, code: "NOT_FOUND" }, { status: 404 });
-    }
-
-    const deleted = serializeRows(rows)[0];
-    await logManualReviewAction({ entityId: `ticket_link_overrides:${id}`, issueType: "DEACTIVATED", details: deleted });
-
-    return NextResponse.json({ row: deleted });
-  } catch (error) {
-    return handleApiError(error);
-  }
+export async function DELETE() {
+  return retired();
 }

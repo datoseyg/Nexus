@@ -1,4 +1,7 @@
 import { normalizeSerialForMatching, extractTrailingSerial } from "./normalize-serial.js";
+// Ver comentario en normalize-client.js sobre por qué esta implementación
+// vive dentro de apps/nexus-bi-app/ (Bloque 2 NEXUS V3).
+import { buildContractClientNameKey } from "../../apps/nexus-bi-app/lib/contract-client-name-key.js";
 
 // Hallazgo verificado (sql/010_processed.sql:32-54): processed.fieldbeat_clients
 // y processed.fieldbeat_equipments NO tienen ningún campo de "sede" real
@@ -69,14 +72,12 @@ function classifyFieldbeatInternalId(internalId) {
   return null;
 }
 
-export function foldName(value) {
-  return String(value ?? "")
-    .normalize("NFD")
-    .replace(new RegExp(`[${String.fromCharCode(0x0300)}-${String.fromCharCode(0x036f)}]`, "g"), "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
+// Re-exportado por compatibilidad con los call sites existentes de este
+// archivo y de client-identity-aliases.js -la implementación real (idéntica
+// a la que vivía acá) ahora vive una sola vez en client-name-key.js, porque
+// client_name_key se persiste como identidad y no puede tener dos algoritmos
+// independientes.
+export const foldName = buildContractClientNameKey;
 
 function buildMatchResult({ status, method, equipment = null, candidateCount, details }) {
   return {

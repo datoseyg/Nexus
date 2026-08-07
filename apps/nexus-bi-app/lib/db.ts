@@ -237,3 +237,60 @@ export async function runQuery<T extends QueryResultRow = Record<string, unknown
     throw error;
   }
 }
+
+// Phase 5 - detalle maestro de reporte FieldBeat: medido con EXPLAIN
+// (ANALYZE, BUFFERS) contra localhost:55480/nexus_bi_dev_local_test, la
+// consulta de detalle (varias correlated subqueries LATERAL para
+// tickets/repuestos/inconsistencias sobre 1 sola fila) tardaba 1.7-2.4s
+// pese a que CADA nodo del plan ejecuta en microsegundos - el planner
+// estima estas subqueries en el peor caso (miles de filas, nunca sabe que
+// solo hay 1 fila externa) y ese estimado de costo dispara compilación JIT
+// completa (jit_above_cost, default de Postgres), cuyo COMPILAR cuesta
+// ~1.7s para un beneficio de ejecución real de <1ms. Confirmado con
+// `SET jit = off`: la MISMA consulta baja a ~17ms. JIT SÍ beneficia a
+// consultas agregadas grandes (overview/quality, cientos-miles de filas) -
+// por eso esto es una función aparte, no un cambio a runQuery()/al pool
+// completo, que seguiría penalizando esas consultas si JIT se apagara
+// globalmente.
+//
+// BEGIN + SET LOCAL + COMMIT, nunca SET a nivel de sesión (bug real
+// encontrado en code review): esta app conecta en producción vía
+// Supavisor/PgBouncer en modo transaction (ver comentario al inicio de
+// este archivo) - en ese modo, un client lógico de pg.Pool NO garantiza
+// hablar con el mismo backend físico entre dos statements autocommited
+// separados ("SET jit=off", la query real, "SET jit=on" podrían caer en 3
+// backends distintos: el fix no aplicaría, y peor, "jit=off" podría
+// quedar pegado en un backend que después atiende una query de
+// overview/quality de OTRO request, degradándola en silencio). SET LOCAL
+// dentro de una única transacción explícita sí queda garantizado al mismo
+// backend durante toda esa transacción incluso bajo pooling transaction-mode,
+// y se revierte solo al COMMIT/ROLLBACK - sin necesidad de un "restore"
+// manual que además podría fallar/omitirse.
+export async function runQueryWithoutJit<T extends QueryResultRow = Record<string, unknown>>(
+  sql: string,
+  params?: unknown[]
+): Promise<T[]> {
+  const pool = getPool();
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL jit = off");
+    const result = await client.query<T>(sql, params);
+    await client.query("COMMIT");
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes("ECONNREFUSED") || message.includes("timeout") || message.includes("terminated")) {
+      logConnectionFailure(errorReason(error));
+      throw new DbConnectionError(`No se pudo conectar a Supabase Postgres: ${message}`);
+    }
+
+    throw error;
+  } finally {
+    client.release();
+  }
+}

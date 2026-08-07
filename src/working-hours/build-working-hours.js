@@ -1,9 +1,9 @@
 // Entrypoint real de `working-hours:build` / `working-hours:parity`
 // (ETAPA 6.6B2 §12). Tres subcomandos, seguros por defecto:
 //   dry-run  -calcula todo, imprime diagnóstico completo, NUNCA escribe.
-//   apply    -requiere --confirm; staging + validación pre-publicación +
-//             lock advisory + publicación transaccional + rollback completo
-//             ante cualquier fallo (ver db-writer.js).
+//   apply    -requiere --confirm; validación pre-publicación + lock
+//             advisory + UPSERT transaccional + rollback completo ante
+//             cualquier fallo (ver db-writer.js).
 //   parity   -compara legacy_exact_parity/legacy_corrected_v2 contra el
 //             mart legado congelado (marts.fieldbeat_working_hours_analysis,
 //             3.747 filas), leído directo del DuckDB local -es la fuente de
@@ -21,7 +21,7 @@ import { createPool, getConnectionString } from "./db-client.js";
 import { runBuild, validateBeforePublish, publishResults, summarizeResults } from "./db-writer.js";
 import { assertWriteConfirmed } from "../lib/db-safety.js";
 import { segmentLegacyCorrectedV2, computeLegacyExactParity } from "./legacy-global-schedule.js";
-import { resolveInterval } from "./interval-resolver.js";
+import { resolveReportAnalysisInterval } from "./interval-resolver.js";
 import { offsetMinutesAt, localDateStringAt } from "./timezone-resolver.js";
 
 const CLOSED_DIFF_CATEGORIES = Object.freeze(["DST_BOUNDARY_TASK", "HOLIDAY_CALENDAR_DIFFERENCE", "ROUNDING_CORRECTION", "SOURCE_DATA_CORRECTION", "UNEXPLAINED"]);
@@ -234,7 +234,7 @@ async function runParityCorrected({ tasks, starts, ends, frozenByTaskId }, busin
     compared++;
 
     const durationMinutesRaw = num(task.duration_minutes);
-    const resolved = resolveInterval({
+    const resolved = resolveReportAnalysisInterval({
       startTimeRaw: microsToIso(task.start_time),
       reportedStartRaw: starts.get(taskId) ?? null,
       reportedEndRaw: ends.get(taskId) ?? null,

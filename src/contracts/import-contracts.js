@@ -5,9 +5,11 @@ import { buildEquipmentRecord } from "./record-builder.js";
 import { createClientNameNormalizer } from "./normalize-client.js";
 import { matchAll } from "./fieldbeat-matcher.js";
 import { loadClientIdentityAliases, buildClientIdentityAliasIndex } from "./client-identity-aliases.js";
+import { loadDryRunDatabaseState } from "./dry-run-db-state.js";
 import { buildDryRunReport, writeDryRunReport } from "./dry-run-report.js";
 import { parseArgs, validateArgs } from "./cli.js";
 import { readCsv } from "../lib/csv.js";
+import { CONTRACT_TRANSFORM_VERSION } from "./transform-version.js";
 
 const FIELDBEAT_EQUIPMENTS_CSV = "data/processed/fieldbeat/DIM_Equipments.csv";
 const FIELDBEAT_CLIENTS_CSV = "data/processed/fieldbeat/DIM_Clients.csv";
@@ -62,6 +64,8 @@ async function runDryRun(args) {
   let fieldbeatEquipments;
   let fieldbeatClients;
   let overrides = [];
+  let alreadyImported = { isDuplicate: "unknown", priorImportId: null };
+  let versionActions = new Map();
 
   if (dbPeekAvailable) {
     matchSource = "DB";
@@ -74,6 +78,12 @@ async function runDryRun(args) {
       "SELECT equipment_key, fieldbeat_equipment_id FROM config.contract_equipment_match_overrides WHERE active = true"
     ).catch(() => ({ rows: [] }));
     overrides = overridesResult.rows.map(r => ({ equipmentKey: r.equipment_key, fieldbeatEquipmentId: r.fieldbeat_equipment_id }));
+    ({ alreadyImported, versionActions } = await loadDryRunDatabaseState(pool, {
+      sourceSha256,
+      transformVersion: CONTRACT_TRANSFORM_VERSION,
+      records,
+      effectiveDate: effectiveDateForParsing
+    }));
     await pool.end();
   } else {
     fieldbeatEquipments = await readCsv(FIELDBEAT_EQUIPMENTS_CSV);
@@ -101,8 +111,10 @@ async function runDryRun(args) {
     records,
     matchSource,
     matches,
-    alreadyImported: { isDuplicate: "unknown - dry-run no consulta config.contract_import_runs sin conexión", priorImportId: null },
-    dbPeekAvailable
+    alreadyImported,
+    dbPeekAvailable,
+    versionActions,
+    transformVersion: CONTRACT_TRANSFORM_VERSION
   });
 
   const reportPath = await writeDryRunReport(report);

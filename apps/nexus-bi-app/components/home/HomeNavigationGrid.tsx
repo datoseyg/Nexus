@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CARD_INTERACTIVE } from "@/components/ui/interactive";
 
 type NavAccent = "green" | "indigo" | "purple" | "amber";
 
@@ -101,7 +102,7 @@ export function HomeNavigationGrid({ showAudit }: { showAudit: boolean }) {
           <li key={item.href}>
             <Link
               href={item.href}
-              className="flex h-full min-w-0 flex-col gap-1.5 rounded-[var(--nx-radius-card)] border-t-[3px] p-4"
+              className={`flex h-full min-w-0 flex-col gap-1.5 rounded-[var(--nx-radius-card)] border-t-[3px] p-4 ${CARD_INTERACTIVE}`}
               style={{
                 borderTopColor: ACCENT_COLOR[item.accent],
                 background: "var(--nx-card-bg)",

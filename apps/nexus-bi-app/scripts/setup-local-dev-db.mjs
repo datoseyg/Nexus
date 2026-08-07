@@ -32,11 +32,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.join(__dirname, "..");
 const REPO_ROOT = path.join(APP_DIR, "..", "..");
 
-const CONTAINER_NAME = "nexus_bi_dev_local";
-const DB_NAME = "nexus_bi_dev_local_test"; // sufijo _test: se autoidentifica como desechable (db-safety.js)
+const CONTAINER_NAME = "nexus_bi_test_disposable";
+const DB_NAME = "nexus_bi_test_disposable";
 const DB_PASSWORD = "localtest";
-const DB_PORT = 55480;
-const ENV_FILE = path.join(APP_DIR, ".env.development.local");
+const DB_PORT = 55481;
+const ENV_FILE = path.join(APP_DIR, ".env.test.local");
 
 function run(cmd, args, opts = {}) {
   const result = spawnSync(cmd, args, { encoding: "utf8", ...opts });
@@ -107,6 +107,7 @@ function main() {
     const createResult = run("docker", [
       "run", "-d",
       "--name", CONTAINER_NAME,
+      "--label", "com.eyg.nexus.database-purpose=disposable-test",
       "-e", `POSTGRES_PASSWORD=${DB_PASSWORD}`,
       "-e", `POSTGRES_DB=${DB_NAME}`,
       "-p", `${DB_PORT}:5432`,
@@ -128,8 +129,24 @@ function main() {
 
   const connectionString = `postgresql://postgres:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}`;
 
-  if (freshlyCreated) {
-    console.log("[setup-local-dev-db] Aplicando esquema (sql/*.sql en orden) vía el bootstrap oficial SAFETY-1...");
+  // Phase 3 preflight §1.2 - ANTES esto solo corría en freshlyCreated
+  // ("ya se aplicó al crearlo"), asumiendo que sql/*.sql nunca cambia
+  // después de la primera vez. Esa asunción se rompió en cuanto se agregó
+  // sql/086_fieldbeat_quality.sql a un repo con contenedores ya existentes
+  // de contribuidores/sesiones previas - un `npm run dev:local:setup`
+  // sobre un contenedor reutilizado nunca recogía el archivo nuevo. Ahora
+  // se reaplica SIEMPRE (fresh o reused) - seguro porque los 000-085 ya
+  // eran idempotentes (CREATE TABLE/SCHEMA IF NOT EXISTS) y 086 también lo
+  // es (CREATE SCHEMA IF NOT EXISTS + CREATE OR REPLACE en todo, sin DROP
+  // destructivo - ver ese archivo). orderedSqlFiles() escala automático a
+  // cualquier sql/*.sql nuevo, sin lista hardcodeada acá ni en ningún otro
+  // lado - un solo mecanismo, nunca dos sistemas paralelos de DDL.
+  console.log(
+    freshlyCreated
+      ? "[setup-local-dev-db] Aplicando esquema (sql/*.sql en orden) vía el bootstrap oficial SAFETY-1..."
+      : "[setup-local-dev-db] Contenedor reutilizado - reaplicando sql/*.sql de todos modos (idempotente, recoge migraciones nuevas desde la última vez)..."
+  );
+  {
     const sqlFiles = orderedSqlFiles();
     const bootstrapArgs = ["scripts/bootstrap-disposable-postgres.mjs", `--url=${connectionString}`, ...sqlFiles.map(f => `--sql=${f}`)];
     const bootstrapResult = run("node", bootstrapArgs, { cwd: REPO_ROOT });
@@ -139,8 +156,6 @@ function main() {
       console.error("ERROR: falló la aplicación del esquema.");
       process.exit(1);
     }
-  } else {
-    console.log("[setup-local-dev-db] Contenedor reutilizado - se omite reaplicar el esquema (ya se aplicó al crearlo).");
   }
 
   if (existsSync(ENV_FILE)) {

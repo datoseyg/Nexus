@@ -81,7 +81,9 @@ export interface FilterChip {
 export function buildFilterChips(filters: AfterHoursFilterState): FilterChip[] {
   const chips: FilterChip[] = [];
   if (filters.client) chips.push({ id: "client", label: `Cliente: ${filters.client}` });
-  if (filters.technician) chips.push({ id: "technician", label: `Técnico: ${filters.technician}` });
+  // HOTFIX auditoría After-Hours (§5): "responsable" deja explícito que el
+  // filtro acota por assigned_to, nunca por participantes adicionales.
+  if (filters.technician) chips.push({ id: "technician", label: `Técnico responsable: ${filters.technician}` });
   if (filters.taskType) chips.push({ id: "taskType", label: `Tipo de tarea: ${filters.taskType}` });
   if (filters.dataBasis) chips.push({ id: "dataBasis", label: `Base de cálculo: ${getDataBasisLabel(filters.dataBasis).label}` });
   if (filters.confidenceLevel) chips.push({ id: "confidenceLevel", label: `Confianza: ${filters.confidenceLevel}` });
@@ -114,4 +116,13 @@ export function activeQuickRangeKey(ranges: QuickRange[], filters: Pick<AfterHou
   const match = ranges.find(r => r.from === filters.from && r.to === filters.to);
   if (match) return match.key;
   return filters.from || filters.to ? null : "all";
+}
+
+// Sección 1 del encargo - "solo Desde", "solo Hasta" y "Desde + Hasta" son
+// todos válidos; SOLO es inválido cuando AMBOS están presentes y Desde es
+// posterior a Hasta (comparación lexicográfica sobre YYYY-MM-DD, válida
+// para fechas ISO). Pura y sin DOM para ser testeable directo.
+export function isValidAfterHoursDateRange(from: string | undefined, to: string | undefined): boolean {
+  if (!from || !to) return true;
+  return from <= to;
 }

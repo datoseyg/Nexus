@@ -1,4 +1,5 @@
 {
-  "run_id": "b431e1bd-a0ed-40b2-a543-28de5c463a3d",
-  "migrated_at": "2026-07-20T03:24:52.127Z"
+  "run_id": "7f775700-770e-421e-afba-80de00c775ce",
+  "target": "127.0.0.1:55482/nexus_bi_dev_local_v3",
+  "migrated_at": "2026-08-06T15:19:49.986Z"
 }

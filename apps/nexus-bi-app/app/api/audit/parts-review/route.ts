@@ -12,6 +12,13 @@ export const runtime = "nodejs";
 // Fuente: marts.used_parts_dolibarr_match + processed.fieldbeat_used_parts
 // (cantidad) + marts.fieldbeat_report_dolibarr_operational_view (cliente,
 // máquina, fecha) - ver docs/MANUAL_REVIEW_VIEW.md.
+//
+// match_status devuelto NUNCA es el crudo del mart directo - siempre pasa por
+// quality.classify_part_declaration (sql/098), que reclasifica PLACEHOLDER_VALUE
+// en NO_PART_USED cuando el texto completo es una declaración válida de "sin
+// repuesto" (N/A, no aplica, NC...) con cantidad nula/cero. Esas filas nunca
+// deben aparecer en esta bandeja como trabajo pendiente - el WHERE de abajo
+// las excluye por completo (nunca solo las etiqueta distinto).
 export async function GET(request: NextRequest) {
   const authError = await requireReadApiAccess();
   if (authError) return authError;
@@ -23,12 +30,21 @@ export async function GET(request: NextRequest) {
     const filters = parseAuditFilters(searchParams);
 
     const pusher = createParamPusher();
+    // quality.classify_part_declaration (sql/098) reclasifica PLACEHOLDER_VALUE
+    // en NO_PART_USED cuando el valor completo es una declaración válida de
+    // "sin repuesto" (N/A, no aplica, NC...) con cantidad nula/cero - esas
+    // filas NUNCA deben aparecer acá como trabajo pendiente. needs_manual_review
+    // solo se evalúa junto a MATCHED (baja confianza, REF_LIKE) - para
+    // PLACEHOLDER_VALUE siempre viene true en el mart crudo, así que
+    // combinarlo con un OR sin condición aparte volvería a colar las filas
+    // NO_PART_USED por esa rama.
+    const effectiveStatusSql = `quality.classify_part_declaration(m.raw_part_identifier, m.match_status, p.quantity)`;
     const conditions = [
-      `(m.needs_manual_review = true OR m.match_status IN ('NO_MATCH', 'AMBIGUOUS_MATCH', 'PLACEHOLDER_VALUE'))`,
+      `(${effectiveStatusSql} IN ('NO_MATCH', 'AMBIGUOUS_MATCH', 'PLACEHOLDER_VALUE') OR (m.match_status = 'MATCHED' AND m.needs_manual_review = true))`,
       ...buildAuditMartConditions(filters, "r", pusher)
     ];
 
-    if (filters.matchStatus) conditions.push(`m.match_status = ${pusher.push(filters.matchStatus)}`);
+    if (filters.matchStatus) conditions.push(`${effectiveStatusSql} = ${pusher.push(filters.matchStatus)}`);
     if (filters.q) {
       const placeholder = pusher.push(`%${filters.q}%`);
       conditions.push(`(m.raw_part_identifier ILIKE ${placeholder} OR m.part_name ILIKE ${placeholder})`);
@@ -73,7 +89,7 @@ export async function GET(request: NextRequest) {
           m.raw_part_identifier,
           m.part_name,
           p.quantity,
-          m.match_status,
+          ${effectiveStatusSql} AS match_status,
           m.match_method,
           m.match_confidence,
           m.candidate_dolibarr_product_ids,

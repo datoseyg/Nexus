@@ -3,18 +3,13 @@ import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
-import { mapType } from "./generate-postgres-ddl.js";
-import { assertWriteConfirmed } from "../lib/db-safety.js";
+import { mapType, postgresTypeMatchesDuckdb } from "./generate-postgres-ddl.js";
+import { listOwnershipEntries } from "./ownership-manifest.js";
+import { validateWarehouseState } from "./warehouse-validation.js";
+import { buildWriteConfirmationToken, describeConnectionTarget } from "../lib/db-safety.js";
 
-// Validación de la migración a Supabase (Fase 2) -4 chequeos, no solo
-// conteo de filas: 1) filas, 2) tablas presentes, 3) columnas por tabla,
-// 4) tipos principales. Falla con exit code != 0 si cualquiera no pasa,
-// mismo criterio que src/db/validate-duckdb.js. Al terminar, actualiza la
-// fila de audit.warehouse_sync_state que migrate-to-supabase.js insertó
-// (mismo run_id).
-const SYNC_SCHEMAS = ["processed", "marts", "gold"];
-const RUN_ID_FILE = "data/reports/supabase_sync_run_id.json";
 const SUMMARY_FILE = "data/reports/supabase_validation_summary.json";
+const RUN_ID_FILE = "data/reports/supabase_sync_run_id.json";
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -22,209 +17,199 @@ function requireEnv(name) {
   return value;
 }
 
-// Mismo patrón que src/db/migrate-to-supabase.js (TRUNCATE): el UPDATE de
-// audit.warehouse_sync_state necesita esto también, no solo un cast DuckDB
-// (::JSON no alcanza - ver comentario en el UPDATE de abajo). postgres_execute
-// manda el SQL directo a Postgres, que sí resuelve ::jsonb con su propio
-// parser sin pasar por la tabla de staging que arma el puente ATTACH.
 function quoteSqlLiteral(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-async function postgresExecute(connection, sql) {
-  await connection.run(`CALL postgres_execute('pg', ${quoteSqlLiteral(sql)})`);
+function quoteIdentifier(identifier) {
+  return `"${String(identifier).replaceAll('"', '""')}"`;
 }
 
-async function attachPostgres(connection) {
-  // Mismo SUPABASE_DB_URL_DIRECT que migrate-to-supabase.js, rol `postgres`
-  // (ver el comentario homólogo ahí) - acá solo hace falta SELECT/UPDATE,
-  // que postgres cubre de sobra.
-  const directUrl = requireEnv("SUPABASE_DB_URL_DIRECT");
+function validationSchemas() {
+  return [...new Set(listOwnershipEntries().map(entry => entry.schema))].sort();
+}
+
+async function attachPostgresReadOnly(connection, connectionString) {
   await connection.run("INSTALL postgres");
   await connection.run("LOAD postgres");
-  await connection.run(`ATTACH '${directUrl}' AS pg (TYPE postgres)`);
+  await connection.run(`ATTACH ${quoteSqlLiteral(connectionString)} AS pg (TYPE postgres, READ_ONLY)`);
 }
 
-export async function validateSupabase() {
-  console.log("=== Validando migración a Supabase (4 chequeos) ===");
+async function readInventory(connection) {
+  const schemas = validationSchemas();
+  const schemaList = schemas.map(quoteSqlLiteral).join(",");
 
-  // ETAPA SAFETY-1 (Policy C) - aunque mayormente SELECT, este script SÍ
-  // hace un UPDATE real (audit.warehouse_sync_state) -mismo destino
-  // protegido que migrate-to-supabase.js, evaluado ANTES de tocar DuckDB.
-  assertWriteConfirmed(requireEnv("SUPABASE_DB_URL_DIRECT"), { environment: process.env.NODE_ENV ?? "development" });
-
-  // READ_WRITE, no READ_ONLY: aunque este script nunca escribe en el
-  // .duckdb local (solo SELECT), sí hace UPDATE sobre
-  // pg.audit.warehouse_sync_state al final - y una conexión DuckDB
-  // abierta READ_ONLY propaga esa restricción a CUALQUIER base adjuntada
-  // vía ATTACH, incluida Postgres, aunque el ATTACH en sí no pida
-  // READ_ONLY explícitamente. Confirmado en la práctica (no solo por
-  // doc): con READ_ONLY acá, el UPDATE fallaba con "Cannot execute
-  // statement of type UPDATE on database pg which is attached in
-  // read-only mode!" - mismo motivo por el que migrate-to-supabase.js
-  // ya usa READ_WRITE.
-  const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_WRITE" });
-  const connection = await instance.connect();
-  await attachPostgres(connection);
-
-  // table_catalog = current_catalog() obligatorio - mismo motivo que en
-  // migrate-to-supabase.js: el catálogo "pg" adjuntado tiene sus propios
-  // schemas processed/marts/gold con los mismos nombres, así que sin este
-  // filtro cada tabla aparece duplicada.
-  const duckTablesReader = await connection.runAndReadAll(
+  const duckReader = await connection.runAndReadAll(
     `SELECT table_schema, table_name
      FROM information_schema.tables
-     WHERE table_schema IN ('${SYNC_SCHEMAS.join("','")}')
+     WHERE table_schema IN (${schemaList})
        AND table_catalog = current_catalog()
+       AND table_type = 'BASE TABLE'
      ORDER BY table_schema, table_name`
   );
-  const duckTables = duckTablesReader.getRowObjects();
-  const duckTableKeys = new Set(duckTables.map(t => `${t.table_schema}.${t.table_name}`));
 
-  const pgTablesReader = await connection.runAndReadAll(
+  const postgresReader = await connection.runAndReadAll(
     `SELECT table_schema, table_name
      FROM pg.information_schema.tables
-     WHERE table_schema IN ('${SYNC_SCHEMAS.join("','")}')
+     WHERE table_schema IN (${schemaList})
+       AND table_type = 'BASE TABLE'
      ORDER BY table_schema, table_name`
   );
-  const pgTableKeys = new Set(pgTablesReader.getRowObjects().map(t => `${t.table_schema}.${t.table_name}`));
 
-  // Chequeo 2: tablas esperadas vs presentes
-  const missingInPostgres = [...duckTableKeys].filter(k => !pgTableKeys.has(k));
-  const extraInPostgres = [...pgTableKeys].filter(k => !duckTableKeys.has(k));
+  const viewsReader = await connection.runAndReadAll(
+    `SELECT table_schema, table_name
+     FROM pg.information_schema.views
+     WHERE table_schema IN (${schemaList})
+     ORDER BY table_schema, table_name`
+  );
 
-  const tableResults = [];
-  let allRowCountsMatch = true;
-  let allColumnsMatch = true;
-  let allTypesMatch = true;
+  const columnsReader = await connection.runAndReadAll(
+    `SELECT table_schema, table_name, column_name
+     FROM pg.information_schema.columns
+     WHERE table_schema IN (${schemaList})
+     ORDER BY table_schema, table_name, ordinal_position`
+  );
 
-  for (const { table_schema: schema, table_name: table } of duckTables) {
-    const key = `${schema}.${table}`;
+  const postgresColumnsByTable = {};
+  for (const column of columnsReader.getRowObjects()) {
+    const key = `${column.table_schema}.${column.table_name}`;
+    if (!postgresColumnsByTable[key]) postgresColumnsByTable[key] = [];
+    postgresColumnsByTable[key].push(column.column_name);
+  }
 
-    if (!pgTableKeys.has(key)) {
-      tableResults.push({ table: key, status: "MISSING_IN_POSTGRES" });
-      allRowCountsMatch = false;
-      continue;
+  return {
+    duckdbTables: duckReader.getRowObjects().map(row => ({ schema: row.table_schema, table: row.table_name })),
+    postgresTables: postgresReader.getRowObjects().map(row => ({ schema: row.table_schema, table: row.table_name })),
+    postgresViews: viewsReader.getRowObjects().map(row => ({ schema: row.table_schema, view: row.table_name })),
+    postgresColumnsByTable
+  };
+}
+
+async function compareDuckdbSync(connection, entry) {
+  const schema = quoteIdentifier(entry.schema);
+  const table = quoteIdentifier(entry.name);
+  const key = `${entry.schema}.${entry.name}`;
+
+  const duckCountReader = await connection.runAndReadAll(`SELECT COUNT(*) AS n FROM ${schema}.${table}`);
+  const postgresCountReader = await connection.runAndReadAll(`SELECT COUNT(*) AS n FROM pg.${schema}.${table}`);
+  const duckdbRowCount = Number(duckCountReader.getRowObjects()[0].n);
+  const postgresRowCount = Number(postgresCountReader.getRowObjects()[0].n);
+
+  const duckColumnsReader = await connection.runAndReadAll(
+    `SELECT column_name, data_type
+     FROM information_schema.columns
+     WHERE table_catalog = current_catalog()
+       AND table_schema = ${quoteSqlLiteral(entry.schema)}
+       AND table_name = ${quoteSqlLiteral(entry.name)}
+     ORDER BY ordinal_position`
+  );
+  const postgresColumnsReader = await connection.runAndReadAll(
+    `SELECT column_name, data_type
+     FROM pg.information_schema.columns
+     WHERE table_schema = ${quoteSqlLiteral(entry.schema)}
+       AND table_name = ${quoteSqlLiteral(entry.name)}
+     ORDER BY ordinal_position`
+  );
+
+  const duckColumns = duckColumnsReader.getRowObjects();
+  const postgresColumns = postgresColumnsReader.getRowObjects();
+  const duckByName = new Map(duckColumns.map(column => [column.column_name, column.data_type]));
+  const postgresByName = new Map(postgresColumns.map(column => [column.column_name, column.data_type]));
+  const missingColumns = [...duckByName.keys()].filter(name => !postgresByName.has(name));
+  const extraColumns = [...postgresByName.keys()].filter(name => !duckByName.has(name));
+  const typeMismatches = [];
+
+  for (const [name, duckdbType] of duckByName) {
+    const postgresType = postgresByName.get(name);
+    if (!postgresType) continue;
+    if (!postgresTypeMatchesDuckdb(duckdbType, postgresType)) {
+      typeMismatches.push({
+        column: name,
+        duckdb_type: duckdbType,
+        expected_pg_type: mapType(duckdbType),
+        actual_pg_type: postgresType
+      });
     }
+  }
 
-    // Chequeo 1: conteo de filas
-    const duckCountReader = await connection.runAndReadAll(`SELECT COUNT(*) AS n FROM ${schema}."${table}"`);
-    const pgCountReader = await connection.runAndReadAll(`SELECT COUNT(*) AS n FROM pg.${schema}."${table}"`);
-    const duckCount = Number(duckCountReader.getRowObjects()[0].n);
-    const pgCount = Number(pgCountReader.getRowObjects()[0].n);
-    const rowCountStatus = duckCount === pgCount ? "MATCH" : "MISMATCH";
-    if (rowCountStatus === "MISMATCH") allRowCountsMatch = false;
-
-    // Chequeo 3: columnas por tabla
-    const duckColsReader = await connection.runAndReadAll(
-      `SELECT column_name, data_type FROM information_schema.columns
-       WHERE table_schema = '${schema}' AND table_name = '${table}' ORDER BY ordinal_position`
-    );
-    const pgColsReader = await connection.runAndReadAll(
-      `SELECT column_name, data_type FROM pg.information_schema.columns
-       WHERE table_schema = '${schema}' AND table_name = '${table}' ORDER BY ordinal_position`
-    );
-    const duckCols = duckColsReader.getRowObjects();
-    const pgColsByName = new Map(pgColsReader.getRowObjects().map(c => [c.column_name, c.data_type]));
-
-    const missingColumns = duckCols.filter(c => !pgColsByName.has(c.column_name)).map(c => c.column_name);
-    const extraColumns = [...pgColsByName.keys()].filter(name => !duckCols.some(c => c.column_name === name));
-
-    if (missingColumns.length > 0 || extraColumns.length > 0) allColumnsMatch = false;
-
-    // Chequeo 4: tipos principales (mismo mapeo que generate-postgres-ddl.js)
-    const typeMismatches = [];
-    for (const col of duckCols) {
-      const pgType = pgColsByName.get(col.column_name);
-      if (!pgType) continue; // ya reportado como missingColumns
-
-      const expectedPgType = mapType(col.data_type).toLowerCase().replace(" precision", "");
-      const actualPgType = pgType.toLowerCase().replace(" precision", "").replace("with time zone", "with time zone");
-      const normalizedExpected = expectedPgType.includes("timestamptz") ? "timestamp with time zone" : expectedPgType;
-
-      if (!actualPgType.includes(normalizedExpected.split(" ")[0])) {
-        typeMismatches.push({ column: col.column_name, duckdb_type: col.data_type, expected_pg_type: mapType(col.data_type), actual_pg_type: pgType });
-      }
-    }
-    if (typeMismatches.length > 0) allTypesMatch = false;
-
-    const status = rowCountStatus === "MATCH" && missingColumns.length === 0 && extraColumns.length === 0 && typeMismatches.length === 0
+  const status =
+    duckdbRowCount === postgresRowCount &&
+    missingColumns.length === 0 &&
+    extraColumns.length === 0 &&
+    typeMismatches.length === 0
       ? "MATCH"
       : "MISMATCH";
 
-    tableResults.push({
-      table: key,
-      status,
-      duckdb_row_count: duckCount,
-      postgres_row_count: pgCount,
-      missing_columns: missingColumns,
-      extra_columns: extraColumns,
-      type_mismatches: typeMismatches
-    });
-
-    console.log(`${key}: filas duckdb=${duckCount} pg=${pgCount}, columnas faltantes=${missingColumns.length}, tipos distintos=${typeMismatches.length} -> ${status}`);
-  }
-
-  const allPass = missingInPostgres.length === 0 && extraInPostgres.length === 0 && allRowCountsMatch && allColumnsMatch && allTypesMatch;
-  const validationStatus = allPass ? "PASSED" : "FAILED";
-
-  const summary = {
-    generated_at: new Date().toISOString(),
-    validation_status: validationStatus,
-    checks: {
-      tables_missing_in_postgres: missingInPostgres,
-      tables_extra_in_postgres: extraInPostgres,
-      row_counts_match: allRowCountsMatch,
-      columns_match: allColumnsMatch,
-      types_match: allTypesMatch
-    },
-    tables: tableResults
+  return {
+    object: key,
+    status,
+    duckdb_row_count: duckdbRowCount,
+    postgres_row_count: postgresRowCount,
+    missing_columns: missingColumns,
+    extra_columns: extraColumns,
+    type_mismatches: typeMismatches
   };
+}
 
-  await fs.mkdir("data/reports", { recursive: true });
-  await fs.writeFile(SUMMARY_FILE, JSON.stringify(summary, null, 2), "utf8");
-  console.log(`Resumen guardado en ${SUMMARY_FILE}`);
+export { validateWarehouseState };
 
-  // Actualiza la fila de audit.warehouse_sync_state que migrate-to-supabase.js insertó (mismo run_id)
+export function buildValidationProvenance(connectionString, runRecord = null) {
+  const target = buildWriteConfirmationToken(describeConnectionTarget(connectionString));
+  return {
+    target,
+    sync_run_id: runRecord?.target === target && runRecord?.run_id ? runRecord.run_id : null
+  };
+}
+
+async function readRunRecord() {
   try {
-    const runIdFileContent = JSON.parse(await fs.readFile(RUN_ID_FILE, "utf8"));
-
-    // Probado en producción: un UPDATE parametrizado normal
-    // (connection.run con $1/$2/$3, incluso con ::JSON en $2) falla acá -
-    // el puente ATTACH de DuckDB arma una tabla de staging intermedia
-    // para el UPDATE, y esa tabla queda tipada VARCHAR según el tipo de
-    // ORIGEN del parámetro, ignorando el cast del lado DuckDB. Postgres
-    // rechaza la asignación VARCHAR -> jsonb con "column is of type
-    // jsonb but expression is of type character varying". postgres_execute
-    // manda el SQL ya armado directo a Postgres (mismo mecanismo que el
-    // TRUNCATE) - ahí el ::jsonb lo resuelve el propio parser de Postgres,
-    // sin la tabla de staging de por medio.
-    await postgresExecute(
-      connection,
-      `UPDATE audit.warehouse_sync_state
-       SET validation_status = ${quoteSqlLiteral(validationStatus)},
-           validation_summary = ${quoteSqlLiteral(JSON.stringify(summary))}::jsonb
-       WHERE run_id = ${quoteSqlLiteral(runIdFileContent.run_id)}`
-    );
-    console.log(`audit.warehouse_sync_state actualizada (run_id ${runIdFileContent.run_id})`);
+    return JSON.parse(await fs.readFile(RUN_ID_FILE, "utf8"));
   } catch (error) {
-    console.warn(`No se pudo actualizar audit.warehouse_sync_state: ${error.message} (¿corriste migrate-to-supabase.js antes?)`);
+    if (error?.code === "ENOENT") return null;
+    throw error;
   }
+}
 
-  connection.closeSync();
+export async function validateSupabase() {
+  console.log("=== Validando DuckDB -> PostgreSQL (read-only) ===");
+  const connectionString = requireEnv("SUPABASE_DB_URL_DIRECT");
+  const instance = await DuckDBInstance.create(DB_PATH, { access_mode: "READ_ONLY" });
+  const connection = await instance.connect();
 
-  console.log(`=== Validación ${validationStatus} ===`);
+  try {
+    await attachPostgresReadOnly(connection, connectionString);
+    const inventory = await readInventory(connection);
+    const summary = await validateWarehouseState({
+      ...inventory,
+      compareDuckdbSync: entry => compareDuckdbSync(connection, entry)
+    });
+    summary.provenance = buildValidationProvenance(connectionString, await readRunRecord());
 
-  if (!allPass) {
-    throw new Error("Validación falló: al menos uno de los 4 chequeos no pasó. Ver detalle arriba y en el resumen JSON.");
+    await fs.mkdir("data/reports", { recursive: true });
+    await fs.writeFile(SUMMARY_FILE, JSON.stringify(summary, null, 2), "utf8");
+    console.log(`Resumen local guardado en ${SUMMARY_FILE}`);
+    console.log(`=== Validación ${summary.validation_status} (sin escrituras PostgreSQL) ===`);
+
+    if (summary.validation_status !== "PASSED") {
+      const error = new Error("Validación FAILED. Ver causas en el resumen local.");
+      error.summary = summary;
+      throw error;
+    }
+
+    return summary;
+  } finally {
+    connection.closeSync();
+    // Ver el comentario equivalente en src/db/load-duckdb.js - buena
+    // higiene aunque VALIDATE sea hoy la última etapa de este orquestador
+    // que abre el .duckdb (una etapa futura que también lo abriera fallaría
+    // igual que las demás sin esto).
+    instance.closeSync();
   }
-
-  return summary;
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   validateSupabase().catch(error => {
-    console.error("ERROR VALIDANDO SUPABASE:");
+    console.error("ERROR VALIDANDO POSTGRESQL:");
     console.error(error);
     process.exit(1);
   });

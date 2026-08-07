@@ -4,9 +4,7 @@ import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
 
 // La fuente de verdad para el DDL de Postgres es el .duckdb VIVO, no
-// warehouse-config.js ni SQL_WAREHOUSE.md - ambos quedaron desactualizados
-// respecto a lo que realmente hay cargado (40 tablas, no 26 - ver
-// docs/TECH_DEBT_UNREPRODUCIBLE_TABLES.md). Este script introspecciona
+// warehouse-config.js ni SQL_WAREHOUSE.md. Este script introspecciona
 // information_schema.columns directo y emite CREATE TABLE IF NOT EXISTS
 // para processed/marts/gold, agrupado por schema en sql/010-030.
 const SCHEMAS = ["processed", "marts", "gold"];
@@ -33,6 +31,32 @@ export const TYPE_MAP = {
 
 export function mapType(duckdbType) {
   return TYPE_MAP[duckdbType] ?? "TEXT";
+}
+
+function informationSchemaType(pgDdlType) {
+  const normalized = pgDdlType.toLowerCase();
+  if (normalized === "timestamp") return "timestamp without time zone";
+  if (normalized === "timestamptz") return "timestamp with time zone";
+  return normalized;
+}
+
+// Contrato compartido entre el DDL generado y su validador. PostgreSQL
+// reporta TIMESTAMP/TIMESTAMPTZ con los nombres largos de information_schema.
+export function postgresTypeMatchesDuckdb(duckdbType, postgresInformationSchemaType) {
+  return informationSchemaType(mapType(duckdbType)) === postgresInformationSchemaType.toLowerCase();
+}
+
+export async function writeFileIfChanged(filePath, content, io = fs) {
+  let current = null;
+  try {
+    current = await io.readFile(filePath, "utf8");
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+
+  if (current === content) return { changed: false };
+  await io.writeFile(filePath, content, "utf8");
+  return { changed: true };
 }
 
 function quoteIdentifier(identifier) {
@@ -99,8 +123,8 @@ export async function generatePostgresDdl() {
       `-- Ver docs/TECH_DEBT_UNREPRODUCIBLE_TABLES.md para las tablas sin script generador propio.\n\n`;
 
     const body = sqlBySchema[schema].join("\n\n") + "\n";
-    await fs.writeFile(OUTPUT_FILES[schema], header + body, "utf8");
-    console.log(`Escrito ${OUTPUT_FILES[schema]}: ${sqlBySchema[schema].length} tablas`);
+    const { changed } = await writeFileIfChanged(OUTPUT_FILES[schema], header + body);
+    console.log(`${changed ? "Escrito" : "Sin cambios"} ${OUTPUT_FILES[schema]}: ${sqlBySchema[schema].length} tablas`);
   }
 
   console.log(`=== DDL generado: ${summary.length} tablas en total (processed/marts/gold) ===`);

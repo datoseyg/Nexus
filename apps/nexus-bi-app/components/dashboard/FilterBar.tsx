@@ -1,3 +1,5 @@
+import { BUTTON_TEXT } from "@/components/ui/interactive";
+
 export interface FilterSelectConfig {
   type: "select";
   key: string;
@@ -88,7 +90,7 @@ export function FilterBar({ filters, values, onChange, onClear, extra }: FilterB
 
       <button
         type="button"
-        className={`ml-auto whitespace-nowrap text-[13px] font-semibold underline ${FOCUS_RING}`}
+        className={`ml-auto whitespace-nowrap text-[13px] font-semibold underline ${BUTTON_TEXT}`}
         style={{ color: "var(--nx-accent-indigo)", minHeight: 44, padding: "0 4px" }}
         onClick={onClear}
       >

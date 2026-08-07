@@ -161,3 +161,29 @@ export function buildAfterHoursMartConditions(filters: AfterHoursFilters, alias:
 
   return conditions;
 }
+
+export type ReportIdConditionResult = { condition: string } | { errorMessage: string } | null;
+
+// Buscador exacto por N.º de reporte (fieldbeat_task_id) del encabezado de
+// AfterHoursDetailTable - deliberadamente FUERA de AfterHoursFilters/
+// buildAfterHoursMartConditions: no es un filtro general de After-Hours (no
+// vive en AfterHoursFilterState ni en ningún otro endpoint by-*), es
+// exclusivo de /api/dashboard/after-hours/detail. El caller (route.ts)
+// combina el `condition` devuelto con AND sobre el resto de las
+// condiciones ANTES de construir el WHERE compartido por la consulta de
+// filas y la de conteo, así que ambas quedan filtradas por igual por
+// construcción (mismo array `conditions`, mismo whereClause).
+//
+// `raw` es el valor crudo del query param (searchParams.get("reportId") -
+// null si el parámetro está ausente). null -> null (comportamiento actual
+// sin cambios). Presente pero no formado solo por dígitos, o fuera de rango
+// seguro/positivo -> { errorMessage } (el caller responde 400). Válido ->
+// { condition } parametrizado, nunca con el valor interpolado directo en el
+// SQL.
+export function buildReportIdCondition(raw: string | null, alias: string, pusher: ParamPusher): ReportIdConditionResult {
+  if (raw === null) return null;
+  if (!/^\d+$/.test(raw)) return { errorMessage: "reportId debe ser un entero positivo." };
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value <= 0) return { errorMessage: "reportId debe ser un entero positivo." };
+  return { condition: `${col(alias, "fieldbeat_task_id")} = ${pusher.push(value)}` };
+}

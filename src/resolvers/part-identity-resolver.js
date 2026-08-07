@@ -9,17 +9,153 @@ export function normalizeIdentifier(value) {
     .trim();
 }
 
-// Valores que técnicos usan históricamente para decir "no hay dato", no un
-// código real. Se comparan normalizados (mismo normalizeIdentifier de arriba)
-// para cubrir variantes de tildes/espacios/mayúsculas sin hacer fuzzy matching.
-const PLACEHOLDER_LITERALS = [
-  "sin numero", "sin número", "sin nro", "sin n°", "s/n", "sn",
-  "n/a", "na", "no aplica", "sin serie", "sin codigo", "sin código",
-  "no tiene", "pendiente", "no corresponde", "sin información", "sin informacion",
-  "nc", "n/c", "n.c.", "no consume", "sin consumo", "sin repuesto", "sin repuestos"
+// Valores que no representan un identificador real.
+//
+// Importante:
+// - Algunos significan “no se utilizó repuesto”.
+// - Otros solo significan “no se informó el identificador”.
+// Esta lista únicamente los clasifica como PLACEHOLDER_VALUE.
+// La distinción NO_PART_USED debe realizarse posteriormente con la regla
+// semántica correspondiente y considerando cantidad/evidencia contradictoria.
+export const PLACEHOLDER_LITERALS = [
+  // Vacío
+  "",
+
+  // Abreviaturas comunes
+  "n/a",
+  "na",
+  "n.c.",
+  "n/c",
+  "nc",
+  "s/d",
+  "sd",
+
+  // Ausencia explícita
+  "no",
+  "ninguno",
+  "ninguna",
+  "ningún",
+  "ningun",
+  "nada",
+
+  // No existe o no se dispone
+  "no hay",
+  "no existe",
+  "no existen",
+  "no tiene",
+  "no tienen",
+  "no posee",
+  "no poseen",
+  "no presenta",
+  "no presentan",
+  "no registra",
+  "no registrado",
+  "no registrada",
+  "no disponible",
+
+  // No aplica o no corresponde
+  "no aplica",
+  "no aplicable",
+  "no corresponde",
+  "no correspondía",
+  "no correspondia",
+  "no procede",
+  "no requerido",
+  "no requerida",
+  "no requiere",
+  "no se requiere",
+
+  // Ausencia explícita de repuesto
+  "sin repuesto",
+  "sin repuestos",
+  "sin uso de repuesto",
+  "sin uso de repuestos",
+  "sin utilizar repuesto",
+  "sin utilizar repuestos",
+  "no utilizó repuesto",
+  "no utilizo repuesto",
+  "no utilizó repuestos",
+  "no utilizo repuestos",
+  "no se utilizó repuesto",
+  "no se utilizo repuesto",
+  "no se utilizaron repuestos",
+  "no se usó repuesto",
+  "no se uso repuesto",
+  "no se usaron repuestos",
+  "repuesto no utilizado",
+  "repuestos no utilizados",
+
+  // Ausencia de consumo
+  "no consume",
+  "no consumió",
+  "no consumio",
+  "no se consumió",
+  "no se consumio",
+  "sin consumo",
+  "sin consumos",
+
+  // Ausencia de materiales o insumos
+  "sin material",
+  "sin materiales",
+  "sin insumo",
+  "sin insumos",
+  "no se usaron materiales",
+  "no se utilizaron materiales",
+  "no se usaron insumos",
+  "no se utilizaron insumos",
+
+  // Identificador no informado
+  "sin número",
+  "sin numero",
+  "sin nro",
+  "sin n°",
+  "sin num",
+  "s/n",
+  "sn",
+  "sin serie",
+  "sin número de serie",
+  "sin numero de serie",
+  "sin código",
+  "sin codigo",
+  "sin identificador",
+  "sin id",
+
+  // Información faltante o indeterminada
+  "sin información",
+  "sin informacion",
+  "sin dato",
+  "sin datos",
+  "no informado",
+  "no informada",
+  "no ingresado",
+  "no ingresada",
+  "no indicado",
+  "no indicada",
+  "desconocido",
+  "desconocida",
+  "pendiente",
+  "por confirmar",
+  "por definir",
+
+  // Inglés, solo si FieldBeat puede contener entradas en inglés
+  "none",
+  "not applicable",
+  "not required",
+  "no part",
+  "no parts",
+  "no spare part",
+  "no spare parts",
+  "without part",
+  "without parts",
+  "no material",
+  "no materials",
+  "no information",
+  "unknown"
 ];
 
-const PLACEHOLDER_NORMALIZED_SET = new Set(PLACEHOLDER_LITERALS.map(normalizeIdentifier));
+const PLACEHOLDER_NORMALIZED_SET = new Set(
+  PLACEHOLDER_LITERALS.map(normalizeIdentifier)
+);
 
 // Un valor que no deja ningún caracter alfanumérico tras normalizar
 // ("---", ".......", espacios) tampoco es un identificador real.

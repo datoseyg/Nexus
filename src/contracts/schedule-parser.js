@@ -1,9 +1,11 @@
-// Parsea ÚNICAMENTE los patrones demostrables listados en el encargo (§9):
-// 24/7; 24/7 condicionado a fallas que impidan tratamiento; lunes a viernes
-// HH:MM-HH:MM; lunes a jueves + viernes con ventana distinta; días hábiles
-// HH:MM-HH:MM sin fines de semana ni festivos. Todo lo demás (incluyendo
-// "Horario hábil", vacío, "N/A", o cualquier texto no reconocido) queda en
-// REVISIÓN -nunca se asume un horario.
+// Parsea únicamente los patrones contractuales gobernados:
+// 24/7; 24/7 condicionado a fallas críticas; lunes a viernes con ventana
+// explícita; lunes a jueves + viernes con ventana distinta; días hábiles
+// con ventana explícita; y "Horario hábil", definido administrativamente
+// como lunes a viernes de 08:30 a 17:30, sin festivos.
+//
+// Vacío, "N/A" o cualquier otro texto no reconocido queda en revisión;
+// nunca se infiere un horario adicional.
 
 const DAYS_MON_FRI = ["MON", "TUE", "WED", "THU", "FRI"];
 const DAYS_ALL_WEEK = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -65,13 +67,19 @@ export function parseAttentionSchedule({ attentionScheduleRaw }) {
   }
 
   if (/^Horario h[áa]bil$/i.test(raw)) {
-    return {
-      coverageType: "BUSINESS_HOURS_UNDEFINED",
-      coverageCondition: null,
-      parseStatus: "REVIEW_REQUIRED",
-      serviceWindowRows: [],
-      issues: [{ issueType: "AMBIGUOUS_BUSINESS_HOURS", details: { raw } }]
-    };
+  return {
+    coverageType: "FIXED_WINDOW",
+    coverageCondition: null,
+    parseStatus: "OK",
+    serviceWindowRows: fixedWindow(
+      DAYS_MON_FRI,
+      "08",
+      "30",
+      "17",
+      "30"
+    ),
+    issues: []
+  };
   }
 
   if (PATTERN_24X7.test(raw)) {

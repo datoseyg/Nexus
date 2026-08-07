@@ -107,6 +107,7 @@ export async function mineAllFieldBeatTasks() {
 
   let nextPageToken = "";
   let page = 0;
+  let pagesFetched = 0;
 
   const allTasks = [];
   const seenTaskIds = new Set();
@@ -125,6 +126,7 @@ export async function mineAllFieldBeatTasks() {
 
     const tasks = extractTasks(payload);
     console.log(`Página ${page + 1}: ${tasks.length} tasks`);
+    pagesFetched++;
 
     for (const task of tasks) {
       const taskId = extractTaskId(task);
@@ -161,16 +163,26 @@ export async function mineAllFieldBeatTasks() {
   });
 
   const finishedAt = new Date();
+  // Si el loop terminó por alcanzar MAX_PAGES en vez de agotar la
+  // paginación natural, nextPageToken sigue teniendo el valor de la última
+  // página fetcheada (había más por descargar) - mismo criterio que
+  // zendesk.js::truncatedByPageLimit.
+  const truncatedByPageLimit = Boolean(nextPageToken);
 
   console.log("=== FieldBeat Miner finalizado ===");
   console.log(`Inicio: ${startedAt.toISOString()}`);
   console.log(`Fin:    ${finishedAt.toISOString()}`);
   console.log(`Tasks únicas descargadas: ${allTasks.length}`);
+  if (truncatedByPageLimit) {
+    console.log(`ADVERTENCIA: se alcanzó FIELDBEAT_MAX_PAGES=${MAX_PAGES} con más páginas disponibles - descarga incompleta.`);
+  }
 
   return {
     started_at: startedAt,
     finished_at: finishedAt,
-    total_tasks: allTasks.length
+    total_tasks: allTasks.length,
+    pagesFetched,
+    truncatedByPageLimit
   };
 }
 

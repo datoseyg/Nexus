@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-07-01T21:02:03.756Z",
-  "total_zendesk_tickets": 628,
-  "tickets_with_fieldbeat_report": 228,
-  "tickets_without_fieldbeat_report": 400,
-  "tickets_with_multiple_fieldbeat_reports": 38,
-  "tickets_with_used_parts": 113,
-  "total_bridge_relations": 1210,
-  "fieldbeat_links_without_zendesk_ticket": 920,
+  "generated_at": "2026-08-06T15:19:24.811Z",
+  "total_zendesk_tickets": 660,
+  "tickets_with_fieldbeat_report": 238,
+  "tickets_without_fieldbeat_report": 422,
+  "tickets_with_multiple_fieldbeat_reports": 40,
+  "tickets_with_used_parts": 118,
+  "total_bridge_relations": 1235,
+  "fieldbeat_links_without_zendesk_ticket": 931,
   "operational_join_status_breakdown": {
-    "SINGLE_FIELDBEAT_REPORT": 190,
-    "NO_FIELDBEAT_REPORT": 400,
-    "MULTIPLE_FIELDBEAT_REPORTS": 38
+    "SINGLE_FIELDBEAT_REPORT": 198,
+    "NO_FIELDBEAT_REPORT": 422,
+    "MULTIPLE_FIELDBEAT_REPORTS": 40
   }
 }

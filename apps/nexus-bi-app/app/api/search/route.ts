@@ -16,22 +16,45 @@ import {
   mapTicketRow,
   toSafeCount
 } from "@/lib/search-sql";
-import type { SearchCounts, SearchEntity, SearchGroups, SearchResponse } from "@/types/search";
+import type { SearchCounts, SearchEntity, SearchGroups, SearchQueryExplanation, SearchResponse } from "@/types/search";
 
 export const runtime = "nodejs";
 
 const PREVIEW_LIMIT = 5;
 const ALL_ENTITIES: Array<Exclude<SearchEntity, "all">> = ["reports", "tickets", "clients", "machines", "parts"];
 
-// Reemplaza $1, $2... por el valor literal SOLO para el panel "ver query" -
-// nunca se re-ejecuta este string, la query real corre parametrizada.
-function toReadableSql(sql: string, params: unknown[]): string {
-  let readable = sql.trim().replace(/\s+/g, " ");
-  params.forEach((value, index) => {
-    const placeholder = `$${index + 1}`;
-    readable = readable.split(placeholder).join(`'${String(value).replace(/'/g, "''")}'`);
-  });
-  return readable;
+const ENTITY_LABELS: Record<Exclude<SearchEntity, "all">, string> = {
+  reports: "Reportes",
+  tickets: "Tickets",
+  clients: "Clientes",
+  machines: "Equipos",
+  parts: "Repuestos"
+};
+
+// Gate B (B24/21.12) - "SQL ejecutada" retirado de la experiencia productiva
+// para ambos roles: reemplazado por una explicación en lenguaje de negocio,
+// nunca por schema/tabla/columna/join/SQL. Los valores de filtro se
+// muestran tal como el usuario los ingresó (ya son suyos, no un secreto),
+// nunca interpolados dentro de un fragmento de SQL.
+function buildQueryExplanation(filters: SearchFilters, entities: Array<Exclude<SearchEntity, "all">>): SearchQueryExplanation {
+  const filtersApplied: Array<{ label: string; value: string }> = [];
+  if (filters.from) filtersApplied.push({ label: "Desde", value: filters.from });
+  if (filters.to) filtersApplied.push({ label: "Hasta", value: filters.to });
+  if (filters.cliente) filtersApplied.push({ label: "Cliente", value: filters.cliente });
+  if (filters.maquina) filtersApplied.push({ label: "Equipo", value: filters.maquina });
+  if (filters.tipoTarea) filtersApplied.push({ label: "Tipo de tarea", value: filters.tipoTarea });
+  if (filters.estadoTicket) filtersApplied.push({ label: "Estado de ticket", value: filters.estadoTicket });
+  if (filters.conRepuesto !== "all") filtersApplied.push({ label: "Con repuesto", value: filters.conRepuesto === "yes" ? "Sí" : "No" });
+
+  return {
+    entitiesSearched: entities.map(e => ENTITY_LABELS[e]),
+    filtersApplied,
+    resultRelation: "Resultados agrupados por tipo de entidad, cada uno con su propio conteo total.",
+    resultLimits:
+      entities.length > 1
+        ? [`Vista combinada: hasta ${PREVIEW_LIMIT} resultados por tipo de entidad.`]
+        : [`Página de ${filters.pageSize} resultados.`]
+  };
 }
 
 function emptyGroups(): SearchGroups {
@@ -78,18 +101,16 @@ export async function GET(request: NextRequest) {
     counts.all = counts.reports + counts.tickets + counts.clients + counts.machines + counts.parts;
 
     const groups = emptyGroups();
-    const queries: Array<{ label: string; sql: string }> = [
-      { label: "Conteos consolidados", sql: toReadableSql(countsQuery.sql, countsQuery.params) }
-    ];
 
     if (filters.entity === "all") {
+      const nonEmptyEntities: Array<Exclude<SearchEntity, "all">> = [];
       for (const entity of ALL_ENTITIES) {
         if (counts[entity] === 0) continue;
+        nonEmptyEntities.push(entity);
         const pusher = createParamPusher();
         const rowsQuery = buildEntityRowsQuery(entity, filters, normalized.tokens, reportFieldsAvailable, pusher, PREVIEW_LIMIT, 0);
         const rawRows = await timer.timed(`preview:${entity}`, () => runQuery<Record<string, unknown>>(rowsQuery.sql, rowsQuery.params));
         (groups[entity] as unknown[]) = mapEntityRows(entity, serializeRows(rawRows));
-        queries.push({ label: `Preview de ${entity}`, sql: toReadableSql(rowsQuery.sql, rowsQuery.params) });
       }
 
       const response: SearchResponse = {
@@ -100,7 +121,7 @@ export async function GET(request: NextRequest) {
         pagination: null,
         queryAdjusted: normalized.queryAdjusted,
         queryAdjustmentReasons: normalized.queryAdjustmentReasons,
-        queries
+        queryExplanation: buildQueryExplanation(filters, nonEmptyEntities.length > 0 ? nonEmptyEntities : ALL_ENTITIES)
       };
       console.info(`[search] entity=all queries=${timer.count()} totalMs=${timer.timings.reduce((s, t) => s + t.ms, 0)}`, timer.timings);
       return NextResponse.json(response);
@@ -112,7 +133,6 @@ export async function GET(request: NextRequest) {
     const rowsQuery = buildEntityRowsQuery(entity, filters, normalized.tokens, reportFieldsAvailable, pusher, filters.pageSize, offset);
     const rawRows = await timer.timed(`page:${entity}`, () => runQuery<Record<string, unknown>>(rowsQuery.sql, rowsQuery.params));
     (groups[entity] as unknown[]) = mapEntityRows(entity, serializeRows(rawRows));
-    queries.push({ label: `Página de ${entity}`, sql: toReadableSql(rowsQuery.sql, rowsQuery.params) });
 
     const total = counts[entity];
     const totalPages = Math.max(1, Math.ceil(total / filters.pageSize));
@@ -125,7 +145,7 @@ export async function GET(request: NextRequest) {
       pagination: { page: Math.min(filters.page, totalPages), pageSize: filters.pageSize, total, totalPages },
       queryAdjusted: normalized.queryAdjusted,
       queryAdjustmentReasons: normalized.queryAdjustmentReasons,
-      queries
+      queryExplanation: buildQueryExplanation(filters, [entity])
     };
     console.info(`[search] entity=${entity} queries=${timer.count()} totalMs=${timer.timings.reduce((s, t) => s + t.ms, 0)}`, timer.timings);
     return NextResponse.json(response);

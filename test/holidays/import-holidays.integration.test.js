@@ -229,7 +229,7 @@ test("9) vista canónica config.current_holiday_calendar_entries refleja solo co
 });
 
 test("10) permisos: nexus_app no puede leer ninguna tabla/vista de config.holiday_*", { skip: !TEST_DB_URL }, async () => {
-  const nexusUrl = TEST_DB_URL.replace(/\/\/[^:]+:[^@]+@/, "//nexus_app:test@");
+  const nexusUrl = TEST_DB_URL.replace(/\/\/[^:]+:[^@]+@/, "//nexus_app:__SET_IN_SUPABASE_DASHBOARD__@");
   const nexusPool = new Pool({ connectionString: nexusUrl });
   try {
     await assert.rejects(() => nexusPool.query("SELECT * FROM config.holiday_import_runs LIMIT 1"));

@@ -7,15 +7,17 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "predev": "node ../../scripts/check-local-backend.mjs",
     "dev": "next dev",
-    "dev:local:setup": "node scripts/setup-local-dev-db.mjs",
-    "dev:local:teardown": "node scripts/teardown-local-dev-db.mjs",
+    "db:disposable:setup": "node scripts/setup-local-dev-db.mjs",
+    "db:disposable:teardown": "node scripts/teardown-local-dev-db.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
     "test": "node scripts/run-unit-tests.mjs",
-    "test:integration": "node scripts/run-integration-tests.mjs"
+    "test:integration": "node scripts/run-integration-tests.mjs",
+    "test:integration:fresh": "node scripts/run-integration-tests-fresh.mjs"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
@@ -24,6 +26,7 @@
     "@tanstack/react-table": "^8.21.3",
     "chart.js": "^4.5.1",
     "next": "^16.2.10",
+    "pdfkit": "^0.19.1",
     "pg": "^8.22.0",
     "react": "^19.2.7",
     "react-chartjs-2": "^5.3.1",
@@ -33,6 +36,8 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^26.1.0",
+    "dotenv": "^16.4.7",
+    "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

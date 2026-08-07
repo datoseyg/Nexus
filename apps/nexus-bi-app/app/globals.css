@@ -110,6 +110,13 @@
   --nx-heat-4: rgba(74, 85, 212, 0.66);
   --nx-heat-5: rgba(74, 85, 212, 0.88);
 
+  /* Fila seleccionada (Explorador) - distinta del hover (que reutiliza
+     --nx-page-bg): tinte de acento + borde izquierdo sólido, para que la
+     señal nunca dependa solo del color y se distinga del hover incluso al
+     pasar el mouse sobre una fila ya seleccionada. */
+  --nx-row-selected-bg: var(--nx-heat-2);
+  --nx-row-selected-border: var(--nx-accent-indigo);
+
   /* Semánticos - triple fondo/borde/texto solo donde está evidenciado en
      los mockups (warning, en los banners "Diseño deseado"/"Análisis
      estimado"); los demás solo aportan el color de texto/ícono evidenciado,
@@ -197,9 +204,19 @@
   }
 }
 
+/* El canvas global usa los tokens --nx-* (siempre claros, sin variante
+   oscura - ver comentario "Nexus Product Palette v1" arriba) en vez de
+   --page-plane/--text-primary (derivados de --eyg-bg/--eyg-ink, que SÍ
+   tienen una variante @media (prefers-color-scheme: dark) mucho más oscura,
+   #131a17). Antes de esta corrección, un usuario con el SO en modo oscuro
+   veía el body #131a17 (un negro verdoso) detrás de cada card --nx-card-bg
+   (blanco fijo, sin variante oscura) en CUALQUIER ruta que no fijara su
+   propio fondo de wrapper - el bug reportado como "fondo verde oscuro en
+   Auditoría/Explorador". Fijar el canvas acá (autoritativo) es la corrección
+   real - no un parche por ruta. */
 body {
-  background: var(--page-plane);
-  color: var(--text-primary);
+  background: var(--nx-page-bg);
+  color: var(--nx-text-primary);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 

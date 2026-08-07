@@ -29,7 +29,7 @@ export function AfterHoursHeader({ rangeLabel }: AfterHoursHeaderProps) {
             className="rounded-[var(--nx-radius-chip)] border px-3 py-1.5 text-[13px]"
             style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)", color: "var(--nx-text-secondary)" }}
           >
-            Última actualización aún no disponible
+            Actualizar datos antes de analizar.
           </span>
         </>
       }

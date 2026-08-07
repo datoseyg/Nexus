@@ -6,6 +6,7 @@ import { HomeNavigationGrid } from "@/components/home/HomeNavigationGrid";
 import { HomeDashboard } from "@/components/home/HomeDashboard";
 import { requireAuthenticatedUser } from "@/lib/auth/authorization";
 import { redirect } from "next/navigation";
+import { CARD_INTERACTIVE } from "@/components/ui/interactive";
 
 const TOOLS = [
   { href: "/explorer", title: "Explorador", description: "Consulta libre de las tablas internas del warehouse.", feature: "explorer" as const },
@@ -115,7 +116,7 @@ export default async function HomePage() {
                 <li key={tool.href}>
                   <Link
                     href={tool.href}
-                    className="flex min-w-0 flex-col gap-1 rounded-[var(--nx-radius-card)] border p-3.5"
+                    className={`flex min-w-0 flex-col gap-1 rounded-[var(--nx-radius-card)] border p-3.5 ${CARD_INTERACTIVE}`}
                     style={{ background: TOOL_CARD_BG, borderColor: "var(--nx-border)" }}
                   >
                     <span className="text-sm font-semibold" style={{ color: "var(--nx-text-secondary)" }}>

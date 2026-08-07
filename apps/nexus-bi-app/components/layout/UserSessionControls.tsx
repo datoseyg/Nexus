@@ -7,6 +7,8 @@ import {
   INITIAL_LOGOUT_STATE,
   type LogoutActionState,
 } from "@/app/login/action-state";
+import { BUTTON_CHROME } from "@/components/ui/interactive";
+import { EygBrand } from "../brand/EygBrand";
 
 function LogoutButton({ compact }: { compact: boolean }) {
   const { pending } = useFormStatus();
@@ -15,8 +17,8 @@ function LogoutButton({ compact }: { compact: boolean }) {
       type="submit"
       disabled={pending}
       aria-label={pending ? "Cerrando sesión" : "Cerrar sesión"}
-      className="flex w-full items-center gap-2 rounded-[var(--nx-radius-button)] px-2.5 py-2 text-[12px] font-semibold disabled:opacity-60"
-      style={{ color: "var(--nx-sidebar-text-secondary)", background: "rgba(255,255,255,0.06)" }}
+      className={`flex w-full items-center gap-2 rounded-[var(--nx-radius-button)] bg-white/[0.06] px-2.5 py-2 text-[12px] font-semibold ${BUTTON_CHROME}`}
+      style={{ color: "var(--nx-sidebar-text-secondary)" }}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M10 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H10" />
@@ -31,15 +33,11 @@ export function UserSessionControls({ label, compact = false }: { label: string;
   const [state, formAction] = useActionState(logoutAction, INITIAL_LOGOUT_STATE);
 
   return (
-    <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+    <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}>
       <div className={`flex items-center gap-2 px-2.5 ${compact ? "justify-center" : ""}`}>
-        <span
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold"
-          style={{ color: "#fff", background: "var(--nx-accent-indigo)" }}
-          aria-hidden="true"
-        >
-          {label.slice(0, 1)}
-        </span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-white" title="E&G Medical Systems — Nexus BI">
+        <EygBrand variant="mark" className="h-6 w-6" />
+      </span>
         <span className={compact ? "sr-only" : "text-[12px] font-bold"} style={{ color: "var(--nx-sidebar-text-primary)" }}>
           {label}
         </span>

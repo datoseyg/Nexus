@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/ui/PageContainer";
-import { FieldbeatShell } from "@/components/fieldbeat/FieldbeatShell";
+import { FieldbeatQualityShell } from "@/components/fieldbeat/quality/FieldbeatQualityShell";
 
 export const metadata = {
   title: "Dashboard FieldBeat - Nexus BI"
@@ -8,7 +8,7 @@ export const metadata = {
 export default function FieldBeatDashboardPage() {
   return (
     <PageContainer wide>
-      <FieldbeatShell />
+      <FieldbeatQualityShell />
     </PageContainer>
   );
 }

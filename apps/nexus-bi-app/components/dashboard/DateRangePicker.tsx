@@ -1,4 +1,5 @@
 import type { Grain } from "@/lib/dashboard-filters";
+import { BASE_TRANSITION, FOCUS_RING as SHARED_FOCUS_RING } from "@/components/ui/interactive";
 
 export interface DateRangeValue {
   from?: string;
@@ -64,12 +65,13 @@ export function DateRangePicker({ value, onChange, min, max }: DateRangePickerPr
           <button
             key={preset.label}
             type="button"
-            className={`rounded-[var(--nx-radius-pill)] px-3 py-1.5 text-[12px] font-semibold ${FOCUS_RING}`}
-            style={{
-              background: active ? "var(--nx-accent-green)" : "var(--nx-page-bg)",
-              color: active ? "#ffffff" : "var(--nx-text-secondary)",
-              minHeight: 32
-            }}
+            aria-pressed={active}
+            className={`rounded-[var(--nx-radius-pill)] px-3 py-1.5 text-[12px] font-semibold cursor-pointer active:translate-y-px ${BASE_TRANSITION} ${SHARED_FOCUS_RING} ${
+              active
+                ? "bg-[var(--nx-accent-green)] text-white shadow-sm hover:bg-[#2f7024] hover:shadow-md active:bg-[#245a1c]"
+                : "bg-[var(--nx-page-bg)] text-[var(--nx-text-secondary)] hover:bg-indigo-50 hover:text-indigo-900 active:bg-indigo-100"
+            }`}
+            style={{ minHeight: 32 }}
             onClick={() => onChange({ ...value, ...preset.range() })}
           >
             {preset.label}

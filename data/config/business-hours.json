@@ -1,13 +1,13 @@
 {
   "status": "DEFAULT_UNVALIDATED",
   "timezone": "America/Santiago",
-  "note": "Horario por defecto NO validado con negocio (Lun-Vie 08:30-18:30, sin sabado/domingo). Ver docs/AFTER_HOURS_METRICS.md antes de usar estos numeros para decisiones operativas o contractuales. Editar este archivo a mano para reflejar la politica real de EyG una vez validada.",
+  "note": "Horario Elekta por defecto (08:00 a 17:00)",
   "weekly_schedule": {
-    "monday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
-    "tuesday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
-    "wednesday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
-    "thursday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
-    "friday": { "is_business_day": true, "start": "08:30", "end": "18:30" },
+    "monday": { "is_business_day": true, "start": "08:00", "end": "17:00" },
+    "tuesday": { "is_business_day": true, "start": "08:00", "end": "17:00" },
+    "wednesday": { "is_business_day": true, "start": "08:00", "end": "17:00" },
+    "thursday": { "is_business_day": true, "start": "08:00", "end": "17:00" },
+    "friday": { "is_business_day": true, "start": "08:00", "end": "17:00" },
     "saturday": { "is_business_day": false },
     "sunday": { "is_business_day": false }
   }

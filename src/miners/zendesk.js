@@ -26,6 +26,7 @@ export async function mineZendeskTickets() {
 
   let page = 1;
   let total = 0;
+  let pagesFetched = 0;
 
   while (nextUrl && page <= MAX_PAGES) {
     console.log(`Zendesk página ${page}: ${nextUrl}`);
@@ -38,6 +39,7 @@ export async function mineZendeskTickets() {
 
     const tickets = data.results || [];
     total += tickets.length;
+    pagesFetched++;
 
     await saveJson(
       `data/raw/zendesk/search_page_${page}_${timestampForFile()}.json`,
@@ -48,8 +50,14 @@ export async function mineZendeskTickets() {
     page++;
   }
 
+  const truncatedByPageLimit = Boolean(nextUrl);
+
   console.log(`Zendesk finalizado. Tickets descargados: ${total}`);
-  return total;
+  if (truncatedByPageLimit) {
+    console.log(`ADVERTENCIA: se alcanzó MAX_PAGES=${MAX_PAGES} con más páginas disponibles - descarga incompleta.`);
+  }
+
+  return { total, pagesFetched, truncatedByPageLimit };
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {

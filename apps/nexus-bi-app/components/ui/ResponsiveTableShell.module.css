@@ -1,8 +1,8 @@
 .wrapper {
-  background: var(--eyg-card);
-  border: 1px solid var(--eyg-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(36, 48, 51, 0.07);
+  background: var(--nx-card-bg);
+  border: 1px solid var(--nx-border);
+  border-radius: var(--nx-radius-card);
+  box-shadow: var(--nx-shadow-card);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -28,7 +28,7 @@
 .title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--nx-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   overflow: hidden;
@@ -38,7 +38,7 @@
 
 .count {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--nx-text-secondary);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -52,7 +52,7 @@
 
 .densityToggle {
   display: inline-flex;
-  border: 1px solid var(--eyg-border);
+  border: 1px solid var(--nx-border);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -63,20 +63,73 @@
   padding: 4px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--nx-text-secondary);
   cursor: pointer;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.densityToggle button:hover {
+  background: rgba(74, 85, 212, 0.08);
+  color: var(--nx-text-primary);
+}
+
+.densityToggle button:active {
+  background: rgba(74, 85, 212, 0.16);
+}
+
+.densityToggle button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--nx-focus-ring-color);
+  position: relative;
+  z-index: 1;
+}
+
+.densityToggle button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .densityToggleActive {
-  background: var(--eyg-green-dark);
+  background: var(--nx-accent-green);
   color: #fff !important;
 }
 
+/* Selector calificado a propósito (.densityToggle button.densityToggleActive)
+   para ganarle en especificidad a ".densityToggle button:hover" de arriba -
+   con solo ".densityToggleActive:hover" el hover neutro seguiría ganando. */
+.densityToggle button.densityToggleActive:hover {
+  background: #2f7024;
+  color: #fff;
+}
+
+.densityToggle button.densityToggleActive:active {
+  background: #245a1c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .densityToggle button {
+    transition: none;
+  }
+}
+
+/* Sin scroll vertical interno dominante (corrección de negocio, ver
+   docs/design-context - "no debe ser necesario desplazarse verticalmente
+   dentro de la propia tabla, usar paginación y scroll normal de página").
+   `overflow-x` se mantiene como red de seguridad únicamente para el caso
+   técnico secundario (una tabla genuinamente más ancha que su contenedor en
+   pantallas angostas) - nunca para recortar el alto de la lista completa.
+   Un consumidor puede seguir pasando `maxHeight` explícito cuando SÍ
+   necesita un panel de altura fija (ninguno de Auditoría lo hace ya). */
 .scrollArea {
-  overflow: auto;
-  border: 1px solid var(--eyg-border);
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid var(--nx-border);
   border-radius: 8px;
   min-width: 0;
+}
+
+.scrollArea[data-clamped="true"] {
+  overflow-y: auto;
 }
 
 .scrollArea :global(table) {
@@ -89,19 +142,19 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #eaf5ea;
-  color: #2f5c2a;
+  background: var(--nx-page-bg);
+  color: var(--nx-text-secondary);
   text-align: left;
   font-weight: 700;
   padding: 9px 12px;
   white-space: nowrap;
-  border-bottom: 1px solid var(--eyg-border);
+  border-bottom: 1px solid var(--nx-border);
 }
 
 .scrollArea :global(tbody) :global(td) {
   padding: 8px 12px;
-  border-bottom: 1px solid var(--eyg-border);
-  color: var(--text-primary);
+  border-bottom: 1px solid var(--nx-border);
+  color: var(--nx-text-primary);
   max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -109,7 +162,7 @@
 }
 
 .scrollArea :global(tbody) :global(tr:hover) {
-  background: #f4f9f4;
+  background: var(--nx-page-bg);
 }
 
 .compact :global(thead) :global(th),
@@ -121,12 +174,12 @@
 .state {
   padding: 32px 16px;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--nx-text-secondary);
   font-size: 13px;
 }
 
 .errorState {
-  color: var(--eyg-danger);
+  color: var(--nx-danger-fg, #c0392b);
   font-weight: 600;
 }
 
@@ -137,5 +190,5 @@
   flex-wrap: wrap;
   gap: 12px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--nx-text-secondary);
 }
