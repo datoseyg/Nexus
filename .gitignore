@@ -32,3 +32,10 @@ test/contracts/.tmp-fixtures/
 data/reports/holidays/
 # Local Netlify folder
 .netlify
+
+# Local environment backups
+*.env.development.local.before-*
+*.env.development.local.previous
+
+# Local database backups
+backups/*.dump
