@@ -14,7 +14,8 @@ import {
   WriteConfirmationRequiredError,
   parseSupabaseProjectRef,
   assertKnownSupabaseProject,
-  UnknownSupabaseProjectError
+  UnknownSupabaseProjectError,
+  assertSupabaseWriteAuthorized
 } from "../../src/lib/db-safety.js";
 
 const BASE_VALID = {
@@ -370,4 +371,98 @@ test("assertKnownSupabaseProject: acepta un nombre de variable de entorno altern
     assertKnownSupabaseProject("postgresql://u:p@db.stagingref.supabase.co:5432/postgres", { expectedProjectRefEnvVar: "SUPABASE_PROJECT_REF_STAGING" })
   );
   delete process.env.SUPABASE_PROJECT_REF_STAGING;
+});
+
+// === NEXUS V3 - assertSupabaseWriteAuthorized: política ÚNICA que combina
+// assertWriteConfirmed (dual confirmation) + assertKnownSupabaseProject
+// (project ref V3 exacto). Todo write path hacia Supabase (migrate-to-supabase.js,
+// contracts, holidays, working-hours, contract-rematch) delega en esta
+// única función -estos tests cubren la política en sí, no cada caller.
+
+const V3_HOST = "db.v3projectref.supabase.co";
+const V3_URL = `postgresql://u:p@${V3_HOST}:5432/postgres`;
+const V3_TOKEN = `${V3_HOST}:5432/postgres`;
+
+function clearSupabaseGuardEnv() {
+  delete process.env.CONFIRM_WRITE_TARGET;
+  delete process.env.CONFIRM_PROTECTED_WRITE_TARGET;
+  delete process.env.SUPABASE_PROJECT_REF_V3;
+}
+
+test("assertSupabaseWriteAuthorized: project ref correcto + AMBAS confirmaciones exactas -> permitido", () => {
+  clearSupabaseGuardEnv();
+  process.env.CONFIRM_WRITE_TARGET = V3_TOKEN;
+  process.env.CONFIRM_PROTECTED_WRITE_TARGET = V3_TOKEN;
+  process.env.SUPABASE_PROJECT_REF_V3 = "v3projectref";
+  assert.doesNotThrow(() => assertSupabaseWriteAuthorized(V3_URL, { environment: "test" }));
+  clearSupabaseGuardEnv();
+});
+
+test("assertSupabaseWriteAuthorized: SUPABASE_PROJECT_REF_V3 ausente -> rechazado (UnknownSupabaseProjectError) aunque ambas confirmaciones sean exactas", () => {
+  clearSupabaseGuardEnv();
+  process.env.CONFIRM_WRITE_TARGET = V3_TOKEN;
+  process.env.CONFIRM_PROTECTED_WRITE_TARGET = V3_TOKEN;
+  assert.throws(() => assertSupabaseWriteAuthorized(V3_URL, { environment: "test" }), UnknownSupabaseProjectError);
+  clearSupabaseGuardEnv();
+});
+
+test("assertSupabaseWriteAuthorized: project ref distinto (destino V2, no V3) -> rechazado aunque ambas confirmaciones sean exactas para ESE destino", () => {
+  clearSupabaseGuardEnv();
+  const v2Url = "postgresql://u:p@db.v2projectref.supabase.co:5432/postgres";
+  const v2Token = "db.v2projectref.supabase.co:5432/postgres";
+  process.env.CONFIRM_WRITE_TARGET = v2Token;
+  process.env.CONFIRM_PROTECTED_WRITE_TARGET = v2Token;
+  process.env.SUPABASE_PROJECT_REF_V3 = "v3projectref"; // el ref esperado es V3, el destino real es V2
+  assert.throws(() => assertSupabaseWriteAuthorized(v2Url, { environment: "test" }), UnknownSupabaseProjectError);
+  clearSupabaseGuardEnv();
+});
+
+test("assertSupabaseWriteAuthorized: confirmaciones ausentes/incorrectas -> rechazado (WriteConfirmationRequiredError) aunque el project ref sea correcto", () => {
+  clearSupabaseGuardEnv();
+  process.env.SUPABASE_PROJECT_REF_V3 = "v3projectref";
+  assert.throws(() => assertSupabaseWriteAuthorized(V3_URL, { environment: "test" }), WriteConfirmationRequiredError);
+  clearSupabaseGuardEnv();
+});
+
+test("assertSupabaseWriteAuthorized: solo CONFIRM_WRITE_TARGET (falta la protegida) -> rechazado aunque el project ref sea correcto", () => {
+  clearSupabaseGuardEnv();
+  process.env.CONFIRM_WRITE_TARGET = V3_TOKEN;
+  process.env.SUPABASE_PROJECT_REF_V3 = "v3projectref";
+  assert.throws(() => assertSupabaseWriteAuthorized(V3_URL, { environment: "test" }), WriteConfirmationRequiredError);
+  clearSupabaseGuardEnv();
+});
+
+test("assertSupabaseWriteAuthorized: AMBAS confirmaciones exactas coincidentes entre sí pero para OTRO destino (host distinto) -> rechazado, aunque el project ref esperado sea correcto", () => {
+  clearSupabaseGuardEnv();
+  const otherToken = "db.v3projectref.supabase.co:5433/postgres"; // mismo ref, puerto distinto
+  process.env.CONFIRM_WRITE_TARGET = otherToken;
+  process.env.CONFIRM_PROTECTED_WRITE_TARGET = otherToken;
+  process.env.SUPABASE_PROJECT_REF_V3 = "v3projectref";
+  assert.throws(() => assertSupabaseWriteAuthorized(V3_URL, { environment: "test" }), WriteConfirmationRequiredError);
+  clearSupabaseGuardEnv();
+});
+
+test("assertSupabaseWriteAuthorized: target local desechable -> sigue las reglas locales existentes, sin exigir ninguna confirmación ni project ref", () => {
+  clearSupabaseGuardEnv();
+  assert.doesNotThrow(() => assertSupabaseWriteAuthorized("postgresql://u:p@localhost:55480/nexus_bi_dev_local_test", { environment: "test" }));
+});
+
+test("assertSupabaseWriteAuthorized: target local NO desechable sin confirmación -> rechazado por las mismas reglas locales de siempre (assertWriteConfirmed), nunca exige SUPABASE_PROJECT_REF_V3", () => {
+  clearSupabaseGuardEnv();
+  assert.throws(
+    () => assertSupabaseWriteAuthorized("postgresql://u:p@localhost:5432/algun_cliente_real", { environment: "test" }),
+    WriteConfirmationRequiredError
+  );
+});
+
+test("assertSupabaseWriteAuthorized: acepta expectedProjectRefEnvVar alternativo, igual que assertKnownSupabaseProject", () => {
+  clearSupabaseGuardEnv();
+  process.env.CONFIRM_WRITE_TARGET = V3_TOKEN;
+  process.env.CONFIRM_PROTECTED_WRITE_TARGET = V3_TOKEN;
+  process.env.SUPABASE_PROJECT_REF_STAGING = "v3projectref";
+  assert.doesNotThrow(() =>
+    assertSupabaseWriteAuthorized(V3_URL, { environment: "test", expectedProjectRefEnvVar: "SUPABASE_PROJECT_REF_STAGING" })
+  );
+  delete process.env.SUPABASE_PROJECT_REF_STAGING;
+  clearSupabaseGuardEnv();
 });

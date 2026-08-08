@@ -92,4 +92,12 @@ export interface AssertKnownSupabaseProjectOptions {
 
 export function assertKnownSupabaseProject(connectionString: string, opts?: AssertKnownSupabaseProjectOptions): ConnectionTarget;
 
+export interface AssertSupabaseWriteAuthorizedOptions {
+  environment?: string;
+  applicationName?: string;
+  expectedProjectRefEnvVar?: string;
+}
+
+export function assertSupabaseWriteAuthorized(connectionString: string, opts?: AssertSupabaseWriteAuthorizedOptions): ConnectionTarget;
+
 export function seedDisposableMarker(pool: QueryableClient, runId: string): Promise<void>;

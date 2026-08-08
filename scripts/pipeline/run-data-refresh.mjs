@@ -85,16 +85,14 @@
 //     adicional para After-Hours, la vista ya es la capa de agregación en
 //     vivo.
 //   - WORKING_HOURS_DB_URL (nunca SUPABASE_DB_URL_DIRECT) es la conexión
-//     real de este builder (ver src/working-hours/db-client.js) y esa
-//     misma capa RECHAZA ESTRUCTURALMENTE cualquier host reconocido como
-//     Supabase productivo (assertNotProductionHost, ETAPA 6.6B2 - "Promover
-//     a producción requiere un flag/gate de despliegue explícito de una
-//     subetapa futura"). Consecuencia real, no un descuido de este cambio:
-//     hoy BUILD_WORKING_HOURS solo puede tener éxito para environment=LOCAL
-//     (donde WORKING_HOURS_DB_URL apunta al mismo Postgres local que
-//     SUPABASE_DB_URL_DIRECT); para STAGING/PRODUCTION la etapa falla
-//     rápido y con mensaje claro (WORKING_HOURS_DB_URL ausente o rechazado)
-//     en vez de saltarse el módulo en silencio.
+//     real de este builder (ver src/working-hours/db-client.js). NEXUS V3 -
+//     un host reconocido como Supabase cloud ya no se rechaza
+//     incondicionalmente: exige la misma política única de escritura que
+//     cualquier otro write V3 hacia Supabase (assertSupabaseWriteAuthorized
+//     - dual confirmation + project ref V3 exacto, ver
+//     src/lib/db-safety.js). Sin WORKING_HOURS_DB_URL, o apuntando a un
+//     Supabase cloud sin esa autorización, la etapa falla rápido y con
+//     mensaje claro en vez de saltarse el módulo en silencio.
 //   - NUNCA dispara `contracts:import` ni `holidays:import`. Después de
 //     SYNC_POSTGRES sí reevalúa de forma append-only los matches de los
 //     contratos ya importados contra el maestro FieldBeat recién cargado;
@@ -124,7 +122,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
-import { buildWriteConfirmationToken, describeConnectionTarget, isSupabaseCloudHost } from "../../src/lib/db-safety.js";
+import { buildWriteConfirmationToken, describeConnectionTarget, isSupabaseCloudHost, assertSupabaseWriteAuthorized } from "../../src/lib/db-safety.js";
 import { mineAllFieldBeatTasks } from "../../src/miners/fieldbeat-all.js";
 import { mineZendeskTickets } from "../../src/miners/zendesk.js";
 import { mineDolibarrProducts } from "../../src/miners/dolibarr.js";
@@ -247,14 +245,30 @@ function prepareSupabaseWriteConfirmation(supabaseDbUrlDirect) {
 
 // Etapa BUILD_WORKING_HOURS - mismo principio que prepareSupabaseWriteConfirmation
 // de arriba, pero para WORKING_HOURS_DB_URL (conexión DISTINTA, ver
-// src/working-hours/db-client.js - nunca SUPABASE_DB_URL_DIRECT). Esta
-// conexión nunca es "protegida" en el sentido de assertWriteConfirmed
-// (runApply no pasa allowProtectedWithDualConfirmation - un host Supabase
-// cloud lo rechaza ANTES, en assertNotProductionHost, con un mensaje más
-// específico) - alcanza con fijar el token simple.
+// src/working-hours/db-client.js - nunca SUPABASE_DB_URL_DIRECT). NEXUS V3 -
+// esta conexión SÍ puede ser "protegida" ahora (un host Supabase cloud ya
+// no se rechaza incondicionalmente, ver assertNotProductionHost en
+// src/working-hours/db-client.js) - por eso fija también
+// CONFIRM_PROTECTED_WRITE_TARGET cuando corresponde, igual que
+// prepareSupabaseWriteConfirmation arriba.
 function prepareWorkingHoursWriteConfirmation(workingHoursDbUrl) {
-  const token = buildWriteConfirmationToken(describeConnectionTarget(workingHoursDbUrl));
+  const target = describeConnectionTarget(workingHoursDbUrl);
+  const token = buildWriteConfirmationToken(target);
   process.env.CONFIRM_WRITE_TARGET = token;
+  if (isSupabaseCloudHost(target.host)) {
+    process.env.CONFIRM_PROTECTED_WRITE_TARGET = token;
+  }
+}
+
+// Extraída como función nombrada (mismo motivo que assertWorkingHoursApplyOk
+// más abajo) para poder probar de forma aislada, sin DB, que el preflight
+// de escritura ocurre y rechaza un destino no autorizado -sin esto, un
+// futuro cambio en la etapa BUILD_WORKING_HOURS podría reordenar o borrar
+// esta llamada (dejando de nuevo al contract-rematch detrás de un pg.Pool
+// sin preflight) sin que ningún test lo note.
+export function prepareAndAuthorizeWorkingHoursWrite(workingHoursDbUrl) {
+  prepareWorkingHoursWriteConfirmation(workingHoursDbUrl);
+  assertSupabaseWriteAuthorized(workingHoursDbUrl, { environment: process.env.NODE_ENV ?? "development" });
 }
 
 // runApply() devuelve {ok:false, validation|error} EN VEZ DE lanzar cuando
@@ -331,15 +345,22 @@ export async function executeClaimedRefreshRun({
       const syncResult = await migrateToSupabase({ expectedProjectRefEnvVar });
 
       await enterStage("BUILD_WORKING_HOURS");
-      // WORKING_HOURS_DB_URL es SOLO local hoy (ver comentario de cabecera
-      // - assertNotProductionHost rechaza cualquier host Supabase cloud) -
-      // se lee acá, no en requireEnv() de main(), para que su ausencia en
-      // STAGING/PRODUCTION falle esta etapa puntual con un mensaje claro en
-      // vez de impedir arrancar el resto del refresh.
+      // WORKING_HOURS_DB_URL se lee acá, no en requireEnv() de main(), para
+      // que su ausencia en STAGING/PRODUCTION falle esta etapa puntual con
+      // un mensaje claro en vez de impedir arrancar el resto del refresh.
       const workingHoursDbUrl = process.env.WORKING_HOURS_DB_URL;
       if (!workingHoursDbUrl) {
         throw new Error("BUILD_WORKING_HOURS: falta WORKING_HOURS_DB_URL en el entorno - el módulo After-Hours no está habilitado para este entorno todavía.");
       }
+      // NEXUS V3 - preflight ANTES de abrir CUALQUIER conexión de escritura
+      // hacia este target, incluida la del contract-rematch de abajo -antes
+      // ese rematch abría su pg.Pool (vía withPool) directo, sin pasar por
+      // ningún guard (ver src/contracts/rematch-contracts.js::refreshContractEquipmentMatches,
+      // que recibe un pool ya abierto y confía en que su caller ya evaluó el
+      // destino). Misma política única que protege cualquier otro write V3
+      // hacia un destino protegido (dual confirmation + project ref V3
+      // exacto para un host Supabase; sin cambios para un target local).
+      prepareAndAuthorizeWorkingHoursWrite(workingHoursDbUrl);
       const rematchResult = await withPool(
         workingHoursDbUrl,
         "pipeline-refresh-worker:contract-rematch",
@@ -350,7 +371,6 @@ export async function executeClaimedRefreshRun({
         `matched=${rematchResult.summary.matched} ambiguous=${rematchResult.summary.ambiguous} ` +
         `unmatched=${rematchResult.summary.unmatched} applied=${rematchResult.applied}`
       );
-      prepareWorkingHoursWriteConfirmation(workingHoursDbUrl);
       const workingHoursResult = await runWorkingHoursApply({ from: null, to: null });
       assertWorkingHoursApplyOk(workingHoursResult);
 

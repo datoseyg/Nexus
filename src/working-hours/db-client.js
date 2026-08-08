@@ -1,5 +1,6 @@
 import "dotenv/config";
 import pg from "pg";
+import { assertSupabaseWriteAuthorized, isSupabaseCloudHost } from "../lib/db-safety.js";
 
 const { Pool, types } = pg;
 
@@ -24,13 +25,16 @@ function isLocalHost(connectionString) {
   }
 }
 
-// Hosts reconocidos como productivos (Supabase) -si WORKING_HOURS_DB_URL
-// apunta a alguno de estos, se rechaza estructuralmente. Promover este
-// builder a producción es una decisión explícita de una subetapa futura
-// (con su propio flag/gate de despliegue), nunca un efecto colateral de
-// reutilizar accidentalmente una URL productiva.
-const PRODUCTION_HOST_PATTERNS = [/\.supabase\.co$/i, /\.supabase\.com$/i, /pooler\.supabase\.com$/i];
-
+// NEXUS V3 - un host reconocido como Supabase cloud ya NO es un bloqueo
+// incondicional (como en la ETAPA 6.6B2 original). Ahora exige la misma
+// política única que cualquier otro write V3 hacia Supabase (ver
+// src/lib/db-safety.js::assertSupabaseWriteAuthorized): dual confirmation
+// (CONFIRM_WRITE_TARGET + CONFIRM_PROTECTED_WRITE_TARGET, host:puerto/base
+// EXACTOS) Y project ref V3 exacto (SUPABASE_PROJECT_REF_V3). Sin ambas
+// cosas, sigue rechazado exactamente igual que antes -"promover a
+// producción" ahora es ese flag/gate de despliegue explícito, en vez de una
+// variable de entorno editada a mano. Un host NO-Supabase (local, etc.)
+// sigue las reglas locales existentes, sin cambios.
 function assertNotProductionHost(connectionString) {
   let hostname;
   try {
@@ -38,14 +42,8 @@ function assertNotProductionHost(connectionString) {
   } catch {
     return; // formato no parseable -no es nuestra responsabilidad validar más allá acá
   }
-  if (PRODUCTION_HOST_PATTERNS.some(re => re.test(hostname))) {
-    throw new Error(
-      `WORKING_HOURS_DB_URL apunta a un host reconocido como productivo (${hostname}). ` +
-      `ETAPA 6.6B2 rechaza esto estructuralmente -este builder solo puede escribir contra ` +
-      `Postgres 16 desechable durante esta subetapa. Promover a producción requiere un ` +
-      `flag/gate de despliegue explícito de una subetapa futura, no editar esta variable.`
-    );
-  }
+  if (!isSupabaseCloudHost(hostname)) return;
+  assertSupabaseWriteAuthorized(connectionString, { environment: process.env.NODE_ENV ?? "development" });
 }
 
 export function getConnectionString() {

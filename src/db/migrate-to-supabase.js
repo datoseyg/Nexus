@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { DB_PATH } from "./warehouse-config.js";
 import { classifyOwnership, isDuckdbSync } from "./ownership-manifest.js";
-import { assertWriteConfirmed, assertKnownSupabaseProject, buildWriteConfirmationToken, describeConnectionTarget } from "../lib/db-safety.js";
+import { assertSupabaseWriteAuthorized, buildWriteConfirmationToken, describeConnectionTarget } from "../lib/db-safety.js";
 
 
 function quoteIdentifier(identifier) {
@@ -220,35 +220,30 @@ async function syncRawJson(connection) {
 export async function migrateToSupabase({ expectedProjectRefEnvVar, dbPath = DB_PATH } = {}) {
   console.log("=== Migrando DuckDB -> Supabase Postgres ===");
 
-  // ETAPA SAFETY-1 (Policy D, corregida en el cierre) - este script SIEMPRE
-  // apunta a un host protegido (Supabase cloud, vía SUPABASE_DB_URL_DIRECT).
-  // No debe poder escribir ahí por defecto (allowProtectedWithDualConfirmation
-  // habilita el chequeo, no lo salta), pero tampoco debe quedar
-  // permanentemente inutilizable -exige AMBOS CONFIRM_WRITE_TARGET y
-  // CONFIRM_PROTECTED_WRITE_TARGET, cada uno host:puerto/base EXACTOS del
-  // destino efectivo (ver src/lib/db-safety.js), evaluado ANTES de tocar
-  // DuckDB o abrir el ATTACH. Este opt-in es exclusivo de este script -los
-  // demás callers de assertWriteConfirmed (contracts, holidays,
-  // working-hours, validate-supabase) siguen sin poder escribir contra un
-  // target protegido bajo ninguna circunstancia.
+  // ETAPA SAFETY-1 / NEXUS V3 - este script SIEMPRE apunta a un host
+  // protegido (Supabase cloud, vía SUPABASE_DB_URL_DIRECT). Política única
+  // (src/lib/db-safety.js::assertSupabaseWriteAuthorized), evaluada ANTES
+  // de tocar DuckDB o abrir el ATTACH: exige AMBOS CONFIRM_WRITE_TARGET y
+  // CONFIRM_PROTECTED_WRITE_TARGET (host:puerto/base EXACTOS del destino
+  // efectivo) Y que el project ref real del destino coincida EXACTO con
+  // SUPABASE_PROJECT_REF_V3 (o la variable que indique
+  // expectedProjectRefEnvVar). A diferencia de antes, la comprobación de
+  // project ref ya NO es opt-in -la invocación CLI histórica
+  // (`npm run db:pg:migrate`, sin argumentos) dejaba de pasar
+  // expectedProjectRefEnvVar y por lo tanto se saltaba por completo esa
+  // capa; ahora assertSupabaseWriteAuthorized la aplica siempre (con el
+  // default "SUPABASE_PROJECT_REF_V3" si no se indica otra variable), así
+  // que es estructuralmente imposible configurar un URL Supabase
+  // equivocado, poner correctamente ambos tokens de confirmación, y aun así
+  // escribir. Este opt-in de doble confirmación sigue siendo exclusivo de
+  // este script -los demás callers (contracts, holidays, working-hours,
+  // validate-supabase) siguen sin poder escribir contra un target protegido
+  // salvo que también llamen assertSupabaseWriteAuthorized explícitamente.
   const connectionString = requireEnv("SUPABASE_DB_URL_DIRECT");
-  assertWriteConfirmed(connectionString, {
+  assertSupabaseWriteAuthorized(connectionString, {
     environment: process.env.NODE_ENV ?? "development",
-    allowProtectedWithDualConfirmation: true
+    expectedProjectRefEnvVar
   });
-
-  // NEXUS V3 - guard V2/V3 (src/lib/db-safety.js::assertKnownSupabaseProject)
-  // compuesto directo en el único punto de escritura real hacia Supabase,
-  // para que TODO caller lo herede automáticamente (igual que ya heredan
-  // assertWriteConfirmed arriba) - nunca un chequeo aparte que cada caller
-  // nuevo tiene que acordarse de agregar. Opt-in vía parámetro (no
-  // incondicional): la invocación CLI histórica de este script
-  // (`npm run db:pg:migrate`, sin argumentos) sigue funcionando exactamente
-  // igual que siempre para Nexus V2 -solo scripts/pipeline/run-data-refresh.mjs
-  // pasa expectedProjectRefEnvVar='SUPABASE_PROJECT_REF_V3'.
-  if (expectedProjectRefEnvVar) {
-    assertKnownSupabaseProject(connectionString, { expectedProjectRefEnvVar });
-  }
 
   const loadRaw = process.env.LOAD_RAW === "true";
   console.log(`LOAD_RAW=${loadRaw} (default: false -ver riesgo de presupuesto de espacio en el plan de migración)`);

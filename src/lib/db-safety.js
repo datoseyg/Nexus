@@ -342,6 +342,41 @@ export function assertKnownSupabaseProject(connectionString, opts = {}) {
 }
 
 /**
+ * Política ÚNICA para cualquier escritura V3 que pueda alcanzar un destino
+ * Supabase cloud -combina, en orden, las dos capas ya existentes: primero
+ * assertWriteConfirmed con el opt-in de doble confirmación (exige AMBOS
+ * CONFIRM_WRITE_TARGET y CONFIRM_PROTECTED_WRITE_TARGET, host:puerto/base
+ * EXACTOS del destino efectivo), después assertKnownSupabaseProject (el
+ * project ref real del destino debe coincidir EXACTO con
+ * SUPABASE_PROJECT_REF_V3, o la variable que indique
+ * opts.expectedProjectRefEnvVar). Ningún caller debe volver a componer esta
+ * combinación a mano -cada write path hacia Supabase (migrate-to-supabase.js,
+ * contracts, holidays, working-hours, contract-rematch) reutiliza esta
+ * única función, así que fortalecer la política en un solo lugar fortalece
+ * a TODOS los callers a la vez, y es estructuralmente imposible configurar
+ * un URL Supabase equivocado, poner correctamente ambos tokens de
+ * confirmación, y aun así escribir -el project ref real también debe
+ * coincidir.
+ *
+ * Un destino no-Supabase (local desechable, etc.) sigue las reglas locales
+ * existentes sin cambios: assertWriteConfirmed no exige nada especial fuera
+ * de PROTECTED_DATABASE_NAMES/host Supabase, y assertKnownSupabaseProject
+ * no-opea para un host no-Supabase.
+ * @param {string} connectionString
+ * @param {{ environment?: string, applicationName?: string, expectedProjectRefEnvVar?: string }} [opts]
+ * @returns {{ host: string, port: string, database: string, user: string }}
+ */
+export function assertSupabaseWriteAuthorized(connectionString, opts = {}) {
+  const target = assertWriteConfirmed(connectionString, {
+    environment: opts.environment,
+    applicationName: opts.applicationName,
+    allowProtectedWithDualConfirmation: true
+  });
+  assertKnownSupabaseProject(connectionString, { expectedProjectRefEnvVar: opts.expectedProjectRefEnvVar });
+  return target;
+}
+
+/**
  * Siembra la marca DISPOSABLE_TEST -SOLO debe invocarse desde un script de
  * bootstrap que crea la base desechable, NUNCA desde el before() de un
  * test (si el test pudiera crear su propia marca, un test accidentalmente

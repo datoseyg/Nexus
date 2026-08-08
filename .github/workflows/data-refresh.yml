@@ -94,6 +94,17 @@ jobs:
           GOVERNANCE_PIPELINE_REQUESTER_DB_URL: ${{ secrets.GOVERNANCE_PIPELINE_REQUESTER_DB_URL }}
           GOVERNANCE_PIPELINE_WORKER_DB_URL: ${{ secrets.GOVERNANCE_PIPELINE_WORKER_DB_URL }}
           GOVERNANCE_RULE_EVALUATOR_DB_URL: ${{ secrets.GOVERNANCE_RULE_EVALUATOR_DB_URL }}
+          # NEXUS V3 - conexión del builder de horas fuera de jornada (etapa
+          # BUILD_WORKING_HOURS) y del contract-rematch que corre justo
+          # antes de él - nunca SUPABASE_DB_URL_DIRECT (ver
+          # src/working-hours/db-client.js). Sin este secreto configurado en
+          # el Environment, la etapa falla rápido con mensaje claro en vez
+          # de saltarse el módulo en silencio; con un destino Supabase
+          # cloud, además exige la misma política única de escritura que
+          # cualquier otro write V3 (dual confirmation + project ref V3
+          # exacto, ver src/lib/db-safety.js::assertSupabaseWriteAuthorized)
+          # - nunca alcanza con que las URLs "deberían" coincidir.
+          WORKING_HOURS_DB_URL: ${{ secrets.WORKING_HOURS_DB_URL }}
           # CONFIRM_WRITE_TARGET/CONFIRM_PROTECTED_WRITE_TARGET NO son
           # secretos de este workflow: el orquestador los calcula él mismo a
           # partir de SUPABASE_DB_URL_DIRECT (buildWriteConfirmationToken) e

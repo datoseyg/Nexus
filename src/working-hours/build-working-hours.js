@@ -19,7 +19,7 @@ import fs from "node:fs/promises";
 import { parseArgs, validateArgs } from "./cli.js";
 import { createPool, getConnectionString } from "./db-client.js";
 import { runBuild, validateBeforePublish, publishResults, summarizeResults } from "./db-writer.js";
-import { assertWriteConfirmed } from "../lib/db-safety.js";
+import { assertSupabaseWriteAuthorized } from "../lib/db-safety.js";
 import { segmentLegacyCorrectedV2, computeLegacyExactParity } from "./legacy-global-schedule.js";
 import { resolveReportAnalysisInterval } from "./interval-resolver.js";
 import { offsetMinutesAt, localDateStringAt } from "./timezone-resolver.js";
@@ -77,7 +77,12 @@ async function runApply(args) {
   // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir cualquier
   // conexión de escritura. Protege este entrypoint sin importar si se
   // invoca vía CLI (`working-hours:build -- apply`) o directo.
-  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  // NEXUS V3 - política única (src/lib/db-safety.js::assertSupabaseWriteAuthorized):
+  // permite escribir deliberadamente contra Supabase V3 solo con dual
+  // confirmation Y project ref V3 exacto -db-client.js::createPool() aplica
+  // la misma política una segunda vez (defensa en profundidad) para
+  // cualquier caller que abra un pool sin pasar por acá primero.
+  assertSupabaseWriteAuthorized(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
 
   const pool = createPool({ applicationName: `working-hours-apply:${randomUUID().slice(0, 8)}` });
   const { results } = await runBuild(pool);

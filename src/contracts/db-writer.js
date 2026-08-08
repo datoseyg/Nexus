@@ -1,7 +1,7 @@
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createPool, getConnectionString, STATEMENT_TIMEOUT_MS } from "./db-client.js";
-import { assertWriteConfirmed } from "../lib/db-safety.js";
+import { assertSupabaseWriteAuthorized } from "../lib/db-safety.js";
 import { readSourceCsvRaw } from "./csv-source.js";
 import { classifyRows } from "./row-classifier.js";
 import { buildEquipmentRecord } from "./record-builder.js";
@@ -134,8 +134,14 @@ export async function applyContracts(args) {
   // invoque directamente, como hace test/contracts/db-writer.integration.test.js).
   // Evalúa el destino ANTES de crear el Pool -ninguna sentencia se ejecuta
   // si el target no está confirmado.
+  // NEXUS V3 - política única de escritura hacia un destino protegido (ver
+  // src/lib/db-safety.js::assertSupabaseWriteAuthorized): permite escribir
+  // deliberadamente contra Supabase V3 solo con dual confirmation Y project
+  // ref V3 exacto -nunca con los tokens de confirmación por sí solos (que
+  // por sí solos podrían apuntar por error al proyecto Nexus V2, mismo
+  // sufijo .supabase.co). Un target local sigue las reglas existentes.
   const connectionString = getConnectionString();
-  assertWriteConfirmed(connectionString, { environment: process.env.NODE_ENV ?? "development" });
+  assertSupabaseWriteAuthorized(connectionString, { environment: process.env.NODE_ENV ?? "development" });
 
   const pool = createPool({ applicationName: `contracts-apply:${randomUUID().slice(0, 8)}` });
   const sourceFilename = path.basename(args.file);
