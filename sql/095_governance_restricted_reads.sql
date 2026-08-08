@@ -9,6 +9,17 @@
 -- nexus_app_read (B76), superficie mínima, no gobernada por las mismas
 -- invariantes de corrección.
 
+-- Todas las funciones de este archivo deben terminar owned por
+-- governance_owner (NOLOGIN) - mismo mecanismo y misma razón que
+-- sql/092_governance_commands_2.sql (ver ese comentario para el detalle
+-- completo): el sweep de sql/090 ya corrió antes de que este archivo
+-- exista, así que sin esto CREATE OR REPLACE deja las 4 funciones de este
+-- archivo owned por quien migra (deriva real, confirmada en Cloud). Crear
+-- directo como governance_owner en vez de transferir después. Requiere
+-- solo la membresía SET ya otorgada -nunca INHERIT, nunca privilegios
+-- nuevos. Idempotente.
+SET ROLE governance_owner;
+
 CREATE OR REPLACE FUNCTION governance.fn_read_restricted_evidence(
   p_actor_user_id uuid,
   p_actor_role text,
@@ -147,3 +158,7 @@ $$;
 
 REVOKE ALL ON FUNCTION governance.fn_record_export_completed(uuid, text, text, jsonb, integer, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION governance.fn_record_export_completed(uuid, text, text, jsonb, integer, text) TO nexus_app_read, nexus_app_corrections;
+
+-- Restaura la identidad del migrador -nunca queda elevado para el resto de
+-- la sesión/archivos posteriores.
+RESET ROLE;

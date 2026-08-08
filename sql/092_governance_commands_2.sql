@@ -7,6 +7,22 @@
 -- autorización (B34), verification_requests solo cuando hay regla asociada
 -- (B81). Aditivo, sin DROP.
 
+-- Todas las funciones de este archivo deben terminar owned por
+-- governance_owner (NOLOGIN) - sin este SET ROLE, CREATE OR REPLACE las crea
+-- (o las deja) owned por quien aplique la migración (postgres en Supabase),
+-- porque el sweep de ownership de sql/090 ya corrió antes de que este
+-- archivo exista y nunca vuelve a barrer schema `governance` (deriva real,
+-- confirmada en Cloud: 18 funciones -incluidas las 4 de este archivo- owned
+-- por postgres). Crear directo como governance_owner (en vez de crear como
+-- el migrador y transferir después) evita la deriva en la raíz, no solo su
+-- síntoma - mismo mecanismo que sql/098 (SET ROLE ... RESET ROLE), aplicado
+-- acá a la sección completa porque todo el archivo es governance_owner sin
+-- excepción (ninguna sentencia intermedia necesita ejecutarse como otro
+-- rol). Requiere la membresía SET ya otorgada (sql/089/090); nunca INHERIT,
+-- nunca privilegios nuevos - governance_owner ya tenía CREATE en `governance`
+-- desde sql/089. Idempotente: repetir SET ROLE/RESET ROLE nunca falla.
+SET ROLE governance_owner;
+
 -- =============================================================================
 -- fn_apply_technician_identity: promueve una representación de origen a
 -- identidad canónica verificada manualmente. Sin rule_code asociado en el
@@ -484,3 +500,7 @@ $$;
 
 REVOKE ALL ON FUNCTION governance.fn_reverse_correction(uuid, text, bigint, text, text, uuid, integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION governance.fn_reverse_correction(uuid, text, bigint, text, text, uuid, integer) TO nexus_app_corrections;
+
+-- Restaura la identidad del migrador -nunca queda elevado para el resto de
+-- la sesión/archivos posteriores.
+RESET ROLE;

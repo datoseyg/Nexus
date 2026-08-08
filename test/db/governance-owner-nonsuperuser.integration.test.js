@@ -303,4 +303,42 @@ test("governance_owner: ownership transfer reproducible bajo un rol migrador NO 
     );
     assert.deepEqual(rows[0], { rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false });
   });
+
+  // === Aserción global (sql/109): TODAS las funciones SECURITY DEFINER
+  // REALES de governance/pipeline (creadas por el árbol sql/*.sql real -
+  // 000 a 109, nunca el sandbox sintético de arriba) deben terminar owned
+  // por governance_owner, nunca por postgres. Requiere que ESTA corrida
+  // haya bootstrapeado el árbol sql/ completo (no el bootstrap vacío usado
+  // para las pruebas anteriores) - si no encuentra ninguna función que
+  // revisar, falla fuerte en vez de pasar vacíamente, para no poder pasar
+  // "por accidente" contra una base sin las migraciones reales aplicadas.
+
+  await t.test("aserción global (sql/109): TODA función SECURITY DEFINER real en governance/pipeline pertenece a governance_owner", async () => {
+    const { rows } = await adminPool.query(`
+      SELECT n.nspname AS schema, p.proname AS name, pg_get_userbyid(p.proowner) AS owner
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname IN ('governance', 'pipeline') AND p.prosecdef = true
+      ORDER BY n.nspname, p.proname
+    `);
+    assert.ok(
+      rows.length > 0,
+      "se esperaba al menos una función SECURITY DEFINER real en governance/pipeline -¿esta corrida bootstrapeó sql/*.sql completo (000-109), o solo el bootstrap vacío?"
+    );
+    const misowned = rows.filter(r => r.owner !== "governance_owner");
+    assert.deepEqual(
+      misowned, [],
+      `funciones SECURITY DEFINER que NO pertenecen a governance_owner: ${misowned.map(r => `${r.schema}.${r.name} (owner=${r.owner})`).join(", ")}`
+    );
+  });
+
+  await t.test("aserción global (sql/109): ninguna función SECURITY DEFINER de governance/pipeline quedó owned por postgres específicamente", async () => {
+    const { rows } = await adminPool.query(`
+      SELECT n.nspname AS schema, p.proname AS name
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname IN ('governance', 'pipeline') AND p.prosecdef = true AND pg_get_userbyid(p.proowner) = 'postgres'
+    `);
+    assert.deepEqual(rows, [], `funciones owned por postgres (deriva no reparada): ${rows.map(r => `${r.schema}.${r.name}`).join(", ")}`);
+  });
 });
