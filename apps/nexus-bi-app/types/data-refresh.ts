@@ -49,8 +49,14 @@ export interface DataRefreshRunDetail extends DataRefreshRunSummary {
   stages: DataRefreshRunStage[];
 }
 
+export interface DataRefreshDispatchOutcome {
+  ok: boolean;
+  reason?: string;
+}
+
 export interface DataRefreshStartResult {
   refreshRunId: string;
   status: "QUEUED" | "ALREADY_RUNNING";
   replay?: boolean;
+  dispatch?: DataRefreshDispatchOutcome;
 }

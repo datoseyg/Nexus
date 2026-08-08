@@ -110,6 +110,85 @@ test("DataRefreshControl: tanto la actualización incremental como la FULL reini
   }
 });
 
+// Blocker de revisión de producto - "el botón real sigue siendo LOCAL": el
+// componente ya no debe enviar/leer environment ni executorType en ningún
+// punto - el backend los resuelve server-side (route.ts::resolveRefreshEnvironment).
+// Estos tests son la red de regresión barata (sin DB, sin red) para que un
+// futuro cambio no reintroduzca esos campos en el body/query del cliente.
+test("DataRefreshControl: startRun() (POST) NUNCA envía environment/executorType en el body - el backend los resuelve", async () => {
+  const src = await source("components/data-refresh/DataRefreshControl.tsx");
+  const fnStart = src.indexOf("async function startRun(");
+  assert.ok(fnStart >= 0, "no se encontró startRun()");
+  // El primer "{" tras la firma es el del TIPO de retorno (Promise<{ status:
+  // ...; dispatch?: ... }>), no el del cuerpo - se salta ese objeto-literal
+  // balanceado (reconocible porque su cierre queda seguido de ">", el cierre
+  // del genérico Promise<...>) antes de buscar el "{" real del cuerpo.
+  let braceIndex = src.indexOf("{", fnStart);
+  let range = balancedRange(src, braceIndex, "{", "}");
+  while (src[range.end + 1] === ">") {
+    braceIndex = src.indexOf("{", range.end + 1);
+    range = balancedRange(src, braceIndex, "{", "}");
+  }
+  const body = src.slice(range.start, range.end);
+
+  assert.doesNotMatch(body, /\bexecutorType\b/, "startRun() no debe mencionar executorType en absoluto - ni leerlo ni enviarlo");
+  assert.match(body, /JSON\.stringify\(\{\s*mode:\s*options\.mode,\s*confirmed:\s*options\.confirmed,\s*reason:\s*options\.reason\s*\}\)/, "el body del POST debe ser exactamente {mode, confirmed, reason}");
+});
+
+test("DataRefreshControl: fetchRunsList() (GET) NUNCA envía ?environment= - el backend lo resuelve", async () => {
+  const src = await source("components/data-refresh/DataRefreshControl.tsx");
+  const fnStart = src.indexOf("async function fetchRunsList(");
+  assert.ok(fnStart >= 0, "no se encontró fetchRunsList()");
+  const bodyOpen = src.indexOf("{", fnStart);
+  const body = src.slice(bodyOpen, balancedRange(src, bodyOpen, "{", "}").end + 1);
+
+  // El comentario dentro del cuerpo SÍ menciona "environment" a propósito
+  // (documenta por qué se omite) - lo que nunca debe aparecer es la URL con
+  // un query param real.
+  assert.doesNotMatch(body, /\?environment=/, "fetchRunsList() no debe enviar ningún query param environment=");
+  assert.match(body, /\/api\/data-refresh\/runs\?limit=5/, "el GET debe pedir solo ?limit=5, sin filtro de entorno");
+});
+
+// Blocker de revisión de producto - "el UI debe mostrar claramente si la
+// activación del worker remoto falló" y "permitir una recuperación
+// coherente": dispatchWarning es un estado DISTINTO de `error` (nunca se
+// confunden - un dispatch fallido no es un request fallido), y el botón
+// principal debe reactivarse para reintentar mientras la corrida siga
+// QUEUED por esa razón.
+test("DataRefreshControl: existe un estado dispatchWarning separado de error, poblado desde result.dispatch cuando falla", async () => {
+  const src = await source("components/data-refresh/DataRefreshControl.tsx");
+  assert.match(src, /const \[dispatchWarning, setDispatchWarning\] = useState<string \| null>\(null\)/, "debe existir un estado dispatchWarning propio, distinto de error");
+
+  for (const fnName of ["handleIncremental", "handleFullConfirmed"]) {
+    const fnStart = src.indexOf(`async function ${fnName}(`);
+    assert.ok(fnStart >= 0, `no se encontró ${fnName}`);
+    const bodyOpen = src.indexOf("{", fnStart);
+    const body = src.slice(bodyOpen, balancedRange(src, bodyOpen, "{", "}").end + 1);
+    assert.match(
+      body,
+      /if \(result\.dispatch && !result\.dispatch\.ok\) setDispatchWarning\(/,
+      `${fnName} debe poblar dispatchWarning cuando result.dispatch.ok es false, sin confundirlo con result.error`
+    );
+  }
+});
+
+test("DataRefreshControl: el botón principal se reactiva para reintentar (canRetryDispatch) cuando la corrida sigue QUEUED por un dispatch fallido", async () => {
+  const src = await source("components/data-refresh/DataRefreshControl.tsx");
+  assert.match(
+    src,
+    /const canRetryDispatch = isActive && latestRun\?\.status === "QUEUED" && Boolean\(dispatchWarning\)/,
+    "debe existir canRetryDispatch, activo solo mientras la corrida sigue QUEUED y hay una advertencia de dispatch pendiente"
+  );
+
+  const buttonStart = src.indexOf("onClick={handleIncremental}");
+  assert.ok(buttonStart >= 0, "no se encontró el botón principal (onClick={handleIncremental})");
+  const disabledIndex = src.indexOf("disabled={", buttonStart);
+  assert.ok(disabledIndex >= 0 && disabledIndex - buttonStart < 200, "no se encontró el prop disabled del botón principal cerca de su onClick");
+  const disabledRange = balancedRange(src, disabledIndex + "disabled=".length, "{", "}");
+  const disabledExpr = src.slice(disabledRange.start, disabledRange.end);
+  assert.match(disabledExpr, /!canRetryDispatch/, "el botón principal debe reactivarse (nunca quedar deshabilitado por isActive) cuando canRetryDispatch es true");
+});
+
 test("AppShell: Sidebar (y por lo tanto DataRefreshControl, montado dentro) nunca se renderiza en /login", async () => {
   const src = await source("components/layout/AppShell.tsx");
 

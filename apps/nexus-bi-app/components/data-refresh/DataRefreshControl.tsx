@@ -5,18 +5,30 @@ import { hasCapability } from "@/lib/auth/capabilities-shared";
 import { StatusBadge, type StatusTone } from "@/components/ui/StatusBadge";
 import { dispatchDataRefreshSucceeded } from "@/lib/data-refresh-events";
 import { ACTIVE_STATUSES, queuedFeedback, shouldContinuePolling, shouldNotifySucceeded } from "@/lib/data-refresh-polling";
-import type { DataRefreshMode, DataRefreshRunDetail, DataRefreshRunSummary, DataRefreshStatus } from "@/types/data-refresh";
+import type { DataRefreshDispatchOutcome, DataRefreshMode, DataRefreshRunDetail, DataRefreshRunSummary, DataRefreshStatus } from "@/types/data-refresh";
 import { BUTTON_CHROME } from "@/components/ui/interactive";
 
 // Mecanismo de actualización manual de datos (requisitos 1/2/3.5 NEXUS V3) -
 // montado UNA sola vez en components/layout/Sidebar.tsx, nunca duplicado
-// por página. Este control solo encola/observa el entorno LOCAL: STAGING y
-// PRODUCTION no tienen todavía un proyecto Supabase V3 real (ver reporte
-// final) y su disparo es exclusivamente manual vía GitHub Actions
-// (workflow_dispatch, docs/data-refresh-runbook.md) - exponer un selector
-// de entorno acá crearía una corrida QUEUED que nadie procesaría.
-const ENVIRONMENT = "LOCAL";
+// por página.
+//
+// Blocker de revisión de producto - "el botón real sigue siendo LOCAL": este
+// componente YA NO sabe ni decide contra qué entorno corre - ni envía
+// `environment` ni `executorType` en el POST, ni los usa para filtrar el
+// GET. El backend (app/api/data-refresh/runs/route.ts::resolveRefreshEnvironment)
+// resuelve el destino real una sola vez por deployment vía la variable de
+// entorno SERVER-ONLY NEXUS_REFRESH_ENVIRONMENT - el MISMO botón "Actualizar
+// datos" termina en LOCAL/LOCAL (worker local por polling) en un deployment
+// de desarrollo, o en STAGING|PRODUCTION/GITHUB (workflow_dispatch,
+// disparado por ese mismo POST) en un deployment remoto, sin ningún cambio
+// de código ni de UI entre ambos casos.
 const POLL_INTERVAL_MS = 3000;
+
+// Texto exacto pedido por la revisión de producto - nunca "actualización
+// iniciada" a secas cuando el dispatch remoto falló: la corrida QUEUED es
+// real (se conserva para auditoría/recuperación), pero nadie la está
+// procesando todavía.
+const DISPATCH_FAILURE_MESSAGE = "Corrida creada, pero no fue posible iniciar el worker remoto.";
 
 // Etiquetas legibles por etapa (requisito 5) - mismo orden real que
 // scripts/pipeline/run-data-refresh.mjs::STAGES. Un valor no mapeado (etapa
@@ -81,7 +93,10 @@ function formatClock(iso: string | null): string | null {
 }
 
 async function fetchRunsList(): Promise<DataRefreshRunSummary[]> {
-  const res = await fetch(`/api/data-refresh/runs?environment=${ENVIRONMENT}&limit=5`, { cache: "no-store" });
+  // Sin `environment` - GET resuelve el mismo entorno server-side que POST
+  // (resolveRefreshEnvironment), así este widget siempre observa el destino
+  // real de ESTE deployment sin tener que conocerlo de antemano.
+  const res = await fetch(`/api/data-refresh/runs?limit=5`, { cache: "no-store" });
   if (!res.ok) throw new Error(`GET /api/data-refresh/runs -> ${res.status}`);
   const body = await res.json();
   return body.runs ?? [];
@@ -99,15 +114,22 @@ interface StartRunOptions {
   reason: string | null;
 }
 
-async function startRun(options: StartRunOptions): Promise<{ status: string; error?: string }> {
+// Sin `environment`/`executorType` - el backend los resuelve (ver el
+// comentario de cabecera). Un reintento (mismo botón, otro click) genera un
+// nuevo Idempotency-Key cada vez a propósito: el backend ya no depende de
+// que el cliente reutilice la clave para permitir reintentar el dispatch
+// (route.ts relee el status VIVO de la fila en cada POST) - cualquier click
+// mientras la corrida siga QUEUED reintenta el dispatch igual, con clave
+// nueva o repetida.
+async function startRun(options: StartRunOptions): Promise<{ status: string; error?: string; dispatch?: DataRefreshDispatchOutcome }> {
   const res = await fetch("/api/data-refresh/runs", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
-    body: JSON.stringify({ environment: ENVIRONMENT, mode: options.mode, executorType: "LOCAL", confirmed: options.confirmed, reason: options.reason })
+    body: JSON.stringify({ mode: options.mode, confirmed: options.confirmed, reason: options.reason })
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) return { status: "ERROR", error: body?.error ?? `HTTP ${res.status}` };
-  return { status: body.status };
+  return { status: body.status, dispatch: body.dispatch };
 }
 
 export function DataRefreshControl({ capabilities, compact }: { capabilities: string[]; compact: boolean }) {
@@ -119,6 +141,15 @@ export function DataRefreshControl({ capabilities, compact }: { capabilities: st
   const [runDetail, setRunDetail] = useState<DataRefreshRunDetail | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Blocker de revisión de producto - "no es aceptable que el UI diga
+  // simplemente 'actualización iniciada' si el workflow remoto no pudo
+  // activarse": distinto de `error` (que implica que la solicitud en sí
+  // falló) - acá la fila QUEUED es real y válida, solo el dispatch a
+  // GitHub Actions falló. Se limpia solo cuando el polling observa que la
+  // corrida DEJÓ de estar QUEUED (ver fetchLatestRun más abajo) - en ese
+  // punto ya sea el reintento funcionó, alguien la reclamó igual
+  // (workflow_dispatch manual), o la corrida se reapeó/canceló.
+  const [dispatchWarning, setDispatchWarning] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmChecked, setConfirmChecked] = useState(false);
   // Requisito 2.7 - único disparador de "reiniciar el polling ya", nunca
@@ -148,6 +179,12 @@ export function DataRefreshControl({ capabilities, compact }: { capabilities: st
     }
 
     setLatestRun(run);
+
+    // La advertencia de dispatch solo tiene sentido mientras la corrida
+    // SIGUE QUEUED - en cuanto avanza (CLAIMED en adelante) o termina de
+    // cualquier forma, alguien ya la reclamó o ya no es recuperable vía
+    // reintento del botón, así que mostrarla seguiría confundiendo.
+    if (run?.status !== "QUEUED") setDispatchWarning(null);
 
     if (run && shouldNotifySucceeded(run, lastNotifiedRunIdRef.current)) {
       lastNotifiedRunIdRef.current = run.refreshRunId;
@@ -206,24 +243,39 @@ export function DataRefreshControl({ capabilities, compact }: { capabilities: st
   async function handleIncremental() {
     setBusy(true);
     setError(null);
+    setDispatchWarning(null);
     const result = await startRun({ mode: "INCREMENTAL", confirmed: false, reason: null });
     setBusy(false);
     if (result.error) setError(result.error);
-    else setPollGeneration(g => g + 1);
+    else {
+      setPollGeneration(g => g + 1);
+      if (result.dispatch && !result.dispatch.ok) setDispatchWarning(DISPATCH_FAILURE_MESSAGE);
+    }
   }
 
   async function handleFullConfirmed() {
     setBusy(true);
     setError(null);
+    setDispatchWarning(null);
     const result = await startRun({ mode: "FULL", confirmed: true, reason: "Actualización completa solicitada manualmente desde la UI." });
     setBusy(false);
     setConfirmOpen(false);
     setConfirmChecked(false);
     if (result.error) setError(result.error);
-    else setPollGeneration(g => g + 1);
+    else {
+      setPollGeneration(g => g + 1);
+      if (result.dispatch && !result.dispatch.ok) setDispatchWarning(DISPATCH_FAILURE_MESSAGE);
+    }
   }
 
   const isActive = latestRun ? ACTIVE_STATUSES.has(latestRun.status) : false;
+  // Blocker de revisión de producto - "permitir una recuperación coherente":
+  // mientras la corrida sigue QUEUED por un dispatch fallido, el mismo botón
+  // "Actualizar ahora" se reactiva para reintentar (en vez de quedar
+  // deshabilitado por `isActive` como cualquier otra corrida en curso) - el
+  // backend ya sabe atender ese reintento sin crear una segunda corrida (ver
+  // liveRefreshRunStatus en route.ts).
+  const canRetryDispatch = isActive && latestRun?.status === "QUEUED" && Boolean(dispatchWarning);
   const badge = latestRun ? STATUS_BADGE[latestRun.status] : null;
   const tooltip = latestRun ? `${badge?.label ?? latestRun.status} · ${formatRelative(latestRun.finishedAt ?? latestRun.requestedAt)}` : "Sin corridas registradas";
   const queuedMessage = latestRun ? queuedFeedback(latestRun) : null;
@@ -270,11 +322,13 @@ export function DataRefreshControl({ capabilities, compact }: { capabilities: st
         <button
           type="button"
           onClick={handleIncremental}
-          disabled={busy || isActive}
+          disabled={busy || (isActive && !canRetryDispatch)}
           className={`flex w-full items-center justify-center gap-2 rounded-[var(--nx-radius-button)] bg-white/[0.06] px-2.5 py-2 text-[12px] font-semibold ${BUTTON_CHROME}`}
           style={{ color: "var(--nx-sidebar-text-secondary)" }}
         >
-          <span className={compact ? "sr-only" : undefined}>{isActive ? "Actualización en curso…" : "Actualizar ahora"}</span>
+          <span className={compact ? "sr-only" : undefined}>
+            {canRetryDispatch ? "Reintentar activación remota" : isActive ? "Actualización en curso…" : "Actualizar ahora"}
+          </span>
           <span className={compact ? undefined : "sr-only"}>↻</span>
         </button>
       ) : null}
@@ -294,6 +348,16 @@ export function DataRefreshControl({ capabilities, compact }: { capabilities: st
       {error ? (
         <p className={compact ? "sr-only" : "px-2.5 text-[11px]"} style={{ color: "#fca5a5" }} role="alert">
           {error}
+        </p>
+      ) : null}
+
+      {/* Blocker de revisión de producto - distinto tono/mensaje que `error`
+          a propósito: esto NUNCA fue un request fallido (la fila QUEUED es
+          real), solo el dispatch remoto - el botón de arriba ya se
+          reactivó como "Reintentar activación remota". */}
+      {dispatchWarning ? (
+        <p className={compact ? "sr-only" : "px-2.5 text-[11px]"} style={{ color: "#e0a53f" }} role="status">
+          {dispatchWarning}
         </p>
       ) : null}
 

@@ -207,6 +207,26 @@ async function claimNextRefreshRun({ environment, executorType, workerId, govern
   );
 }
 
+// Reclamo EXACTO por refresh_run_id (sql/110) - mecanismo PRINCIPAL del
+// dispatch automático (workflow con refresh_run_id, ver data-refresh.yml).
+// A diferencia de claimNextRefreshRun (cola genérica + comparación DESPUÉS
+// de reclamar, ver checkRefreshRunClaimMatchesExpectation más abajo), esta
+// función nunca puede reclamar una fila distinta a p_refresh_run_id -
+// estructuralmente, no solo por comparación posterior.
+async function claimRefreshRunByIdOnPool(pool, { refreshRunId, environment, executorType, claimedBy }) {
+  const r = await pool.query(
+    `SELECT pipeline.fn_claim_refresh_run_by_id($1,$2,$3,$4) AS result`,
+    [refreshRunId, environment, executorType, claimedBy]
+  );
+  return r.rows[0].result;
+}
+
+async function claimRefreshRunById({ refreshRunId, environment, executorType, workerId, governanceWorkerDbUrl }) {
+  return withPool(governanceWorkerDbUrl, "pipeline-refresh-worker:claim-by-id", pool =>
+    claimRefreshRunByIdOnPool(pool, { refreshRunId, environment, executorType, claimedBy: workerId })
+  );
+}
+
 async function startRefreshRun({ environment, mode, executorType, actorUserId, actorRole, confirmed, reason, idempotencyKey, correlationId, governanceRequesterDbUrl }) {
   return withPool(governanceRequesterDbUrl, "pipeline-refresh-requester:start", async pool => {
     const r = await pool.query(
@@ -284,6 +304,23 @@ export function assertWorkingHoursApplyOk(result) {
   const reasons = result.validation?.errors?.slice(0, 5).join("; ")
     ?? (result.error instanceof Error ? result.error.message : String(result.error ?? "razón desconocida"));
   throw new Error(`BUILD_WORKING_HOURS: apply rechazado - ${reasons}`);
+}
+
+// Defensa en profundidad (YA NO el mecanismo principal - ver
+// pipeline.fn_claim_refresh_run_by_id, sql/110): el dispatch automático
+// ahora reclama por refresh_run_id EXACTO, así que esta comparación es
+// tautológicamente cierta en ese camino (claim.refreshRunId siempre es
+// args.expectedRefreshRunId cuando claimed=true). Se conserva como red de
+// seguridad ante una futura regresión que reintroduzca claim-next en el
+// camino automático sin darse cuenta - función pura (sin DB) para poder
+// probarla aislada, ver checkRefreshRunClaimMatchesExpectation en main().
+export function checkRefreshRunClaimMatchesExpectation(claim, expectedRefreshRunId) {
+  if (!expectedRefreshRunId) return { ok: true };
+  if (claim.refreshRunId === expectedRefreshRunId) return { ok: true };
+  return {
+    ok: false,
+    reason: `refresh_run_id reclamado (${claim.refreshRunId}) no coincide con el esperado por este dispatch (${expectedRefreshRunId}).`
+  };
 }
 
 export async function executeClaimedRefreshRun({
@@ -454,14 +491,15 @@ function parseArgs(argv) {
     actorRole: get("actor-role") ?? null,
     actorUserId: get("actor-user-id") ?? null,
     idempotencyKey: get("idempotency-key") ?? null,
-    correlationId: get("correlation-id") ?? null
+    correlationId: get("correlation-id") ?? null,
+    expectedRefreshRunId: get("expected-refresh-run-id") || null
   };
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.environment || !args.executorType || !args.workerId) {
-    throw new Error("Uso: run-data-refresh.mjs --environment=LOCAL|STAGING|PRODUCTION --executor-type=LOCAL|GITHUB --worker-id=<id> [--start --mode=... --confirmed=true|false --actor-role=... --reason=...]");
+    throw new Error("Uso: run-data-refresh.mjs --environment=LOCAL|STAGING|PRODUCTION --executor-type=LOCAL|GITHUB --worker-id=<id> [--start --mode=... --confirmed=true|false --actor-role=... --reason=...] [--expected-refresh-run-id=<uuid>]");
   }
 
   const governanceWorkerDbUrl = requireEnv("GOVERNANCE_PIPELINE_WORKER_DB_URL");
@@ -486,19 +524,67 @@ async function main() {
     console.log(`[run-data-refresh] fn_start_refresh_run -> ${JSON.stringify(started)}`);
   }
 
-  const claim = await claimNextRefreshRun({
-    environment: args.environment,
-    executorType: args.executorType,
-    workerId: args.workerId,
-    governanceWorkerDbUrl
-  });
-
-  if (!claim.claimed) {
-    console.log(`[run-data-refresh] nada QUEUED para environment=${args.environment} executor_type=${args.executorType} - sin trabajo.`);
-    return { claimed: false };
+  // Dos caminos de reclamo, nunca mezclados (blocker de revisión de
+  // producto - "automatic exact-claim vs manual claim-next"):
+  //   - Dispatch AUTOMÁTICO (llegó con --expected-refresh-run-id, ver
+  //     data-refresh.yml cuando REFRESH_RUN_ID viene lleno desde el puente
+  //     POST /api/data-refresh/runs): reclama EXACTAMENTE esa fila vía
+  //     pipeline.fn_claim_refresh_run_by_id (sql/110) - estructuralmente no
+  //     puede tocar ninguna otra. Si no puede reclamarla (ya no existe, ya
+  //     no está QUEUED, o no coincide environment/executor_type - por
+  //     ejemplo un segundo workflow_dispatch para el mismo refresh_run_id
+  //     que llegó tarde), sale limpio: nunca cae a reclamar "lo próximo en
+  //     cola" en su lugar, eso reclamaría una corrida que este dispatch en
+  //     particular no pidió.
+  //   - Dispatch MANUAL/emergencia (sin refresh_run_id, llenado a mano en la
+  //     pestaña Actions de GitHub): conserva pipeline.fn_claim_next_refresh_run
+  //     sin cambios - toma lo próximo en cola para ese entorno/ejecutor,
+  //     mismo comportamiento de siempre.
+  let claim;
+  if (args.expectedRefreshRunId) {
+    claim = await claimRefreshRunById({
+      refreshRunId: args.expectedRefreshRunId,
+      environment: args.environment,
+      executorType: args.executorType,
+      workerId: args.workerId,
+      governanceWorkerDbUrl
+    });
+    if (!claim.claimed) {
+      console.log(
+        `[run-data-refresh] dispatch automático: no se pudo reclamar exactamente refresh_run_id=${args.expectedRefreshRunId} ` +
+        `(motivo=${claim.reason ?? "desconocido"}) - salida limpia, ninguna otra corrida fue tocada. ` +
+        "Escenario esperado si otro workflow ya la reclamó primero (doble dispatch inocuo) o si ya no está QUEUED."
+      );
+      return { claimed: false, reason: claim.reason };
+    }
+  } else {
+    claim = await claimNextRefreshRun({
+      environment: args.environment,
+      executorType: args.executorType,
+      workerId: args.workerId,
+      governanceWorkerDbUrl
+    });
+    if (!claim.claimed) {
+      console.log(`[run-data-refresh] nada QUEUED para environment=${args.environment} executor_type=${args.executorType} - sin trabajo.`);
+      return { claimed: false };
+    }
   }
 
   console.log(`[run-data-refresh] reclamado refresh_run_id=${claim.refreshRunId} (mode=${claim.mode})`);
+
+  // Defensa en profundidad (ver comentario de
+  // checkRefreshRunClaimMatchesExpectation más arriba) - tautológicamente
+  // cierta en el camino automático de arriba (fn_claim_refresh_run_by_id
+  // solo puede devolver claimed=true para EXACTAMENTE args.expectedRefreshRunId);
+  // conservada como red de seguridad, nunca el mecanismo principal.
+  const claimMatch = checkRefreshRunClaimMatchesExpectation(claim, args.expectedRefreshRunId);
+  if (!claimMatch.ok) {
+    console.error(`[run-data-refresh] ${claimMatch.reason} No se ejecuta el pipeline para esta corrida - se marca DISPATCH_CORRELATION_MISMATCH y queda disponible para un futuro dispatch manual (sin refresh_run_id) que sí la reclame.`);
+    await withPool(governanceWorkerDbUrl, "pipeline-refresh-worker:claim-mismatch", pool =>
+      pool.query(`SELECT pipeline.fn_fail_refresh_run($1,$2,$3,$4)`, [claim.refreshRunId, "DISPATCH_CORRELATION_MISMATCH", claimMatch.reason, false])
+    );
+    throw new Error(claimMatch.reason);
+  }
   const result = await executeClaimedRefreshRun({
     refreshRunId: claim.refreshRunId,
     environment: args.environment,
@@ -516,4 +602,4 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   });
 }
 
-export { claimNextRefreshRun, claimNextRefreshRunOnPool, startRefreshRun, STAGES };
+export { claimNextRefreshRun, claimNextRefreshRunOnPool, claimRefreshRunById, claimRefreshRunByIdOnPool, startRefreshRun, STAGES };

@@ -45,6 +45,10 @@ on:
         description: "Motivo de esta actualización manual (recomendado, queda en pipeline.refresh_runs.reason)"
         type: string
         required: false
+      refresh_run_id:
+        description: "USO INTERNO - lo llena automáticamente POST /api/data-refresh/runs (puente NEXUS V3). Dejar vacío en un dispatch manual: el worker reclama la próxima corrida QUEUED de este entorno, exactamente igual que antes."
+        type: string
+        required: false
 
 concurrency:
   group: data-refresh-${{ inputs.environment }}
@@ -125,13 +129,36 @@ jobs:
           REFRESH_ACTOR: ${{ github.actor }}
           REFRESH_RUN_ATTEMPT_ID: "gh-actions:${{ github.run_id }}:${{ github.run_attempt }}"
           REFRESH_REASON: ${{ inputs.reason }}
+          # Puente NEXUS V3 (POST /api/data-refresh/runs -> workflow_dispatch):
+          # cuando viene lleno, la fila pipeline.refresh_runs YA existe (la
+          # creó ese POST vía pipeline.fn_start_refresh_run) - este job NO
+          # vuelve a llamar --start (evita una segunda llamada redundante a
+          # esa función) y en cambio le pasa el id esperado al orquestador,
+          # que reclama EXACTAMENTE esa fila vía pipeline.fn_claim_refresh_run_by_id
+          # (sql/110, atómico por refresh_run_id - nunca puede tocar otra
+          # corrida). checkRefreshRunClaimMatchesExpectation en
+          # scripts/pipeline/run-data-refresh.mjs se conserva como defensa en
+          # profundidad, ya no como mecanismo principal. Si dos
+          # workflow_dispatch llegan con el mismo refresh_run_id (reintento
+          # del propio POST), solo uno logra reclamarla - el otro sale limpio
+          # sin tocar nada. Vacío en cualquier dispatch manual - mismo
+          # comportamiento de siempre (fn_claim_next_refresh_run, cola).
+          REFRESH_RUN_ID: ${{ inputs.refresh_run_id }}
         run: |
-          node scripts/pipeline/run-data-refresh.mjs \
-            --start \
-            --environment="$REFRESH_ENVIRONMENT" \
-            --executor-type=GITHUB \
-            --worker-id="$REFRESH_RUN_ATTEMPT_ID" \
-            --mode="$REFRESH_MODE" \
-            --confirmed="$REFRESH_CONFIRMED" \
-            --actor-role="github-actions-manual-dispatch:$REFRESH_ACTOR" \
-            --reason="$REFRESH_REASON"
+          if [ -n "$REFRESH_RUN_ID" ]; then
+            node scripts/pipeline/run-data-refresh.mjs \
+              --environment="$REFRESH_ENVIRONMENT" \
+              --executor-type=GITHUB \
+              --worker-id="$REFRESH_RUN_ATTEMPT_ID" \
+              --expected-refresh-run-id="$REFRESH_RUN_ID"
+          else
+            node scripts/pipeline/run-data-refresh.mjs \
+              --start \
+              --environment="$REFRESH_ENVIRONMENT" \
+              --executor-type=GITHUB \
+              --worker-id="$REFRESH_RUN_ATTEMPT_ID" \
+              --mode="$REFRESH_MODE" \
+              --confirmed="$REFRESH_CONFIRMED" \
+              --actor-role="github-actions-manual-dispatch:$REFRESH_ACTOR" \
+              --reason="$REFRESH_REASON"
+          fi
