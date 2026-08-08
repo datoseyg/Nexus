@@ -19,11 +19,12 @@ RETURNS text
 LANGUAGE sql IMMUTABLE
 SET search_path = pg_catalog
 AS $$
-  -- pgcrypto (digest()) vive en el schema `public` (confirmado vía
-  -- pg_extension) - se califica explícitamente en vez de agregar `public`
-  -- al search_path, consistente con B73 (nunca resolver por búsqueda
-  -- implícita en public).
-  SELECT encode(public.digest(
+  -- pgcrypto (digest()) vive en el schema `extensions` (Supabase la instala
+  -- ahí por defecto; sql/000_roles_and_schemas.sql la coloca ahí también en
+  -- cualquier otro Postgres) - se califica explícitamente en vez de agregar
+  -- `extensions`/`public` al search_path, consistente con B73 (nunca
+  -- resolver por búsqueda implícita).
+  SELECT encode(extensions.digest(
     format('{"entityKey":"%s","entityType":"%s","occurrenceKey":"%s","ruleCode":"%s"}',
       p_entity_key, p_entity_type, p_occurrence_key, p_rule_code),
     'sha256'), 'hex');
@@ -207,7 +208,7 @@ BEGIN
       'marts', jsonb_build_object('entityKey', v_row.entity_key, 'occurrenceKey', v_row.occurrence_key),
       v_row.evidence_payload, v_row.evidence_payload,
       -- B42: hash sobre el payload canónico completo, no solo observed_values.
-      encode(public.digest(
+      encode(extensions.digest(
         v_row.rule_code || '|' || v_row.rule_version || '|' || v_row.entity_key || '|' || v_row.occurrence_key || '|' || v_row.evidence_payload::text,
         'sha256'), 'hex'),
       '1.0.0')
@@ -251,7 +252,7 @@ BEGIN
       'governance.rule_evaluation_coverage', v_row.coverage_key,
       jsonb_build_object('coverageKey', v_row.coverage_key),
       jsonb_build_object('stillDetected', false),
-      encode(public.digest(
+      encode(extensions.digest(
         v_row.rule_code || '|' || v_row.rule_version || '|' || v_row.entity_key || '|' || coalesce(v_row.occurrence_key,'') || '|verification-not-detected|' || p_run_id::text,
         'sha256'), 'hex'),
       '1.0.0')
@@ -462,7 +463,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'correction:part-alias', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -691,3 +692,16 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- governance_owner necesita poder resolver extensions.digest(...) dentro de
+-- estas funciones SECURITY DEFINER (ver governance._fingerprint arriba y
+-- fn_record_command_attempt): antes, con public.digest(...), esto nunca
+-- hacía falta -toda base tiene USAGE en `public` otorgado a PUBLIC por
+-- defecto. `extensions` no lo tiene, así que se otorga explícitamente acá,
+-- una sola vez -este GRANT es por rol, no por función, así que también
+-- cubre las funciones de sql/092 en adelante (mismo owner governance_owner,
+-- misma llamada a extensions.digest, corridas después de este archivo).
+-- Nunca se otorga EXECUTE sobre funciones de `extensions` ni se toca ningún
+-- search_path -solo USAGE en el schema, imprescindible para poder siquiera
+-- calificar `extensions.digest(...)` en una sentencia.
+GRANT USAGE ON SCHEMA extensions TO governance_owner;

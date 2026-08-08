@@ -250,7 +250,7 @@ BEGIN
   IF p_idempotency_key IS NOT NULL THEN
     INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
       VALUES (v_actor_type, v_actor_key, 'data-refresh:start', p_idempotency_key, v_request_payload,
-        encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, coalesce(p_correlation_id, gen_random_uuid()));
+        encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, coalesce(p_correlation_id, gen_random_uuid()));
   END IF;
 
   RETURN v_result;

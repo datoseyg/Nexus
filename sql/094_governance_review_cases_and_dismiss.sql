@@ -61,7 +61,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'review-case:create', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -123,7 +123,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'review-case:assign', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -192,7 +192,7 @@ BEGIN
   IF p_idempotency_key IS NOT NULL THEN
     INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
       VALUES ('HUMAN', p_actor_user_id::text, 'review-case:comment', p_idempotency_key, v_request_payload,
-        encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, coalesce(p_correlation_id, gen_random_uuid()));
+        encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, coalesce(p_correlation_id, gen_random_uuid()));
   END IF;
 
   RETURN v_result;
@@ -255,7 +255,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'review-case:redact-comment', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -333,7 +333,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'review-case:close', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -406,7 +406,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'issue:dismiss', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -478,7 +478,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'issue:reopen', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;

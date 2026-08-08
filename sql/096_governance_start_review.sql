@@ -59,7 +59,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'issue:start-review', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;

@@ -101,7 +101,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'correction:technician-identity', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -226,7 +226,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'correction:ticket-link', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -325,7 +325,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'correction:equipment-identification', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
@@ -476,7 +476,7 @@ BEGIN
 
   INSERT INTO governance.idempotency_keys (actor_type, actor_key, command_type, idempotency_key, request_payload, body_hash, response_snapshot, correlation_id)
     VALUES ('HUMAN', p_actor_user_id::text, 'correction:reverse', p_idempotency_key, v_request_payload,
-      encode(public.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
+      encode(extensions.digest(v_request_payload::text, 'sha256'), 'hex'), v_result, p_correlation_id);
 
   RETURN v_result;
 END;
