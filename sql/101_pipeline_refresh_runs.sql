@@ -417,7 +417,24 @@ GRANT EXECUTE ON FUNCTION pipeline.fn_fail_refresh_run(uuid, text, text, boolean
 -- `pipeline` (ese bloque original está scoped a `n.nspname = 'governance'`,
 -- nunca tocaría estas funciones). Se reasigna al final por la misma razón:
 -- el bloque de creación de arriba no requiere SET ROLE previo.
--- =============================================================================
+--
+-- PostgreSQL exige, además de poder SET ROLE al nuevo owner (sql/089:
+-- "GRANT governance_owner TO SESSION_USER WITH INHERIT FALSE, SET TRUE"),
+-- que ese nuevo owner tenga CREATE sobre el schema de cada función
+-- transferida - governance_owner ya tiene CREATE en `governance` (sql/089:636),
+-- pero sql/089 solo le otorgó USAGE en `pipeline` (línea 637), nunca CREATE,
+-- porque ese schema todavía no tenía ningún objeto propio de governance_owner
+-- en ese momento. Sin este GRANT, el ALTER FUNCTION de abajo falla con
+-- "permission denied for schema pipeline" (42501, confirmado contra
+-- Supabase) - distinto del error de sql/090/098 (ese era falta de SET ROLE;
+-- este es falta de CREATE en el schema destino, ambos exigidos por el mismo
+-- ALTER ... OWNER TO). Privilegio mínimo y explícito -solo CREATE, nunca
+-- ownership del schema completo (no hace falta: CREATE alcanza para que
+-- governance_owner pueda poseer objetos ahí, nunca le da control sobre el
+-- schema en sí ni sobre objetos de otros). No se toca USAGE (ya otorgado en
+-- sql/089) ni se otorga nada a ningún rol runtime. Idempotente: repetir el
+-- mismo GRANT nunca falla ni amplía nada.
+GRANT CREATE ON SCHEMA pipeline TO governance_owner;
 
 DO $$
 DECLARE v_fn record;

@@ -39,6 +39,7 @@ test("governance_owner: ownership transfer reproducible bajo un rol migrador NO 
   const RUNTIME_ROLE = `nx_test_runtime_${suffix}`;
   const OWNER_DOUBLE_ROLE = `nx_test_gov_owner_${suffix}`;
   const TEST_SCHEMA = `nx_test_ownership_${suffix}`;
+  const PIPELINE_TEST_SCHEMA = `nx_test_pipeline_${suffix}`;
   const MIGRATOR_PASSWORD = randomUUID();
   const RUNTIME_PASSWORD = randomUUID();
 
@@ -100,6 +101,7 @@ test("governance_owner: ownership transfer reproducible bajo un rol migrador NO 
     // haber terminado como dueño de la función (ese es justamente el punto
     // probado). CASCADE en el schema se lleva la función sin importar quién
     // sea su dueño en ese momento.
+    await adminPool.query(`DROP SCHEMA IF EXISTS ${PIPELINE_TEST_SCHEMA} CASCADE`).catch(() => {});
     await adminPool.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`).catch(() => {});
     await adminPool.query(`DROP OWNED BY ${OWNER_DOUBLE_ROLE}`).catch(() => {});
     await adminPool.query(`DROP ROLE IF EXISTS ${OWNER_DOUBLE_ROLE}`).catch(() => {});
@@ -235,5 +237,70 @@ test("governance_owner: ownership transfer reproducible bajo un rol migrador NO 
         return true;
       }
     );
+  });
+
+  // === Tercer caso real: ALTER FUNCTION ... OWNER TO exige que el NUEVO
+  // owner tenga CREATE sobre el schema destino, ADEMÁS de la membresía SET
+  // (ya probada y ya establecida arriba) - sql/101 transfiriendo
+  // pipeline.fn_claim_next_refresh_run et al. a governance_owner, que solo
+  // tenía USAGE en `pipeline` (sql/089), nunca CREATE. Schema de prueba
+  // NUEVO y todavía SIN el GRANT CREATE -a diferencia de TEST_SCHEMA
+  // (arriba), que ya lo tiene desde el primer caso; esto aísla
+  // específicamente el requisito de CREATE-en-el-schema, distinto del
+  // requisito de SET ROLE ya cubierto.
+
+  await t.test("setup (tercer caso): schema nuevo (aún sin CREATE para el doble de governance_owner) + función creada por el migrador", async () => {
+    await migratorPool.query(`CREATE SCHEMA ${PIPELINE_TEST_SCHEMA}`);
+    await migratorPool.query(`CREATE FUNCTION ${PIPELINE_TEST_SCHEMA}.pipeline_fn() RETURNS void LANGUAGE sql AS $$ SELECT 1 $$`);
+  });
+
+  await t.test("REPRODUCCIÓN (tercer caso real): con la membresía SET ya establecida pero SIN CREATE en el schema destino, el ownership transfer falla -'permission denied for schema', nunca 'must be able to set role' (aísla el requisito distinto)", async () => {
+    await assert.rejects(
+      () => migratorPool.query(`ALTER FUNCTION ${PIPELINE_TEST_SCHEMA}.pipeline_fn() OWNER TO ${OWNER_DOUBLE_ROLE}`),
+      err => {
+        assert.equal(err.code, "42501", `código esperado 42501, recibido ${err.code}: ${err.message}`);
+        assert.match(err.message, /permission denied for schema/i);
+        return true;
+      }
+    );
+  });
+
+  await t.test("mismo mecanismo de sql/101 (GRANT CREATE ON SCHEMA ... TO governance_owner) habilita el ownership transfer", async () => {
+    await assert.doesNotReject(() => migratorPool.query(`GRANT CREATE ON SCHEMA ${PIPELINE_TEST_SCHEMA} TO ${OWNER_DOUBLE_ROLE}`));
+    await assert.doesNotReject(() => migratorPool.query(`ALTER FUNCTION ${PIPELINE_TEST_SCHEMA}.pipeline_fn() OWNER TO ${OWNER_DOUBLE_ROLE}`));
+  });
+
+  await t.test("pipeline_fn() terminó realmente owned por el doble de governance_owner (verificado por el superusuario)", async () => {
+    const { rows } = await adminPool.query(
+      `SELECT pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE proname = 'pipeline_fn' AND pronamespace = $1::regnamespace`,
+      [PIPELINE_TEST_SCHEMA]
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].owner, OWNER_DOUBLE_ROLE);
+  });
+
+  await t.test("el rol runtime NO ganó CREATE en el schema de pipeline ni SET ROLE al doble de governance_owner -el GRANT fue exclusivo del doble, nunca ampliado a roles runtime", async () => {
+    await assert.rejects(
+      () => runtimePool.query(`CREATE FUNCTION ${PIPELINE_TEST_SCHEMA}.runtime_should_not_create() RETURNS void LANGUAGE sql AS $$ SELECT 1 $$`),
+      err => {
+        assert.equal(err.code, "42501", `código esperado 42501, recibido ${err.code}: ${err.message}`);
+        return true;
+      }
+    );
+    await assert.rejects(
+      () => runtimePool.query(`SET ROLE ${OWNER_DOUBLE_ROLE}`),
+      err => {
+        assert.equal(err.code, "42501", `código esperado 42501, recibido ${err.code}: ${err.message}`);
+        return true;
+      }
+    );
+  });
+
+  await t.test("el doble de governance_owner conserva sus propiedades restrictivas después de este tercer grant también (NOLOGIN, no-superuser, sin CREATEDB/CREATEROLE)", async () => {
+    const { rows } = await adminPool.query(
+      `SELECT rolcanlogin, rolsuper, rolcreatedb, rolcreaterole FROM pg_roles WHERE rolname = $1`,
+      [OWNER_DOUBLE_ROLE]
+    );
+    assert.deepEqual(rows[0], { rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false });
   });
 });
