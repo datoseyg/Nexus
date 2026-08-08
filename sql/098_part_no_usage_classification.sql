@@ -212,6 +212,26 @@ UPDATE governance.rule_registry SET active_rule_version = 2 WHERE rule_code = 'P
 --    CREATE OR REPLACE de la función completa (git-versionada, no un dato) -
 --    se copian las ramas existentes tal cual, nunca se reescriben.
 -- ============================================================================
+-- governance._evaluate_rule_into_staging ya existe (sql/090) y quedó owned
+-- por governance_owner (sweep de ownership al final de ese archivo).
+-- CREATE OR REPLACE FUNCTION sobre una función existente exige ser su owner
+-- -el migrador que aplica este script solo tiene membresía SET-only, sin
+-- herencia automática (sql/089: "GRANT governance_owner TO SESSION_USER
+-- WITH INHERIT FALSE, SET TRUE"), así que sin elevar explícitamente el rol
+-- de la sesión ANTES de este statement, el replace falla con
+-- "must be owner of function _evaluate_rule_into_staging" (42501) - error
+-- real confirmado contra Supabase. Elevación mínima y acotada a este único
+-- statement: SET ROLE justo antes, RESET ROLE justo después -nunca
+-- INHERIT, nunca una membresía nueva, nunca un cambio de ownership. Misma
+-- mecánica ya usada por el ownership-transfer de sql/090, aplicada acá al
+-- caso distinto de re-crear (no transferir) un objeto ya owned por
+-- governance_owner. Funciona igual bajo superusuario local (SET ROLE
+-- siempre permitido), bajo el migrador local con la membresía SET TRUE, y
+-- bajo el `postgres` administrado de Supabase (misma membresía, ya
+-- otorgada por sql/089/090 antes de llegar acá). Idempotente: reaplicar
+-- este archivo repite el mismo SET ROLE/RESET ROLE sin efecto acumulativo.
+SET ROLE governance_owner;
+
 CREATE OR REPLACE FUNCTION governance._evaluate_rule_into_staging(
   p_run_id uuid, p_rule_code text, p_rule_version integer, p_evaluator_key text,
   p_scope_entity_key text, p_scope_occurrence_key text
@@ -317,3 +337,10 @@ BEGIN
   END IF;
 END;
 $$;
+
+-- Restaura la identidad de sesión del migrador inmediatamente después de
+-- terminar esta única definición -nunca se queda elevado para el resto del
+-- archivo/sesión (ningún statement posterior de este archivo necesita ser
+-- governance_owner: las funciones quality.* de arriba las crea el migrador
+-- mismo, sin conflicto de ownership).
+RESET ROLE;

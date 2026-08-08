@@ -179,4 +179,61 @@ test("governance_owner: ownership transfer reproducible bajo un rol migrador NO 
       }
     );
   });
+
+  // === Segundo caso real: CREATE OR REPLACE FUNCTION sobre un objeto que YA
+  // existe y ya quedó owned por governance_owner (nunca transferencia de
+  // ownership -eso es el bloque de arriba; esto es sql/098 reemplazando
+  // governance._evaluate_rule_into_staging, creada y transferida por sql/090).
+  // A este punto dummy_fn() ya está owned por OWNER_DOUBLE_ROLE (subtest de
+  // ownership transfer, arriba).
+
+  await t.test("REPRODUCCIÓN (segundo caso real): sin SET ROLE, el migrador NO puede CREATE OR REPLACE una función ya owned por el doble de governance_owner (42501, must be owner)", async () => {
+    await assert.rejects(
+      () => migratorPool.query(`CREATE OR REPLACE FUNCTION ${TEST_SCHEMA}.dummy_fn() RETURNS void LANGUAGE sql AS $$ SELECT 2 $$`),
+      err => {
+        assert.equal(err.code, "42501", `código esperado 42501, recibido ${err.code}: ${err.message}`);
+        assert.match(err.message, /must be owner/i);
+        return true;
+      }
+    );
+  });
+
+  await t.test("mismo mecanismo de sql/098 (SET ROLE governance_owner; CREATE OR REPLACE FUNCTION ...; RESET ROLE;) habilita el replace", async () => {
+    // Un solo query con las 3 sentencias combinadas, igual a como
+    // bootstrap-disposable-postgres.mjs aplica el archivo completo (una
+    // sola llamada client.query(ddl) con TODO el contenido del .sql).
+    await assert.doesNotReject(() =>
+      migratorPool.query(`
+        SET ROLE ${OWNER_DOUBLE_ROLE};
+        CREATE OR REPLACE FUNCTION ${TEST_SCHEMA}.dummy_fn() RETURNS void LANGUAGE sql AS $$ SELECT 2 $$;
+        RESET ROLE;
+      `)
+    );
+  });
+
+  await t.test("la función sigue owned por el doble de governance_owner después del replace (CREATE OR REPLACE nunca cambia el owner) y la nueva definición realmente se aplicó", async () => {
+    const { rows } = await adminPool.query(
+      `SELECT pg_get_userbyid(proowner) AS owner, prosrc FROM pg_proc WHERE proname = 'dummy_fn' AND pronamespace = $1::regnamespace`,
+      [TEST_SCHEMA]
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].owner, OWNER_DOUBLE_ROLE);
+    assert.match(rows[0].prosrc, /SELECT 2/);
+  });
+
+  await t.test("RESET ROLE restauró la identidad de sesión del migrador -la MISMA conexión vuelve a ser el migrador, nunca queda elevada", async () => {
+    const { rows } = await migratorPool.query("SELECT current_user AS u, session_user AS su");
+    assert.equal(rows[0].u, MIGRATOR_ROLE);
+    assert.equal(rows[0].su, MIGRATOR_ROLE);
+  });
+
+  await t.test("(recordatorio) un rol runtime sigue sin poder SET ROLE al doble de governance_owner después del replace -ver subtest dedicado arriba, mismo resultado", async () => {
+    await assert.rejects(
+      () => runtimePool.query(`SET ROLE ${OWNER_DOUBLE_ROLE}`),
+      err => {
+        assert.equal(err.code, "42501", `código esperado 42501, recibido ${err.code}: ${err.message}`);
+        return true;
+      }
+    );
+  });
 });
