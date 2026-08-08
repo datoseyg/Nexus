@@ -622,6 +622,34 @@ BEGIN
 END
 $$;
 
+-- El rol que aplica este script (`postgres` en Supabase, también `postgres`
+-- en el Postgres local desechable) necesita más adelante poder
+-- ALTER ... OWNER TO governance_owner (sql/090, sql/096, sql/101) sin
+-- depender de ser superusuario real. PostgreSQL exige poder hacer
+-- SET ROLE al nuevo owner para transferir un objeto -en Supabase, `postgres`
+-- tiene privilegios administrativos pero NO es superusuario real, así que
+-- sin este GRANT explícito el ownership transfer falla con
+-- "must be able to SET ROLE governance_owner" (42501).
+--
+-- Se usa SESSION_USER -la identidad realmente autenticada de esta conexión,
+-- nunca CURRENT_USER (que podría haber cambiado por un SET ROLE previo
+-- dentro de la misma sesión, y reflejaría un rol transitorio en vez del
+-- migrador real)- en vez de hardcodear "postgres", para que este archivo
+-- funcione igual sin importar el nombre real del rol administrativo que lo
+-- ejecute (Supabase hoy, local, o cualquier Postgres futuro).
+--
+-- WITH INHERIT FALSE, SET TRUE (sintaxis de membresía de rol de
+-- PostgreSQL 16): el migrador puede hacer SET ROLE governance_owner
+-- explícitamente cuando lo necesita (ALTER ... OWNER TO), pero NUNCA hereda
+-- automáticamente sus privilegios en el resto de la sesión -el privilegio
+-- mínimo real para este propósito. Nunca ADMIN OPTION (permitiría además
+-- otorgar la membresía a terceros) ni una membresía con herencia (ampliaría
+-- el alcance más allá de lo necesario). No se otorga a PUBLIC ni a ningún
+-- rol runtime (nexus_app*, requester, worker, rule evaluator) -queda
+-- exclusivamente en manos de quien ejecuta este script. Idempotente: volver
+-- a otorgar la misma membresía nunca falla ni duplica nada.
+GRANT governance_owner TO SESSION_USER WITH INHERIT FALSE, SET TRUE;
+
 -- =============================================================================
 -- 15. Grants
 -- =============================================================================

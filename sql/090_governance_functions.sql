@@ -680,6 +680,14 @@ GRANT EXECUTE ON FUNCTION governance.fn_record_command_attempt(uuid, text, text,
 -- para que el bloque de creación de arriba no requiera SET ROLE previo.
 -- =============================================================================
 
+-- Defensivo: sql/089 ya otorga esta misma membresía (SESSION_USER de
+-- entonces) una sola vez, pero si este archivo se reintenta de forma
+-- aislada -ej. justo el escenario real que motivó este fix, "090 falló,
+-- reintentar 090"- sin haber vuelto a aplicar 089 primero, el ALTER
+-- FUNCTION de abajo necesita esta membresía IGUAL. Repetir el mismo GRANT
+-- acá es seguro e idempotente (ver comentario completo en sql/089).
+GRANT governance_owner TO SESSION_USER WITH INHERIT FALSE, SET TRUE;
+
 DO $$
 DECLARE v_fn record;
 BEGIN
