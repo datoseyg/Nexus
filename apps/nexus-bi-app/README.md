@@ -84,7 +84,7 @@ npm run dev:local:teardown
 
 Elimina solo el contenedor `nexus_bi_dev_local` - nunca toca Supabase cloud ni ningún otro contenedor Postgres que tengas corriendo.
 
-**Nunca conectar el runtime de esta app contra un Postgres local sin decidir `DATABASE_SSL_MODE` explícitamente** (`lib/db.ts`): sin la variable, el default es `require` incluso en `localhost` (nunca se infiere del hostname). `DATABASE_SSL_MODE=disable` solo se acepta contra `localhost`/`127.0.0.1`/`::1` - contra cualquier otro host, lanza un error claro en vez de aceptarlo en silencio.
+**Nunca conectar el runtime de esta app contra un Postgres local sin decidir `DATABASE_SSL_MODE` explícitamente** (`lib/db.ts`): sin la variable, el default es `verify-full` (verificación estricta de certificado y hostname) incluso en `localhost` (nunca se infiere del hostname). `DATABASE_SSL_MODE=disable` solo se acepta contra `localhost`/`127.0.0.1`/`::1` - contra cualquier otro host, lanza un error claro en vez de aceptarlo en silencio. En Cloud, `verify-full` exige además `DATABASE_SSL_CA_B64` (el PEM de la CA raíz, en base64 - ver `.env.example`).
 
 ## Si aparece "Base de datos bloqueada"
 

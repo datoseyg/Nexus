@@ -60,16 +60,20 @@ export function extractHostname(connectionString: string): string {
   }
 }
 
-// ETAPA 6.6D-V - contrato explícito de SSL. Antes el Pool forzaba
-// `ssl: { rejectUnauthorized: false }` sin importar el destino, lo que
-// exigía habilitar SSL a mano en cualquier Postgres local/desechable solo
-// para poder conectarse. Ahora "local" nunca se infiere en silencio del
-// hostname -DATABASE_SSL_MODE=disable es el único camino, y solo se acepta
-// contra localhost/127.0.0.1/::1 (nunca contra un host remoto, ni con
-// NODE_ENV como atajo). Sin la variable, el default siempre es "require",
-// incluso en localhost - así un desarrollador que no configuró nada nunca
-// termina hablando en claro con una base sin querer.
-export type DatabaseSslMode = "require" | "disable";
+// ETAPA 6.6D-V (endurecida - release productivo NEXUS V3) - contrato
+// explícito de SSL. Antes el Pool forzaba `ssl: { rejectUnauthorized: false
+// }` para CUALQUIER destino no-disable: cifra la conexión, pero nunca
+// verifica que el certificado del servidor pertenezca a quien dice ser
+// (vulnerable a un MITM que presente cualquier certificado autofirmado).
+// Ahora el único modo remoto es "verify-full" -verificación estricta de
+// certificado Y hostname, igual que exige sslmode=verify-full de libpq- y
+// "disable" sigue existiendo SOLO para Postgres local (nunca se infiere del
+// hostname sin que DATABASE_SSL_MODE lo pida explícitamente, ni con
+// NODE_ENV como atajo). El viejo valor "require" ya NO es válido -cifraba
+// sin verificar identidad, exactamente el hueco que se cierra acá- y falla
+// cerrado como cualquier otro valor desconocido, nunca cae en silencio a un
+// modo más débil.
+export type DatabaseSslMode = "verify-full" | "disable";
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 
@@ -83,11 +87,11 @@ export function isLocalHostname(hostname: string): boolean {
 
 export function resolveSslMode(hostname: string, rawMode: string | undefined): DatabaseSslMode {
   if (rawMode === undefined) {
-    return "require";
+    return "verify-full";
   }
 
-  if (rawMode !== "require" && rawMode !== "disable") {
-    throw new DbConnectionError(`DATABASE_SSL_MODE inválido: "${rawMode}". Valores permitidos: "require" | "disable".`);
+  if (rawMode !== "verify-full" && rawMode !== "disable") {
+    throw new DbConnectionError(`DATABASE_SSL_MODE inválido: "${rawMode}". Valores permitidos: "verify-full" | "disable".`);
   }
 
   if (rawMode === "disable" && !isLocalHostname(hostname)) {
@@ -99,8 +103,86 @@ export function resolveSslMode(hostname: string, rawMode: string | undefined): D
   return rawMode;
 }
 
-export function buildSslConfig(mode: DatabaseSslMode): false | { rejectUnauthorized: boolean } {
-  return mode === "disable" ? false : { rejectUnauthorized: false };
+// La CA raíz (ej. la de Supabase) viaja como variable de entorno SERVER-ONLY
+// en base64 -nunca una ruta de archivo local (Netlify no tiene un
+// filesystem persistente para depositar un .pem, y una ruta hardcodeada
+// rompería portabilidad entre deployments) y nunca se escribe a disco acá.
+// "disable" (solo local) no necesita CA -Postgres local no presenta un
+// certificado que verificar. Los mensajes de error de esta función NUNCA
+// incluyen el valor crudo ni el PEM decodificado, solo el diagnóstico de
+// forma (falta / no es base64+PEM válido).
+const PEM_CERTIFICATE_PATTERN = /-----BEGIN CERTIFICATE-----[\s\S]+-----END CERTIFICATE-----/;
+
+export function resolveSslCa(mode: DatabaseSslMode, rawBase64: string | undefined): string | undefined {
+  if (mode === "disable") {
+    return undefined;
+  }
+
+  if (!rawBase64) {
+    throw new DbConnectionError(
+      "Falta DATABASE_SSL_CA_B64 en el entorno - obligatoria bajo DATABASE_SSL_MODE=verify-full: el PEM de la CA raíz " +
+      "(ej. la de Supabase) codificado en base64, nunca una ruta de archivo local."
+    );
+  }
+
+  const decoded = Buffer.from(rawBase64, "base64").toString("utf8");
+
+  if (!PEM_CERTIFICATE_PATTERN.test(decoded)) {
+    throw new DbConnectionError(
+      "DATABASE_SSL_CA_B64 no decodifica a un certificado PEM válido " +
+      "(se esperaba un bloque -----BEGIN CERTIFICATE----- / -----END CERTIFICATE-----)."
+    );
+  }
+
+  return decoded;
+}
+
+// Nunca existe un tercer valor de retorno con rejectUnauthorized:false -las
+// únicas dos formas posibles son "sin TLS" (disable, solo local) o
+// "verificación estricta con CA explícita" (verify-full). ca faltante bajo
+// verify-full es un error de programación del caller (resolveSslCa ya lo
+// exige antes de llegar acá) - se rechaza en vez de construir un Pool con
+// una config a medias.
+export function buildSslConfig(mode: DatabaseSslMode, ca: string | undefined): false | { rejectUnauthorized: true; ca: string } {
+  if (mode === "disable") {
+    return false;
+  }
+
+  if (!ca) {
+    throw new DbConnectionError("buildSslConfig: falta la CA para DATABASE_SSL_MODE=verify-full (llamar resolveSslCa antes de construir el Pool).");
+  }
+
+  return { rejectUnauthorized: true, ca };
+}
+
+// node-postgres (vía pg-connection-string) reemplaza el objeto `ssl`
+// explícito del Pool si la connection string trae sus propios parámetros
+// SSL en la query string - un SUPABASE_DB_URL/GOVERNANCE_*_DB_URL con
+// `?sslmode=require` (o similar) podría entonces pisar silenciosamente la
+// verificación estricta de arriba. Se rechaza ANTES de crear cualquier Pool
+// -nunca se eliminan/modifican esos parámetros automáticamente, exige
+// corregir la connection string a mano- y el mensaje de error nombra
+// ÚNICAMENTE el parámetro conflictivo, nunca la connection string completa.
+const CONNECTION_STRING_SSL_OVERRIDE_PARAMS = new Set(["sslmode", "sslrootcert", "sslcert", "sslkey"]);
+
+export function assertNoConnectionStringSslOverrides(connectionString: string): void {
+  let url: URL;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    throw new DbConnectionError("La connection string no es una URL válida (no se pudo interpretar para revisar parámetros SSL).");
+  }
+
+  for (const key of url.searchParams.keys()) {
+    const normalized = key.toLowerCase();
+    if (CONNECTION_STRING_SSL_OVERRIDE_PARAMS.has(normalized)) {
+      throw new DbConnectionError(
+        `La connection string incluye el parámetro "${normalized}", que node-postgres usa para reemplazar el objeto ssl ` +
+        "explícito del Pool - el modo TLS de NEXUS V3 se controla exclusivamente vía DATABASE_SSL_MODE/DATABASE_SSL_CA_B64. " +
+        "Quitar ese parámetro de la connection string a mano (nunca se elimina ni se modifica automáticamente)."
+      );
+    }
+  }
 }
 
 // Diagnóstico de conexión para consola de desarrollo (nunca para la
@@ -154,11 +236,14 @@ function createPool(): Pool {
   let connectionString: string;
   let hostname: string;
   let sslMode: DatabaseSslMode;
+  let sslCa: string | undefined;
 
   try {
     connectionString = resolveConnectionString();
+    assertNoConnectionStringSslOverrides(connectionString);
     hostname = extractHostname(connectionString);
     sslMode = resolveSslMode(hostname, process.env.DATABASE_SSL_MODE);
+    sslCa = resolveSslCa(sslMode, process.env.DATABASE_SSL_CA_B64);
   } catch (error) {
     if (process.env.NODE_ENV !== "production") {
       console.error(`After-hours DB connection failed\nreason=${errorReason(error)}`);
@@ -170,7 +255,7 @@ function createPool(): Pool {
 
   const pool = new Pool({
     connectionString,
-    ssl: buildSslConfig(sslMode),
+    ssl: buildSslConfig(sslMode, sslCa),
     max: 5
   });
 

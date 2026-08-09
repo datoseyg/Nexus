@@ -9,7 +9,8 @@ Esta matriz registra variables consumidas por el código auditado. No contiene v
 | `NEXT_PUBLIC_SUPABASE_URL` | Sí | Sí | Sí | No | Clientes Supabase browser/server; URL del proyecto |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sí | Sí | Sí | No | Publishable key pública; nunca secret/service-role key |
 | `SUPABASE_DB_URL` | Sí | No | Sí | Sí | `apps/nexus-bi-app/lib/db.ts`; transaction pooler `:6543`, rol `nexus_app` |
-| `DATABASE_SSL_MODE` | Opcional | No | Sí | No | `require` para remoto; `disable` solo en tests locales desechables |
+| `DATABASE_SSL_MODE` | Opcional | No | Sí | No | `verify-full` (verificación estricta de certificado + hostname) para remoto - también el default si se omite; `disable` solo contra `localhost`/`127.0.0.1`/`::1` |
+| `DATABASE_SSL_CA_B64` | Opcional (local) | No | Sí | Sí | Obligatoria bajo `DATABASE_SSL_MODE=verify-full`; PEM de la CA raíz (ej. Supabase) en base64, server-only |
 | `NEXUS_AUTH_GERENCIA_EMAIL` | Sí | No | Sí | Sensible | Resolución server-only de `GERENCIA` |
 | `NEXUS_AUTH_ADMINISTRACION_EMAIL` | Sí | No | Sí | Sensible | Resolución server-only de `ADMINISTRACION` |
 | `NEXUS_ADMIN_TOKEN` | Si se prueban APIs admin | No | Sí | Sí | Header técnico de `/api/admin/**`; no es la sesión de usuario |

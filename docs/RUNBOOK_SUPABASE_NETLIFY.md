@@ -126,7 +126,7 @@ Configuración de ramas:
 La matriz exacta está en `DEPLOYMENT_VARIABLE_MATRIX.md`. Resumen:
 
 - Build + Functions: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-- Functions solamente: `SUPABASE_DB_URL`, `DATABASE_SSL_MODE`, emails de roles, `NEXUS_ADMIN_TOKEN` y flags.
+- Functions solamente: `SUPABASE_DB_URL`, `DATABASE_SSL_MODE`, `DATABASE_SSL_CA_B64`, emails de roles, `NEXUS_ADMIN_TOKEN` y flags.
 - Administración local solamente: `SUPABASE_DB_URL_DIRECT`, confirmaciones de escritura e importadores.
 - Smoke local/CI: `BASE_URL`, `PORT`, `SMOKE_TIMEOUT_MS`.
 
@@ -136,8 +136,9 @@ Runtime PostgreSQL serverless:
 
 - `SUPABASE_DB_URL` usa transaction pooler `aws-*.pooler.supabase.com:6543`, rol mínimo `nexus_app`.
 - El código usa consultas sin nombre y un pool pequeño, compatible con transaction mode.
-- `DATABASE_SSL_MODE=require` puede declararse explícitamente; si se omite, el código aplica el modo seguro correspondiente al host remoto.
+- `DATABASE_SSL_MODE=verify-full` (verificación estricta de certificado + hostname, nunca solo cifrado) es el modo Cloud - también el default si se omite. Exige `DATABASE_SSL_CA_B64` (PEM de la CA raíz de Supabase, en base64, server-only - nunca una ruta de archivo). `DATABASE_SSL_MODE=require` ya no es un valor válido.
 - No usar la conexión directa ni el session pooler como runtime serverless.
+- `SUPABASE_DB_URL`/`GOVERNANCE_*_DB_URL` nunca deben incluir `sslmode`/`sslrootcert`/`sslcert`/`sslkey` en la connection string - el runtime rechaza el arranque si los detecta (el TLS se controla exclusivamente desde `DATABASE_SSL_MODE`/`DATABASE_SSL_CA_B64`, ver `lib/db.ts`).
 
 ## 5. Protección esperada
 

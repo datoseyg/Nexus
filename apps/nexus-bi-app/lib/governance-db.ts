@@ -1,5 +1,5 @@
 import { Pool, type QueryResultRow } from "pg";
-import { DbConnectionError, extractHostname, resolveSslMode, buildSslConfig } from "./db";
+import { DbConnectionError, extractHostname, resolveSslMode, resolveSslCa, buildSslConfig, assertNoConnectionStringSslOverrides } from "./db";
 
 // Gate B (B13/B34): la autorización real de un comando de gobierno es el rol
 // de conexión PostgreSQL y sus grants EXECUTE - nunca un argumento de la
@@ -57,12 +57,19 @@ function resolveGovernanceConnectionString(role: GovernanceDbRole): string {
 
 function createGovernancePool(role: GovernanceDbRole): Pool {
   const connectionString = resolveGovernanceConnectionString(role);
+  // Misma lógica TLS compartida que lib/db.ts::createPool - nunca un
+  // segundo algoritmo paralelo. Cada rol de gobierno sigue con su propia
+  // connection string dedicada (Gate B B13/B34); DATABASE_SSL_MODE/
+  // DATABASE_SSL_CA_B64 son las mismas variables de deployment para
+  // cualquier conexión Postgres de esta app, gobierno o no.
+  assertNoConnectionStringSslOverrides(connectionString);
   const hostname = extractHostname(connectionString);
   const sslMode = resolveSslMode(hostname, process.env.DATABASE_SSL_MODE);
+  const sslCa = resolveSslCa(sslMode, process.env.DATABASE_SSL_CA_B64);
 
   const pool = new Pool({
     connectionString,
-    ssl: buildSslConfig(sslMode),
+    ssl: buildSslConfig(sslMode, sslCa),
     max: 5
   });
 
