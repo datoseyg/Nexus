@@ -11,14 +11,43 @@ import { NextResponse, type NextRequest } from "next/server";
 // la petición, incluido detrás de un proxy que reescriba Host correctamente)
 // - ausente o distinto en una mutación => 403 FORBIDDEN. Nunca se exige en
 // GET.
+function hostFromUrl(value: string): string | null {
+  try {
+    return new URL(value).host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function firstForwardedHost(value: string | null): string | null {
+  if (!value) return null;
+  return value.split(",")[0]?.trim().toLowerCase() || null;
+}
+
 export function requireSameOriginForMutation(request: NextRequest): NextResponse | null {
-  const expectedOrigin = request.nextUrl.origin;
   const originHeader = request.headers.get("origin");
   const refererHeader = request.headers.get("referer");
 
-  const candidate = originHeader ?? (refererHeader ? new URL(refererHeader).origin : null);
+  // Origin tiene prioridad. Referer solo se usa como fallback cuando Origin
+  // no existe. Nunca se confía en request.nextUrl.origin como origen público:
+  // detrás de proxies/serverless puede representar una URL interna.
+  const candidateHeader = originHeader ?? refererHeader;
+  const candidateHost = candidateHeader ? hostFromUrl(candidateHeader) : null;
 
-  if (!candidate || candidate !== expectedOrigin) {
+  // Mismo criterio que la protección CSRF de Next.js para requests
+  // reenviadas: x-forwarded-host representa el host público original y
+  // Host queda como fallback para desarrollo local / runtimes sin proxy.
+  const forwardedHost = firstForwardedHost(request.headers.get("x-forwarded-host"));
+  const host = request.headers.get("host")?.trim().toLowerCase() || null;
+
+  const sameHost =
+    candidateHost !== null &&
+    (
+      (forwardedHost !== null && candidateHost === forwardedHost) ||
+      (host !== null && candidateHost === host)
+    );
+
+  if (!sameHost) {
     return NextResponse.json(
       { error: "Origin ausente o no coincide con el host esperado.", code: "FORBIDDEN" },
       { status: 403, headers: { "Cache-Control": "private, no-store" } }
