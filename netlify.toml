@@ -1,7 +1,10 @@
 # Netlify despliega únicamente la aplicación Next.js. Con `base`, las rutas
 # de command y publish son relativas a apps/nexus-bi-app. Next.js usa la
-# integración OpenNext automática de Netlify; no se declara el plugin legacy.
+# integración Next.js de Netlify. Este site requiere declarar explícitamente el runtime.
 [build]
   base = "apps/nexus-bi-app"
   command = "npm run build"
   publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
