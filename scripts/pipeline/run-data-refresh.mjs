@@ -183,8 +183,88 @@ function requireEnv(name) {
   return value;
 }
 
+// Release productivo NEXUS V3 - blocker: withPool() (el ÚNICO lugar de este
+// archivo que crea un pg.Pool - ver el grep de "new pg.Pool"/"new pg.Client"
+// más abajo, no hay otro) no pasaba NINGÚN objeto `ssl` explícito. Sin uno,
+// node-postgres decide TLS únicamente a partir de lo que la propia
+// connection string traiga (sslmode=... en la query string) o, en su
+// ausencia, no negocia TLS en absoluto - un comportamiento implícito e
+// indistinguible entre "esta URL ya trae su propio TLS seguro embebido" y
+// "esta conexión nunca verificó nada, ni lo intentó". Todos los callers
+// reales de withPool (governanceWorkerDbUrl, governanceRequesterDbUrl,
+// governanceRuleEvaluatorDbUrl, y workingHoursDbUrl -tanto el
+// contract-rematch como el chequeo de cobertura de feriados en
+// VALIDATE_AFTER_HOURS-) quedan cubiertos automáticamente por este único
+// cambio, sin tocar cada llamada por separado.
+//
+// Mismo concepto de "host local" que src/working-hours/db-client.js
+// (localhost/127.0.0.1 - el patrón ya establecido en TODOS los db-client.js
+// hermanos de src/, ver working-hours/holidays/contracts) - nunca se
+// importa apps/nexus-bi-app/lib/db.ts acá (acopllaría este CLI/worker a un
+// módulo pensado para el runtime Next.js, con su propio árbol de
+// dependencias y supuestos de entorno). Host remoto -> rejectUnauthorized:true,
+// SIN `ca` explícita: Node valida contra su trust store por defecto MÁS
+// NODE_EXTRA_CA_CERTS, la misma variable que ya prepara
+// .github/workflows/data-refresh.yml ANTES de arrancar este proceso (ver
+// PASO 5 del reporte). Si esa variable está ausente o apunta a una CA
+// incorrecta, la conexión falla por la validación TLS normal de Node - nunca
+// se debilita el handshake para "intentar seguir igual".
+function isLocalPipelineHostname(hostname) {
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
+export function buildPipelineSslConfig(connectionString) {
+  let hostname;
+  try {
+    hostname = new URL(connectionString).hostname;
+  } catch {
+    throw new Error("buildPipelineSslConfig: connection string inválida (no se pudo interpretar el host) - no se puede determinar el modo TLS.");
+  }
+  return isLocalPipelineHostname(hostname) ? false : { rejectUnauthorized: true };
+}
+
+// node-postgres (vía pg-connection-string) reemplaza el objeto `ssl`
+// explícito de arriba si la connection string trae sus propios parámetros
+// SSL en la query string - una GOVERNANCE_*_DB_URL/WORKING_HOURS_DB_URL con
+// `?sslmode=...` (contenido de un secret de GitHub Actions que este código
+// nunca controla ni puede ver) podría entonces pisar en silencio la
+// verificación estricta de buildPipelineSslConfig. Se rechaza ANTES de crear
+// cualquier Pool -nunca se elimina/modifica el parámetro automáticamente,
+// exige corregir el secret a mano- y el mensaje nombra ÚNICAMENTE el
+// parámetro conflictivo, nunca la connection string completa (ver
+// PIPELINE_SSL_OVERRIDE_PARAMS). Implementación independiente y deliberada
+// (no importada de apps/nexus-bi-app/lib/db.ts) - mismo motivo que
+// buildPipelineSslConfig arriba.
+const PIPELINE_SSL_OVERRIDE_PARAMS = new Set(["sslmode", "sslrootcert", "sslcert", "sslkey"]);
+
+export function assertNoPipelineConnectionStringSslOverrides(connectionString) {
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    throw new Error("assertNoPipelineConnectionStringSslOverrides: connection string inválida (no se pudo interpretar para revisar parámetros SSL).");
+  }
+
+  for (const key of url.searchParams.keys()) {
+    const normalized = key.toLowerCase();
+    if (PIPELINE_SSL_OVERRIDE_PARAMS.has(normalized)) {
+      throw new Error(
+        `La connection string incluye el parámetro "${normalized}", que node-postgres usa para reemplazar el objeto ssl explícito ` +
+        "del Pool - el TLS de este orquestador se controla exclusivamente vía buildPipelineSslConfig + NODE_EXTRA_CA_CERTS. " +
+        "Quitar ese parámetro de la connection string (nunca se elimina ni se modifica automáticamente)."
+      );
+    }
+  }
+}
+
 async function withPool(connectionString, applicationName, fn) {
-  const pool = new pg.Pool({ connectionString, application_name: applicationName, max: 2 });
+  assertNoPipelineConnectionStringSslOverrides(connectionString);
+  const pool = new pg.Pool({
+    connectionString,
+    application_name: applicationName,
+    ssl: buildPipelineSslConfig(connectionString),
+    max: 2
+  });
   try {
     return await fn(pool);
   } finally {

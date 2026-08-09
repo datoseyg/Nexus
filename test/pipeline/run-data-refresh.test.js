@@ -15,7 +15,11 @@ import {
   checkRefreshRunClaimMatchesExpectation,
   claimRefreshRunById,
   claimRefreshRunByIdOnPool,
-  claimNextRefreshRun
+  claimNextRefreshRun,
+  buildPipelineSslConfig,
+  assertNoPipelineConnectionStringSslOverrides,
+  prepareAndAuthorizeWorkingHoursWrite,
+  assertWorkingHoursApplyOk
 } from "../../scripts/pipeline/run-data-refresh.mjs";
 
 test("STAGES incluye LOAD_DUCKDB exactamente entre BUILD_GOLD y SYNC_POSTGRES", () => {
@@ -108,4 +112,132 @@ test("main(): el reclamo automático (--expected-refresh-run-id) usa claimRefres
 
   assert.match(manualBranch, /claimNextRefreshRun\(/, "el camino manual/emergencia (sin --expected-refresh-run-id) debe conservar claim-next, sin cambios");
   assert.doesNotMatch(manualBranch, /claimRefreshRunById\(/, "el camino manual nunca debe reclamar por un ID exacto que nadie pidió");
+});
+
+// buildPipelineSslConfig/assertNoPipelineConnectionStringSslOverrides -
+// blocker de revisión de producto: withPool() (el ÚNICO lugar de este
+// archivo que crea un pg.Pool) no pasaba ningún objeto `ssl` explícito, así
+// que TLS quedaba a merced de lo que la connection string trajera implícito
+// (o nada). Cubre TODOS los callers reales de withPool automáticamente
+// (governanceWorkerDbUrl, governanceRequesterDbUrl, governanceRuleEvaluatorDbUrl,
+// workingHoursDbUrl) - funciones puras, sin DB, sin abrir ningún socket.
+
+const REMOTE_URL = "postgresql://user:pass@some-remote-postgres.example.com:5432/postgres";
+const REMOTE_SUPABASE_URL = "postgresql://postgres:pw@db.v3projectref.supabase.co:5432/postgres";
+
+test("buildPipelineSslConfig (1,2): localhost/127.0.0.1 -> false, mismo concepto de host local que src/working-hours/db-client.js", () => {
+  assert.equal(buildPipelineSslConfig("postgresql://user:pass@localhost:5432/db"), false);
+  assert.equal(buildPipelineSslConfig("postgresql://user:pass@127.0.0.1:5432/db"), false);
+});
+
+test("buildPipelineSslConfig (3): host remoto -> { rejectUnauthorized: true }, sin `ca` explícita (se apoya en NODE_EXTRA_CA_CERTS)", () => {
+  const config = buildPipelineSslConfig(REMOTE_URL);
+  assert.deepEqual(config, { rejectUnauthorized: true });
+  assert.equal(Object.prototype.hasOwnProperty.call(config, "ca"), false);
+});
+
+test("buildPipelineSslConfig (4): ningún host remoto produce rejectUnauthorized:false", () => {
+  for (const url of [REMOTE_URL, REMOTE_SUPABASE_URL, "postgresql://u:p@aws-0-us-east-1.pooler.supabase.com:6543/postgres"]) {
+    const config = buildPipelineSslConfig(url);
+    assert.notEqual(config, false, `${url} debe exigir TLS`);
+    assert.equal(config.rejectUnauthorized, true);
+  }
+});
+
+test("buildPipelineSslConfig (5,10): connection string inválida falla explícito y seguro, el mensaje nunca incluye password/usuario/URL completa", () => {
+  const bogus = "postgresql://secretuser:secretpassword@";
+  assert.throws(() => buildPipelineSslConfig("no-es-una-url"), (err) => {
+    assert.match(err.message, /connection string inválida/);
+    assert.doesNotMatch(err.message, /secretuser|secretpassword/);
+    return true;
+  });
+  assert.throws(() => buildPipelineSslConfig(bogus), (err) => {
+    assert.doesNotMatch(err.message, /secretuser|secretpassword/);
+    return true;
+  });
+});
+
+// --- 6-9: parámetros SSL en la connection string -> rechazados ------------
+test("assertNoPipelineConnectionStringSslOverrides (6): ?sslmode= -> rechazado, mensaje nombra solo el parámetro", () => {
+  assert.throws(() => assertNoPipelineConnectionStringSslOverrides("postgresql://user:pass@host:5432/db?sslmode=require"), (err) => {
+    assert.match(err.message, /sslmode/);
+    assert.doesNotMatch(err.message, /user:pass@host/);
+    return true;
+  });
+});
+
+test("assertNoPipelineConnectionStringSslOverrides (7): ?sslrootcert= -> rechazado", () => {
+  assert.throws(() => assertNoPipelineConnectionStringSslOverrides("postgresql://user:pass@host:5432/db?sslrootcert=/tmp/ca.pem"), /sslrootcert/);
+});
+
+test("assertNoPipelineConnectionStringSslOverrides (8): ?sslcert= -> rechazado", () => {
+  assert.throws(() => assertNoPipelineConnectionStringSslOverrides("postgresql://user:pass@host:5432/db?sslcert=/tmp/client.crt"), /sslcert/);
+});
+
+test("assertNoPipelineConnectionStringSslOverrides (9): ?sslkey= -> rechazado", () => {
+  assert.throws(() => assertNoPipelineConnectionStringSslOverrides("postgresql://user:pass@host:5432/db?sslkey=/tmp/client.key"), /sslkey/);
+});
+
+test("assertNoPipelineConnectionStringSslOverrides: detecta el parámetro sin importar mayúsculas/minúsculas", () => {
+  assert.throws(() => assertNoPipelineConnectionStringSslOverrides("postgresql://user:pass@host:5432/db?SSLMODE=verify-ca"), /sslmode/);
+});
+
+test("assertNoPipelineConnectionStringSslOverrides: connection string normal, sin esos parámetros -> no lanza", () => {
+  assert.doesNotThrow(() => assertNoPipelineConnectionStringSslOverrides(REMOTE_URL));
+  assert.doesNotThrow(() => assertNoPipelineConnectionStringSslOverrides("postgresql://user:pass@localhost:5432/db"));
+});
+
+test("assertNoPipelineConnectionStringSslOverrides (10): connection string inválida -> falla explícito, nunca expone la URL/credenciales", () => {
+  assert.throws(() => assertNoPipelineConnectionStringSslOverrides("no-es-una-url"), (err) => {
+    assert.match(err.message, /connection string inválida/);
+    return true;
+  });
+});
+
+// --- 11: withPool() usa el helper TLS (verificación estructural - withPool
+// no está exportado, por diseño: solo se invoca con connection strings
+// reales del propio orquestador, nunca pensado para llamarse suelto desde
+// fuera - mismo criterio que el test de main() más arriba) --------------
+test("withPool() (11): construye el Pool con ssl: buildPipelineSslConfig(connectionString), y valida overrides ANTES de crear el Pool", () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(path.join(__dirname, "..", "..", "scripts", "pipeline", "run-data-refresh.mjs"), "utf8");
+
+  const fnStart = src.indexOf("async function withPool(connectionString, applicationName, fn)");
+  assert.ok(fnStart >= 0, "no se encontró withPool() - run-data-refresh.mjs cambió de forma inesperada");
+  const fnEnd = src.indexOf("\n}\n", fnStart);
+  const body = src.slice(fnStart, fnEnd);
+
+  const assertIndex = body.indexOf("assertNoPipelineConnectionStringSslOverrides(connectionString)");
+  const poolIndex = body.indexOf("new pg.Pool(");
+  assert.ok(assertIndex >= 0, "withPool() debe validar overrides SSL");
+  assert.ok(poolIndex >= 0, "withPool() debe seguir creando el Pool acá (único lugar de todo el archivo)");
+  assert.ok(assertIndex < poolIndex, "la validación de overrides SSL debe ocurrir ANTES de crear el Pool");
+
+  const poolCallRange = body.slice(poolIndex, body.indexOf(");", poolIndex));
+  assert.match(poolCallRange, /ssl:\s*buildPipelineSslConfig\(connectionString\)/, "el Pool debe usar exactamente ssl: buildPipelineSslConfig(connectionString)");
+  assert.doesNotMatch(poolCallRange, /rejectUnauthorized:\s*false/, "withPool() nunca debe volver a un ssl fijo/débil inline");
+});
+
+test("run-data-refresh.mjs (8): 'new pg.Pool'/'new pg.Client' aparecen EXACTAMENTE una vez en todo el archivo (dentro de withPool) - ninguna otra conexión remota puede quedar sin el helper TLS", () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(path.join(__dirname, "..", "..", "scripts", "pipeline", "run-data-refresh.mjs"), "utf8");
+
+  const poolMatches = [...src.matchAll(/new pg\.Pool\(/g)];
+  const clientMatches = [...src.matchAll(/new pg\.Client\(/g)];
+  assert.equal(poolMatches.length, 1, "debe haber exactamente una construcción de pg.Pool en todo el archivo (dentro de withPool)");
+  assert.equal(clientMatches.length, 0, "este orquestador nunca debe crear un pg.Client suelto por fuera de withPool");
+});
+
+// --- 12: guards/confirmaciones productivas existentes siguen intactos -----
+// (comportamiento REAL ya cubierto por sus propios tests dedicados -
+// test/lib/supabase-write-guard-wiring.test.js para prepareAndAuthorizeWorkingHoursWrite,
+// los tests de checkRefreshRunClaimMatchesExpectation más arriba en este
+// mismo archivo- esto es solo la superficie: que buildPipelineSslConfig/
+// assertNoPipelineConnectionStringSslOverrides se agregaron JUNTO a esos
+// guards, nunca en su lugar).
+test("guards de escritura protegida (12): prepareAndAuthorizeWorkingHoursWrite/assertWorkingHoursApplyOk siguen exportados sin cambios - el TLS de withPool es ortogonal (SUPABASE_DB_URL_DIRECT nunca pasa por withPool, ver migrateToSupabase)", () => {
+  assert.equal(typeof prepareAndAuthorizeWorkingHoursWrite, "function");
+  assert.equal(typeof assertWorkingHoursApplyOk, "function");
+  assert.equal(typeof buildPipelineSslConfig, "function");
+  assert.equal(typeof assertNoPipelineConnectionStringSslOverrides, "function");
 });

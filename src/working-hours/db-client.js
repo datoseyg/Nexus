@@ -50,6 +50,33 @@ export function getConnectionString() {
   return requireEnv("WORKING_HOURS_DB_URL");
 }
 
+// Release productivo NEXUS V3 - blocker: este cliente forzaba
+// `rejectUnauthorized: false` para CUALQUIER host no-local, cifrando la
+// conexión sin verificar jamás que el certificado del servidor perteneciera
+// a quien dice ser (vulnerable a MITM con un certificado autofirmado
+// cualquiera). BUILD_WORKING_HOURS (scripts/pipeline/run-data-refresh.mjs,
+// disparado por .github/workflows/data-refresh.yml) es el único camino
+// productivo real que atraviesa este archivo - ahora exige verificación TLS
+// estricta contra cualquier host remoto, sin excepción ni fallback débil.
+//
+// A diferencia de apps/nexus-bi-app/lib/db.ts (runtime Netlify, que decodifica
+// una CA explícita desde DATABASE_SSL_CA_B64 y la pasa como `ca:`), este
+// cliente CLI/worker se apoya en el trust store NATIVO de Node:
+// `rejectUnauthorized: true` SIN un campo `ca` explícito hace que Node valide
+// contra su bundle de CAs por defecto MÁS cualquier CA agregada vía la
+// variable de entorno estándar de Node NODE_EXTRA_CA_CERTS (nunca leída ni
+// referenciada acá - es responsabilidad exclusiva de quien invoca este
+// proceso, ver .github/workflows/data-refresh.yml). Si NODE_EXTRA_CA_CERTS
+// está ausente o apunta a una CA incorrecta, la conexión falla mediante la
+// validación TLS normal de Node (UNABLE_TO_VERIFY_LEAF_SIGNATURE o similar) -
+// nunca se debilita el handshake para "intentar continuar" igual.
+//
+// El contrato de qué cuenta como "local" (isLocalHost arriba) NO cambia acá
+// -sigue siendo exactamente el mismo que antes de esta corrección.
+export function buildSslConfig(connectionString) {
+  return isLocalHost(connectionString) ? false : { rejectUnauthorized: true };
+}
+
 /**
  * Lee WORKING_HOURS_DB_URL (NUNCA SUPABASE_DB_URL_DIRECT) y rechaza
  * estructuralmente cualquier host reconocido como Supabase productivo.
@@ -63,7 +90,7 @@ export function createPool(opts = {}) {
   const pool = new Pool({
     connectionString,
     application_name: opts.applicationName ?? "working-hours-build",
-    ssl: isLocalHost(connectionString) ? false : { rejectUnauthorized: false },
+    ssl: buildSslConfig(connectionString),
     max: 4
   });
 

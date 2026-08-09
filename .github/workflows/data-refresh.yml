@@ -73,6 +73,37 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      # Release productivo NEXUS V3 - blocker: src/working-hours/db-client.js
+      # (BUILD_WORKING_HOURS, ver scripts/pipeline/run-data-refresh.mjs) exige
+      # ahora verificación TLS estricta (rejectUnauthorized:true) contra
+      # WORKING_HOURS_DB_URL cuando apunta a Supabase - sin una CA de
+      # confianza disponible, Node rechazaría CUALQUIER conexión remota
+      # (correcto, fail-closed) hasta que este paso le entregue una. Nunca se
+      # commitea el PEM: viaja como secret de este Environment
+      # (SUPABASE_DB_CA_B64, distinto de DATABASE_SSL_CA_B64 -esa es del
+      # runtime Netlify de apps/nexus-bi-app, superficie de secretos
+      # separada; puede ser el MISMO material de CA, nunca la misma
+      # variable), se reconstruye a un archivo temporal EFÍMERO del runner
+      # ($RUNNER_TEMP - fuera del working directory, nunca versionado, y
+      # desaparece solo cuando el runner se destruye al terminar el job) y se
+      # expone únicamente vía NODE_EXTRA_CA_CERTS (variable estándar de
+      # Node, leída automáticamente por CUALQUIER conexión TLS de este
+      # proceso - src/working-hours/db-client.js nunca referencia esta
+      # variable ni ninguna ruta de archivo directamente). Nunca se imprime
+      # el contenido del secret, solo la ruta del archivo generado.
+      - name: Configurar CA de Supabase (NODE_EXTRA_CA_CERTS)
+        env:
+          SUPABASE_DB_CA_B64: ${{ secrets.SUPABASE_DB_CA_B64 }}
+        run: |
+          if [ -z "$SUPABASE_DB_CA_B64" ]; then
+            echo "::error::Falta el secret SUPABASE_DB_CA_B64 en el Environment ${{ inputs.environment }} - obligatorio para la verificación TLS estricta de BUILD_WORKING_HOURS contra WORKING_HOURS_DB_URL. Configurarlo (Settings -> Environments -> ${{ inputs.environment }} -> Secrets) antes de reintentar."
+            exit 1
+          fi
+          CA_PATH="${RUNNER_TEMP}/supabase-ca.pem"
+          echo "$SUPABASE_DB_CA_B64" | base64 -d > "$CA_PATH"
+          echo "NODE_EXTRA_CA_CERTS=$CA_PATH" >> "$GITHUB_ENV"
+          echo "CA de Supabase escrita en $CA_PATH (contenido nunca impreso; se descarta con el runner al terminar el job)."
+
       - name: Ejecutar orquestador compartido
         env:
           # Fuentes externas (mismas 3 fuentes que la minería local, ver
@@ -162,3 +193,11 @@ jobs:
               --actor-role="github-actions-manual-dispatch:$REFRESH_ACTOR" \
               --reason="$REFRESH_REASON"
           fi
+
+      # $RUNNER_TEMP ya desaparece solo al destruirse el runner efímero al
+      # terminar el job - este paso es higiene explícita, no una dependencia
+      # real de seguridad. `if: always()` para que corra incluso si el
+      # orquestador de arriba falló.
+      - name: Limpiar CA temporal
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/supabase-ca.pem"
