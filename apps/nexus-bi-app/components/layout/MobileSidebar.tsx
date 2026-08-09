@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from "react";
 import { SidebarBrand } from "@/components/layout/SidebarBrand";
 import { SidebarNavigation } from "@/components/layout/SidebarNavigation";
 import { UserSessionControls } from "@/components/layout/UserSessionControls";
+import { BUTTON_CHROME } from "@/components/ui/interactive";
 
 interface MobileSidebarProps {
   open: boolean;
@@ -106,7 +107,7 @@ export function MobileSidebar({ open, onClose, pendingReviewCount, returnFocusRe
             type="button"
             onClick={onClose}
             aria-label="Cerrar menú"
-            className="mr-2.5 flex h-8 w-8 items-center justify-center rounded-[var(--nx-radius-button)]"
+            className={`mr-2.5 flex h-8 w-8 items-center justify-center rounded-[var(--nx-radius-button)] ${BUTTON_CHROME}`}
             style={{ color: "var(--nx-sidebar-text-secondary)" }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">

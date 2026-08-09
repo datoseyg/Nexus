@@ -1,13 +1,13 @@
 client_name,total_tickets,tickets_with_fieldbeat,fieldbeat_report_count,tickets_with_multiple_fieldbeat_reports,tickets_with_used_parts,used_parts_count,matched_used_parts_count,placeholder_used_parts_count,unmatched_used_parts_count,ambiguous_used_parts_count,review_required_tickets
-Instituto Nacional del Cáncer (INC),48,48,62,12,25,49,41,6,2,0,11
-UC CHRISTUS - CECA,39,39,51,8,21,50,38,4,6,2,8
-UC CHRISTUS - SCA,30,30,38,5,10,12,6,4,2,0,5
+Instituto Nacional del Cáncer (INC),49,49,63,12,25,49,42,6,1,0,10
+UC CHRISTUS - CECA,41,41,54,9,22,53,40,4,7,2,9
+UC CHRISTUS - SCA,33,33,43,6,13,17,10,4,3,0,6
 FUNDACION ARTURO LOPEZ PEREZ,23,23,36,3,11,19,11,5,1,2,8
-SERVICIO DE SALUD DE MAGALLANES,22,22,24,2,14,21,9,5,7,0,11
-CLINICA ALEMANA DE SANTIAGO,21,21,25,3,10,15,12,2,1,0,4
-CLÍNICA LAS CONDES,16,16,20,1,7,8,3,2,3,0,4
-HOSPITAL CARLOS VAN BUREN (SSVSA),12,12,15,3,7,16,13,1,2,0,3
-INRAD,10,10,12,1,4,6,2,2,2,0,3
+SERVICIO DE SALUD DE MAGALLANES,22,22,24,2,14,21,9,9,3,0,11
+CLINICA ALEMANA DE SANTIAGO,22,22,26,3,10,15,12,2,1,0,4
+CLÍNICA LAS CONDES,16,16,21,1,7,9,3,3,3,0,4
+HOSPITAL CARLOS VAN BUREN (SSVSA),14,14,17,3,7,16,13,1,2,0,3
+INRAD,11,11,13,1,5,7,3,3,1,0,3
 RADIO ONCOLOGÍA DEL SUR,3,3,3,0,2,2,1,0,0,1,1
 HOSPITAL EXEQUIEL GONZÁLEZ CORTÉS,1,1,1,0,1,1,0,0,1,0,1
 ACME,1,1,1,0,0,0,0,0,0,0,0

@@ -10,6 +10,51 @@
 // los ignora sin necesidad de un filtro WHERE explícito adicional -pero
 // los CONTEOS de tareas si necesitan distinguir explícitamente la
 // población, de ahí estas expresiones).
+//
+// ============================================================================
+// AUDITORÍA obligatoria de After-Hours vs. participantes 0..N (HOTFIX de
+// integridad de datos FieldBeat, post-Phase 6) - tabla real, evidencia
+// directa de sql/082 + processed.fieldbeat_tasks, nunca supuesta.
+// ============================================================================
+//
+// Hallazgo estructural único (aplica a los 4 endpoints, confirmado leyendo
+// sql/082 línea por línea): AFTER_HOURS_VIEW tiene GRANO 1 fila = 1
+// fieldbeat_task_id, y su columna `assigned_to` es
+// `COALESCE(c.assigned_to, l.assigned_to)` -SIEMPRE proviene de
+// processed.fieldbeat_tasks.assigned_to (Capa C/mart legado la heredan sin
+// tocarla). Esta vista y todo su linaje (task-coverage-builder.js, Capa
+// B/C, contratos/feriados) NUNCA leyeron "NOMBRE DEL INGENIERO ADICIONAL"
+// -no existe, en ninguna capa de este pipeline, el concepto de participante
+// adicional. Es un linaje de cálculo COMPLETAMENTE separado del de
+// quality.fieldbeat_report_labor_summary (sql/088): éste mide MINUTOS DE
+// COBERTURA CONTRACTUAL de la ventana agendada de una tarea (¿cayó dentro
+// o fuera del horario contratado?), no minutos de trabajo físico de una o
+// más personas -son dos preguntas de negocio distintas sobre el tiempo,
+// nunca deben mezclarse (mismo principio que separa actualReportDurationMinutes
+// de scheduledEstimateMinutes en FieldbeatLaborSummary).
+//
+// | Endpoint/métrica     | Grano actual        | Qué significa "técnico"        | Usa solo assigned_to | Mide eventos o horas-persona                              | Debe cambiar |
+// |-----------------------|---------------------|----------------------------------|:---:|--------------------------------------------------------------|:---:|
+// | summary (KPIs 1-6)    | Agregado global (todas las tareas filtradas) | N/A -no agrupa por técnico, salvo `distinct_technicians` (COUNT DISTINCT assigned_to) | Sí, solo en distinct_technicians | Totales = SUM de minutos de cobertura por REPORTE, nunca por persona | Cálculo NO -totales deben permanecer a grano-reporte. Solo se documenta/rotula `distinct_technicians` como "responsables principales", nunca "todas las personas que trabajaron". |
+// | by-technician         | 1 fila por fieldbeat_task_id, agrupado por assigned_to | El único responsable principal (assigned_to) | Sí, exclusivamente | Horas de COBERTURA CONTRACTUAL atribuidas al responsable, no horas-persona de labor física | Cálculo NO (repartir/duplicar minutos de cobertura por participante rompería la reconciliación contra el mart de contratos, que se mide por tarea). Copy/label SÍ: "¿Qué técnicos responsables registran más actividad?" (antes ambiguo "¿Qué técnicos...?"). |
+// | technician-client     | 1 fila por (fieldbeat_task_id, assigned_to, client_name) | Mismo assigned_to, en pares con cliente | Sí, exclusivamente | Igual que by-technician (ranking de pares) | Mismo criterio que by-technician: cálculo sin cambios, copy clarificado ("técnicos responsables"). |
+// | detail                | 1 fila = 1 fieldbeat_task_id (tabla paginada, sin agregación por persona) | assigned_to mostrado tal cual, por fila | Sí | Grano-evento/tarea (duración cronológica de ESA tarea) -nunca agrega por persona | Cálculo NO (calza con la regla de decisión: mide solo duración cronológica del evento, conserva grano-reporte). Aditivo SÍ: `participant_count` (fuente quality.fieldbeat_report_labor_summary, sql/088) expuesto como campo informativo -nunca altera duration_hours/business_hours/after_hours- para que la fila deje de implicar silenciosamente que assigned_to es la única persona que trabajó la tarea. |
+//
+// Conclusión (evidencia, no supuesta): ninguno de los 4 endpoints necesita
+// cambiar su ARITMÉTICA de horas -el dominio After-Hours mide cobertura
+// contractual por tarea, un dominio genuinamente distinto de "cuántas
+// personas trabajaron" (ese dominio es quality.fieldbeat_report_labor_summary,
+// sql/088). Las horas de un participante adicional (ej. Alexis Acevedo en
+// el 3453) NO faltan de After-Hours por un bug -After-Hours nunca las tuvo
+// en su modelo, por diseño de su propio linaje de cálculo, y sumarlas
+// inventaría una atribución que ningún dato real respalda. Lo que SÍ era un
+// defecto real (silencioso, no documentado) es que el copy/label de 3 de
+// los 4 endpoints ("¿Qué técnicos...?", "Técnicos involucrados", "Técnico"
+// en filtro/drawer/tabla) podía leerse como si assigned_to representara a
+// TODAS las personas que trabajaron la tarea -corregido acá (labels
+// renombrados a "responsable(s) principal(es)"/"Técnico responsable") + un
+// campo aditivo `participant_count` en `detail` (nunca en los 3 rankings
+// agregados, donde repartir por participante sí corrompería el total).
 
 import type { AfterHoursByDimensionRow, AfterHoursPopulationCounts } from "../types/after-hours";
 import { getConfidenceLabel } from "./confidence";
@@ -224,18 +269,4 @@ export function mapGroupedRow(row: GroupedAggregateQueryRow): AfterHoursByDimens
     extra: row.extra ?? null,
     ...mapAggregateMetrics(row)
   };
-}
-
-/**
- * Branching temporal del endpoint detail (§6.4), extraído como función
- * pura para poder testearlo sin base de datos. Comportamiento preservado
- * exacto del mart legado: EXACT_REPORTED_START_END muestra el string
- * crudo reportado por el técnico (reported_end_raw); cualquier otro
- * método usa el fin normalizado por el pipeline (antes
- * estimated_end_time_local en el mart legado, ahora end_time_local en la
- * vista - ver sql/082, mismo valor semántico, columna renombrada).
- */
-export function resolveEstimatedEndTime(calculationMethod: string, reportedEndRaw: string | null, endTimeLocal: string | null): string | null {
-  if (calculationMethod === "EXACT_REPORTED_START_END") return reportedEndRaw;
-  return endTimeLocal ? String(endTimeLocal) : null;
 }

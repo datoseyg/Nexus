@@ -11,7 +11,19 @@
 // ajeno, de otro cliente.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildFieldbeatKeyByUuid } from "../../src/working-hours/db-writer.js";
+import { buildBulkInsert, buildFieldbeatKeyByUuid } from "../../src/working-hours/db-writer.js";
+
+test("publicación incremental genera UPSERT y nunca TRUNCATE", () => {
+  const { sql } = buildBulkInsert(
+    "marts.example",
+    ["fieldbeat_task_id", "data_basis"],
+    [[3824, "CONTRACTUAL"]],
+    { conflictTarget: ["fieldbeat_task_id"], updateColumns: ["data_basis"], returning: "working_hours_id" }
+  );
+  assert.match(sql, /ON CONFLICT \(fieldbeat_task_id\) DO UPDATE SET data_basis = EXCLUDED\.data_basis/);
+  assert.match(sql, /RETURNING working_hours_id$/);
+  assert.doesNotMatch(sql, /TRUNCATE/i);
+});
 
 // === Caso A - colisión vacía (equipment_uuid='') ===
 

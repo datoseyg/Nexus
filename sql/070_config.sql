@@ -294,49 +294,36 @@ CREATE UNIQUE INDEX IF NOT EXISTS contract_equipment_match_overrides_active_fb_u
 -- fieldbeat_equipment_uuid/candidate_count de la tabla de matches. El match
 -- expuesto es el MÁS RECIENTE por equipment_key (nunca uno viejo
 -- silenciosamente vigente).
-CREATE OR REPLACE VIEW config.contract_equipment_analysis AS
-SELECT
-  v.contract_version_id,
-  v.equipment_key,
-  v.client_name_canonical,
-  v.site_abbreviation,
-  v.equipment_model,
-  v.serial_number,
-  v.installation_month,
-  v.installation_date_precision,
-  v.contract_status_code,
-  v.spa_tier_code,
-  v.weekday_service,
-  v.weekend_service,
-  v.support_mode_code,
-  v.parts_coverage_code,
-  v.hw_refresh_code,
-  v.updates_code,
-  v.upgrades_code,
-  v.preventive_maintenance_min,
-  v.preventive_maintenance_max,
-  v.preventive_maintenance_rule,
-  v.warranty_end_date,
-  v.valid_from,
-  v.valid_to,
-  v.is_current,
-  v.requires_review,
-  v.normalization_status,
-  v.updated_at,
-  latest_match.match_status,
-  latest_match.match_method,
-  latest_match.fieldbeat_equipment_key,
-  latest_match.fieldbeat_internal_id
-FROM config.contract_equipment_versions v
-LEFT JOIN LATERAL (
-  SELECT m.match_status, m.match_method, m.fieldbeat_equipment_key, m.fieldbeat_internal_id
-  FROM config.contract_equipment_matches m
-  JOIN config.contract_equipment_observations o ON o.observation_id = m.observation_id
-  WHERE o.equipment_key = v.equipment_key
-  ORDER BY o.effective_date DESC, m.matched_at DESC
-  LIMIT 1
-) latest_match ON true;
+--
+-- config.contract_equipment_analysis (v.contract_version_id, ...,
+-- client_name_key, created_at) se define en sql/103_contract_client_name_key_nullable.sql,
+-- NUNCA acá -client_name_key es una columna que 103 agrega recién después
+-- de este archivo (ALTER TABLE), así que la vista que la selecciona no
+-- puede crearse en 070 sin fallar en una base nueva (la columna todavía no
+-- existiría en ese punto de la secuencia). Definirla una sola vez, en el
+-- archivo que la modifica por última vez, evita el mismo problema de
+-- CREATE OR REPLACE VIEW que motivó editar contract_service_window_analysis
+-- en el mismo archivo en vez de una migración separada (ver comentario
+-- abajo) - "cannot drop columns from view" al reaplicar sql/*.sql completo
+-- si dos archivos numerados distinto definen la MISMA vista con formas
+-- distintas (ver test/fieldbeat/sql-migration-idempotency.integration.test.ts).
 
+-- Bloque 2 NEXUS V3 - LEFT JOIN partiendo de contract_service_schedules
+-- (nunca INNER JOIN partiendo de contract_service_windows): un schedule con
+-- CERO ventanas (FULL_24X7/CRITICAL_ONLY_24X7/BUSINESS_HOURS_UNDEFINED/
+-- ON_DEMAND/NOT_COVERED/NOT_APPLICABLE, caso explícitamente válido, ver
+-- comentario arriba de contract_service_windows) debe seguir apareciendo
+-- acá -con un INNER JOIN simplemente no aparecía, indistinguible de "no
+-- existe schedule" (confirmado contra datos reales: 9 de 23 schedules
+-- eran invisibles bajo la definición anterior). Una fila con
+-- service_window_id IS NULL significa "schedule existe, cero ventanas".
+-- Editado en el mismo archivo/definición (nunca una vista paralela ni un
+-- DROP+CREATE en una migración posterior) - CREATE OR REPLACE VIEW exige
+-- que la lista de columnas de salida no cambie de nombre/orden respecto a
+-- la definición vigente; cambiar eso en un archivo NUMERADO DESPUÉS de
+-- este rompe la idempotencia real de aplicar sql/*.sql completo (070
+-- reaplicado reafirmaría la forma vieja, chocando con la nueva - ver
+-- test/fieldbeat/sql-migration-idempotency.integration.test.ts).
 CREATE OR REPLACE VIEW config.contract_service_window_analysis AS
 SELECT
   w.service_window_id,
@@ -350,8 +337,8 @@ SELECT
   s.coverage_condition,
   s.parse_status,
   s.timezone
-FROM config.contract_service_windows w
-JOIN config.contract_service_schedules s ON s.schedule_id = w.schedule_id;
+FROM config.contract_service_schedules s
+LEFT JOIN config.contract_service_windows w ON w.schedule_id = s.schedule_id;
 
 -- ============================================================
 -- 12. Revokes -defensa en profundidad más allá de "no otorgar a nexus_app"
@@ -375,5 +362,7 @@ REVOKE ALL ON SEQUENCE manual_review.contract_data_issues_id_seq FROM nexus_app;
 -- 13. Grants -únicamente USAGE de schema + SELECT sobre las vistas seguras
 -- ============================================================
 GRANT USAGE ON SCHEMA config TO nexus_app;
-GRANT SELECT ON config.contract_equipment_analysis TO nexus_app;
+-- GRANT SELECT ON config.contract_equipment_analysis: ver
+-- sql/103_contract_client_name_key_nullable.sql (esa vista se define y se
+-- otorga ahí, no acá - ver comentario en la sección 11 arriba).
 GRANT SELECT ON config.contract_service_window_analysis TO nexus_app;

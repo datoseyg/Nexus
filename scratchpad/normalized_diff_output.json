@@ -1,0 +1,684 @@
+[
+  {
+    "norm": "",
+    "raws": [
+      "<empty>"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "desconocida",
+    "raws": [
+      "desconocida"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "desconocido",
+    "raws": [
+      "desconocido"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "na",
+    "raws": [
+      "n/a",
+      "na"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "nada",
+    "raws": [
+      "nada"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nc",
+    "raws": [
+      "n.c.",
+      "n/c",
+      "nc"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "ningun",
+    "raws": [
+      "ningún",
+      "ningun"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "ninguna",
+    "raws": [
+      "ninguna"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "ninguno",
+    "raws": [
+      "ninguno"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "no",
+    "raws": [
+      "no"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "noaplica",
+    "raws": [
+      "no aplica"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "noaplicable",
+    "raws": [
+      "no aplicable"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noconsume",
+    "raws": [
+      "no consume"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noconsumio",
+    "raws": [
+      "no consumió",
+      "no consumio"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nocorresponde",
+    "raws": [
+      "no corresponde"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "nocorrespondia",
+    "raws": [
+      "no correspondía",
+      "no correspondia"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nodisponible",
+    "raws": [
+      "no disponible"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noexiste",
+    "raws": [
+      "no existe"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noexisten",
+    "raws": [
+      "no existen"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nohay",
+    "raws": [
+      "no hay"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "noindicada",
+    "raws": [
+      "no indicada"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noindicado",
+    "raws": [
+      "no indicado"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noinformada",
+    "raws": [
+      "no informada"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noinformado",
+    "raws": [
+      "no informado"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noinformation",
+    "raws": [
+      "no information"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noingresada",
+    "raws": [
+      "no ingresada"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noingresado",
+    "raws": [
+      "no ingresado"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nomaterial",
+    "raws": [
+      "no material"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nomaterials",
+    "raws": [
+      "no materials"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "none",
+    "raws": [
+      "none"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nopart",
+    "raws": [
+      "no part"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noparts",
+    "raws": [
+      "no parts"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noposee",
+    "raws": [
+      "no posee"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noposeen",
+    "raws": [
+      "no poseen"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nopresenta",
+    "raws": [
+      "no presenta"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nopresentan",
+    "raws": [
+      "no presentan"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noprocede",
+    "raws": [
+      "no procede"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noregistra",
+    "raws": [
+      "no registra"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noregistrada",
+    "raws": [
+      "no registrada"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noregistrado",
+    "raws": [
+      "no registrado"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "norequerida",
+    "raws": [
+      "no requerida"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "norequerido",
+    "raws": [
+      "no requerido"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "norequiere",
+    "raws": [
+      "no requiere"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseconsumio",
+    "raws": [
+      "no se consumió",
+      "no se consumio"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noserequiere",
+    "raws": [
+      "no se requiere"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseusaroninsumos",
+    "raws": [
+      "no se usaron insumos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseusaronmateriales",
+    "raws": [
+      "no se usaron materiales"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseusaronrepuestos",
+    "raws": [
+      "no se usaron repuestos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseusorepuesto",
+    "raws": [
+      "no se usó repuesto",
+      "no se uso repuesto"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseutilizaroninsumos",
+    "raws": [
+      "no se utilizaron insumos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseutilizaronmateriales",
+    "raws": [
+      "no se utilizaron materiales"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseutilizaronrepuestos",
+    "raws": [
+      "no se utilizaron repuestos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noseutilizorepuesto",
+    "raws": [
+      "no se utilizó repuesto",
+      "no se utilizo repuesto"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nosparepart",
+    "raws": [
+      "no spare part"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "nospareparts",
+    "raws": [
+      "no spare parts"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "notapplicable",
+    "raws": [
+      "not applicable"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "notiene",
+    "raws": [
+      "no tiene"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "notienen",
+    "raws": [
+      "no tienen"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "notrequired",
+    "raws": [
+      "not required"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noutilizorepuesto",
+    "raws": [
+      "no utilizó repuesto",
+      "no utilizo repuesto"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "noutilizorepuestos",
+    "raws": [
+      "no utilizó repuestos",
+      "no utilizo repuestos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "pendiente",
+    "raws": [
+      "pendiente"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "porconfirmar",
+    "raws": [
+      "por confirmar"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "pordefinir",
+    "raws": [
+      "por definir"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "repuestonoutilizado",
+    "raws": [
+      "repuesto no utilizado"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "repuestosnoutilizados",
+    "raws": [
+      "repuestos no utilizados"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sd",
+    "raws": [
+      "s/d",
+      "sd"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sincodigo",
+    "raws": [
+      "sin código",
+      "sin codigo"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinconsumo",
+    "raws": [
+      "sin consumo"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinconsumos",
+    "raws": [
+      "sin consumos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sindato",
+    "raws": [
+      "sin dato"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sindatos",
+    "raws": [
+      "sin datos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinid",
+    "raws": [
+      "sin id"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinidentificador",
+    "raws": [
+      "sin identificador"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sininformacion",
+    "raws": [
+      "sin información",
+      "sin informacion"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sininsumo",
+    "raws": [
+      "sin insumo"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sininsumos",
+    "raws": [
+      "sin insumos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinmaterial",
+    "raws": [
+      "sin material"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinmateriales",
+    "raws": [
+      "sin materiales"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinn",
+    "raws": [
+      "sin n°"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinnro",
+    "raws": [
+      "sin nro"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinnum",
+    "raws": [
+      "sin num"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinnumero",
+    "raws": [
+      "sin número",
+      "sin numero"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinnumerodeserie",
+    "raws": [
+      "sin número de serie",
+      "sin numero de serie"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinrepuesto",
+    "raws": [
+      "sin repuesto"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "sinrepuestos",
+    "raws": [
+      "sin repuestos"
+    ],
+    "alreadyMarker": true
+  },
+  {
+    "norm": "sinserie",
+    "raws": [
+      "sin serie"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinusoderepuesto",
+    "raws": [
+      "sin uso de repuesto"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinusoderepuestos",
+    "raws": [
+      "sin uso de repuestos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinutilizarrepuesto",
+    "raws": [
+      "sin utilizar repuesto"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sinutilizarrepuestos",
+    "raws": [
+      "sin utilizar repuestos"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "sn",
+    "raws": [
+      "s/n",
+      "sn"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "unknown",
+    "raws": [
+      "unknown"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "withoutpart",
+    "raws": [
+      "without part"
+    ],
+    "alreadyMarker": false
+  },
+  {
+    "norm": "withoutparts",
+    "raws": [
+      "without parts"
+    ],
+    "alreadyMarker": false
+  }
+]

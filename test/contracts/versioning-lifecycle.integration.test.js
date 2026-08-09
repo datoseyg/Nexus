@@ -89,6 +89,12 @@ test("ETAPA 6.5.1.1 - lifecycle de versiones (requiere CONTRACTS_TEST_DATABASE_U
     await adminPool.query(await fs.readFile("sql/070_config.sql", "utf8"));
     await adminPool.query(await fs.readFile("sql/084_contract_valid_from_correction.sql", "utf8"));
     await adminPool.query(await fs.readFile("sql/085_contract_version_revision_uniqueness.sql", "utf8"));
+    // Bloque 2 NEXUS V3 - client_name_key: el writer real (applyContracts(),
+    // usado abajo) ya lo persiste incondicionalmente en cada INSERT, así que
+    // la columna debe existir acá aunque este archivo no pruebe identidad de
+    // cliente. Solo la fase nullable (103) - la fase NOT NULL (104) es
+    // irrelevante para lo que este archivo valida (lifecycle de versiones).
+    await adminPool.query(await fs.readFile("sql/103_contract_client_name_key_nullable.sql", "utf8"));
 
     await adminPool.query(
       `INSERT INTO processed.fieldbeat_equipments (equipment_key, equipment_uuid, internal_id, client_key) VALUES ('K-LC','u-lc','Linac-777001','C-LC')`

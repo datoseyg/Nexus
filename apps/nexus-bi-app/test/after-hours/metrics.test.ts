@@ -9,7 +9,6 @@ import {
   populationCountExprs,
   populationSelectListSql,
   rateExpr,
-  resolveEstimatedEndTime,
   sumMinutesExpr
 } from "../../lib/after-hours-metrics.ts";
 
@@ -110,24 +109,6 @@ test("confidenceEligibilityCountExprs: eligible y excluded usan el mismo filtro 
   // excluded está acotado a la población calculable -una fila NONE nunca
   // "pierde" un score que nunca se le exigió.
   assert.ok(excluded.includes(calculableExpr("w")));
-});
-
-// === Branching temporal del detail (§6.4) ===
-
-test("resolveEstimatedEndTime: EXACT_REPORTED_START_END muestra reported_end_raw tal cual", () => {
-  assert.equal(resolveEstimatedEndTime("EXACT_REPORTED_START_END", "10/08/2026 17:30", "2026-08-10T17:00:00"), "10/08/2026 17:30");
-});
-
-test("resolveEstimatedEndTime: otros métodos usan end_time_local normalizado", () => {
-  assert.equal(resolveEstimatedEndTime("ESTIMATED_FROM_START_DURATION", "algo raro", "2026-08-10T17:00:00"), "2026-08-10T17:00:00");
-});
-
-test("resolveEstimatedEndTime: EXACT_REPORTED_START_END con reported_end_raw NULL -> NULL (nunca cae a end_time_local silenciosamente)", () => {
-  assert.equal(resolveEstimatedEndTime("EXACT_REPORTED_START_END", null, "2026-08-10T17:00:00"), null);
-});
-
-test("resolveEstimatedEndTime: sin end_time_local (NONE terminal) -> NULL, nunca inventa un valor", () => {
-  assert.equal(resolveEstimatedEndTime("INSUFFICIENT_DATA", null, null), null);
 });
 
 // === mapAggregateMetrics / mapGroupedRow (ETAPA 6.6D - extracción de la

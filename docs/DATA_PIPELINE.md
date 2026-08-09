@@ -87,6 +87,15 @@ npm run build:gold
 
 Lee los marts finales + los 3 JSON de reportes (`scope_reconciliation_summary.json`, `zendesk_backfill_by_fieldbeat_summary.json`, `dolibarr_parts_match_summary.json`) y genera las 6 tablas de `data/gold/`. Ver [GOLD_DATA_CONTRACT.md](GOLD_DATA_CONTRACT.md).
 
+## 7. Sincronización a Postgres, validación y actualización orquestada (NEXUS V3)
+
+```bash
+npm run db:pg:migrate     # DuckDB -> Supabase Postgres (requiere SUPABASE_DB_URL_DIRECT + confirmación, ver src/db/migrate-to-supabase.js)
+npm run db:pg:validate    # comparación read-only DuckDB vs Postgres
+```
+
+Los pasos 1-6 de arriba (miners → GOLD) más `db:pg:migrate`/`db:pg:validate` y la reevaluación de reglas de gobierno también se pueden ejecutar como una sola corrida gobernada, en vez de comando por comando: `scripts/pipeline/run-data-refresh.mjs`, disparado por `scripts/pipeline/local-refresh-worker.mjs` (local) o `.github/workflows/data-refresh.yml` (STAGING/PRODUCTION, manual). Cada corrida queda registrada en `pipeline.refresh_runs` con su estado, etapa actual y resultado - ver [data-refresh-runbook.md](data-refresh-runbook.md). Un snapshot ya publicado nunca se reemplaza por una carga incompleta: la publicación (`pipeline.published_dataset_state`) es la última etapa, solo alcanzable si todo lo anterior terminó bien.
+
 ## Otros comandos (QA independiente, no bloquean el flujo)
 
 ```bash

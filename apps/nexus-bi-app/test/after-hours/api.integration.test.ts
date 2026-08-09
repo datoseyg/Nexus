@@ -386,11 +386,11 @@ test("detail: data_basis=NONE nunca inventa 0 - minutos NULL, intervalo conserva
   const body = await res.json();
 
   const terminalRow = body.rows.find((r: { fieldbeat_task_id: number }) => r.fieldbeat_task_id === 800003);
-  assert.equal(terminalRow.start_time, null);
+  assert.equal(terminalRow.analysis_start_time, null);
   assert.equal(terminalRow.duration_hours, null);
 
   const resolvedNoneRow = body.rows.find((r: { fieldbeat_task_id: number }) => r.fieldbeat_task_id === 800004);
-  assert.notEqual(resolvedNoneRow.start_time, null, "intervalo se conserva pese a NONE, motivo no terminal");
+  assert.notEqual(resolvedNoneRow.analysis_start_time, null, "intervalo se conserva pese a NONE, motivo no terminal");
   assert.equal(resolvedNoneRow.business_hours, null, "minutos de cobertura siguen NULL, nunca 0 inventado");
   assert.equal(resolvedNoneRow.coverage_reason_code, "NO_EQUIPMENT");
 });
@@ -433,8 +433,28 @@ test("compatibilidad: los campos históricos del contrato (§3) siguen presentes
   for (const field of [
     "business_hours", "after_hours", "weekend_hours", "holiday_hours", "after_hours_rate",
     "confidence_score", "confidence_label", "confidence_factors", "calculation_method",
-    "reported_end_raw", "start_time", "duration_hours", "calculation_status"
+    "reported_end_raw", "analysis_start_time", "analysis_end_time", "analysis_interval_basis",
+    "analysis_fallback_used", "analysis_fallback_reason", "duration_hours", "calculation_status"
   ]) {
     assert.ok(field in row, `campo histórico ausente: ${field}`);
   }
+});
+
+// HOTFIX de integridad de datos FieldBeat (auditoría After-Hours, §5 del
+// plan) - `assigned_to`/`w.assigned_to` es y siempre fue el ÚNICO
+// responsable principal (nunca participantes adicionales, ver sql/082: la
+// vista nunca lee "NOMBRE DEL INGENIERO ADICIONAL"). participant_count es un
+// campo ADITIVO e INFORMATIVO tomado de quality.fieldbeat_report_labor_summary
+// (sql/088) - nunca reparte/multiplica minutos de cobertura por
+// participante (eso corrompería la reconciliación de horas contractuales
+// contra el mart de contratos). Fixtures 800001-800005 no declaran
+// "NOMBRE DEL INGENIERO ADICIONAL", así que cada una tiene exactamente 1
+// participante (el responsable principal).
+test("detail: participant_count aditivo (quality.fieldbeat_report_labor_summary) - nunca altera duration_hours/business_hours", { skip: !TEST_DB_URL }, async () => {
+  const { GET } = await import("../../app/api/dashboard/after-hours/detail/route.ts");
+  const res = await GET(req("/api/dashboard/after-hours/detail", { pageSize: "20" }));
+  const body = await res.json();
+  const row = body.rows.find((r: { fieldbeat_task_id: number }) => r.fieldbeat_task_id === 800001);
+  assert.equal(row.participant_count, 1, "sin adicionales declarados en el fixture, solo el responsable principal cuenta");
+  assert.equal(row.duration_hours, 1, "participant_count nunca debe alterar la hora de cobertura ya calculada");
 });

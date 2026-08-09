@@ -1,5 +1,5 @@
 import type { HomeLastClientState } from "./home.types";
-
+import { formatDateTimeEsCl } from "@/lib/dashboard-formatters";
 // Se compone con HomeLastClientState (no status/clientName
 // independientes). `fullWidth` la controla el padre (HomeDashboard) según
 // si hay ítems de atención en la misma fila (ver layout responsive).
@@ -25,7 +25,7 @@ export function HomeLastClient(props: HomeLastClientProps) {
       aria-busy={props.status === "loading"}
     >
       <h2 className="text-[13px] font-semibold" style={{ color: "var(--nx-sidebar-text-secondary)" }}>
-        Último cliente registrado
+        Último cliente atendido
       </h2>
 
       <div className="min-w-0 flex-1">
@@ -50,15 +50,24 @@ export function HomeLastClient(props: HomeLastClientProps) {
         )}
 
         {props.status === "success" && props.clientName !== null && (
-          <>
-            <p className="break-words text-lg font-extrabold" style={{ color: "var(--nx-sidebar-text-primary)" }}>
-              {props.clientName}
-            </p>
-            <p className="text-xs" style={{ color: "var(--nx-sidebar-text-secondary)" }}>
-              La fecha exacta no está disponible en este resumen.
-            </p>
-          </>
-        )}
+            <>
+              <p
+                className="break-words text-lg font-extrabold"
+                style={{ color: "var(--nx-sidebar-text-primary)" }}
+              >
+                {props.clientName}
+              </p>
+
+              <p
+                className="text-xs"
+                style={{ color: "var(--nx-sidebar-text-secondary)" }}
+              >
+                {props.activityDate
+                  ? `Última actividad: ${formatDateTimeEsCl(props.activityDate)}`
+                  : "Fecha de actividad no disponible."}
+              </p>
+            </>
+          )}
       </div>
     </div>
   );

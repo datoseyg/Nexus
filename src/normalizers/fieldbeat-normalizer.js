@@ -90,6 +90,20 @@ function getFieldValueFromGroup(group, targetName) {
   return field?.value || "";
 }
 
+// Companero de getFieldValueFromGroup para el comentario libre asociado a un
+// campo (ej. "UBICACIÓN DE ORIGEN DE REPUESTO" con comment_enabled=true trae
+// un f.comment separado de f.value, ej. "Repuesto proporcionado por el
+// cliente" para el reporte 3453 - ver HOTFIX de integridad de datos).
+function getFieldCommentFromGroup(group, targetName) {
+  const target = normalizeText(targetName);
+
+  const field = (group.fields || []).find(f => {
+    return normalizeText(f.name) === target;
+  });
+
+  return field?.comment || "";
+}
+
 function findFieldValue(task, possibleNames) {
   const normalizedTargets = possibleNames.map(normalizeText);
 
@@ -320,6 +334,16 @@ function buildFieldBeatTables(tasks) {
           field_index: field.index ?? "",
           field_type: field.type || "",
           field_value: field.value || "",
+          // HOTFIX de integridad de datos: field.comment (el texto libre
+          // asociado a una seleccion tipo "OTROS (COMENTE)" en campos MULTIPLE
+          // con comment_enabled=true) se perdia por completo en la ingesta -
+          // repo-wide, no solo para el campo de ingeniero adicional
+          // (comment_enabled aparece 66,126 veces en el crudo). Se captura
+          // aqui para TODOS los campos, para trazabilidad en processed; la
+          // exposicion hacia la API/UI/Busqueda queda SIEMPRE acotada a
+          // extractores de dominio allowlisted (ver lib/fieldbeat-participants.ts),
+          // nunca expuesta de forma generica.
+          field_comment: field.comment || "",
           mandatory: Boolean(field.mandatory),
           possible_values: Array.isArray(field.possible_values)
             ? field.possible_values.join("|")
@@ -352,6 +376,14 @@ function buildFieldBeatTables(tasks) {
         getFieldValueFromGroup(group, "UBICACIÓN DE ORIGEN DE REPUESTO") ||
         getFieldValueFromGroup(group, "UBICACION DE ORIGEN DE REPUESTO");
 
+      // HOTFIX de integridad de datos: comentario libre asociado a
+      // "Otros (Comente)" en el origen del repuesto (ej. "Repuesto
+      // proporcionado por el cliente" para el reporte 3453) - se perdia
+      // por completo, nunca llegaba a processed.
+      const originComment =
+        getFieldCommentFromGroup(group, "UBICACIÓN DE ORIGEN DE REPUESTO") ||
+        getFieldCommentFromGroup(group, "UBICACION DE ORIGEN DE REPUESTO");
+
       const photoRef =
         getFieldValueFromGroup(group, "FOTO DEL REPUESTO UTILIZADO");
 
@@ -370,6 +402,7 @@ function buildFieldBeatTables(tasks) {
           raw_original_part_number: rawPartNumber,
           raw_original_part_name: rawPartName,
           origin_location: originLocation,
+          origin_comment: originComment,
           photo_ref: photoRef,
           dolibarr_product_id: "",
           dolibarr_ref: item.partNumber,

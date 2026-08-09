@@ -78,4 +78,26 @@ export interface AssertWriteConfirmedOptions {
 
 export function assertWriteConfirmed(connectionString: string, opts?: AssertWriteConfirmedOptions): ConnectionTarget;
 
+export function isSupabaseCloudHost(host: string | null | undefined): boolean;
+
+export function parseSupabaseProjectRef(target: Pick<ConnectionTarget, "host" | "user">): string | null;
+
+export class UnknownSupabaseProjectError extends Error {
+  constructor(reason: string);
+}
+
+export interface AssertKnownSupabaseProjectOptions {
+  expectedProjectRefEnvVar?: string;
+}
+
+export function assertKnownSupabaseProject(connectionString: string, opts?: AssertKnownSupabaseProjectOptions): ConnectionTarget;
+
+export interface AssertSupabaseWriteAuthorizedOptions {
+  environment?: string;
+  applicationName?: string;
+  expectedProjectRefEnvVar?: string;
+}
+
+export function assertSupabaseWriteAuthorized(connectionString: string, opts?: AssertSupabaseWriteAuthorizedOptions): ConnectionTarget;
+
 export function seedDisposableMarker(pool: QueryableClient, runId: string): Promise<void>;

@@ -103,10 +103,10 @@ before(async () => {
 
   const versionRes = await pool.query(
     `INSERT INTO config.contract_equipment_versions
-       (equipment_key, client_name_canonical, client_name_raw, equipment_model, installation_date_precision,
+       (equipment_key, client_name_canonical, client_name_raw, client_name_key, equipment_model, installation_date_precision,
         contract_status_code, spa_tier_code, support_mode_code, parts_coverage_code, hw_refresh_code, updates_code, upgrades_code,
         valid_from, valid_to, is_current, source_import_id, source_row_number, source_row_hash, contract_fingerprint)
-     VALUES ('SN:TEST1','Cliente Test','Cliente Test','EQ-1','UNKNOWN',
+     VALUES ('SN:TEST1','Cliente Test','Cliente Test','cliente test','EQ-1','UNKNOWN',
              'ACTIVE_AUTO_RENEW','NO_SPA','REMOTE','NOT_INCLUDED','NO','NO','NO',
              '2020-01-01', NULL, true, $1, 1, 'fixture-row-hash', 'fixture-fingerprint')
      RETURNING contract_version_id`,
@@ -309,10 +309,10 @@ test("concurrencia: 2 publishResults concurrentes se serializan por el advisory 
   void startA; void startB;
 
   // Si el lock advisory sirvió, AMBAS tareas quedan publicadas (una tras
-  // otra, nunca corrompidas por una carrera) -TRUNCATE dentro de cada
-  // transacción sin serialización dejaría a lo sumo 1 fila visible.
+  // otra, nunca corrompidas por una carrera). El UPSERT conserva cada tarea
+  // y el lock impide que sus tablas dependientes se publiquen entrelazadas.
   const count = await pool.query("SELECT count(*) FROM marts.fieldbeat_working_hours_analysis_v2 WHERE fieldbeat_task_id IN (900701,900702)");
-  assert.equal(Number(count.rows[0].count), 1, "cada publishResults hace TRUNCATE de toda la tabla -el ganador de la carrera de advisory lock es quien queda, nunca ambos ni ninguno corrupto");
+  assert.equal(Number(count.rows[0].count), 2, "ambas publicaciones serializadas deben conservarse mediante UPSERT");
 });
 
 test("summarizeResults: distribuciones agregadas coherentes con los resultados de entrada", () => {

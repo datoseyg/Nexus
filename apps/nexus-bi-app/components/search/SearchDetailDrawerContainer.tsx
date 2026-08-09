@@ -5,12 +5,18 @@ import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { BUTTON_SECONDARY } from "./search.styles";
 import { isSearchDetailResponse, type DetailState } from "./search.types";
-import { formatDateEsCl, resolveTicketTitle, splitEquipmentIds, ticketStatusTone } from "./search.utils";
+import { formatDateEsCl, resolveTicketTitle, ticketStatusTone } from "./search.utils";
 import type { SearchEntity } from "@/types/search";
 
 interface SearchDetailDrawerContainerProps {
   request: { entity: Exclude<SearchEntity, "all">; key: string } | null;
   onClose: () => void;
+  /** HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) - abre
+   * el drawer CANÓNICO de reporte (FieldbeatReportDetailDrawer), nunca el
+   * propio de Search. El caller (SearchDashboard) es quien cierra ESTE
+   * drawer antes/al mismo tiempo de abrir el canónico - nunca dos diálogos
+   * apilados. */
+  onOpenReport: (fieldbeatTaskId: string) => void;
 }
 
 const GLOBAL_NOTE = "Esta vista muestra el estado global de la entidad, sin aplicar los filtros de búsqueda actuales.";
@@ -49,10 +55,15 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Fila de lista de 2 líneas (primaria oscura/semibold + secundaria legible) - reemplaza el patrón de una sola línea en gris parejo. */
-function DetailListItem({ primary, secondary }: { primary: React.ReactNode; secondary?: React.ReactNode }) {
-  return (
-    <li className="-mx-2 rounded-[var(--nx-radius-chip)] border-b px-2 py-2 last:border-b-0 hover:bg-[var(--nx-page-bg)]" style={{ borderColor: "var(--nx-border)" }}>
+/** Fila de lista de 2 líneas (primaria oscura/semibold + secundaria legible) -
+ * reemplaza el patrón de una sola línea en gris parejo. HOTFIX de integridad
+ * de datos FieldBeat (Stage 9): con `onClick` se renderiza como <button>
+ * real (foco/teclado/Enter-Space nativos) en vez de un <li> inerte - las
+ * filas de "reportes relacionados" (recentReports/linkedReports/recentUsages)
+ * dejan de ser 100% inertes, abren el drawer canónico del reporte. */
+function DetailListItem({ primary, secondary, onClick }: { primary: React.ReactNode; secondary?: React.ReactNode; onClick?: () => void }) {
+  const content = (
+    <>
       <p className="text-[13.5px] font-semibold" style={{ color: "var(--nx-text-primary)" }}>
         {primary}
       </p>
@@ -61,6 +72,25 @@ function DetailListItem({ primary, secondary }: { primary: React.ReactNode; seco
           {secondary}
         </p>
       )}
+    </>
+  );
+  if (!onClick) {
+    return (
+      <li className="-mx-2 rounded-[var(--nx-radius-chip)] border-b px-2 py-2 last:border-b-0" style={{ borderColor: "var(--nx-border)" }}>
+        {content}
+      </li>
+    );
+  }
+  return (
+    <li className="border-b last:border-b-0" style={{ borderColor: "var(--nx-border)" }}>
+      <button
+        type="button"
+        onClick={onClick}
+        className="-mx-2 block w-full rounded-[var(--nx-radius-chip)] px-2 py-2 text-left hover:bg-[var(--nx-page-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nx-focus-ring-color)]"
+        style={{ minHeight: 44 }}
+      >
+        {content}
+      </button>
     </li>
   );
 }
@@ -73,7 +103,7 @@ function EmptyListItem({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DetailBody({ state, onRetry }: { state: DetailState; onRetry: () => void }) {
+function DetailBody({ state, onRetry, onOpenReport }: { state: DetailState; onRetry: () => void; onOpenReport: (fieldbeatTaskId: string) => void }) {
   if (state.status === "loading") {
     return (
       <p aria-busy="true" style={{ color: "var(--nx-text-secondary)" }}>
@@ -117,7 +147,7 @@ function DetailBody({ state, onRetry }: { state: DetailState; onRetry: () => voi
           <SectionTitle>Reportes recientes</SectionTitle>
           <ul className="flex flex-col">
             {data.recentReports.map(r => (
-              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.taskType ?? "—"} />
+              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.taskType ?? "—"} onClick={() => onOpenReport(r.fieldbeatTaskId)} />
             ))}
             {data.recentReports.length === 0 && <EmptyListItem>Sin reportes.</EmptyListItem>}
           </ul>
@@ -164,7 +194,7 @@ function DetailBody({ state, onRetry }: { state: DetailState; onRetry: () => voi
           <SectionTitle>Reportes recientes</SectionTitle>
           <ul className="flex flex-col">
             {data.recentReports.map(r => (
-              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.clientName ?? "—"} />
+              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.clientName ?? "—"} onClick={() => onOpenReport(r.fieldbeatTaskId)} />
             ))}
             {data.recentReports.length === 0 && <EmptyListItem>Sin reportes.</EmptyListItem>}
           </ul>
@@ -173,54 +203,12 @@ function DetailBody({ state, onRetry }: { state: DetailState; onRetry: () => voi
     );
   }
 
-  if (data.entity === "reports") {
-    const machines = splitEquipmentIds(data.summary.machineId);
-    return (
-      <div className="flex flex-col gap-4 text-sm">
-        <dl className="grid grid-cols-2 gap-2">
-          <dt style={LABEL_STYLE}>Fecha</dt>
-          <dd className={VALUE_CLASS}>{formatDateEsCl(data.summary.date)}</dd>
-          <dt style={LABEL_STYLE}>Cliente</dt>
-          <dd className={VALUE_CLASS}>{data.summary.clientName ?? "—"}</dd>
-          <dt style={LABEL_STYLE}>Máquina(s)</dt>
-          <dd className={VALUE_CLASS}>{machines.length ? machines.join(", ") : "—"}</dd>
-          <dt style={LABEL_STYLE}>Tipo de tarea</dt>
-          <dd className={VALUE_CLASS}>{data.summary.taskType ?? "—"}</dd>
-          <dt style={LABEL_STYLE}>Ticket</dt>
-          <dd className={VALUE_CLASS}>{data.summary.ticketId ?? "Sin ticket asociado"}</dd>
-        </dl>
-        <section>
-          <SectionTitle>Campos del reporte</SectionTitle>
-          <dl className="grid grid-cols-2 gap-1.5 text-[13px]">
-            {data.fields.map((f, i) => (
-              <div key={i} className="contents">
-                <dt style={LABEL_STYLE}>{f.label}</dt>
-                <dd style={{ color: "var(--nx-text-primary)" }}>{f.value ?? "—"}</dd>
-              </div>
-            ))}
-          </dl>
-          {data.fields.length === 0 && (
-            <p className="text-[13px]" style={EMPTY_STYLE}>
-              Sin campos adicionales.
-            </p>
-          )}
-        </section>
-        <section>
-          <SectionTitle>Repuestos usados</SectionTitle>
-          <ul className="flex flex-col">
-            {data.parts.map(p => (
-              <DetailListItem
-                key={p.key}
-                primary={p.partName ?? p.sku ?? p.rawIdentifier}
-                secondary={`${p.quantityConsumed.toLocaleString("es-CL")} consumidos`}
-              />
-            ))}
-            {data.parts.length === 0 && <EmptyListItem>Sin repuestos registrados.</EmptyListItem>}
-          </ul>
-        </section>
-      </div>
-    );
-  }
+  // HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) - Search
+  // YA NUNCA abre su propio drawer para la entidad "reports" (SearchDashboard
+  // intercepta el click y abre directamente FieldbeatReportDetailDrawer, el
+  // canónico) - esta rama quedaría inalcanzable, eliminada junto con
+  // buildReportDetailSummaryQuery/buildReportDetailRelatedQuery y el caso
+  // entity==="reports" de /api/search/detail.
 
   if (data.entity === "tickets") {
     return (
@@ -239,7 +227,7 @@ function DetailBody({ state, onRetry }: { state: DetailState; onRetry: () => voi
           <SectionTitle>Reportes vinculados</SectionTitle>
           <ul className="flex flex-col">
             {data.linkedReports.map(r => (
-              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.taskType ?? "—"} />
+              <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.taskType ?? "—"} onClick={() => onOpenReport(r.fieldbeatTaskId)} />
             ))}
             {data.linkedReports.length === 0 && <EmptyListItem>Sin reportes vinculados.</EmptyListItem>}
           </ul>
@@ -267,7 +255,7 @@ function DetailBody({ state, onRetry }: { state: DetailState; onRetry: () => voi
         <SectionTitle>Usos recientes</SectionTitle>
         <ul className="flex flex-col">
           {data.recentUsages.map(r => (
-            <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.clientName ?? "—"} />
+            <DetailListItem key={r.key} primary={`#${r.fieldbeatTaskId} · ${formatDateEsCl(r.date)}`} secondary={r.clientName ?? "—"} onClick={() => onOpenReport(r.fieldbeatTaskId)} />
           ))}
           {data.recentUsages.length === 0 && <EmptyListItem>Sin usos registrados.</EmptyListItem>}
         </ul>
@@ -281,7 +269,6 @@ function titleForRequest(entity: Exclude<SearchEntity, "all">, state: DetailStat
   const data = state.data;
   if (data.entity === "clients") return data.summary.clientName;
   if (data.entity === "machines") return data.summary.machineId;
-  if (data.entity === "reports") return `Reporte #${data.summary.fieldbeatTaskId}`;
   if (data.entity === "tickets") return resolveTicketTitle(data.summary.title, data.summary.ticketId);
   return data.summary.partName || data.summary.sku || "Repuesto";
 }
@@ -289,7 +276,7 @@ function titleForRequest(entity: Exclude<SearchEntity, "all">, state: DetailStat
 // Ciclo de vida propio (closed|loading|success|error), independiente del
 // de la búsqueda principal, con su propio AbortController - abrir el
 // drawer nunca cancela la búsqueda en curso y viceversa.
-export function SearchDetailDrawerContainer({ request, onClose }: SearchDetailDrawerContainerProps) {
+export function SearchDetailDrawerContainer({ request, onClose, onOpenReport }: SearchDetailDrawerContainerProps) {
   const [state, setState] = useState<DetailState>({ status: "closed" });
   const [retryCount, setRetryCount] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
@@ -339,7 +326,7 @@ export function SearchDetailDrawerContainer({ request, onClose }: SearchDetailDr
       footerNote={GLOBAL_NOTE}
     >
       <div style={DETAIL_SURFACE_STYLE}>
-        <DetailBody state={state} onRetry={() => setRetryCount(c => c + 1)} />
+        <DetailBody state={state} onRetry={() => setRetryCount(c => c + 1)} onOpenReport={onOpenReport} />
       </div>
     </DetailDrawer>
   );

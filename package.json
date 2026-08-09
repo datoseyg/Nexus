@@ -2,7 +2,13 @@
   "name": "eyg-nexus-local",
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
+    "dev:local": "node scripts/dev-local.mjs",
+    "db:persistent:setup": "node scripts/setup-persistent-local-db.mjs",
+    "dev:local:test": "node --test test/local-dev-runtime.test.js",
     "get:zendesk": "node src/miners/zendesk.js",
     "get:fieldbeat": "node src/miners/fieldbeat.js",
     "get:fieldbeat:all": "node src/miners/fieldbeat-all.js",
@@ -28,25 +34,36 @@
     "db:pg:ddl": "node src/db/generate-postgres-ddl.js",
     "db:pg:migrate": "node src/db/migrate-to-supabase.js",
     "db:pg:validate": "node src/db/validate-supabase.js",
+    "db:pg:record-validation": "node src/db/record-supabase-validation.js",
     "db:pg:build": "npm run db:pg:ddl && npm run db:pg:migrate && npm run db:pg:validate",
     "build:fieldbeat-report-dolibarr-view": "node src/marts/build-fieldbeat-report-dolibarr-view.js",
     "build:gold:fieldbeat": "node src/gold/build-fieldbeat-gold.js",
     "contracts:import": "node src/contracts/import-contracts.js",
-    "contracts:test": "node --test \"test/contracts/*.test.js\"",
-    "contracts:test:integration": "node --test --test-concurrency=1 \"test/contracts/*.integration.test.js\"",
-    "working-hours:test": "node --test \"test/working-hours/*.test.js\"",
-    "working-hours:test:integration": "node --test --test-concurrency=1 \"test/working-hours/*.integration.test.js\"",
+    "contracts:rematch": "node scripts/contracts/rematch-current.mjs",
+    "contracts:backfill-client-name-key": "node scripts/contracts/backfill-client-name-key.mjs",
+    "contracts:audit-client-name-key": "node scripts/contracts/audit-client-name-key-collisions.mjs",
+    "contracts:test": "node scripts/run-test-suite.mjs test/contracts unit",
+    "contracts:test:integration": "node scripts/run-test-suite.mjs test/contracts integration",
+    "working-hours:test": "node scripts/run-test-suite.mjs test/working-hours unit",
+    "working-hours:test:integration": "node scripts/run-test-suite.mjs test/working-hours integration",
     "working-hours:ownership:test": "node --test \"test/db/migrate-to-supabase.ownership.test.js\"",
     "working-hours:build": "node src/working-hours/build-working-hours.js",
     "working-hours:parity": "node src/working-hours/build-working-hours.js parity",
     "holidays:import": "node src/holidays/import-holidays.js",
-    "holidays:test": "node --test \"test/holidays/*.test.js\"",
-    "holidays:test:integration": "node --test \"test/holidays/*.integration.test.js\""
+    "holidays:test": "node scripts/run-test-suite.mjs test/holidays unit",
+    "holidays:test:integration": "node scripts/run-test-suite.mjs test/holidays integration",
+    "pipeline:local:env": "node scripts/with-local-pipeline-env.mjs",
+    "after-hours:import-all": "node scripts/import-after-hours-pipeline.mjs",
+    "pipeline:refresh:worker:local": "node scripts/with-local-pipeline-env.mjs node scripts/pipeline/local-refresh-worker.mjs",
+    "pipeline:refresh:run": "node scripts/pipeline/run-data-refresh.mjs"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.4-r.1",
     "csv-parse": "^7.0.0",
     "dotenv": "^16.4.7",
     "pg": "^8.22.0"
+  },
+  "devDependencies": {
+    "supabase": "^2.109.1"
   }
 }

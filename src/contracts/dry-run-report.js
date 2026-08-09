@@ -24,7 +24,9 @@ export function buildDryRunReport({
   matchSource,
   matches,
   alreadyImported,
-  dbPeekAvailable
+  dbPeekAvailable,
+  versionActions,
+  transformVersion
 }) {
   const matchesByEquipmentKey = new Map((matches ?? []).map(m => [m.equipmentKey, m]));
   const issues = records.flatMap(r => {
@@ -70,6 +72,7 @@ export function buildDryRunReport({
     sourceFile,
     sourceSha256,
     sourceSheet: sourceSheet ?? null,
+    transformVersion,
     dbPeekAvailable: Boolean(dbPeekAvailable),
     alreadyImported: alreadyImported ?? { isDuplicate: "unknown", priorImportId: null },
     rows: {
@@ -89,7 +92,7 @@ export function buildDryRunReport({
       contractStatusCode: r.normalizedFields.contractStatusCode,
       requiresReview: r.requiresReview,
       normalizationStatus: r.normalizationStatus,
-      versionAction: "unknown"
+      versionAction: versionActions?.get(r.equipmentKey) ?? "unknown"
     })),
     serviceWindows: records.flatMap(r =>
       r.serviceWindowRows.map(w => ({ equipmentKey: r.equipmentKey, ...w }))

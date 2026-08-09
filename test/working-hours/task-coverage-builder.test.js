@@ -49,6 +49,29 @@ test("sin equipos -> NO_EQUIPMENT, cae a LEGACY_SCHEDULE preservando contractual
   assert.equal(r.coverageReasonCode, "WITHIN_LEGACY_SCHEDULE");
 });
 
+test("caso 3824: Working-Hours analiza el intervalo informado multidiario y conserva su procedencia", () => {
+  const r = run({
+    task: {
+      startTimeRaw: "2026-07-31T23:01:00.000Z",
+      durationMinutes: 120,
+      reportedStartRaw: "30/07/2026 06:02",
+      reportedEndRaw: "31/07/2026 23:13",
+      deliveredRaw: "31/07/2026 23:15",
+      clientKey: "C1",
+      taskType: "CORRECTIVA PROGRAMADA",
+      assignedTo: "mabreu"
+    },
+    equipmentInputs: []
+  });
+  assert.equal(r.analysisIntervalBasis, "REPORTED_WORK_INTERVAL");
+  assert.equal(r.analysisFallbackUsed, false);
+  assert.equal(r.analysisFallbackReason, null);
+  assert.equal(r.startTimeUtc.toISOString(), "2026-07-30T10:02:00.000Z");
+  assert.equal(r.endTimeUtc.toISOString(), "2026-08-01T03:13:00.000Z");
+  assert.equal(r.durationSeconds, 2471 * 60);
+  assert.equal(r.deliveredAt.toISOString(), "2026-08-01T03:15:00.000Z");
+});
+
 test("1 equipo con contrato FULL_24X7 vigente -> CONTRACTUAL, WITHIN_MATCHED_CONTRACT, sin fallback", () => {
   const r = run({ equipmentInputs: [contractualEquipment("EQ-1")] });
   assert.equal(r.dataBasis, "CONTRACTUAL");
@@ -58,6 +81,29 @@ test("1 equipo con contrato FULL_24X7 vigente -> CONTRACTUAL, WITHIN_MATCHED_CON
   assert.equal(r.contractResolutionConfidence, 90); // SERIAL_SUFFIX(+40) + FULL_24X7(+30) + SINGLE(+20)
   assert.equal(r.equipmentLinks.length, 1);
   assert.equal(r.equipmentLinks[0].isPrimary, true);
+});
+
+test("la aplicabilidad contractual usa la fecha local de Santiago en el límite de sourceEffectiveDate", () => {
+  const equipment = contractualEquipment("EQ-1");
+  equipment.versions[0] = {
+    contractVersionId: 1,
+    validFrom: null,
+    validTo: null,
+    sourceEffectiveDate: "2026-01-01",
+    contractStatusCode: "ACTIVE_AUTO_RENEW"
+  };
+  const beforeLocalMidnight = run({
+    task: { startTimeRaw: "2026-01-01T02:30:00Z", durationMinutes: 30, clientKey: "C1", taskType: "PM", assignedTo: "tech1" },
+    equipmentInputs: [equipment]
+  });
+  const afterLocalMidnight = run({
+    task: { startTimeRaw: "2026-01-01T03:30:00Z", durationMinutes: 30, clientKey: "C1", taskType: "PM", assignedTo: "tech1" },
+    equipmentInputs: [equipment]
+  });
+  assert.equal(beforeLocalMidnight.dataBasis, "LEGACY_SCHEDULE");
+  assert.equal(beforeLocalMidnight.contractualReasonCode, "NO_CONTRACT_AT_TASK_DATE");
+  assert.equal(afterLocalMidnight.dataBasis, "CONTRACTUAL");
+  assert.equal(afterLocalMidnight.fallbackUsed, false);
 });
 
 test("1 equipo EQUIPMENT_UNMATCHED -> cae a LEGACY_SCHEDULE, preserva contractualReasonCode", () => {
@@ -89,6 +135,19 @@ test("equipo con estado DEINSTALLED -> no calculable, cae a LEGACY_SCHEDULE pres
   const r = run({ equipmentInputs: [contractualEquipment("EQ-1", { statusCode: "DEINSTALLED" })] });
   assert.equal(r.dataBasis, "LEGACY_SCHEDULE");
   assert.equal(r.contractualReasonCode, "CONTRACT_STATUS_DEINSTALLED");
+});
+
+test("NO_CONTRACT + N/A usa horario global con motivo NO_CONTRACT explícito", () => {
+  const equipment = contractualEquipment("EQ-105614", { statusCode: "NO_CONTRACT" });
+  equipment.scheduleByVersionId = new Map([[1, { scheduleId: 1, coverageType: "NOT_APPLICABLE", parseStatus: "REVIEW_REQUIRED" }]]);
+  equipment.windowsByScheduleId = new Map([[1, []]]);
+  const r = run({ equipmentInputs: [equipment] });
+  assert.equal(r.dataBasis, "LEGACY_SCHEDULE");
+  assert.equal(r.fallbackUsed, true);
+  assert.equal(r.contractualReasonCode, "NO_CONTRACT");
+  assert.equal(r.coverageReasonCode, "WITHIN_LEGACY_SCHEDULE");
+  assert.equal(r.equipmentLinks[0].contractVersionId, 1);
+  assert.equal(r.equipmentLinks[0].scheduleId, null);
 });
 
 test("equipo CRITICAL_ONLY_24X7 sin señal de criticidad -> CRITICALITY_UNKNOWN, nunca se asume crítico ni no-crítico", () => {

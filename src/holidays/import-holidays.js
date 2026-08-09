@@ -4,7 +4,7 @@ import { readBundleRaw } from "./bundle-source.js";
 import { validateBundle } from "./bundle-validator.js";
 import { buildDryRunReport, writeDryRunReport } from "./dry-run-report.js";
 import { parseArgs, validateArgs } from "./cli.js";
-import { assertWriteConfirmed } from "../lib/db-safety.js";
+import { assertSupabaseWriteAuthorized } from "../lib/db-safety.js";
 
 /**
  * Peek de solo lectura, best-effort -nunca aborta el dry-run si falla
@@ -90,7 +90,10 @@ async function runApply(args) {
   const { createPool, getConnectionString } = await import("./db-client.js");
   const { applyBundle } = await import("./db-writer.js");
   // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir la conexión.
-  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  // NEXUS V3 - política única (src/lib/db-safety.js::assertSupabaseWriteAuthorized):
+  // permite escribir deliberadamente contra Supabase V3 solo con dual
+  // confirmation Y project ref V3 exacto. Un target local sigue igual.
+  assertSupabaseWriteAuthorized(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
   const pool = createPool({ applicationName: `holidays-apply:${randomUUID().slice(0, 8)}` });
   try {
     const result = await applyBundle({ pool, filename: args.file, sha256, bundle, resolvedEvents: validation.resolvedEvents });
@@ -108,7 +111,8 @@ async function runPublish(args) {
   const { createPool, getConnectionString } = await import("./db-client.js");
   const { publishCoverage } = await import("./publish-coverage.js");
   // ETAPA SAFETY-1 (Policy C) - evalúa el destino ANTES de abrir la conexión.
-  assertWriteConfirmed(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
+  // NEXUS V3 - misma política única que runApply(), ver ese comentario.
+  assertSupabaseWriteAuthorized(getConnectionString(), { environment: process.env.NODE_ENV ?? "development" });
   const pool = createPool({ applicationName: `holidays-publish:${randomUUID().slice(0, 8)}` });
   try {
     const result = await publishCoverage(pool, {

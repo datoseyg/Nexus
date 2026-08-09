@@ -1,0 +1,310 @@
+// Vocabulario de negocio para Auditoría - traduce los códigos técnicos del
+// esquema de gobierno (event_type/correction_type/entity_type/actor_type/
+// verification_outcome/etc., todos catálogos cerrados y versionados en
+// sql/089-097) a etiquetas legibles. rule_code es la única excepción: su
+// nombre de negocio vive en governance.rule_definitions.title (columna real,
+// ya corregida para coincidir con este vocabulario) - se consulta ahí, nunca
+// se duplica acá, para tener una sola fuente de verdad.
+//
+// Cada mapa es exhaustivo contra su catálogo real (confirmado por lectura de
+// las semillas SQL) - un valor no mapeado devuelve el código crudo tal cual
+// (nunca inventa una traducción), señal de que este archivo quedó atrás de
+// una migración nueva.
+
+export const ENTITY_TYPE_LABELS: Record<string, string> = {
+  part_occurrence: "Repuesto declarado",
+  report: "Reporte",
+  ticket_link: "Vínculo de ticket"
+};
+
+export const CORRECTION_TYPE_LABELS: Record<string, string> = {
+  "part-alias": "Alias de repuesto",
+  "technician-identity": "Identidad de técnico",
+  "ticket-link": "Vínculo de ticket",
+  "equipment-identification": "Identificación de equipo"
+};
+
+export const EVENT_TYPE_LABELS: Record<string, string> = {
+  ISSUE_DETECTED: "Incidencia detectada",
+  ISSUE_REAPPEARED: "Incidencia reaparecida",
+  ISSUE_ASSIGNED: "Revisión iniciada",
+  ISSUE_DISMISSED: "Incidencia descartada",
+  ISSUE_REOPENED: "Incidencia reabierta",
+  ISSUE_RESOLVED_VERIFIED: "Incidencia resuelta (verificada)",
+  COMMENT_ADDED: "Comentario agregado",
+  COMMENT_REDACTED: "Comentario redactado",
+  CORRECTION_APPLIED: "Corrección aplicada",
+  CORRECTION_REVERSED: "Corrección revertida",
+  VERIFICATION_PASSED: "Verificación aprobada",
+  VERIFICATION_STILL_DETECTED: "Verificación: problema persiste",
+  VERIFICATION_OPERATIONAL_ERROR: "Verificación: error operacional",
+  VERIFICATION_DEAD_LETTERED: "Verificación: reintentos agotados",
+  REVIEW_CASE_CREATED: "Caso creado",
+  REVIEW_CASE_UPDATED: "Caso actualizado",
+  LEGACY_CORRECTION_IMPORTED: "Corrección histórica migrada",
+  EXPORT_COMPLETED: "Exportación completada",
+  RESTRICTED_EVIDENCE_ACCESSED: "Evidencia restringida consultada",
+  REDACTED_COMMENT_ACCESSED: "Comentario redactado consultado",
+  RESTRICTED_EVENT_STATE_ACCESSED: "Estado restringido de evento consultado"
+};
+
+export const EVIDENCE_TYPE_LABELS: Record<string, string> = {
+  RULE_DETECTION: "Detección de regla",
+  CORRECTION_VERIFICATION: "Verificación de corrección"
+};
+
+// governance.command_events.command_type - closed set emitida por las
+// funciones de comando (sql/090-097), confirmado por lectura de cada
+// `jsonb_build_object('commandType', ...)`/`INSERT ... command_events`.
+export const COMMAND_TYPE_LABELS: Record<string, string> = {
+  "correction:part-alias": "Alias de repuesto",
+  "correction:technician-identity": "Identidad de técnico",
+  "correction:ticket-link": "Vínculo de ticket",
+  "correction:equipment-identification": "Identificación de equipo",
+  "correction:reverse": "Reversión de corrección",
+  "review-case:create": "Creación de caso",
+  "review-case:assign": "Asignación de caso",
+  "review-case:comment": "Comentario en caso",
+  "review-case:redact-comment": "Redacción de comentario",
+  "review-case:close": "Cierre de caso",
+  "review-case:reopen": "Reapertura de caso",
+  "review-case:add-issue": "Incidencia agregada a caso",
+  "review-case:end-membership": "Incidencia quitada de caso",
+  "issue:start-review": "Inicio de revisión",
+  "issue:dismiss": "Descarte de incidencia",
+  "issue:reopen": "Reapertura de incidencia",
+  "audit:evidence-restricted": "Acceso a contenido restringido",
+  export: "Exportación"
+};
+
+export const ACTOR_TYPE_LABELS: Record<string, string> = {
+  HUMAN: "Persona",
+  SERVICE: "Sistema",
+  LEGACY_UNVERIFIED: "Histórico sin verificar"
+};
+
+export const VERIFICATION_PROCESSING_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Verificación pendiente",
+  RUNNING: "Verificando",
+  COMPLETED: "Verificación completada",
+  CANCELLED: "Verificación cancelada",
+  DEAD_LETTERED: "Verificación con error persistente"
+};
+
+export const VERIFICATION_OUTCOME_LABELS: Record<string, string> = {
+  PASSED: "Aprobada - problema resuelto",
+  STILL_DETECTED: "Problema persiste",
+  OPERATIONAL_ERROR: "Error operacional"
+};
+
+export const MEMBERSHIP_END_REASON_LABELS: Record<string, string> = {
+  REMOVED_BY_ACTOR: "Quitada manualmente",
+  CASE_CLOSED: "Caso resuelto",
+  CASE_DISMISSED: "Caso descartado"
+};
+
+export const EVALUATION_RUN_STATUS_LABELS: Record<string, string> = {
+  RUNNING: "En ejecución",
+  SUCCEEDED: "Completada",
+  PARTIAL_FAILED_NOT_PUBLISHED: "Falla parcial (sin publicar)",
+  FAILED: "Fallida",
+  SUPERSEDED_NOT_PUBLISHED: "Reemplazada (sin publicar)",
+  CANCELLED: "Cancelada"
+};
+
+export const EVALUATION_SCOPE_MODE_LABELS: Record<string, string> = {
+  FULL: "Universo completo",
+  INCREMENTAL_SINCE_LAST_REFRESH: "Incremental desde la última actualización",
+  SCOPED: "Acotada a una regla/entidad"
+};
+
+export const EVALUATION_TRIGGERED_BY_LABELS: Record<string, string> = {
+  BATCH_SCHEDULE: "Programada",
+  DATA_REFRESH_PUBLISH: "Tras actualización de datos",
+  MANUAL_ADMIN: "Manual (Administración)",
+  CORRECTION_VERIFICATION: "Verificación de corrección"
+};
+
+function labelOrRaw(map: Record<string, string>, code: string | null | undefined): string {
+  if (!code) return "-";
+  return map[code] ?? code;
+}
+
+export function entityTypeLabel(code: string | null | undefined): string {
+  return labelOrRaw(ENTITY_TYPE_LABELS, code);
+}
+
+export function correctionTypeLabel(code: string | null | undefined): string {
+  return labelOrRaw(CORRECTION_TYPE_LABELS, code);
+}
+
+export function eventTypeLabel(code: string | null | undefined): string {
+  return labelOrRaw(EVENT_TYPE_LABELS, code);
+}
+
+export function commandTypeLabel(code: string | null | undefined): string {
+  return labelOrRaw(COMMAND_TYPE_LABELS, code);
+}
+
+export function evidenceTypeLabel(code: string | null | undefined): string {
+  return labelOrRaw(EVIDENCE_TYPE_LABELS, code);
+}
+
+export function actorTypeLabel(code: string | null | undefined): string {
+  return labelOrRaw(ACTOR_TYPE_LABELS, code);
+}
+
+export function verificationProcessingStatusLabel(code: string | null | undefined): string {
+  return labelOrRaw(VERIFICATION_PROCESSING_STATUS_LABELS, code);
+}
+
+export function verificationOutcomeLabel(code: string | null | undefined): string {
+  return labelOrRaw(VERIFICATION_OUTCOME_LABELS, code);
+}
+
+export function membershipEndReasonLabel(code: string | null | undefined): string {
+  return labelOrRaw(MEMBERSHIP_END_REASON_LABELS, code);
+}
+
+export function evaluationRunStatusLabel(code: string | null | undefined): string {
+  return labelOrRaw(EVALUATION_RUN_STATUS_LABELS, code);
+}
+
+export function evaluationScopeModeLabel(code: string | null | undefined): string {
+  return labelOrRaw(EVALUATION_SCOPE_MODE_LABELS, code);
+}
+
+export function evaluationTriggeredByLabel(code: string | null | undefined): string {
+  return labelOrRaw(EVALUATION_TRIGGERED_BY_LABELS, code);
+}
+
+// governance.issues.severity/status - MISMO texto que severityBadge/
+// issueStatusBadge en components/ui/StatusBadge.tsx (solo la etiqueta, sin
+// el tono de color que ese componente agrega para la UI). Se duplica acá
+// como funciones puras en vez de importar StatusBadge.tsx desde código
+// server-only (rutas API como app/api/audit/issues/export/route.ts) - un
+// .tsx con JSX real no puede importarse desde la suite de tests unitarios
+// (node --experimental-strip-types no transforma JSX, ver
+// test/ts-extension-loader.mjs), y una ruta de servidor no debería depender
+// de un componente de UI de todos modos. Si el texto cambia en un lugar,
+// debe cambiar en el otro.
+export const SEVERITY_LABELS: Record<string, string> = {
+  HIGH: "Alta",
+  MEDIUM: "Media",
+  LOW: "Baja",
+  WARNING: "Advertencia"
+};
+
+export const ISSUE_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Abierta",
+  IN_REVIEW: "En revisión",
+  RESOLVED: "Resuelta",
+  DISMISSED: "Descartada"
+};
+
+export function severityLabel(code: string | null | undefined): string {
+  return labelOrRaw(SEVERITY_LABELS, code);
+}
+
+export function issueStatusLabel(code: string | null | undefined): string {
+  return labelOrRaw(ISSUE_STATUS_LABELS, code);
+}
+
+// Hallazgo + recomendación de negocio por regla (governance.issues.rule_code) -
+// único lugar de traducción, reutilizado por Bandeja/Resumen/exportaciones
+// (nunca una traducción distinta por pantalla, corrección de negocio
+// "mismo issue, mismo nombre en toda la app"). rule_code es un catálogo
+// cerrado (governance.rule_definitions, sql/089) - un código no mapeado cae
+// al título/descripción ya provistos por el backend (rule_title), nunca se
+// inventa una recomendación para una regla desconocida.
+export interface IssueRecommendation {
+  finding: string;
+  recommendation: string;
+  actionLabel: string;
+}
+
+const ISSUE_RECOMMENDATIONS: Record<string, IssueRecommendation> = {
+  PART_NO_MATCH: {
+    finding: "No se identificó un producto",
+    recommendation: "Buscar el producto correcto en el catálogo Dolibarr.",
+    actionLabel: "Resolver"
+  },
+  PART_AMBIGUOUS_MATCH: {
+    finding: "Hay varias coincidencias posibles",
+    recommendation: "Elegir el producto correcto entre los candidatos sugeridos.",
+    actionLabel: "Revisar opciones"
+  },
+  PART_PLACEHOLDER_VALUE: {
+    finding: "Valor genérico o incompleto",
+    recommendation: 'Confirmar si corresponde a "sin repuesto" o elegir el producto correcto.',
+    actionLabel: "Confirmar"
+  },
+  REPORT_QUALITY_DEGRADED: {
+    finding: "Información incompleta en el reporte",
+    recommendation: "Revisar el reporte y completar la información faltante.",
+    actionLabel: "Revisar reporte"
+  },
+  TICKET_LINK_RESTRICTED_OR_MISSING: {
+    finding: "Ticket faltante o no disponible",
+    recommendation: "Confirmar si existe un ticket asociado o registrar que no corresponde.",
+    actionLabel: "Resolver"
+  }
+};
+
+export function issueRecommendation(ruleCode: string | null | undefined, fallbackTitle?: string | null): IssueRecommendation {
+  if (ruleCode && ISSUE_RECOMMENDATIONS[ruleCode]) return ISSUE_RECOMMENDATIONS[ruleCode];
+  return {
+    finding: fallbackTitle ?? "Incidencia detectada",
+    recommendation: "Revisar el detalle para conocer la corrección disponible.",
+    actionLabel: "Revisar"
+  };
+}
+
+// Hallazgo/recomendación de negocio por match_status
+// (marts.used_parts_dolibarr_match.match_status - "Repuestos por revisar" y
+// sus sub-pestañas de Correcciones leen esta vista, no governance.issues
+// directamente, así que usan su propio vocabulario aquí en vez de
+// issueRecommendation). Mismas 4 categorías reales del pipeline - ver
+// matchStatusBadge en components/ui/StatusBadge.tsx (tono visual); estas
+// funciones dan el texto largo de hallazgo/recomendación para la tabla de
+// decisión, nunca el código crudo.
+export function matchStatusFinding(status: string | null | undefined): string {
+  switch (status) {
+    case "NO_MATCH":
+      return "No se identificó un producto";
+    case "AMBIGUOUS_MATCH":
+      return "Hay varias coincidencias posibles";
+    case "PLACEHOLDER_VALUE":
+      return "Valor genérico o incompleto";
+    case "MATCHED":
+      return "Producto identificado";
+    // Declaración válida de ausencia de repuesto (N/A, no aplica, NC, sin
+    // repuesto...), NUNCA un placeholder que requiera revisión - ver
+    // quality.classify_part_declaration (sql/098). El texto original queda
+    // como evidencia (raw_part_identifier), nunca se pierde.
+    case "NO_PART_USED":
+      return "Sin repuesto utilizado";
+    default:
+      return status ?? "-";
+  }
+}
+
+export function matchStatusRecommendation(status: string | null | undefined): { text: string; actionLabel: string } {
+  switch (status) {
+    case "NO_MATCH":
+      return { text: "Buscar el producto correcto en el catálogo Dolibarr.", actionLabel: "Resolver" };
+    case "AMBIGUOUS_MATCH":
+      return { text: "Elegir el producto correcto entre los candidatos sugeridos.", actionLabel: "Revisar opciones" };
+    case "PLACEHOLDER_VALUE":
+      return { text: 'Confirmar si corresponde a "sin repuesto" o elegir el producto correcto.', actionLabel: "Confirmar" };
+    case "MATCHED":
+      return { text: "Validar que la coincidencia sugerida sea correcta.", actionLabel: "Validar" };
+    // Nunca accionable - ni alias, ni selección de producto, ni confirmación
+    // manual (clasificación automática de una regla determinista, sección 10
+    // de la corrección de negocio).
+    case "NO_PART_USED":
+      return { text: "El reporte declaró que no se utilizó repuesto.", actionLabel: "Sin repuesto utilizado" };
+    default:
+      return { text: "Revisar el detalle para más información.", actionLabel: "Revisar" };
+  }
+}

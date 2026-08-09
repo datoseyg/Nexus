@@ -3,10 +3,30 @@
 -- Supabase o psql, contra la conexión DIRECTA (puerto 5432) -no el pooler.
 -- Orden de ejecución de sql/: 000 -> 005 -> 010 -> 020 -> 030 -> 040 -> 050 -> 060.
 
--- gen_random_uuid() (usado en audit.pipeline_runs, audit.warehouse_sync_state)
--- necesita esto en versiones de Postgres donde no viene en core. Idempotente,
--- no rompe nada si Supabase ya lo trae.
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- pgcrypto -digest()/hmac()/crypt() (usados por las funciones de governance,
+-- ver sql/090 en adelante). gen_random_uuid() NO depende de esto -viene en
+-- core desde Postgres 13. Supabase instala pgcrypto en el schema
+-- `extensions` por defecto (nunca `public`, confirmado vía el dump de
+-- proyectos Supabase reales) - se replica esa misma ubicación acá para que
+-- toda referencia calificada (extensions.digest(...), etc.) resuelva igual
+-- en Supabase y en cualquier Postgres vanilla (ej. el desechable local de
+-- tests), sin depender de resolución implícita por search_path.
+CREATE SCHEMA IF NOT EXISTS extensions;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pgcrypto') THEN
+    -- Nunca instalada en esta base -crear directo en el schema canónico.
+    CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
+  ELSIF (SELECT extnamespace::regnamespace::text FROM pg_extension WHERE extname = 'pgcrypto') <> 'extensions' THEN
+    -- Ya instalada en otro schema (ej. una base donde una versión anterior
+    -- de este archivo la instaló en `public`) - relocalizar explícitamente.
+    -- pgcrypto es relocatable; esto nunca toca ni mueve ninguna otra
+    -- extensión, y es un no-op si ya está en `extensions` (caso Supabase).
+    ALTER EXTENSION pgcrypto SET SCHEMA extensions;
+  END IF;
+END
+$$;
 
 CREATE SCHEMA IF NOT EXISTS raw;
 CREATE SCHEMA IF NOT EXISTS processed;

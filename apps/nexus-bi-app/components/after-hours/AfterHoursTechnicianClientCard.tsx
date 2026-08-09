@@ -39,7 +39,7 @@ export function AfterHoursTechnicianClientCard({
   const max = maxOf(rows.map(r => r.after_hours_total_hours));
 
   return (
-    <AfterHoursSectionCard question="¿Cómo se relacionan técnicos y clientes?" subtitle="Actividad cruzada">
+    <AfterHoursSectionCard question="¿Cómo se relacionan técnicos responsables y clientes?" subtitle="Actividad cruzada (responsable principal por tarea)">
       {status === "error" ? (
         <AfterHoursEmptyBlock layout="column" tone="error" title="No se pudo cargar esta sección" description={error ?? "Intenta nuevamente en unos minutos."} onRetry={onRetry} />
       ) : status === "loading" ? (

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildAfterHoursMartConditions, createParamPusher, parseAfterHoursFilters } from "../../lib/after-hours-filters.ts";
+import { buildAfterHoursMartConditions, buildReportIdCondition, createParamPusher, parseAfterHoursFilters } from "../../lib/after-hours-filters.ts";
 
 function qs(params: Record<string, string>): URLSearchParams {
   return new URLSearchParams(params);
@@ -209,4 +209,60 @@ test("buildAfterHoursMartConditions: múltiples filtros simultáneos -> placehol
   const expected = Array.from({ length: pusher.params.length }, (_, i) => i + 1);
   assert.deepEqual([...usedPlaceholders].sort((a, b) => a - b), expected, "cada placeholder $N debe usarse exactamente una vez, sin huecos ni duplicados");
   assert.equal(new Set(usedPlaceholders).size, usedPlaceholders.length, "ningún placeholder se reutiliza para dos valores distintos");
+});
+
+// === Buscador de reporte (fieldbeat_task_id) - deliberadamente FUERA de
+// AfterHoursFilters/buildAfterHoursMartConditions, ver comentario de
+// cabecera de buildReportIdCondition ===
+
+test("buildReportIdCondition: reportId ausente (null) -> null, conserva exactamente el comportamiento actual (no toca pusher)", () => {
+  const pusher = createParamPusher();
+  const result = buildReportIdCondition(null, "w", pusher);
+  assert.equal(result, null);
+  assert.equal(pusher.params.length, 0);
+});
+
+test("buildReportIdCondition: reportId válido -> condición parametrizada sobre fieldbeat_task_id, nunca interpolada", () => {
+  const pusher = createParamPusher();
+  const result = buildReportIdCondition("3811", "w", pusher);
+  assert.ok(result && "condition" in result, "debe devolver una condición, no un error");
+  const condition = (result as { condition: string }).condition;
+  assert.equal(condition, "w.fieldbeat_task_id = $1");
+  assert.doesNotMatch(condition, /3811/, "el valor nunca debe interpolarse directo en el SQL, solo vía placeholder");
+  assert.deepEqual(pusher.params, [3811]);
+});
+
+test("buildReportIdCondition: combinado con otros filtros, el parámetro de reportId ocupa el siguiente placeholder (AND, nunca reemplaza)", () => {
+  const pusher = createParamPusher();
+  const filters = parseAfterHoursFilters(qs({ client: "C1" }));
+  const conditions = buildAfterHoursMartConditions(filters, "w", pusher);
+  const reportIdResult = buildReportIdCondition("3811", "w", pusher);
+  assert.ok(reportIdResult && "condition" in reportIdResult);
+  conditions.push((reportIdResult as { condition: string }).condition);
+
+  assert.equal(conditions.length, 2);
+  assert.ok(conditions.some(c => c === "w.client_name = $1"));
+  assert.ok(conditions.some(c => c === "w.fieldbeat_task_id = $2"));
+  assert.deepEqual(pusher.params, ["C1", 3811]);
+});
+
+test("buildReportIdCondition: rechaza cadenas con caracteres no numéricos (#, letras, signo) con un mensaje de error, nunca 400 silencioso", () => {
+  const pusher = createParamPusher();
+  for (const invalid of ["#3811", "38a11", "3811abc", "-3811", "1.5", ""]) {
+    const result = buildReportIdCondition(invalid, "w", pusher);
+    assert.ok(result && "errorMessage" in result, `"${invalid}" debería producir un error`);
+  }
+  assert.equal(pusher.params.length, 0, "ningún intento inválido debe dejar params a medio pushear");
+});
+
+test("buildReportIdCondition: rechaza '0' (no es positivo) aunque sea todo dígitos", () => {
+  const pusher = createParamPusher();
+  const result = buildReportIdCondition("0", "w", pusher);
+  assert.ok(result && "errorMessage" in result);
+});
+
+test("buildReportIdCondition: rechaza un valor que exceda Number.isSafeInteger", () => {
+  const pusher = createParamPusher();
+  const result = buildReportIdCondition("99999999999999999999", "w", pusher);
+  assert.ok(result && "errorMessage" in result);
 });

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { ErrorBanner } from "@/components/ErrorBanner";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 import type { AuditSummary } from "@/types/audit";
 
 // Alimenta la pestaña "Resumen de calidad" - ver
@@ -11,6 +12,7 @@ import type { AuditSummary } from "@/types/audit";
 // gold.fieldbeat_data_quality / gold.scope_metadata vía
 // /api/audit/summary; nada se calcula de nuevo acá.
 export function QualitySummarySection() {
+  const epoch = useDataRefreshEpoch();
   const [data, setData] = useState<AuditSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,10 +24,10 @@ export function QualitySummarySection() {
         setData(body);
       })
       .catch(body => setError(body?.error ?? "Error desconocido"));
-  }, []);
+  }, [epoch]);
 
   if (error) return <ErrorBanner message={error} />;
-  if (!data) return <p style={{ color: "var(--text-muted)" }}>Cargando resumen de calidad…</p>;
+  if (!data) return <p style={{ color: "var(--nx-text-secondary)" }}>Cargando resumen de calidad…</p>;
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,10 +42,10 @@ export function QualitySummarySection() {
 
       <SectionCard title="Repuestos Dolibarr" description="Universo report-céntrico completo (marts.used_parts_dolibarr_match)">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <MetricCard label="Matched" value={data.partsMatched} tone="success" />
-          <MetricCard label="Sin match" value={data.partsUnmatched} tone="danger" />
-          <MetricCard label="Ambiguos" value={data.partsAmbiguous} tone="warning" />
-          <MetricCard label="Placeholders" value={data.partsPlaceholder} />
+          <MetricCard label="Producto identificado" value={data.partsMatched} tone="success" />
+          <MetricCard label="Sin producto identificado" value={data.partsUnmatched} tone="danger" />
+          <MetricCard label="Varias coincidencias posibles" value={data.partsAmbiguous} tone="warning" />
+          <MetricCard label="Valor genérico o incompleto" value={data.partsPlaceholder} />
         </div>
       </SectionCard>
 

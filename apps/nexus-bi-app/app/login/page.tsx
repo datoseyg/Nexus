@@ -4,6 +4,7 @@ import { requireAuthenticatedUser } from "@/lib/auth/authorization";
 import { safeReturnTo } from "@/lib/auth/return-to";
 import { LoginForm } from "./LoginForm";
 import styles from "./login.module.css";
+import { EygBrand } from "@/components/brand/EygBrand";
 
 export const dynamic = "force-dynamic";
 
@@ -34,34 +35,32 @@ export default async function LoginPage({
       <section className={styles.portal} aria-labelledby="login-title">
         <div className={styles.context}>
           <div className={styles.brandLine}>
-            <Brand />
-            <span>EyG Medical Systems</span>
+            <EygBrand variant="large" priority className="h-full w-auto max-w-full" />
           </div>
 
           <div className={styles.contextCopy}>
-            <p className={styles.eyebrow}>Portal empresarial</p>
             <h1 id="login-title">NEXUS</h1>
             <p>
-              Información operacional de servicio técnico, soporte y repuestos en un entorno protegido.
+              Este sistema integra y relaciona la información de EyG Medical Systems en un sólo lugar,
+              unificando las principales plataformas (FieldBeat, Dolibarr, Zendesk) ofreciendo a su vez distintas herramientas
+              tanto de uso operacional como general y administrativo.
             </p>
+            
+            <p>
+              " Preguntarle a los datos nunca fue tan rápido "
+              </p>
           </div>
 
-          <div className={styles.dataRail} aria-hidden="true">
-            <span>Servicio técnico</span>
-            <span>Soporte</span>
-            <span>Repuestos</span>
-            <i />
-          </div>
         </div>
 
         <div className={styles.accessPanel}>
           <div className={styles.accessCopy}>
-            <p className={styles.eyebrow}>Acceso controlado</p>
-            <h2>Ingresa a NEXUS</h2>
-            <p>Utiliza la identidad asignada por EyG para consultar la información disponible.</p>
+            <p className={styles.eyebrow}>Inicio de sesión</p>
+            <h2>Entra a NEXUS</h2>
+            <p>Ingresar credenciales de acceso.</p>
           </div>
           <LoginForm returnTo={safeReturnTo(requestedReturnTo)} />
-          <p className={styles.securityNote}>La sesión se valida antes de acceder a páginas y datos.</p>
+          <p className={styles.securityNote}>La sesión se tiene que validar antes de acceder a páginas y datos.</p>
         </div>
       </section>
     </main>

@@ -21,6 +21,14 @@ export const CALCULATION_METHOD = Object.freeze({
   INSUFFICIENT_DATA: "INSUFFICIENT_DATA"
 });
 
+export const ANALYSIS_INTERVAL_BASIS = Object.freeze({
+  REPORTED_WORK_INTERVAL: "REPORTED_WORK_INTERVAL",
+  DELIVERY_FALLBACK: "DELIVERY_FALLBACK",
+  TASK_TRANSITIONS: "TASK_TRANSITIONS",
+  SCHEDULED_ESTIMATE: "SCHEDULED_ESTIMATE",
+  INSUFFICIENT_DATA: "INSUFFICIENT_DATA"
+});
+
 export const CONFIDENCE_TIERS = Object.freeze([
   { min: 0, max: 39, label: "Insuficiente" },
   { min: 40, max: 64, label: "Baja" },
@@ -28,24 +36,38 @@ export const CONFIDENCE_TIERS = Object.freeze([
   { min: 85, max: 100, label: "Alta" }
 ]);
 
-const REPORTED_SPAN_MAX_MINUTES = 1440;
 const CHILE_WALL_CLOCK_RE = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/;
 
 /** "DD/MM/YYYY HH:mm" (hora local Chile, sin marcador de zona) -> partes, o null. */
-export function parseChileWallClockParts(value) {
-  const raw = String(value ?? "").trim();
+function parseChileWallClockParts(value) {
+  const raw = String(value ?? "").trim().replace(/\s+/g, " ");
   const match = raw.match(CHILE_WALL_CLOCK_RE);
   if (!match) return null;
   const day = Number(match[1]), month = Number(match[2]), year = Number(match[3]), hour = Number(match[4]), minute = Number(match[5]);
-  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59) return null;
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  const calendarCheck = new Date(Date.UTC(year, month - 1, day));
+  if (calendarCheck.getUTCFullYear() !== year || calendarCheck.getUTCMonth() + 1 !== month || calendarCheck.getUTCDate() !== day) return null;
   return { year, month, day, hour, minute, second: 0 };
 }
 
-/** "DD/MM/YYYY HH:mm" local Chile -> instante UTC real (DST-correcto), o null. */
-export function parseChileWallClockToUtcMs(value) {
-  const parts = parseChileWallClockParts(value);
-  if (!parts) return null;
-  return resolveSantiagoPartsToUtc(parts).utcMs;
+/**
+ * Parser canónico de campos DATETIME FieldBeat. Conserva valor crudo,
+ * procedencia y estado; nunca depende del locale del runtime.
+ */
+export function parseFieldbeatDateTime(value, sourceField) {
+  const rawValue = value === null || value === undefined ? null : String(value);
+  const trimmed = rawValue?.trim() ?? "";
+  const base = { rawValue, source: "FORM_FIELD", sourceField: sourceField ?? null };
+  if (!trimmed) return { ...base, value: null, parseStatus: "MISSING" };
+  const parts = parseChileWallClockParts(trimmed);
+  if (!parts) return { ...base, value: null, parseStatus: "INVALID" };
+  const resolved = resolveSantiagoPartsToUtc(parts);
+  if (resolved.kind === "nonexistent") return { ...base, value: null, parseStatus: "INVALID" };
+  return {
+    ...base,
+    value: new Date(resolved.utcMs),
+    parseStatus: resolved.kind === "ambiguous" ? "AMBIGUOUS" : "PARSED"
+  };
 }
 
 function isValidDate(value) {
@@ -58,42 +80,13 @@ function parseDate(value) {
 }
 
 /**
- * Evalúa si un par (reportedStartRaw, reportedEndRaw) -strings de reloj
- * local chileno- es plausible frente a duration_minutes, EXACTO al
- * algoritmo legado: lapso <= 1440 min, tolerancia = max(60, 0.5*duración).
- * @returns {{ plausible: boolean, reason: string, startUtcMs: number|null, endUtcMs: number|null }}
- */
-export function evaluateReportedInterval(reportedStartRaw, reportedEndRaw, durationMinutes) {
-  const startUtcMs = parseChileWallClockToUtcMs(reportedStartRaw);
-  const endUtcMs = parseChileWallClockToUtcMs(reportedEndRaw);
-
-  if (startUtcMs === null || endUtcMs === null) {
-    return { plausible: false, reason: "sin par reportado o formato inválido", startUtcMs, endUtcMs };
-  }
-  if (!(endUtcMs > startUtcMs)) {
-    return { plausible: false, reason: "hora de término reportada es anterior o igual a la de inicio", startUtcMs, endUtcMs };
-  }
-  const spanMinutes = (endUtcMs - startUtcMs) / 60000;
-  if (spanMinutes > REPORTED_SPAN_MAX_MINUTES) {
-    return { plausible: false, reason: `lapso reportado (${Math.round(spanMinutes)} min) cruza más de un día calendario`, startUtcMs, endUtcMs };
-  }
-  if (!(durationMinutes > 0)) {
-    return { plausible: false, reason: "duration_minutes inválido, no se puede contrastar plausibilidad", startUtcMs, endUtcMs };
-  }
-  const tolerance = Math.max(60, 0.5 * durationMinutes);
-  if (Math.abs(spanMinutes - durationMinutes) > tolerance) {
-    return { plausible: false, reason: `lapso reportado (${Math.round(spanMinutes)} min) difiere de duration_minutes (${durationMinutes} min) más allá de la tolerancia (±${Math.round(tolerance)} min)`, startUtcMs, endUtcMs };
-  }
-  return { plausible: true, reason: "lapso reportado consistente con duration_minutes", startUtcMs, endUtcMs };
-}
-
-/**
- * Resuelve el intervalo + calculation_method (jerarquía de 6 valores,
- * idéntica al legado) sobre instantes UTC reales.
+ * Regla temporal canónica FieldBeat. El intervalo informado se valida solo
+ * contra sí mismo: registro, programación, transiciones y estimación no lo
+ * invalidan ni reducen su confianza.
  * @param {{ startTimeRaw?: string|Date|null, reportedStartRaw?: string|null, reportedEndRaw?: string|null, durationMinutes?: number|null }} task
  * @returns {{ method: string, startTimeUtc: Date|null, endTimeUtc: Date|null, durationSeconds: number|null, reasonCode: string|null, reportedEvaluation: object|null }}
  */
-export function resolveInterval({ startTimeRaw, reportedStartRaw, reportedEndRaw, durationMinutes } = {}) {
+export function resolveReportAnalysisInterval({ startTimeRaw, reportedStartRaw, reportedEndRaw, deliveredRaw, durationMinutes } = {}) {
   // Normalización a whole-seconds (Capa C exige date_trunc('second', x) = x
   // para start_time_utc/end_time_utc, sql/081) -start_time de FieldBeat
   // puede traer milisegundos; se trunca acá, en el origen, para que
@@ -108,39 +101,84 @@ export function resolveInterval({ startTimeRaw, reportedStartRaw, reportedEndRaw
   const durationPositive = durationPresent && durationNum > 0;
   const durationSuspicious = durationPositive && (durationNum < 5 || durationNum >= 480 || durationNum === 1440);
 
-  if (!start) {
-    return { method: CALCULATION_METHOD.INVALID_START_TIME, startTimeUtc: null, endTimeUtc: null, durationSeconds: null, reasonCode: "INVALID_START_TIME", reportedEvaluation: null };
+  const reportedStart = parseFieldbeatDateTime(reportedStartRaw, "HORA DE INICIO DEL TRABAJO");
+  const reportedEnd = parseFieldbeatDateTime(reportedEndRaw, "HORA DE TERMINO DEL TRABAJO");
+  const delivered = parseFieldbeatDateTime(deliveredRaw, "FECHA Y HORA DE ENTREGA");
+  const temporalIssues = [];
+  let reportedFailureReason = "REPORTED_INTERVAL_MISSING";
+
+  const hasReportedStart = reportedStart.parseStatus !== "MISSING";
+  const hasReportedEnd = reportedEnd.parseStatus !== "MISSING";
+  if (hasReportedStart !== hasReportedEnd) {
+    reportedFailureReason = "REPORTED_INTERVAL_INCOMPLETE";
+    temporalIssues.push(reportedFailureReason);
+  } else if (hasReportedStart && hasReportedEnd) {
+    if (reportedStart.parseStatus === "AMBIGUOUS" || reportedEnd.parseStatus === "AMBIGUOUS") {
+      reportedFailureReason = "TEMPORAL_FIELD_AMBIGUOUS";
+      temporalIssues.push(reportedFailureReason);
+    } else if (reportedStart.parseStatus !== "PARSED" || reportedEnd.parseStatus !== "PARSED") {
+      reportedFailureReason = "TEMPORAL_FIELD_UNPARSEABLE";
+      temporalIssues.push(reportedFailureReason);
+    } else if (reportedEnd.value.getTime() < reportedStart.value.getTime()) {
+      reportedFailureReason = "REPORTED_WORK_END_PRECEDES_START";
+      temporalIssues.push(reportedFailureReason);
+    } else {
+      if (delivered.parseStatus === "PARSED" && delivered.value.getTime() < reportedEnd.value.getTime()) {
+        temporalIssues.push("DELIVERY_PRECEDES_REPORTED_END");
+      }
+      const durationSeconds = Math.round((reportedEnd.value.getTime() - reportedStart.value.getTime()) / 1000);
+      const reportedEvaluation = {
+        plausible: true,
+        reason: "intervalo informado completo y coherente",
+        startUtcMs: reportedStart.value.getTime(),
+        endUtcMs: reportedEnd.value.getTime()
+      };
+      return {
+        method: CALCULATION_METHOD.EXACT_REPORTED_START_END,
+        startTimeUtc: reportedStart.value,
+        endTimeUtc: reportedEnd.value,
+        durationSeconds,
+        reasonCode: null,
+        reportedEvaluation,
+        reportedStart,
+        reportedEnd,
+        delivered,
+        analysisIntervalBasis: ANALYSIS_INTERVAL_BASIS.REPORTED_WORK_INTERVAL,
+        analysisFallbackUsed: false,
+        analysisFallbackReason: null,
+        temporalIssues
+      };
+    }
   }
 
-  const reportedEvaluation = reportedStartRaw || reportedEndRaw ? evaluateReportedInterval(reportedStartRaw, reportedEndRaw, durationNum) : null;
-
-  if (reportedEvaluation?.plausible) {
-    const durationSeconds = Math.round((reportedEvaluation.endUtcMs - reportedEvaluation.startUtcMs) / 1000);
+  if (!start) {
     return {
-      method: CALCULATION_METHOD.EXACT_REPORTED_START_END,
-      startTimeUtc: new Date(reportedEvaluation.startUtcMs),
-      endTimeUtc: new Date(reportedEvaluation.endUtcMs),
-      durationSeconds, reasonCode: null, reportedEvaluation
+      method: CALCULATION_METHOD.INVALID_START_TIME, startTimeUtc: null, endTimeUtc: null, durationSeconds: null,
+      reasonCode: "INVALID_START_TIME", reportedEvaluation: { plausible: false, reason: reportedFailureReason, startUtcMs: reportedStart.value?.getTime() ?? null, endUtcMs: reportedEnd.value?.getTime() ?? null },
+      reportedStart, reportedEnd, delivered, analysisIntervalBasis: ANALYSIS_INTERVAL_BASIS.INSUFFICIENT_DATA,
+      analysisFallbackUsed: false, analysisFallbackReason: reportedFailureReason, temporalIssues
     };
   }
 
+  const reportedEvaluation = { plausible: false, reason: reportedFailureReason, startUtcMs: reportedStart.value?.getTime() ?? null, endUtcMs: reportedEnd.value?.getTime() ?? null };
+
   if (durationPositive && !durationSuspicious) {
     const durationSeconds = Math.round(durationNum * 60);
-    return { method: CALCULATION_METHOD.ESTIMATED_FROM_START_DURATION, startTimeUtc: start, endTimeUtc: new Date(start.getTime() + durationSeconds * 1000), durationSeconds, reasonCode: null, reportedEvaluation };
+    return { method: CALCULATION_METHOD.ESTIMATED_FROM_START_DURATION, startTimeUtc: start, endTimeUtc: new Date(start.getTime() + durationSeconds * 1000), durationSeconds, reasonCode: null, reportedEvaluation, reportedStart, reportedEnd, delivered, analysisIntervalBasis: ANALYSIS_INTERVAL_BASIS.SCHEDULED_ESTIMATE, analysisFallbackUsed: true, analysisFallbackReason: reportedFailureReason, temporalIssues };
   }
 
-  if (durationSuspicious || (reportedEvaluation && !reportedEvaluation.plausible)) {
+  if (durationSuspicious) {
     if (durationPositive) {
       const durationSeconds = Math.round(durationNum * 60);
-      return { method: CALCULATION_METHOD.PARTIAL_ESTIMATE, startTimeUtc: start, endTimeUtc: new Date(start.getTime() + durationSeconds * 1000), durationSeconds, reasonCode: null, reportedEvaluation };
+      return { method: CALCULATION_METHOD.PARTIAL_ESTIMATE, startTimeUtc: start, endTimeUtc: new Date(start.getTime() + durationSeconds * 1000), durationSeconds, reasonCode: null, reportedEvaluation, reportedStart, reportedEnd, delivered, analysisIntervalBasis: ANALYSIS_INTERVAL_BASIS.SCHEDULED_ESTIMATE, analysisFallbackUsed: true, analysisFallbackReason: reportedFailureReason, temporalIssues };
     }
   }
 
   if (!durationPresent) {
-    return { method: CALCULATION_METHOD.INSUFFICIENT_DATA, startTimeUtc: null, endTimeUtc: null, durationSeconds: null, reasonCode: "INSUFFICIENT_DATA", reportedEvaluation };
+    return { method: CALCULATION_METHOD.INSUFFICIENT_DATA, startTimeUtc: null, endTimeUtc: null, durationSeconds: null, reasonCode: "INSUFFICIENT_DATA", reportedEvaluation, reportedStart, reportedEnd, delivered, analysisIntervalBasis: ANALYSIS_INTERVAL_BASIS.INSUFFICIENT_DATA, analysisFallbackUsed: false, analysisFallbackReason: reportedFailureReason, temporalIssues };
   }
 
-  return { method: CALCULATION_METHOD.INVALID_DURATION, startTimeUtc: null, endTimeUtc: null, durationSeconds: null, reasonCode: "INVALID_DURATION", reportedEvaluation };
+  return { method: CALCULATION_METHOD.INVALID_DURATION, startTimeUtc: null, endTimeUtc: null, durationSeconds: null, reasonCode: "INVALID_DURATION", reportedEvaluation, reportedStart, reportedEnd, delivered, analysisIntervalBasis: ANALYSIS_INTERVAL_BASIS.INSUFFICIENT_DATA, analysisFallbackUsed: false, analysisFallbackReason: reportedFailureReason, temporalIssues };
 }
 
 function clampScore(value) {

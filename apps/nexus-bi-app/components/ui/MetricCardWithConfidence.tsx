@@ -21,18 +21,18 @@ export function MetricCardWithConfidence({ label, value, unit, hint, confidence,
   return (
     <div
       className="rounded-xl border p-4 min-w-0"
-      style={{ borderColor: "var(--eyg-border)", background: "var(--eyg-card)", boxShadow: "0 1px 3px rgba(36,48,51,0.07)" }}
+      style={{ borderColor: "var(--nx-border)", background: "var(--nx-card-bg)", boxShadow: "var(--nx-shadow-card)" }}
     >
-      <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
+      <div className="text-sm" style={{ color: "var(--nx-text-secondary)" }}>
         {label}
       </div>
 
       <div className="mt-1 flex items-baseline gap-1">
-        <span className="truncate text-3xl font-semibold" style={{ color: "var(--text-primary)" }}>
+        <span className="truncate text-3xl font-semibold" style={{ color: "var(--nx-text-primary)" }}>
           {display}
         </span>
         {unit && (
-          <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          <span className="text-sm" style={{ color: "var(--nx-text-secondary)" }}>
             {unit}
           </span>
         )}
@@ -43,13 +43,13 @@ export function MetricCardWithConfidence({ label, value, unit, hint, confidence,
       </div>
 
       {hint && (
-        <div className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+        <div className="mt-1 text-xs" style={{ color: "var(--nx-text-secondary)" }}>
           {hint}
         </div>
       )}
 
       {isEstimated && !caution && (
-        <div className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+        <div className="mt-1 text-xs" style={{ color: "var(--nx-text-secondary)" }}>
           Valor estimado
         </div>
       )}
@@ -57,7 +57,7 @@ export function MetricCardWithConfidence({ label, value, unit, hint, confidence,
       {caution && (
         <div
           className="mt-1 text-xs font-medium"
-          style={{ color: caution === "Usar con cautela" ? "var(--eyg-danger)" : "var(--eyg-warning)" }}
+          style={{ color: caution === "Usar con cautela" ? "var(--nx-danger-fg, #c0392b)" : "var(--nx-warning-fg, #7a4f0a)" }}
         >
           {caution}
         </div>

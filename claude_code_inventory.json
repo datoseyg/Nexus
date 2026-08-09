@@ -1,0 +1,248 @@
+{
+  "generated_at": "2026-07-24",
+  "purpose": "Inventario de plugins, skills, subagentes y herramientas disponibles en esta sesion de Claude Code, para redactar mejores prompts sabiendo con que capacidades se cuenta.",
+  "session_context": {
+    "primary_working_directory": "a:\\Documents\\EyG\\Codigo",
+    "platform": "win32",
+    "shell": "PowerShell (primaria) + Bash (Git Bash) tambien disponible",
+    "user_home": "C:\\Users\\IgnacioGameolay",
+    "scope_note": "En Claude Code, 'global' = nivel usuario (~/.claude), aplica a cualquier proyecto que se abra. 'Local' = nivel proyecto (<repo>/.claude), solo aplica cuando el cwd de la sesion esta dentro de ese repo. El cwd de ESTA sesion es la carpeta padre 'Codigo', que no es un repo git y cuyo .claude/ esta vacio (sin settings.json ni skills propias). Por eso las skills/plugins realmente activos ahora mismo son los de nivel usuario (global) mas los que ese usuario habilito globalmente. Los dos repos anidados (eyg-nexus-local y nexus-main-release) tienen sus PROPIOS conjuntos de skills de proyecto que solo se activarian si se abre Claude Code con el cwd dentro de esos repos."
+  },
+
+  "plugins": {
+    "marketplaces_registradas": [
+      {
+        "name": "grc-skills",
+        "repo": "github:Sushegaad/Claude-Skills-Governance-Risk-and-Compliance",
+        "install_location": "C:\\Users\\IgnacioGameolay\\.claude\\plugins\\marketplaces\\grc-skills"
+      },
+      {
+        "name": "claude-plugins-official",
+        "repo": "github:anthropics/claude-plugins-official",
+        "install_location": "C:\\Users\\IgnacioGameolay\\.claude\\plugins\\marketplaces\\claude-plugins-official"
+      }
+    ],
+    "instalados": [
+      {
+        "id": "iso27001@grc-skills",
+        "version": "1.6.2",
+        "description": "Experto en ISO 27001: gap analysis, redaccion de politicas, guia de controles Anexo A, generacion de SoA y registro de riesgos (versiones 2013 y 2022).",
+        "scope_instalacion": ["user (global)", "local (eyg-nexus-local)"],
+        "habilitado_global": true,
+        "habilitado_local_explicito_en": ["eyg-nexus-local"],
+        "provee": { "skills": ["iso27001"], "agents": [], "commands": [] }
+      },
+      {
+        "id": "nist-csf@grc-skills",
+        "version": "1.6.2",
+        "description": "Asesor de NIST Cybersecurity Framework (CSF 2.0 y 1.1): evaluaciones de brechas, perfiles organizacionales, tiers de implementacion, mapeo cruzado con otros frameworks.",
+        "scope_instalacion": ["user (global)", "local (eyg-nexus-local)"],
+        "habilitado_global": true,
+        "habilitado_local_explicito_en": ["eyg-nexus-local"],
+        "provee": { "skills": ["nist-csf"], "agents": [], "commands": [] }
+      },
+      {
+        "id": "cis-controls@grc-skills",
+        "version": "1.6.2",
+        "description": "Asesor de CIS Controls v8 (CIS Top 18): scoping de Implementation Groups (IG1/IG2/IG3), evaluacion de los 153 safeguards, mapeo a NIST CSF/ISO 27001/SOC2/PCI DSS/CMMC.",
+        "scope_instalacion": ["user (global)", "local (eyg-nexus-local)"],
+        "habilitado_global": true,
+        "habilitado_local_explicito_en": ["eyg-nexus-local"],
+        "provee": { "skills": ["cis-controls"], "agents": [], "commands": [] }
+      },
+      {
+        "id": "wcag@grc-skills",
+        "version": "1.6.2",
+        "description": "Asesor experto en WCAG 2.0/2.1/2.2: principios POUR, criterios de exito, niveles de conformidad, ARIA, contraste, teclado, lectores de pantalla, mapeos legales (EN 301 549, EAA, ADA, Section 508).",
+        "scope_instalacion": ["user (global)", "local (eyg-nexus-local)"],
+        "habilitado_global": true,
+        "habilitado_local_explicito_en": ["eyg-nexus-local"],
+        "provee": { "skills": ["wcag"], "agents": [], "commands": [] }
+      },
+      {
+        "id": "feature-dev@claude-plugins-official",
+        "version": "unknown (oficial Anthropic)",
+        "description": "Flujo completo de desarrollo de features con subagentes especializados para exploracion de codebase, diseno de arquitectura y revision de calidad.",
+        "scope_instalacion": ["user (global)"],
+        "habilitado_global": true,
+        "habilitado_local_explicito_en": [],
+        "provee": {
+          "skills": ["feature-dev"],
+          "agents": ["code-architect", "code-explorer", "code-reviewer"],
+          "commands": ["/feature-dev"]
+        }
+      }
+    ],
+    "nota": "Los 5 plugins estan habilitados a nivel GLOBAL en ~/.claude/settings.json (enabledPlugins), por lo que estan activos sin importar en que proyecto se trabaje. eyg-nexus-local ademas los re-declara (redundante) en su settings.local.json para iso27001/nist-csf/cis-controls/wcag."
+  },
+
+  "skills_nivel_global_usuario": {
+    "ubicacion": "C:\\Users\\IgnacioGameolay\\.claude\\skills",
+    "descripcion": "Skills instaladas a nivel usuario, disponibles en cualquier proyecto/sesion.",
+    "lista": [
+      { "name": "agents-sdk", "description": "Build AI agents on Cloudflare Workers using the Agents SDK: Agent class, state management, callable RPC, Workflows, durable execution, queues, retries, observability, React hooks." },
+      { "name": "cloudflare", "description": "Skill integral de la plataforma Cloudflare: Workers, Pages, storage (KV, D1, R2), AI (Workers AI, Vectorize, Agents SDK), feature flags (Flagship), networking (Tunnel, Spectrum), seguridad (WAF, DDoS) e infra-as-code (Terraform, Pulumi)." },
+      { "name": "cloudflare-email-service", "description": "Envio y recepcion de emails transaccionales con Cloudflare Email Service (Email Sending + Email Routing): binding de Workers, REST API, SPF/DKIM/DMARC, MCP email tools." },
+      { "name": "cloudflare-one", "description": "Diseno, configuracion y troubleshooting de Cloudflare One / Zero Trust: Access, Gateway, WARP, Tunnel, WAN, DLP, CASB, device posture, identidad." },
+      { "name": "cloudflare-one-migrations", "description": "Planes de migracion desde Zscaler ZIA/ZPA, Palo Alto, VPN legacy, SWG o stacks SASE hacia Cloudflare One." },
+      { "name": "durable-objects", "description": "Creacion y revision de Cloudflare Durable Objects: coordinacion con estado, metodos RPC, storage SQLite, alarms, WebSockets." },
+      { "name": "excalidraw-skill", "description": "Toolkit de canvas Excalidraw para crear/editar/refinar diagramas de forma iterativa, export/import .excalidraw, PNG/SVG, conversion Mermaid->Excalidraw, CRUD de elementos." },
+      { "name": "sandbox-sdk", "description": "Construccion de aplicaciones sandboxed para ejecucion segura de codigo: interpretes de codigo AI, CI/CD, entornos de desarrollo interactivos, ejecucion de codigo no confiable." },
+      { "name": "supabase", "description": "Para cualquier tarea con Supabase: Database, Auth, Edge Functions, Realtime, Storage, Vectors, Cron, Queues; supabase-js, @supabase/ssr en Next.js/React/SvelteKit/Astro/Remix; RLS, CLI, MCP server, migraciones.", "nota": "symlink -> C:\\Users\\IgnacioGameolay\\.agents\\skills\\supabase" },
+      { "name": "turnstile-spin", "description": "Setup end-to-end de Cloudflare Turnstile: escanea el codebase, crea el widget via API, despliega el Worker de siteverify, agrega snippets frontend, valida." },
+      { "name": "web-perf", "description": "Analisis de performance web via Chrome DevTools MCP: Core Web Vitals (LCP, INP, CLS), FCP, TBT, Speed Index, render-blocking, cadenas de dependencia de red, layout shifts, caching, gaps de accesibilidad." },
+      { "name": "workers-best-practices", "description": "Revision y autoria de codigo Cloudflare Workers contra mejores practicas de produccion: streaming, floating promises, estado global, secrets, bindings, observability." },
+      { "name": "wrangler", "description": "CLI de Cloudflare Workers: deploy, dev, gestion de KV, R2, D1, Vectorize, Hyperdrive, Workers AI, Containers, Queues, Workflows, Pipelines, Secrets Store." }
+    ]
+  },
+
+  "skills_integradas_builtin_claude_code": {
+    "descripcion": "Skills que vienen empaquetadas con Claude Code (no residen como carpetas editables en ~/.claude/skills), disponibles globalmente en cualquier sesion.",
+    "lista": [
+      { "name": "dataviz", "description": "Usar antes de crear cualquier chart/grafico/plot/dashboard/visualizacion en cualquier medio (artifact HTML/React, SVG, matplotlib/plotly/d3/Recharts, imagenes, Slack). Da heuristicas de forma, formula de color, specs de marca, layout." },
+      { "name": "artifact-design", "description": "Guia de diseno y fundamentos para Artifacts." },
+      { "name": "artifact-capabilities", "description": "Capacidades runtime que un Artifact publicado puede tener (datos en vivo, estado compartido entre viewers, auto-actualizacion). Cargar antes de declarar 'capabilities' en un Artifact." },
+      { "name": "update-config", "description": "Configurar el harness de Claude Code via settings.json: hooks automaticos, permisos, variables de entorno." },
+      { "name": "keybindings-help", "description": "Personalizar atajos de teclado / ~/.claude/keybindings.json." },
+      { "name": "simplify", "description": "Revisa el codigo modificado buscando reuso, simplificacion, eficiencia y limpieza de altitud, y aplica los fixes. Solo calidad, no bugs." },
+      { "name": "fewer-permission-prompts", "description": "Escanea transcripciones para detectar llamadas comunes de Bash/MCP de solo lectura y agrega un allowlist priorizado a .claude/settings.json." },
+      { "name": "loop", "description": "Ejecuta un prompt o slash command en un intervalo recurrente (o self-paced si se omite el intervalo)." },
+      { "name": "schedule", "description": "Crear/actualizar/listar/ejecutar agentes cloud programados (rutinas) en cron, incluye ejecuciones one-shot programadas." },
+      { "name": "claude-api", "description": "Referencia de la API de Claude / Anthropic SDK: model ids, pricing, params, streaming, tool use, MCP, agentes, caching, token counting, migracion de modelos. Trigger obligatorio ante cualquier mencion de Claude/Anthropic/modelos LLM." },
+      { "name": "run", "description": "Lanza y ejecuta la app del proyecto para verificar visualmente un cambio (CLI, server, TUI, Electron, browser-driven, libreria)." },
+      { "name": "init", "description": "Inicializa un nuevo CLAUDE.md con documentacion del codebase." },
+      { "name": "review", "description": "Revisa un Pull Request de GitHub (para el diff de trabajo propio usar /code-review)." },
+      { "name": "security-review", "description": "Completa una revision de seguridad de los cambios pendientes en la rama actual." }
+    ]
+  },
+
+  "skills_via_plugins_grc": {
+    "descripcion": "Redundante con 'plugins.instalados' arriba, listado aqui solo como skills invocables por /nombre.",
+    "lista": [
+      { "name": "iso27001", "invocar_como": "/iso27001 o mencion natural de ISO 27001/ISMS", "plugin_origen": "iso27001@grc-skills" },
+      { "name": "nist-csf", "invocar_como": "/nist-csf o mencion natural de NIST CSF", "plugin_origen": "nist-csf@grc-skills" },
+      { "name": "cis-controls", "invocar_como": "/cis-controls o mencion natural de CIS Controls/CIS Benchmarks", "plugin_origen": "cis-controls@grc-skills" },
+      { "name": "wcag", "invocar_como": "/wcag o mencion natural de WCAG/accesibilidad", "plugin_origen": "wcag@grc-skills" },
+      { "name": "feature-dev", "invocar_como": "/feature-dev <descripcion opcional>", "plugin_origen": "feature-dev@claude-plugins-official", "subagentes_asociados": ["code-explorer", "code-architect", "code-reviewer"] }
+    ]
+  },
+
+  "skills_nivel_proyecto_local": {
+    "descripcion": "Skills que viven en <repo>/.claude/skills (via symlink a <repo>/.agents/skills). Solo se activan si la sesion de Claude Code se abre con cwd dentro de ese repo especifico. NO estan activas en la sesion actual porque el cwd es la carpeta padre 'Codigo'.",
+    "proyectos": [
+      {
+        "repo": "eyg-nexus-local",
+        "path": "a:\\Documents\\EyG\\Codigo\\eyg-nexus-local",
+        "rama_actual_detectada": "FB-Dashboard",
+        "remote": "https://github.com/datoseyg/Nexus.git",
+        "mecanismo": "symlinks en .claude/skills/* -> .agents/skills/* (repo compartido tipo 'matt-pocock skills')",
+        "skills_registradas_activas_si_se_abre_aqui": [
+          "ask-matt", "brainstorming", "code-review", "codebase-design", "database-design",
+          "diagnosing-bugs", "documentation-and-adrs", "domain-modeling", "graphify",
+          "grill-me", "grill-with-docs", "grilling", "handoff", "implement",
+          "improve-codebase-architecture", "prototype", "research", "resolving-merge-conflicts",
+          "setup-matt-pocock-skills", "systematic-debugging", "tdd", "teach",
+          "test-driven-development", "to-spec", "to-tickets", "triage", "wayfinder",
+          "writing-great-skills"
+        ],
+        "skills_presentes_en_.agents_pero_NO_registradas_en_.claude": [
+          "frontend-design", "supabase-postgres-best-practices", "vercel-composition-patterns",
+          "vercel-react-best-practices", "web-design-guidelines"
+        ],
+        "nota_no_registradas": "Existen como carpetas en .agents/skills pero no tienen symlink en .claude/skills, por lo que Claude Code no las detecta como skills invocables en este repo (aunque el contenido esta disponible para lectura manual).",
+        "plugins_habilitados_localmente": ["iso27001@grc-skills", "nist-csf@grc-skills", "cis-controls@grc-skills", "wcag@grc-skills"],
+        "hooks": "PreToolUse hooks via graphify.EXE hook-guard para Bash/Grep/Read/Glob (definidos en .claude/settings.json)"
+      },
+      {
+        "repo": "nexus-main-release",
+        "path": "a:\\Documents\\EyG\\Codigo\\nexus-main-release",
+        "rama_actual_detectada": "review/supabase-write-guards-dual-token-opt-in",
+        "mecanismo": "copias reales de archivos (no symlinks) en .claude/skills/*, identico set de 27 nombres que eyg-nexus-local",
+        "skills_registradas_activas_si_se_abre_aqui": [
+          "ask-matt", "brainstorming", "code-review", "codebase-design", "database-design",
+          "diagnosing-bugs", "documentation-and-adrs", "domain-modeling", "graphify",
+          "grill-me", "grill-with-docs", "grilling", "handoff", "implement",
+          "improve-codebase-architecture", "prototype", "research", "resolving-merge-conflicts",
+          "setup-matt-pocock-skills", "systematic-debugging", "tdd", "teach",
+          "test-driven-development", "to-spec", "to-tickets", "triage", "wayfinder",
+          "writing-great-skills"
+        ],
+        "plugins_habilitados_localmente": [],
+        "nota": "No tiene settings.local.json propio; hereda unicamente los 5 plugins habilitados a nivel global."
+      }
+    ],
+    "descripciones_skills_proyecto": [
+      { "name": "ask-matt", "description": "Ask which skill or flow fits your situation. A router over the skills in this repo." },
+      { "name": "brainstorming", "description": "Usar OBLIGATORIAMENTE antes de cualquier trabajo creativo: crear features, construir componentes, agregar funcionalidad, o modificar comportamiento. Explora intencion del usuario, requisitos y diseno antes de implementar." },
+      { "name": "code-review", "description": "Revisa los cambios desde un punto fijo (commit/branch/tag/merge-base) en dos ejes: Standards (sigue los estandares documentados del repo) y Spec (coincide con lo pedido en el issue/PRD). Corre ambas revisiones en paralelo con subagentes." },
+      { "name": "codebase-design", "description": "Vocabulario compartido para disenar modulos profundos ('deep modules'): interfaces, oportunidades de profundizacion, donde poner una costura (seam), testabilidad, navegabilidad para IA." },
+      { "name": "database-design", "description": "Principios de diseno de bases de datos y toma de decisiones: diseno de esquema, estrategia de indexado, seleccion de ORM, bases de datos serverless." },
+      { "name": "diagnosing-bugs", "description": "Loop de diagnostico para bugs dificiles y regresiones de performance. Usar cuando el usuario dice 'diagnostica'/'debuggea esto', o reporta algo roto/lanzando error/fallando/lento." },
+      { "name": "documentation-and-adrs", "description": "Registra decisiones y documentacion. Usar al tomar decisiones arquitectonicas, cambiar APIs publicas, lanzar features, o cuando se necesite dejar contexto para futuros ingenieros/agentes." },
+      { "name": "domain-modeling", "description": "Construye y afina el modelo de dominio de un proyecto. Usar para fijar terminologia de dominio o lenguaje ubicuo, registrar una decision arquitectonica, o cuando otra skill necesite mantener el modelo de dominio." },
+      { "name": "graphify", "description": "Para cualquier pregunta sobre un codebase, su arquitectura, relaciones entre archivos o contenido del proyecto -especialmente si existe graphify-out/-. Convierte cualquier input en un grafo de conocimiento persistente con god nodes, deteccion de comunidades y herramientas de query/path/explain." },
+      { "name": "grill-me", "description": "Una entrevista implacable para afinar un plan o diseno." },
+      { "name": "grill-with-docs", "description": "Igual que grill-me, pero ademas genera documentacion (ADRs y glosario) sobre la marcha." },
+      { "name": "grilling", "description": "Interroga al usuario implacablemente sobre un plan, decision o idea. Usar cuando el usuario quiere poner a prueba su razonamiento o usa frases trigger tipo 'grill'." },
+      { "name": "handoff", "description": "Compacta la conversacion actual en un documento de traspaso para que otro agente continue." },
+      { "name": "implement", "description": "Implementa una pieza de trabajo basada en un spec o set de tickets." },
+      { "name": "improve-codebase-architecture", "description": "Escanea un codebase buscando oportunidades de profundizacion, las presenta como reporte HTML visual, luego 'grilla' la que se elija." },
+      { "name": "prototype", "description": "Construye un prototipo desechable para responder una pregunta de diseno: validar un modelo de estado/logica o explorar como deberia verse una UI." },
+      { "name": "research", "description": "Investiga una pregunta contra fuentes primarias de alta confianza y captura los hallazgos como Markdown en el repo. Puede delegarse a un agente en background." },
+      { "name": "resolving-merge-conflicts", "description": "Usar para resolver un conflicto de merge/rebase de git en curso." },
+      { "name": "setup-matt-pocock-skills", "description": "Configura el repo para las skills de ingenieria: issue tracker, vocabulario de labels de triage, layout de docs de dominio. Correr una vez antes del primer uso de las demas skills." },
+      { "name": "systematic-debugging", "description": "Usar ante cualquier bug, test que falla, o comportamiento inesperado, antes de proponer fixes." },
+      { "name": "tdd", "description": "Test-driven development. Usar cuando el usuario quiere construir features o arreglar bugs test-first, menciona 'red-green-refactor', o quiere tests de integracion." },
+      { "name": "teach", "description": "Ensena al usuario una nueva skill o concepto dentro de este workspace." },
+      { "name": "test-driven-development", "description": "Usar al implementar cualquier feature o bugfix, antes de escribir codigo de implementacion." },
+      { "name": "to-spec", "description": "Convierte la conversacion actual en un spec y lo publica en el issue tracker del proyecto -sin entrevista, solo sintesis de lo ya discutido." },
+      { "name": "to-tickets", "description": "Descompone un plan, spec o la conversacion actual en tickets tipo 'tracer-bullet', cada uno declarando sus dependencias, publicados al tracker configurado." },
+      { "name": "triage", "description": "Mueve issues y PRs externos por una maquina de estados de triage: categorizar, verificar, grillar si hace falta, y escribir briefs listos para agentes." },
+      { "name": "wayfinder", "description": "Planifica un bloque enorme de trabajo (mas de lo que cabe en una sesion) como un mapa compartido de tickets de decision en el issue tracker, resolviendolos uno a uno." },
+      { "name": "writing-great-skills", "description": "Referencia para escribir y editar skills correctamente: vocabulario y principios que hacen predecible a una skill." }
+    ],
+    "descripciones_skills_no_registradas_agents_only": [
+      { "name": "frontend-design", "description": "Guia para diseno visual distintivo e intencional al construir o rehacer UI: direccion estetica, tipografia, evitar defaults 'templated'." },
+      { "name": "supabase-postgres-best-practices", "description": "Optimizacion de performance y mejores practicas de Postgres segun Supabase: queries, diseno de esquema, configuracion de base de datos." },
+      { "name": "vercel-react-best-practices", "description": "Guias de performance de React/Next.js segun Vercel Engineering: componentes, data fetching, bundle optimization." },
+      { "name": "vercel-composition-patterns", "description": "Patrones de composicion (sin descripcion en frontmatter; revisar SKILL.md para detalle)." },
+      { "name": "web-design-guidelines", "description": "Revisa codigo de UI contra 'Web Interface Guidelines'. Usar ante 'revisa mi UI', 'chequea accesibilidad', 'audita diseno'." }
+    ]
+  },
+
+  "subagentes_disponibles_agent_tool": {
+    "descripcion": "Tipos de agente invocables via la herramienta Agent en esta sesion.",
+    "lista": [
+      { "name": "claude", "description": "Catch-all para cualquier tarea que no encaje en un agente mas especifico.", "tools": "todas" },
+      { "name": "claude-code-guide", "description": "Preguntas sobre Claude Code (CLI), Claude Agent SDK, Claude API/Anthropic SDK, Claude Tag (Slack).", "tools": "Glob, Grep, Read, WebFetch, WebSearch" },
+      { "name": "Explore", "description": "Busqueda rapida de solo lectura para localizar codigo (archivos, simbolos, referencias).", "tools": "todas excepto Agent/Artifact/ExitPlanMode/Edit/Write/NotebookEdit" },
+      { "name": "feature-dev:code-architect", "description": "Disena arquitecturas de features analizando patrones existentes del codebase; entrega blueprint de implementacion.", "plugin_origen": "feature-dev", "tools": "solo lectura (Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput)" },
+      { "name": "feature-dev:code-explorer", "description": "Analiza en profundidad una feature existente: traza ejecucion, mapea capas de arquitectura, documenta dependencias.", "plugin_origen": "feature-dev", "tools": "solo lectura" },
+      { "name": "feature-dev:code-reviewer", "description": "Revisa codigo por bugs, errores logicos, vulnerabilidades de seguridad y calidad, reportando solo hallazgos de alta prioridad.", "plugin_origen": "feature-dev", "tools": "solo lectura" },
+      { "name": "general-purpose", "description": "Agente general para investigar preguntas complejas, buscar codigo y ejecutar tareas multi-paso.", "tools": "todas" },
+      { "name": "Plan", "description": "Arquitecto de software para disenar planes de implementacion.", "tools": "todas excepto Agent/Artifact/ExitPlanMode/Edit/Write/NotebookEdit" },
+      { "name": "statusline-setup", "description": "Configura el status line de Claude Code.", "tools": "Read, Edit" }
+    ]
+  },
+
+  "herramientas_core_disponibles_esta_sesion": {
+    "descripcion": "Tools nativas del harness disponibles en esta sesion (no son skills/plugins, pero son relevantes para prompting).",
+    "cargadas_directamente": [
+      "Agent", "Artifact", "AskUserQuestion", "Bash", "Edit", "Glob", "Grep",
+      "PowerShell", "Read", "ReportFindings", "ScheduleWakeup", "Skill", "ToolSearch", "Write"
+    ],
+    "diferidas_requieren_ToolSearch": [
+      "CronCreate", "CronDelete", "CronList", "DesignSync", "EnterPlanMode", "EnterWorktree",
+      "ExitPlanMode", "ExitWorktree", "Monitor", "NotebookEdit", "PushNotification",
+      "RemoteTrigger", "SendMessage", "TaskOutput", "TaskStop", "TodoWrite", "WebFetch", "WebSearch"
+    ],
+    "nota": "Las 'diferidas' existen pero su schema completo se carga solo bajo demanda via ToolSearch (query 'select:<nombre>')."
+  },
+
+  "recomendaciones_para_mejores_prompts": [
+    "Si el trabajo es dentro de eyg-nexus-local o nexus-main-release, abrir la sesion con ese repo como cwd para que sus 27 skills de proyecto (brainstorming, tdd, code-review, diagnosing-bugs, etc.) esten realmente activas -ahora mismo, desde 'Codigo', no lo estan-.",
+    "Las 4 skills GRC (iso27001, nist-csf, cis-controls, wcag) y feature-dev SI estan activas siempre por estar habilitadas a nivel global -> se pueden invocar por nombre natural o /comando en cualquier proyecto.",
+    "graphify tiene un PreToolUse hook activo en eyg-nexus-local que intercepta Bash/Grep/Read/Glob -relevante si se trabaja ahi, puede afectar el comportamiento de busquedas.",
+    "frontend-design, supabase-postgres-best-practices, vercel-react-best-practices, vercel-composition-patterns y web-design-guidelines existen en ambos repos pero NO estan registradas como skills invocables -si se necesitan, hay que crear el symlink/copia en .claude/skills o pedir su contenido manualmente."
+  ]
+}

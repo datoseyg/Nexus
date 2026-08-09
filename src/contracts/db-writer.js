@@ -1,7 +1,7 @@
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createPool, getConnectionString, STATEMENT_TIMEOUT_MS } from "./db-client.js";
-import { assertWriteConfirmed } from "../lib/db-safety.js";
+import { assertSupabaseWriteAuthorized } from "../lib/db-safety.js";
 import { readSourceCsvRaw } from "./csv-source.js";
 import { classifyRows } from "./row-classifier.js";
 import { buildEquipmentRecord } from "./record-builder.js";
@@ -12,6 +12,8 @@ import { COLUMN } from "./field-map.js";
 import { sourceRowHash } from "./hash.js";
 import { loadKnownContractStartDates, resolveContractStartDate } from "./contract-start-date-resolver.js";
 import { loadClientIdentityAliases, buildClientIdentityAliasIndex } from "./client-identity-aliases.js";
+import { CONTRACT_TRANSFORM_VERSION } from "./transform-version.js";
+import { contractImportLockKey, findSuccessfulContractImport } from "./import-identity.js";
 
 function extractSheetNameFromFilename(filePath) {
   const base = filePath.split(/[\\/]/).pop() ?? filePath;
@@ -35,11 +37,12 @@ async function recordFailedImportStatus(queryable, meta, error) {
   try {
     await queryable.query(
       `INSERT INTO config.contract_import_runs
-         (source_filename, source_sha256, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'FAILED',$9)`,
+         (source_filename, source_sha256, transform_version, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'FAILED',$10)`,
       [
         meta.sourceFilename,
         meta.sourceSha256,
+        meta.transformVersion,
         meta.sourceSheet,
         meta.effectiveDate,
         meta.rowsRead,
@@ -95,7 +98,8 @@ function buildVersionInsertParams(record, resolvedStart, ctx) {
     ctx.importId, // source_import_id ($36)
     record.sourceRowNumber, // $37
     record.sourceRowHash, // $38
-    record.contractFingerprint // $39
+    record.contractFingerprint, // $39
+    f.clientNameKey // $40
   ];
 }
 
@@ -110,10 +114,10 @@ const VERSION_INSERT_SQL = `
     warranty_end_date, warranty_end_date_source,
     valid_from, valid_from_is_inferred, valid_from_basis, valid_from_precision, valid_from_source_field, valid_from_source_value_raw,
     valid_to, is_current, requires_review, normalization_status,
-    source_import_id, source_row_number, source_row_hash, contract_fingerprint
+    source_import_id, source_row_number, source_row_hash, contract_fingerprint, client_name_key
   ) VALUES (
     $1,$2,$3,$4,$5,$6, $7,$8, $9,$10,$11,$12, $13,$14,$15,$16,$17, $18,$19,$20,$21,$22,
-    $23,$24,$25, $26,$27, $28,$29,$30,$31,$32,$33, NULL, true, $34, $35, $36,$37,$38,$39
+    $23,$24,$25, $26,$27, $28,$29,$30,$31,$32,$33, NULL, true, $34, $35, $36,$37,$38,$39, $40
   ) RETURNING contract_version_id
 `;
 
@@ -130,8 +134,14 @@ export async function applyContracts(args) {
   // invoque directamente, como hace test/contracts/db-writer.integration.test.js).
   // Evalúa el destino ANTES de crear el Pool -ninguna sentencia se ejecuta
   // si el target no está confirmado.
+  // NEXUS V3 - política única de escritura hacia un destino protegido (ver
+  // src/lib/db-safety.js::assertSupabaseWriteAuthorized): permite escribir
+  // deliberadamente contra Supabase V3 solo con dual confirmation Y project
+  // ref V3 exacto -nunca con los tokens de confirmación por sí solos (que
+  // por sí solos podrían apuntar por error al proyecto Nexus V2, mismo
+  // sufijo .supabase.co). Un target local sigue las reglas existentes.
   const connectionString = getConnectionString();
-  assertWriteConfirmed(connectionString, { environment: process.env.NODE_ENV ?? "development" });
+  assertSupabaseWriteAuthorized(connectionString, { environment: process.env.NODE_ENV ?? "development" });
 
   const pool = createPool({ applicationName: `contracts-apply:${randomUUID().slice(0, 8)}` });
   const sourceFilename = path.basename(args.file);
@@ -153,6 +163,7 @@ export async function applyContracts(args) {
   const meta = {
     sourceFilename,
     sourceSha256,
+    transformVersion: CONTRACT_TRANSFORM_VERSION,
     sourceSheet,
     effectiveDate: args.effectiveDate,
     rowsRead: dataRows.length,
@@ -177,15 +188,15 @@ export async function applyContracts(args) {
     // Advisory lock transaccional derivado del SHA -evita carrera entre
     // procesos concurrentes importando el mismo archivo a la vez. Se
     // libera solo al COMMIT/ROLLBACK.
-    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [sourceSha256]);
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [contractImportLockKey(sourceSha256)]);
 
-    const alreadyImported = await client.query(
-      `SELECT import_id FROM config.contract_import_runs WHERE source_sha256 = $1 AND import_status = 'SUCCESS'`,
-      [sourceSha256]
-    );
-    if (alreadyImported.rows.length > 0) {
+    const alreadyImported = await findSuccessfulContractImport(client, {
+      sourceSha256,
+      transformVersion: CONTRACT_TRANSFORM_VERSION
+    });
+    if (alreadyImported) {
       await client.query("COMMIT");
-      return { alreadyImported: true, importId: alreadyImported.rows[0].import_id, results: [] };
+      return { alreadyImported: true, importId: alreadyImported.import_id, results: [] };
     }
 
     // Maestro processed.* obligatorio -FATAL si no está disponible.
@@ -204,10 +215,10 @@ export async function applyContracts(args) {
 
     const importInsert = await client.query(
       `INSERT INTO config.contract_import_runs
-         (source_filename, source_sha256, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'SUCCESS',$9)
+         (source_filename, source_sha256, transform_version, source_sheet, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'SUCCESS',$10)
        RETURNING import_id`,
-      [sourceFilename, sourceSha256, sourceSheet, args.effectiveDate, meta.rowsRead, meta.rowsAccepted, meta.rowsIgnored, meta.rowsErrored, JSON.stringify({ argv: process.argv.slice(2) })]
+      [sourceFilename, sourceSha256, CONTRACT_TRANSFORM_VERSION, sourceSheet, args.effectiveDate, meta.rowsRead, meta.rowsAccepted, meta.rowsIgnored, meta.rowsErrored, JSON.stringify({ argv: process.argv.slice(2) })]
     );
     const importId = importInsert.rows[0].import_id;
 

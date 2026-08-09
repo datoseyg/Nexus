@@ -1,151 +1,228 @@
-# Runbook -despliegue cardless (Supabase + Netlify, con Plan B Vercel)
+# Runbook de liberación — Supabase + Netlify
 
-Guía paso a paso para levantar `apps/nexus-bi-app` contra Supabase Postgres en vez de DuckDB local, sin usar ningún servicio que exija tarjeta. Ver [ARCHITECTURE.md § Legacy: Cloudflare](ARCHITECTURE.md#legacy-cloudflare) para contexto de por qué esta es la segunda ruta cardless del proyecto (la primera, Cloudflare R2, quedó congelada por eso mismo).
+Estado de este documento: rebaselinado contra el repositorio el 2026-07-20. Esta etapa es exclusivamente local y documental. No autoriza desplegar, crear usuarios productivos, ejecutar DDL, migrar, validar contra Supabase ni modificar datos remotos.
 
-## 0. Antes de empezar
+> **Nexus V3 (2026-07-31).** Este runbook describe el proyecto Supabase auditado (Nexus V2). NEXUS V3 introduce un mecanismo de actualización manual de datos (`pipeline.refresh_runs`, `scripts/pipeline/run-data-refresh.mjs`) pensado para un proyecto Supabase **separado y todavía no creado** - nunca escribe ni migra sobre este proyecto V2 (guard `src/lib/db-safety.js::assertKnownSupabaseProject`, exige que `SUPABASE_PROJECT_REF_V3` coincida con el destino real antes de cualquier escritura). Ver [data-refresh-runbook.md](data-refresh-runbook.md) y [adr/0002-nexus-v2-v3-project-separation.md](adr/0002-nexus-v2-v3-project-separation.md).
 
-- Repo en la rama `supabase-migration`, con las Fases -1 a 5 ya commiteadas (schemas SQL, scripts de migración, `lib/db.ts`, rutas migradas, CRUD admin).
-- `npm install` corrido tanto en la raíz como en `apps/nexus-bi-app/`.
-- El pipeline CSV/DuckDB local ya corrido al menos una vez (`npm run db:build` desde la raíz) -la migración parte de un `data/warehouse/eyg_nexus.duckdb` real.
+Baseline de liberación:
 
-## 1. Crear el proyecto Supabase (gratis, sin tarjeta)
+- `Frontend-Rev`: previews de Netlify.
+- `main`: producción, después de promoción revisada desde `Frontend-Rev`.
+- La antigua rama `supabase-migration` no es baseline vigente.
+- La auditoría se realizó en `Control-Acceso`, commit `6a699960ed038ae395c73057f98b515c5a667321`, que coincide con `Frontend-Rev`, más el working tree de AUTH-P0 aún no consolidado.
 
-1. [supabase.com](https://supabase.com) → crear cuenta → "New project".
-2. Elegir organización, nombre del proyecto, región (la más cercana), y una contraseña para el rol `postgres` (guardarla -es la que se usa para correr el DDL, no la de `nexus_app`).
-3. El plan Free de Supabase no pide tarjeta para este tamaño de proyecto (base de datos hasta 500MB, ver riesgo de presupuesto de espacio en el plan de migración). Si en algún momento el flujo de creación pide un método de pago, **no completar el paso** -es señal de que las condiciones cambiaron desde que se escribió este runbook; documentarlo y avisar antes de seguir.
-4. Esperar a que el proyecto termine de aprovisionar (unos minutos).
+Documentos operativos vinculados:
 
-## 2. Correr el DDL (`sql/*.sql`)
+- [Delta de despliegue](DEPLOYMENT_DELTA_REPORT.md)
+- [Matriz de variables](DEPLOYMENT_VARIABLE_MATRIX.md)
+- [Inventario y orden SQL](DEPLOYMENT_SQL_INVENTORY.md)
+- [Checklist y gates](DEPLOYMENT_RELEASE_CHECKLIST.md)
+- [Catálogo de comandos y operaciones autorizables](DEPLOYMENT_COMMAND_CATALOG.md)
+- [Contraste con fuentes oficiales](research/2026-07-20-deploy-rebaseline-official-sources.md)
 
-En el dashboard de Supabase → **SQL Editor** → "New query". Correr, **en este orden exacto**, pegando el contenido completo de cada archivo:
+## 1. Reglas inviolables
 
-```
-sql/000_roles_and_schemas.sql
-sql/005_raw.sql
-sql/010_processed.sql
-sql/020_marts.sql
-sql/030_gold.sql
-sql/040_audit.sql
-sql/050_manual_review.sql
-sql/060_stock.sql
-```
+1. Nunca ejecutar DDL, migraciones, `TRUNCATE`, importaciones o validadores que escriben sobre un proyecto remoto sin autorización explícita para el destino exacto.
+2. Nunca almacenar `service_role`, una secret key de Supabase ni credenciales administrativas en Netlify. La aplicación usa la publishable key para Auth y `nexus_app` para PostgreSQL.
+3. No exponer `raw`, `processed`, `marts`, `gold`, `audit`, `manual_review`, `stock` ni `config` mediante PostgREST. La aplicación accede a ellos solamente desde Route Handlers server-side.
+4. Mantener `NEXUS_SHOW_AUDIT=false` y `NEXUS_SHOW_EXPLORER=false` durante la primera liberación.
+5. Ningún smoke de preview o producción puede escribir. Los POST/PUT/PATCH/DELETE se validan con tests locales contra destinos desechables, no con datos remotos.
+6. Un rollback de Netlify revierte el frontend, no el estado de PostgreSQL. Toda mutación de base exige backup, verificación previa y rollback propio.
 
-Todos son idempotentes (`IF NOT EXISTS`) -si algo falla a mitad de camino, corregir y re-correr desde ese archivo, no hace falta empezar de cero.
+## 2. Secuencia de liberación
 
-**Antes de seguir, reemplazar la contraseña placeholder del rol `nexus_app`:** `sql/000_roles_and_schemas.sql` crea el rol con `'__SET_IN_SUPABASE_DASHBOARD__'` a propósito -esa contraseña placeholder NUNCA debe usarse en producción. Correr en el SQL Editor:
+La secuencia obligatoria es:
 
-```sql
-ALTER ROLE nexus_app WITH PASSWORD '<contraseña real generada acá, no en un archivo versionado>';
-```
-
-Generar la contraseña con un gestor de contraseñas o `openssl rand -base64 24` -guardarla junto a las otras credenciales del proyecto (gestor de secretos del equipo), nunca en un commit.
-
-## 3. Confirmar que los schemas NO están expuestos por PostgREST
-
-Dashboard → **Project Settings → API → Exposed schemas**. Confirmar que la lista sea únicamente `public` (o lo que ya estuviera antes) -**no agregar** `raw`, `processed`, `marts`, `gold`, `audit`, `manual_review`, ni `stock`. Esta es la barrera de seguridad principal (ver plan de migración § Decisiones de arquitectura): mientras estos 7 schemas no estén en esa lista, la API REST pública de Supabase (anon key) nunca puede leerlos ni escribirlos -el único camino de acceso es la conexión `pg` server-side de Next.js.
-
-## 4. Obtener las connection strings
-
-Dashboard → **Project Settings → Database → Connection string**:
-
-- **Direct connection** (puerto 5432, `db.<project-ref>.supabase.co`): solo para los scripts de migración/DDL que corren una vez desde tu máquina local. Nunca se usa desde la app desplegada.
-- **Connection pooler** (Supavisor, puerto 6543, modo *Transaction*, host `aws-*.pooler.supabase.com` o similar): la que usa `apps/nexus-bi-app/lib/db.ts` en runtime. Netlify/Vercel son serverless -conexiones directas agotarían el límite de conexiones de Supabase rápido bajo carga concurrente (ver riesgo 2 del plan de migración).
-
-**Ojo con el rol -son roles DISTINTOS a propósito, no el mismo en las dos:**
-
-- **Directa → rol `postgres`** (el superusuario del proyecto, contraseña del paso 1, no la de `nexus_app`). `src/db/migrate-to-supabase.js` hace `TRUNCATE` sobre `processed/marts/gold` para poder resincronizar -y `nexus_app` tiene **a propósito** solo `SELECT` en esos 3 schemas (defensa en profundidad, ver plan de migración § Decisiones de arquitectura). Conectar la migración como `nexus_app` falla con `permission denied for table ...` -es el guardrail funcionando como se diseñó, no un bug: la migración necesita el rol dueño de las tablas.
-- **Pooler → rol `nexus_app`** (mínimo privilegio para el runtime de la app -exactamente lo que no debería poder truncar nada).
-
-```
-# Directa (para migración/DDL local, .env de la raíz) - rol postgres
-SUPABASE_DB_URL_DIRECT=postgresql://postgres:<password-de-postgres-del-paso-1>@db.<project-ref>.supabase.co:5432/postgres
-
-# Pooler (para runtime de la app, .env.local de apps/nexus-bi-app) - rol nexus_app
-SUPABASE_DB_URL=postgresql://nexus_app.<project-ref>:<password-de-nexus_app-del-paso-2>@aws-0-<region>.pooler.supabase.com:6543/postgres
+```text
+local → Supabase → Auth → preview (Frontend-Rev) → producción (main)
 ```
 
-(El formato exacto de usuario en el pooler -`nexus_app.<project-ref>` -lo confirma el propio dashboard de Supabase al mostrar la connection string del pooler; copiarlo de ahí en vez de adivinarlo.)
+Cada flecha es un gate. Si un gate falla, detenerse; no avanzar para “probar si el siguiente paso funciona”. El checklist contiene evidencia y rollback requeridos.
 
-## 5. Migrar los datos (una vez, desde tu máquina)
+### Gate 0 — Baseline y working tree
 
-Desde la raíz del repo, con `SUPABASE_DB_URL_DIRECT` ya en `.env`:
+- Confirmar que la rama candidata es `Frontend-Rev` y registrar el SHA.
+- Confirmar que el diff solo contiene cambios aprobados, que no hay secretos y que AUTH-P0 está consolidado.
+- Confirmar que `main` no contiene commits divergentes no incorporados.
+- Ejecutar las pruebas locales del catálogo. No usar credenciales remotas.
 
-```bash
-npm run db:pg:build
-```
+Salida esperada: typecheck, tests, integración desechable, build, smoke anónimo y diff check verdes.
 
-Esto corre `db:pg:ddl` (regenera `sql/010-030` por si el warehouse cambió), `db:pg:migrate` (TRUNCATE+INSERT de las 40 tablas de processed/marts/gold hacia Postgres) y `db:pg:validate` (los 4 chequeos -filas, tablas, columnas, tipos). Si `db:pg:validate` falla, revisar `data/reports/supabase_validation_summary.json` antes de seguir -no continuar al paso 6 con una migración a medias.
+### Gate 1 — Local y PostgreSQL desechable
 
-Confirmar el resultado directamente en Supabase (SQL Editor):
+1. Construir el warehouse local con los comandos vigentes del repositorio.
+2. Regenerar `sql/010_processed.sql`, `020_marts.sql` y `030_gold.sql` únicamente si el warehouse candidato es definitivo; revisar su diff.
+3. Aplicar los 15 archivos del inventario, en orden, a PostgreSQL 16 desechable.
+4. Probar importadores y rutas de escritura solo contra una base marcada `DISPOSABLE_TEST`.
+5. Verificar la certificación local de Gate 1B antes de solicitar autorización para apuntar a Supabase.
 
-```sql
-SELECT * FROM audit.warehouse_sync_state ORDER BY synced_at DESC LIMIT 1;
-```
+Gate 1B cerrado localmente: migrador y validador consumen el mismo ownership manifest; el validador es read-only y el registro de auditoría vive en `db:pg:record-validation`, separado y sujeto a guard. `db:pg:build` pasó dos veces en PostgreSQL 16 desechable con `LOAD_RAW=false`. Esto elimina el blocker técnico local, pero no autoriza conexión, DDL, migración, validación ni recorder contra Supabase.
 
-Debería mostrar `validation_status = 'PASSED'`.
+### Gate 2 — Supabase: proyecto y DDL
 
-**Cargar `raw` es opcional y queda apagado por default** (106MB de JSON, ver riesgo de presupuesto de espacio) -solo si hace falta: `LOAD_RAW=true npm run db:pg:migrate`.
+Requiere autorización remota separada.
 
-## 6. Desplegar la app -gate-check de billing antes de elegir host
+1. Crear o seleccionar el proyecto de destino y registrar project ref, región y propósito.
+2. Obtener un backup o snapshot verificable del proyecto si no es nuevo.
+3. Inspeccionar el schema real y comparar cada objeto con el inventario; no asumir que el proyecto “versión 1” está vacío ni compatible.
+4. Resolver primero las precondiciones de `sql/085_contract_version_revision_uniqueness.sql`, especialmente filas históricas `is_current=false` sin `superseded_at`.
+5. Ejecutar los 15 SQL en orden con rol administrativo, deteniéndose ante el primer error.
+6. Cambiar la contraseña placeholder de `nexus_app` mediante un secreto generado y guardado fuera del repositorio.
+7. Verificar grants, schemas no expuestos y objetos creados antes de cargar datos.
 
-Netlify y Vercel comparten el mismo backend (Supabase) y el mismo código -el único cambio real es la plataforma de hosting. Las cuentas nuevas de Netlify vienen usando planes basados en créditos desde 2025; no está garantizado que el free tier siga siendo 100% cardless. Por eso:
+Conectividad administrativa:
 
-1. Probar primero el signup de Netlify **sin completar ningún paso de billing**.
-2. Si en algún punto pide tarjeta para el uso previsto (1 sitio, tráfico bajo, Next.js App Router) → pasar directo a la sección Vercel de abajo. Ninguna de las dos rutas es "la buena" -la que no pida tarjeta, es esa.
+- Preferida: conexión directa `db.<project-ref>.supabase.co:5432`; requiere conectividad IPv6.
+- Fallback IPv4: session pooler compartido `aws-*.pooler.supabase.com:5432`, con el usuario exacto mostrado por Supabase. Conserva semántica de sesión y sirve para DDL/migración desde una estación administrativa.
+- No usar transaction pooler `:6543` para DDL o migraciones administrativas.
 
-### 6a. Netlify
+Rollback: un proyecto nuevo se descarta solo con autorización. En un proyecto existente, no hay rollback genérico seguro: restaurar snapshot o ejecutar un plan SQL revisado objeto por objeto. Nunca compensar un fallo con un `TRUNCATE` improvisado.
 
-1. [netlify.com](https://netlify.com) → signup (GitHub recomendado, para conectar el repo directo).
-2. "Add new site" → "Import an existing project" → conectar el repo `datoseyg/Nexus` (o el fork que corresponda).
-3. Configuración de build:
-   - **Base directory:** `apps/nexus-bi-app`
-   - **Build command:** `npm run build`
-   - **Publish directory:** `apps/nexus-bi-app/.next` (Netlify detecta Next.js automáticamente vía `@netlify/plugin-nextjs` si el repo tiene `netlify.toml` o si Netlify lo autodetecta al ver `next.config.ts`)
-4. Site settings → **Environment variables** → agregar:
-   - `SUPABASE_DB_URL` (la del pooler, paso 4)
-   - `NEXUS_ADMIN_TOKEN` (generado en el paso 7 de este runbook -ver más abajo)
-5. Deploy. Netlify corre `apps/nexus-bi-app/app/api/**` como Netlify Functions -confirmar en los logs de build que no hay errores de "Edge Runtime" (si aparecen, revisar que todas las rutas tengan `export const runtime = "nodejs"`, ver Fase 3/4 del plan de migración).
-6. Smoke test (ver sección 7 de abajo) contra la URL de deploy preview antes de promover a producción.
+### Gate 3 — Sincronización y validación de Supabase
 
-### 6b. Vercel (Plan B completo, no alternativa secundaria)
+Requiere autorización remota específica. El blocker local de Gate 1B está resuelto; la compatibilidad del proyecto remoto sigue sin comprobarse.
 
-1. [vercel.com](https://vercel.com) → signup con GitHub.
-2. "Add New..." → "Project" → importar `datoseyg/Nexus`.
-3. Configuración:
-   - **Root Directory:** `apps/nexus-bi-app` (Vercel detecta Next.js automáticamente, no hace falta `vercel.json` para un caso estándar de App Router).
-   - **Framework Preset:** Next.js (autodetectado).
-4. Project Settings → **Environment Variables** → agregar `SUPABASE_DB_URL` y `NEXUS_ADMIN_TOKEN` (mismos valores que en Netlify).
-5. Deploy. Vercel también corre los route handlers como funciones Node.js por default salvo que se declare `edge` explícitamente -como todas las rutas tienen `export const runtime = "nodejs"`, quedan corriendo en el runtime correcto sin configuración adicional.
-6. Smoke test contra la preview URL antes de promover a producción (alias de dominio).
+- `src/db/migrate-to-supabase.js` carga cada objeto `DUCKDB_SYNC` en staging y ejecuta el reemplazo publicado (`TRUNCATE ... RESTART IDENTITY` + `INSERT`) dentro de una única transacción, sin `CASCADE`; `LOAD_RAW` permanece `false` salvo autorización explícita adicional.
+- Las tablas `EXTERNAL`, `POSTGRES_BUILDER` y `POSTGRES_TRANSACTIONAL`, y las vistas Postgres-native no aplicables, no se reemplazan desde DuckDB.
+- La migración exige `SUPABASE_DB_URL_DIRECT` y dos tokens exactos: `CONFIRM_WRITE_TARGET` y `CONFIRM_PROTECTED_WRITE_TARGET`, ambos `host:port/database` del destino.
+- Antes de migrar, capturar conteos, constraints y backup. Después, ejecutar un validador ya corregido y consultas read-only de reconciliación.
+- No automatizar este paso en Netlify.
 
-## 7. Variables de entorno -resumen y generación del token admin
+Rollback: ante un fallo de carga staging o del swap transaccional, la tabla publicada conserva su estado anterior. Para fallos de DDL, corrupción lógica o una cadena ya confirmada, restaurar el snapshot previo; la atomicidad por tabla no reemplaza backup/restore.
 
-`NEXUS_ADMIN_TOKEN` protege `/api/admin/**` (ver `lib/auth.ts`) -es un secreto compartido para llamadores server-to-server, **nunca se expone al cliente** (prohibido `NEXT_PUBLIC_NEXUS_ADMIN_TOKEN`, ver Fase 3 del plan de migración). Generarlo con:
+### Gate 4 — Supabase Auth
 
-```bash
-openssl rand -hex 32
-```
+Requiere autorización separada para crear las dos cuentas.
 
-Variables a configurar (`.env.local` en `apps/nexus-bi-app/`, y el mismo par en el host elegido -nunca en un archivo versionado):
+1. Crear las identidades técnicas cuyos emails correspondan a `NEXUS_AUTH_GERENCIA_EMAIL` y `NEXUS_AUTH_ADMINISTRACION_EMAIL`.
+2. Configurar `app_metadata.nexus_role` server-controlled como `gerencia` o `administracion`.
+3. Deshabilitar registro público y verificar URLs de redirección permitidas para preview y producción.
+4. Entregar contraseñas por canal seguro; nunca registrarlas en archivos ni logs.
+5. Probar login, renovación, expiración, rol inválido, open redirect y logout antes de producción.
 
-| Variable | Dónde se usa | Valor |
+Rollback: bloquear o eliminar las cuentas creadas, rotar credenciales y retirar las URLs de preview autorizadas. No modificar usuarios productivos sin autorización específica.
+
+## 3. Netlify y OpenNext
+
+`netlify.toml` en la raíz es la única configuración versionada; `apps/nexus-bi-app/netlify.toml` no existe y no debe duplicarse. La configuración coherente del monorepo es:
+
+| Campo Netlify | Valor | Semántica |
 |---|---|---|
-| `SUPABASE_DB_URL` | `lib/db.ts` (runtime de la app) | Connection string del **pooler**, rol `nexus_app` |
-| `NEXUS_ADMIN_TOKEN` | `lib/auth.ts` (rutas `/api/admin/**`) | Token generado con `openssl rand -hex 32` |
+| Base directory | `apps/nexus-bi-app` | Directorio desde el que se instalan dependencias y se ejecuta build |
+| Package directory | vacío/no configurado | No es un npm workspace; no duplicar `base` |
+| Build command | `npm run build` | Resuelve al script `next build` del package de la app |
+| Publish directory | `.next` | Relativo a `base`; no usar `apps/nexus-bi-app/.next` |
 
-Y en `.env` de la raíz del repo (solo para correr los scripts de migración localmente, nunca en el host desplegado):
+La integración Next.js vigente de Netlify usa OpenNext automáticamente. La referencia explícita `@netlify/plugin-nextjs` era legacy y fue retirada. No instalar ni declarar ese plugin salvo una incompatibilidad futura demostrada por documentación y logs actuales.
 
-| Variable | Dónde se usa |
-|---|---|
-| `SUPABASE_DB_URL_DIRECT` | `src/db/migrate-to-supabase.js`, `src/db/validate-supabase.js` |
+Configuración de ramas:
 
-## 8. Smoke test post-deploy
+- Preview: `Frontend-Rev` y deploy previews de cambios revisados.
+- Producción: `main` únicamente.
+- Desactivar auto-publicación de ramas distintas de `main`; usar contexto branch/deploy-preview para valores no productivos.
 
-Contra la URL desplegada (deploy preview o producción):
+## 4. Variables por superficie
 
-1. Abrir `/dashboard/operacional`, `/dashboard/after-hours`, `/dashboard/fieldbeat`, `/dashboard/uptime`, `/audit/manual-review`, `/explorer`, `/search` -confirmar que cargan datos (los mismos que mostraban contra DuckDB local).
-2. `curl -X POST https://<tu-deploy>/api/admin/manual-review/part-aliases -H "content-type: application/json" -d '{}'` sin header de token → esperar `401`.
-3. Mismo POST con `-H "x-nexus-admin-token: <tu token>"` y un body válido (`alias_value`, `alias_type`, `dolibarr_product_id`) → esperar `201`.
-4. Confirmar en Supabase (Table Editor o SQL Editor) que la fila apareció en `manual_review.part_aliases` y que se generó una fila espejo en `audit.data_quality_events`.
+La matriz exacta está en `DEPLOYMENT_VARIABLE_MATRIX.md`. Resumen:
 
-Si los 4 pasos pasan, el despliegue está funcionalmente equivalente al local contra DuckDB, más la capa CRUD nueva.
+- Build + Functions: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- Functions solamente: `SUPABASE_DB_URL`, `DATABASE_SSL_MODE`, `DATABASE_SSL_CA_B64`, emails de roles, `NEXUS_ADMIN_TOKEN` y flags.
+- Administración local solamente: `SUPABASE_DB_URL_DIRECT`, confirmaciones de escritura e importadores.
+- Smoke local/CI: `BASE_URL`, `PORT`, `SMOKE_TIMEOUT_MS`.
+
+Las variables de runtime de Functions deben configurarse en Netlify UI/CLI/API con el scope correcto; no se guardan secretos en `netlify.toml`.
+
+Runtime PostgreSQL serverless:
+
+- `SUPABASE_DB_URL` usa transaction pooler `aws-*.pooler.supabase.com:6543`, rol mínimo `nexus_app`.
+- El código usa consultas sin nombre y un pool pequeño, compatible con transaction mode.
+- `DATABASE_SSL_MODE=verify-full` (verificación estricta de certificado + hostname, nunca solo cifrado) es el modo Cloud - también el default si se omite. Exige `DATABASE_SSL_CA_B64` (PEM de la CA raíz de Supabase, en base64, server-only - nunca una ruta de archivo). `DATABASE_SSL_MODE=require` ya no es un valor válido.
+- No usar la conexión directa ni el session pooler como runtime serverless.
+- `SUPABASE_DB_URL`/`GOVERNANCE_*_DB_URL` nunca deben incluir `sslmode`/`sslrootcert`/`sslcert`/`sslkey` en la connection string - el runtime rechaza el arranque si los detecta (el TLS se controla exclusivamente desde `DATABASE_SSL_MODE`/`DATABASE_SSL_CA_B64`, ver `lib/db.ts`).
+
+## 5. Protección esperada
+
+- Las páginas privadas se validan en servidor mediante `requireAuthenticatedUser`/`requireRole`; `proxy.ts` renueva sesiones y redirige páginas, pero no reemplaza la autorización de cada recurso.
+- Las APIs de lectura usan `requireReadApiAccess`: sin sesión devuelven JSON `401`; rol inválido devuelve `403`.
+- Las APIs administrativas conservan `requireAdminToken` y no pasan por el proxy de sesión.
+- El explorador limita schemas a `processed`, `marts` y `gold`.
+- Auditoría y Explorador permanecen ocultos con ambos flags en `false`; ocultar navegación no sustituye la autorización.
+
+Mapa de páginas:
+
+- pública: `/login`;
+- privadas: `/`, `/dashboard/**`, `/audit/**`, `/explorer/**` y `/search/**`;
+- recursos estáticos de Next quedan fuera del control de sesión;
+- usuario ya autenticado que visita `/login` vuelve a `/`.
+
+Mapa de APIs:
+
+- lectura autenticada: `/api/dashboard/**`, `/api/audit/**`, `/api/search/**` y `/api/tables/**`;
+- administración por secreto técnico: `/api/admin/**`, omitida deliberadamente por `proxy.ts` y protegida dentro de cada handler con `requireAdminToken`;
+- `proxy.ts` no autoriza APIs: cada handler debe aplicar su guard y emitir JSON, nunca redirects HTML.
+
+Inventario observado: 39 Route Handlers, de los cuales 29 usan la capa de lectura autenticada y 10 el token administrativo. Cualquier Route Handler nuevo debe incorporarse explícitamente a una de esas dos políticas.
+
+## 6. Smoke de preview y producción
+
+### No autenticado, automatizable y read-only
+
+Desde `apps/nexus-bi-app`:
+
+```powershell
+$env:BASE_URL='https://<deploy-preview>'; npm run smoke
+```
+
+El script actual comprueba `/login` con `200`, redirecciones `307` de páginas privadas y `401` JSON de APIs sin sesión. No escribe.
+
+### Autenticado, read-only
+
+El repositorio todavía no contiene un smoke autenticado automatizado. Hasta que exista un harness seguro, realizar en preview una verificación manual con cada identidad autorizada:
+
+1. Login correcto y retorno solo a una ruta interna.
+2. Shell muestra la identidad esperada.
+3. `/`, dashboards y una API GET autorizada responden correctamente.
+4. Rol ausente/inválido obtiene `403` en API.
+5. `?next=https://example.com` no abandona el origen.
+6. Tras logout, página privada redirige y API GET devuelve `401`.
+7. Esperar o simular expiración en el entorno de prueba y confirmar renovación o retorno seguro a login.
+
+No usar ninguna mutación administrativa como smoke. En producción, repetir solamente lecturas y logout; no crear filas de prueba.
+
+## 7. Promoción y rollback
+
+### Gate 5 — Code review
+
+- Ejecutar en paralelo los ejes Standards y Spec contra el SHA candidato y el alcance de release.
+- Exigir `BLOCKERS=0` y `HIGH=0`; resolver o aceptar explícitamente findings menores.
+- Si cambia código/config/documentación material después del review, repetir el eje afectado.
+
+Rollback: no crear ni promover preview.
+
+### Gate 6 — Preview (`Frontend-Rev`)
+
+- Build OpenNext verde.
+- Variables de preview apuntan exclusivamente a recursos no productivos aprobados.
+- Smokes anónimo y autenticado read-only verdes.
+- Logs sin secretos, errores de runtime o conexiones directas.
+
+Rollback: cancelar promoción, bloquear el deploy de preview y rotar cualquier secreto de preview expuesto. No tocar producción.
+
+### Gate 7 — Producción (`main`)
+
+1. Merge revisado de `Frontend-Rev` a `main` con SHA registrado.
+2. Ventana y responsables aprobados; backups y rollback disponibles.
+3. Variables productivas verificadas por nombre/scope sin mostrar sus valores.
+4. Deploy de `main`; no ejecutar migración como parte del build.
+5. Smoke productivo estrictamente read-only.
+
+Rollback de aplicación: publicar el deploy anterior de Netlify y confirmar sus variables. Si hubo una operación de base autorizada, seguir su plan de restauración por separado; revertir el frontend no revierte DDL ni datos.
+
+## 8. Estado al cierre de esta etapa
+
+El runbook queda utilizable como baseline documental y la cadena quedó certificada únicamente en PostgreSQL 16 local desechable. La ejecución remota permanece detenida por autorización; este estado no certifica que el proyecto Supabase antiguo sea compatible ni que `db:pg:build` esté autorizado para producción.
+
+```text
+DEPLOYMENT_RUNBOOK_REBASELINED
+REMOTE_EXECUTION_PENDING_AUTHORIZATION
+```

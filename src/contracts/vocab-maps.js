@@ -37,12 +37,15 @@ export const SUPPORT_MODE_MAP = {
 
 export const PARTS_COVERAGE_MAP = {
   "Todo Incluído": "FULL_COVERAGE",
+  // Variante ortográfica real de la fuente conservadora 2026-08-04.
+  "Todo Incluido": "FULL_COVERAGE",
   // Hallazgo de verificación contra el archivo real (Clínica Las Condes
   // CLC1/CLC2): misma cobertura completa, con nota de que el contrato es
   // directo con Elekta -no amerita un código de cobertura distinto.
   "Todo Incluído (Contrato directo con Elekta)": "FULL_COVERAGE",
   "Todos, Excepto Paneles, Magnetron y Thyratron": "PARTIAL_EXCLUDES_PANELS_MAGNETRON_THYRATRON",
   "No Incluídos": "NOT_INCLUDED",
+  "No Incluidos": "NOT_INCLUDED",
   "Incluye sólo repuestos bajo USD 1500.- (NO incluye fuente)": "PARTIAL_UNDER_THRESHOLD"
 };
 

@@ -30,6 +30,7 @@ export type AfterHoursCoverageReasonCode =
   | "EQUIPMENT_UNMATCHED"
   | "EQUIPMENT_AMBIGUOUS"
   | "NO_CONTRACT_AT_TASK_DATE"
+  | "NO_CONTRACT"
   | "NO_CONTRACT_STATUS"
   | "ON_DEMAND_UNDEFINED"
   | "CONTRACT_STATUS_DEINSTALLED"
@@ -55,6 +56,7 @@ export const AFTER_HOURS_COVERAGE_REASON_CODE_VALUES: readonly AfterHoursCoverag
   "EQUIPMENT_UNMATCHED",
   "EQUIPMENT_AMBIGUOUS",
   "NO_CONTRACT_AT_TASK_DATE",
+  "NO_CONTRACT",
   "NO_CONTRACT_STATUS",
   "ON_DEMAND_UNDEFINED",
   "CONTRACT_STATUS_DEINSTALLED",
@@ -140,8 +142,11 @@ export interface AfterHoursSummary extends AfterHoursPopulationCounts {
 
 export interface AfterHoursDetailRow extends AfterHoursContractualFields {
   fieldbeat_task_id: number;
-  start_time: string | null;
-  estimated_end_time: string | null; // nombre de campo JSON preservado por compatibilidad; la columna SQL fuente ahora es end_time_local (antes estimated_end_time_local), ver §6.4
+  analysis_start_time: string | null;
+  analysis_end_time: string | null;
+  analysis_interval_basis: "REPORTED_WORK_INTERVAL" | "DELIVERY_FALLBACK" | "TASK_TRANSITIONS" | "SCHEDULED_ESTIMATE" | "INSUFFICIENT_DATA";
+  analysis_fallback_used: boolean;
+  analysis_fallback_reason: string | null;
   reported_end_raw: string | null;
   calculation_method: string;
   client_name: string | null;
@@ -158,6 +163,24 @@ export interface AfterHoursDetailRow extends AfterHoursContractualFields {
   confidence_score: number | null;
   confidence_label: string | null;
   confidence_factors: string | null;
+  // Aditivo (auditoría After-Hours, hotfix de integridad FieldBeat §5) -
+  // informativo, fuente quality.fieldbeat_report_labor_summary (sql/088).
+  // assigned_to sigue siendo el único responsable principal en todas las
+  // columnas de horas de esta fila (duration_hours/business_hours/
+  // after_hours/etc.) - este campo NUNCA reparte ni multiplica esas horas
+  // por participante, solo declara cuántos participantes tiene el reporte
+  // para que la fila deje de implicar silenciosamente que assigned_to es
+  // la única persona que trabajó la tarea.
+  participant_count: number | null;
+  // Sección 14 del encargo NEXUS V3 After-Hours - modelo(s) resuelto(s) para
+  // el/los equipo(s) de la tarea, MISMA precedencia estructurada
+  // (processed.fieldbeat_task_equipments primero, texto como fallback
+  // gobernado) que usa el detalle canónico de reporte. RESOLVED cuando hay
+  // 1+ modelo distinto resuelto (2+ se listan juntos, nunca se elige uno);
+  // UNKNOWN cuando no hay ninguno. Nunca AMBIGUOUS a este nivel de fila -
+  // ver comentario en app/api/dashboard/after-hours/detail/route.ts.
+  model: string | null;
+  model_resolution_status: "RESOLVED" | "UNKNOWN";
 }
 
 export interface AfterHoursByDimensionRow extends AfterHoursPopulationCounts {

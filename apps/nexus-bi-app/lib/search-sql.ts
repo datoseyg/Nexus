@@ -197,6 +197,29 @@ function partsFilterConditions(filters: SearchFilters, pusher: ParamPusher): str
   return conditions;
 }
 
+// HOTFIX de integridad de datos FieldBeat (Stage 9) - expresión SQL de
+// agrupación/identidad de repuesto, compartida por la consulta de conteos y
+// la de listado (nunca reimplementada dos veces con el riesgo de que
+// diverjan). Alineada 1:1 con buildSearchPartKey() (JS) y con
+// lib/fieldbeat-part-occurrence.ts::buildPartSearchIdentity() - mismo
+// principio de identidad, adaptado a las columnas de
+// marts.used_parts_dolibarr_match. CASE explícito (nunca COALESCE con un
+// 'raw:' || NULL) - un repuesto sin dolibarr_ref NI raw_part_identifier/
+// normalized_part_identifier ya NO cae a NULL (que Postgres agruparía junto
+// a TODOS los demás repuestos sin código de todo el warehouse, fusionando
+// ocurrencias completamente distintas) - cae a una identidad POR OCURRENCIA
+// (alias.used_part_id), nunca agrupada automáticamente por nombre.
+function partsGroupKeySql(alias: string): string {
+  return `
+    CASE
+      WHEN NULLIF(TRIM(${alias}.dolibarr_ref), '') IS NOT NULL THEN 'catalog-product:' || TRIM(${alias}.dolibarr_ref)
+      WHEN ${alias}.normalized_part_identifier IS NOT NULL OR ${alias}.raw_part_identifier IS NOT NULL
+        THEN 'raw-part:' || COALESCE(${alias}.normalized_part_identifier, UPPER(TRIM(${alias}.raw_part_identifier)))
+      ELSE 'raw-occurrence:' || ${alias}.used_part_id
+    END
+  `;
+}
+
 // --- Consulta de conteos consolidada (1 sola query, 5 subconsultas escalares) ---
 
 export interface SqlQuery {
@@ -224,7 +247,7 @@ export function buildConsolidatedCountsQuery(
 
   const partsConditions = [...partsFilterConditions(filters, pusher), ...buildPartsTokenConditions(tokens, pusher)];
   const partsWhere = partsConditions.join(" AND ");
-  const partsKeyExpr = `COALESCE(NULLIF(TRIM(m.dolibarr_ref), ''), 'raw:' || COALESCE(m.normalized_part_identifier, UPPER(TRIM(m.raw_part_identifier))))`;
+  const partsKeyExpr = partsGroupKeySql("m");
 
   const sql = `
     WITH ${cte}
@@ -331,20 +354,22 @@ export function buildEntityRowsQuery(
     return { sql, params: pusher.params };
   }
 
-  // parts - GROUP BY únicamente por la clave normalizada (no por
-  // dolibarr_ref/raw_part_identifier crudos) para consolidar de verdad
-  // variantes de mayúsculas/espacios bajo una sola fila; todo lo demás en
-  // el SELECT va agregado (MAX), igual que el precedente ya establecido en
-  // /api/audit/placeholders (MAX(m.raw_part_identifier) al agrupar por
-  // UPPER(TRIM(raw_part_identifier))).
+  // parts - GROUP BY por la identidad de repuesto (partsGroupKeySql, Stage
+  // 9): consolida de verdad variantes de mayúsculas/espacios del MISMO
+  // código bajo una sola fila, pero NUNCA fusiona repuestos sin código
+  // (raw-occurrence:<used_part_id>, ver comentario de partsGroupKeySql) -
+  // todo lo demás en el SELECT va agregado (MAX), igual que el precedente
+  // ya establecido en /api/audit/placeholders (MAX(m.raw_part_identifier)
+  // al agrupar por UPPER(TRIM(raw_part_identifier))).
   const conditions = [...partsFilterConditions(filters, pusher), ...buildPartsTokenConditions(tokens, pusher)];
-  const partsKeyExpr = `COALESCE(NULLIF(TRIM(m.dolibarr_ref), ''), 'raw:' || COALESCE(m.normalized_part_identifier, UPPER(TRIM(m.raw_part_identifier))))`;
+  const partsKeyExpr = partsGroupKeySql("m");
   const sql = `
     SELECT
       MAX(m.dolibarr_ref) AS dolibarr_ref,
       COALESCE(MAX(m.dolibarr_label), MAX(m.part_name)) AS part_name,
       MAX(m.raw_part_identifier) AS raw_part_identifier,
       MAX(COALESCE(m.normalized_part_identifier, UPPER(TRIM(m.raw_part_identifier)))) AS normalized_identifier,
+      MAX(m.used_part_id) AS used_part_id,
       SUM(COALESCE(p.quantity, 1)) AS quantity_consumed,
       COUNT(DISTINCT m.fieldbeat_task_id) AS report_count,
       COUNT(DISTINCT r.client_name) AS client_count
@@ -416,16 +441,39 @@ export function mapTicketRow(row: Record<string, unknown>): SearchTicketResult {
   };
 }
 
+// HOTFIX de integridad de datos FieldBeat (Stage 9) - identidad de
+// resultado de repuesto, NUNCA fusiona por nombre genérico. Mismo
+// principio que lib/fieldbeat-part-occurrence.ts::buildPartSearchIdentity(),
+// adaptado a las columnas que Búsqueda ya trae (dolibarr_ref en vez de un
+// dolibarr_product_id numérico - acá "catálogo validado" se identifica por
+// su ref/SKU, la columna que esta consulta ya selecciona sin un JOIN
+// adicional). Defecto REAL encontrado (no hipotético): antes, un repuesto
+// SIN dolibarr_ref NI raw_part_identifier/normalized_part_identifier
+// producía una expresión de agrupación NULL - Postgres trata TODOS los
+// NULL de un GROUP BY como el MISMO grupo, así que dos repuestos "Filtro"
+// completamente distintos (reportes/clientes/cantidades distintos, sin
+// código ninguno) se fusionaban en una sola fila fantasma con conteos
+// mezclados. `raw-occurrence:<used_part_id>` da a cada ocurrencia sin
+// código su propia identidad, nunca agrupada automáticamente por nombre.
+export function buildSearchPartKey(input: { dolibarrRef: string | null; normalizedIdentifier: string | null; rawIdentifier: string | null; usedPartId: string | null }): string {
+  const dolibarrRef = input.dolibarrRef?.trim();
+  if (dolibarrRef) return `catalog-product:${dolibarrRef}`;
+  const normalized = input.normalizedIdentifier ?? (input.rawIdentifier ? input.rawIdentifier.trim().toUpperCase() : null);
+  if (normalized) return `raw-part:${normalized}`;
+  return `raw-occurrence:${input.usedPartId ?? ""}`;
+}
+
 export function mapPartRow(row: Record<string, unknown>): SearchPartResult {
   const dolibarrRef = (row.dolibarr_ref as string | null) || null;
   const rawIdentifier = (row.raw_part_identifier as string | null) || null;
   const normalizedIdentifier = (row.normalized_identifier as string | null) || null;
+  const usedPartId = (row.used_part_id as string | null) || null;
   // La clave usa el identificador YA NORMALIZADO (misma expresión que el
   // GROUP BY), nunca el valor crudo de exhibición (rawIdentifier) - así el
   // detail (que recibe esta key de vuelta) compara contra el mismo valor
   // normalizado con el que se agrupó, sin depender de mayúsculas/espacios
   // arbitrarios de la fila elegida por MAX().
-  const key = dolibarrRef ? `sku:${dolibarrRef}` : `raw:${normalizedIdentifier ?? ""}`;
+  const key = buildSearchPartKey({ dolibarrRef, normalizedIdentifier, rawIdentifier, usedPartId });
   return {
     key,
     sku: dolibarrRef,
@@ -455,15 +503,17 @@ export function assertNumericIdFormat(key: string, label: string): void {
 }
 
 export interface PartsKey {
-  type: "sku" | "raw";
+  type: "catalog-product" | "raw-part" | "raw-occurrence";
   value: string;
 }
 
-/** Interpreta el prefijo sku:/raw: de la clave de repuesto - nunca interpola el valor como identificador SQL. */
+/** Interpreta el prefijo catalog-product:/raw-part:/raw-occurrence: de la
+ * clave de repuesto - nunca interpola el valor como identificador SQL. */
 export function parsePartsKey(key: string): PartsKey {
-  if (key.startsWith("sku:")) return { type: "sku", value: key.slice(4) };
-  if (key.startsWith("raw:")) return { type: "raw", value: key.slice(4) };
-  throw new Error(`Clave de repuesto con formato inválido: "${key}" (se esperaba el prefijo sku: o raw:).`);
+  if (key.startsWith("catalog-product:")) return { type: "catalog-product", value: key.slice("catalog-product:".length) };
+  if (key.startsWith("raw-part:")) return { type: "raw-part", value: key.slice("raw-part:".length) };
+  if (key.startsWith("raw-occurrence:")) return { type: "raw-occurrence", value: key.slice("raw-occurrence:".length) };
+  throw new Error(`Clave de repuesto con formato inválido: "${key}" (se esperaba el prefijo catalog-product:, raw-part: o raw-occurrence:).`);
 }
 
 export function buildClientDetailSummaryQuery(clientName: string): SqlQuery {
@@ -543,40 +593,12 @@ export function buildMachineDetailRelatedQuery(machineId: string): SqlQuery {
   return { sql, params: pusher.params };
 }
 
-export function buildReportDetailSummaryQuery(fieldbeatTaskId: string): SqlQuery {
-  const pusher = createParamPusher();
-  const p = pusher.push(fieldbeatTaskId);
-  const sql = `
-    SELECT m.fieldbeat_task_id, m.fieldbeat_task_date, m.client_name, m.task_type,
-           m.equipment_internal_ids, m.linked_zendesk_ticket_id, m.used_parts_count, t.description
-    FROM marts.fieldbeat_report_dolibarr_operational_view m
-    JOIN processed.fieldbeat_tasks t ON m.fieldbeat_task_id = t.fieldbeat_task_id
-    WHERE m.fieldbeat_task_id::text = ${p}
-  `;
-  return { sql, params: pusher.params };
-}
-
-export function buildReportDetailRelatedQuery(fieldbeatTaskId: string, reportFieldsAvailable: boolean): SqlQuery {
-  const pusher = createParamPusher();
-  const p = pusher.push(fieldbeatTaskId);
-  const fieldsSubquery = reportFieldsAvailable
-    ? `(SELECT COALESCE(json_agg(x), '[]') FROM (
-         SELECT field_name, field_value FROM processed.fieldbeat_report_fields
-         WHERE fieldbeat_task_id::text = ${p} ORDER BY field_index LIMIT 30
-       ) x)`
-    : `'[]'::json`;
-  const sql = `
-    SELECT
-      ${fieldsSubquery} AS fields,
-      (SELECT COALESCE(json_agg(x), '[]') FROM (
-         SELECT m.dolibarr_ref, COALESCE(m.dolibarr_label, m.part_name) AS part_name, m.raw_part_identifier, p.quantity
-         FROM marts.used_parts_dolibarr_match m
-         LEFT JOIN processed.fieldbeat_used_parts p ON m.used_part_id = p.used_part_id
-         WHERE m.fieldbeat_task_id::text = ${p} LIMIT 20
-       ) x) AS parts
-  `;
-  return { sql, params: pusher.params };
-}
+// HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) -
+// buildReportDetailSummaryQuery/buildReportDetailRelatedQuery retirados:
+// Search ya nunca abre su propio drawer para un reporte (ver
+// SearchDashboard.tsx/app/api/search/detail/route.ts) - el detalle de
+// reporte vive exclusivamente en el contrato canónico
+// (lib/fieldbeat-report-detail-queries.ts).
 
 export function buildTicketDetailSummaryQuery(zendeskTicketId: string): SqlQuery {
   const pusher = createParamPusher();
@@ -609,15 +631,26 @@ export function buildTicketDetailRelatedQuery(zendeskTicketId: string): SqlQuery
   return { sql, params: pusher.params };
 }
 
+/** WHERE compartido por summary/related de detalle de repuesto - un solo
+ * lugar que interpreta los 3 tipos de PartsKey (Stage 9), nunca reimplementado
+ * dos veces con el riesgo de que diverjan entre summary y related. */
+function partsKeyWhereClause(partsKey: PartsKey, placeholder: string): string {
+  if (partsKey.type === "catalog-product") return `m.dolibarr_ref = ${placeholder}`;
+  if (partsKey.type === "raw-occurrence") return `m.used_part_id = ${placeholder}`;
+  return `COALESCE(m.normalized_part_identifier, UPPER(TRIM(m.raw_part_identifier))) = UPPER(${placeholder})`;
+}
+
 export function buildPartDetailSummaryQuery(partsKey: PartsKey): SqlQuery {
   const pusher = createParamPusher();
   const p = pusher.push(partsKey.value);
-  const whereClause = partsKey.type === "sku" ? `m.dolibarr_ref = ${p}` : `COALESCE(m.normalized_part_identifier, UPPER(TRIM(m.raw_part_identifier))) = UPPER(${p})`;
+  const whereClause = partsKeyWhereClause(partsKey, p);
   const sql = `
     SELECT
       MAX(m.dolibarr_ref) AS dolibarr_ref,
       COALESCE(MAX(m.dolibarr_label), MAX(m.part_name)) AS part_name,
       MAX(m.raw_part_identifier) AS raw_part_identifier,
+      MAX(COALESCE(m.normalized_part_identifier, UPPER(TRIM(m.raw_part_identifier)))) AS normalized_identifier,
+      MAX(m.used_part_id) AS used_part_id,
       SUM(COALESCE(p.quantity, 1)) AS quantity_consumed,
       COUNT(DISTINCT m.fieldbeat_task_id) AS report_count,
       COUNT(DISTINCT r.client_name) AS client_count
@@ -632,7 +665,7 @@ export function buildPartDetailSummaryQuery(partsKey: PartsKey): SqlQuery {
 export function buildPartDetailRelatedQuery(partsKey: PartsKey): SqlQuery {
   const pusher = createParamPusher();
   const p = pusher.push(partsKey.value);
-  const whereClause = partsKey.type === "sku" ? `m.dolibarr_ref = ${p}` : `COALESCE(m.normalized_part_identifier, UPPER(TRIM(m.raw_part_identifier))) = UPPER(${p})`;
+  const whereClause = partsKeyWhereClause(partsKey, p);
   const sql = `
     SELECT (SELECT COALESCE(json_agg(x), '[]') FROM (
       SELECT m.fieldbeat_task_id, r.fieldbeat_task_date, r.client_name, p.quantity

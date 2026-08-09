@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { BUTTON_GHOST } from "@/components/ui/interactive";
 
 interface FilterBarBaseProps {
   quickAccess?: React.ReactNode;
@@ -99,7 +100,7 @@ export function FilterBar(props: FilterBarProps) {
             aria-expanded={props.moreFiltersOpen}
             aria-controls={moreFiltersPanelId}
             onClick={props.onToggleMoreFilters}
-            className="rounded-[var(--nx-radius-chip)] border px-3 py-1.5 text-[13px] font-semibold"
+            className={`rounded-[var(--nx-radius-chip)] border px-3 py-1.5 text-[13px] font-semibold ${BUTTON_GHOST}`}
             style={{ borderColor: "var(--nx-border)", color: "var(--nx-accent-indigo)" }}
           >
             {props.moreFiltersLabel ?? (props.moreFiltersOpen ? "Menos filtros" : "Más filtros")}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { QueryDisclosure } from "@/components/QueryDisclosure";
+import { SearchQueryExplanationPanel } from "./SearchQueryExplanationPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { SearchForm } from "./SearchForm";
@@ -11,6 +11,7 @@ import { SearchFilters, type SearchFilterValues } from "./SearchFilters";
 import { SearchGroup } from "./SearchGroup";
 import { SearchPagination } from "./SearchPagination";
 import { SearchDetailDrawerContainer } from "./SearchDetailDrawerContainer";
+import { FieldbeatReportDetailDrawer } from "@/components/fieldbeat/quality/FieldbeatReportDetailDrawer";
 import { BUTTON_SECONDARY } from "./search.styles";
 import { isSearchFiltersResponse, isSearchResponse, type SearchState } from "./search.types";
 import { ENTITY_LABELS, ENTITY_ORDER, normalizeSearchQuery, resolveQueryAdjustmentMessage } from "./search.utils";
@@ -30,6 +31,11 @@ interface UrlState {
   estadoTicket?: string;
   conRepuesto: ConRepuestoFilter;
   page: number;
+  /** HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) - reporte
+   * abierto en el drawer canónico, persistido en la URL (mismo patrón que
+   * selectedReportId en lib/fieldbeat-tabs-url-state.ts) - permite compartir/
+   * recargar un enlace directo a un reporte abierto desde Búsqueda. */
+  report?: string;
 }
 
 function readUrlState(params: URLSearchParams): UrlState {
@@ -47,7 +53,8 @@ function readUrlState(params: URLSearchParams): UrlState {
     tipoTarea: params.get("tipoTarea") || undefined,
     estadoTicket: params.get("estadoTicket") || undefined,
     conRepuesto,
-    page: Math.max(1, Number(params.get("page")) || 1)
+    page: Math.max(1, Number(params.get("page")) || 1),
+    report: params.get("report") || undefined
   };
 }
 
@@ -63,6 +70,7 @@ function buildQueryString(state: UrlState): string {
   if (state.estadoTicket) params.set("estadoTicket", state.estadoTicket);
   if (state.conRepuesto !== "all") params.set("conRepuesto", state.conRepuesto);
   if (state.page > 1) params.set("page", String(state.page));
+  if (state.report) params.set("report", state.report);
   return params.toString();
 }
 
@@ -196,8 +204,37 @@ export function SearchDashboard() {
     [urlState]
   );
 
-  const openDetail = useCallback((entity: Exclude<SearchEntity, "all">, key: string) => setDetailRequest({ entity, key }), []);
+  // HOTFIX de integridad de datos FieldBeat (Stage 9, UX canónica) - el
+  // reporte abierto vive en la URL (state.report, mismo patrón que
+  // selectedReportId en lib/fieldbeat-tabs-url-state.ts) - nunca en un
+  // useState local, para que un enlace directo con ?report=<id> sea
+  // compartible/recargable. Un resultado de la entidad "reports" NUNCA abre
+  // el drawer propio de Search - abre directo el canónico (row.key ===
+  // fieldbeatTaskId para reportes, ver mapReportRow() en lib/search-sql.ts).
+  const openDetail = useCallback(
+    (entity: Exclude<SearchEntity, "all">, key: string) => {
+      if (entity === "reports") {
+        pushState({ report: key }, false);
+        return;
+      }
+      setDetailRequest({ entity, key });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [urlState]
+  );
   const closeDetail = useCallback(() => setDetailRequest(null), []);
+  // Filas "relacionadas" (reportes recientes/vinculados/usos) dentro del
+  // drawer propio de Search - cierra ESE drawer en el mismo cambio de
+  // estado que abre el canónico (vía la URL), nunca dos diálogos apilados.
+  const openReport = useCallback(
+    (reportId: string) => {
+      setDetailRequest(null);
+      pushState({ report: reportId }, false);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [urlState]
+  );
+  const closeReport = useCallback(() => pushState({ report: undefined }, false), [urlState]);
   const handleRetry = useCallback(() => setRetryCount(c => c + 1), []);
 
   const filterValues: SearchFilterValues = {
@@ -313,11 +350,12 @@ export function SearchDashboard() {
             </div>
           )}
 
-          {searchState.data.queries && searchState.data.queries.length > 0 && <QueryDisclosure queries={searchState.data.queries} />}
+          {searchState.data.queryExplanation && <SearchQueryExplanationPanel explanation={searchState.data.queryExplanation} />}
         </>
       )}
 
-      <SearchDetailDrawerContainer request={detailRequest} onClose={closeDetail} />
+      <SearchDetailDrawerContainer request={detailRequest} onClose={closeDetail} onOpenReport={openReport} />
+      <FieldbeatReportDetailDrawer reportId={urlState.report ?? null} onClose={closeReport} />
     </div>
   );
 }

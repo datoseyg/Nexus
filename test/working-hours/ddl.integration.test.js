@@ -30,7 +30,6 @@ before(async () => {
   printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
   adminPool = new Pool({ connectionString: TEST_DB_URL, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
   await assertDisposableTarget(adminPool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
-
   const r = await adminPool.query(
     `INSERT INTO audit.pipeline_runs (stage, status) VALUES ('working-hours-test', 'SUCCESS') RETURNING run_id`
   );
@@ -573,6 +572,21 @@ test("estructural: Capa C no tiene columnas contract_valid_from/match_status/par
   assert.equal(r.rows.length, 0);
 });
 
+test("estructural: Capa C persiste procedencia temporal y campos normalizados/raw sin ambigüedad", { skip: !TEST_DB_URL }, async () => {
+  const expected = [
+    "analysis_interval_basis", "analysis_fallback_used", "analysis_fallback_reason",
+    "reported_work_start_utc", "reported_work_start_local", "reported_work_start_raw", "reported_work_start_parse_status",
+    "reported_work_end_utc", "reported_work_end_local", "reported_work_end_raw", "reported_work_end_parse_status",
+    "delivered_at_utc", "delivered_at_local", "delivered_raw", "delivered_parse_status", "temporal_issue_codes"
+  ];
+  const r = await adminPool.query(`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'marts' AND table_name = 'fieldbeat_working_hours_analysis_v2'
+      AND column_name = ANY($1::text[])
+  `, [expected]);
+  assert.deepEqual(r.rows.map(row => row.column_name).sort(), [...expected].sort());
+});
+
 // ============================================================
 // 5. Tabla puente
 // ============================================================
@@ -773,7 +787,7 @@ test("grants: nexus_app solo puede SELECT la vista de transición, nada más de 
   // Misma contraseña de prueba que test/contracts/db-writer.integration.test.js
   // usa para nexus_app en este Postgres desechable -evita choques si ambas
   // suites corren contra el mismo contenedor en la misma sesión.
-  const nexusUrl = TEST_DB_URL.replace(/\/\/[^:]+:[^@]+@/, "//nexus_app:test@");
+  const nexusUrl = TEST_DB_URL.replace(/\/\/[^:]+:[^@]+@/, "//nexus_app:__SET_IN_SUPABASE_DASHBOARD__@");
   const nexusPool = new Pool({ connectionString: nexusUrl });
   try {
     const viewResult = await nexusPool.query("SELECT * FROM marts.fieldbeat_working_hours_analysis_current LIMIT 1");

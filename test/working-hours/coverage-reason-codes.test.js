@@ -15,16 +15,16 @@ import {
   OUTSIDE_COVERAGE_BUCKET
 } from "../../src/working-hours/coverage-reason-codes.js";
 
-test("SEGMENT_REASON_CODES tiene exactamente 11 códigos", () => {
-  assert.equal(SEGMENT_REASON_CODES.length, 11);
+test("SEGMENT_REASON_CODES tiene exactamente 12 códigos", () => {
+  assert.equal(SEGMENT_REASON_CODES.length, 12);
 });
 
-test("CAPA_C_REASON_CODES tiene exactamente 17 códigos", () => {
-  assert.equal(CAPA_C_REASON_CODES.length, 17);
+test("CAPA_C_REASON_CODES tiene exactamente 18 códigos", () => {
+  assert.equal(CAPA_C_REASON_CODES.length, 18);
 });
 
-test("CONTRACTUAL_REASON_CODES excluye WITHIN_LEGACY_SCHEDULE (16 códigos)", () => {
-  assert.equal(CONTRACTUAL_REASON_CODES.length, 16);
+test("CONTRACTUAL_REASON_CODES excluye WITHIN_LEGACY_SCHEDULE (17 códigos)", () => {
+  assert.equal(CONTRACTUAL_REASON_CODES.length, 17);
   assert.ok(!CONTRACTUAL_REASON_CODES.includes("WITHIN_LEGACY_SCHEDULE"));
 });
 

@@ -25,13 +25,14 @@ import { HomeSummaryGrid } from "./HomeSummaryGrid";
 import { HomeAttentionPanel } from "./HomeAttentionPanel";
 import { HomeLastClient } from "./HomeLastClient";
 import { HomeDataStatus } from "./HomeDataStatus";
+import { useDataRefreshEpoch } from "@/components/data-refresh/DataRefreshEpochProvider";
 
 // Único límite "use client" de la página. Dueño de las 4 llamadas fetch
 // independientes (audit, operacional, fieldbeat, after-hours) y de
 // proyectar cada RemoteData<T> crudo a la forma de presentación que cada
 // componente hoja necesita. Sin estado global nuevo: todo vive acá, en
 // useState local.
-function useRemoteData<T>(url: string, validate: (value: unknown) => value is T): RemoteData<T> {
+function useRemoteData<T>(url: string, validate: (value: unknown) => value is T, epoch: number): RemoteData<T> {
   const [state, setState] = useState<RemoteData<T>>({ status: "loading" });
 
   useEffect(() => {
@@ -51,7 +52,10 @@ function useRemoteData<T>(url: string, validate: (value: unknown) => value is T)
       });
 
     return () => controller.abort();
-  }, [url, validate]);
+    // epoch (NEXUS V3 - components/data-refresh/DataRefreshEpochProvider.tsx)
+    // sube en 1 tras cada actualización de datos exitosa - agregarlo acá
+    // vuelve a disparar este mismo fetch sin cambiar qué/cómo se pide.
+  }, [url, validate, epoch]);
 
   return state;
 }
@@ -70,8 +74,12 @@ function toKpi<T, K extends HomeKpiKey>(
 
 function toLastClientState(source: RemoteData<OperacionalSummaryData>): HomeLastClientState {
   if (source.status === "success") {
-    return { status: "success", clientName: normalizeClientName(source.data.kpis.ultimoCliente) };
-  }
+  return {
+    status: "success",
+    clientName: normalizeClientName(source.data.kpis.ultimoCliente),
+    activityDate: source.data.kpis.ultimoClienteFecha
+  };
+}
   if (source.status === "loading") return { status: "loading" };
   return { status: "error" };
 }
@@ -87,7 +95,7 @@ function deriveFieldbeatStatus(source: RemoteData<FieldbeatSummaryData>): HomeAr
   const label = "FieldBeat";
   if (source.status === "loading") return { area: "fieldbeat", label, status: "loading" };
   if (source.status === "error") return { area: "fieldbeat", label, status: "failed" };
-  return { area: "fieldbeat", label, status: source.data.kpis === null ? "empty" : "success" };
+  return { area: "fieldbeat", label, status: source.data.kpi1.denominator === 0 ? "empty" : "success" };
 }
 
 function deriveAfterHoursStatus(source: RemoteData<AfterHoursSummaryData>): HomeAreaStatusOf<"afterHours"> {
@@ -150,15 +158,18 @@ interface HomeDashboardProps {
 }
 
 export function HomeDashboard({ navigationSlot }: HomeDashboardProps) {
-  const auditState = useRemoteData<AuditSummaryData>("/api/audit/summary", isAuditSummaryData);
+  const epoch = useDataRefreshEpoch();
+  const auditState = useRemoteData<AuditSummaryData>("/api/audit/summary", isAuditSummaryData, epoch);
   const operacionalState = useRemoteData<OperacionalSummaryData>(
     "/api/dashboard/operacional/summary",
-    isOperacionalSummaryData
+    isOperacionalSummaryData,
+    epoch
   );
-  const fieldbeatState = useRemoteData<FieldbeatSummaryData>("/api/dashboard/fieldbeat", isFieldbeatSummaryData);
+  const fieldbeatState = useRemoteData<FieldbeatSummaryData>("/api/dashboard/fieldbeat/overview", isFieldbeatSummaryData, epoch);
   const afterHoursState = useRemoteData<AfterHoursSummaryData>(
     "/api/dashboard/after-hours/summary",
-    isAfterHoursSummaryData
+    isAfterHoursSummaryData,
+    epoch
   );
 
   const kpis: HomeKpiTuple = [

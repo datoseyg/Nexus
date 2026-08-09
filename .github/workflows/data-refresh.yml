@@ -1,0 +1,203 @@
+# NEXUS V3 - Actualización manual de datos (requisitos 1/2 del encargo).
+#
+# SOLO workflow_dispatch: nadie dispara esto automáticamente (nunca push,
+# nunca schedule, nunca pull_request) - una corrida STAGING/PRODUCTION
+# siempre la inicia una persona con permiso de escritura en este repo,
+# llenando los inputs de abajo a mano en la pestaña Actions de GitHub.
+#
+# Este archivo NUNCA fue disparado durante su desarrollo (ver el reporte
+# final de la tarea NEXUS V3) - las credenciales reales de Supabase V3
+# STAGING/PRODUCTION no existen todavía (siguen como un solo entorno LOCAL
+# de desarrollo). Antes de la primera ejecución real hace falta:
+#   1. Crear los "Environments" de GitHub llamados STAGING y PRODUCTION
+#      (Settings -> Environments), cada uno con sus propios secretos (ver
+#      lista abajo) - así este mismo workflow resuelve el secreto correcto
+#      según el entorno elegido en el dispatch sin necesitar lógica extra,
+#      y PRODUCTION puede protegerse con "required reviewers" si se quiere
+#      una aprobación humana adicional antes de que el job corra.
+#   2. Ver docs/data-refresh-runbook.md para el detalle completo.
+#
+# Ejecuta el MISMO orquestador que usa el worker local
+# (scripts/pipeline/run-data-refresh.mjs --start ...) - este YAML no
+# reimplementa ninguna etapa del pipeline, solo provee el entorno y los
+# secretos.
+name: Actualización manual de datos (NEXUS V3)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Entorno destino"
+        type: choice
+        options: [STAGING, PRODUCTION]
+        required: true
+      mode:
+        description: "INCREMENTAL (solo lo nuevo) o FULL (re-extrae todo desde cero)"
+        type: choice
+        options: [INCREMENTAL, FULL]
+        default: INCREMENTAL
+        required: true
+      confirmed:
+        description: "Marcar true SOLO si mode=FULL (obligatorio para FULL, ignorado en INCREMENTAL)"
+        type: boolean
+        default: false
+      reason:
+        description: "Motivo de esta actualización manual (recomendado, queda en pipeline.refresh_runs.reason)"
+        type: string
+        required: false
+      refresh_run_id:
+        description: "USO INTERNO - lo llena automáticamente POST /api/data-refresh/runs (puente NEXUS V3). Dejar vacío en un dispatch manual: el worker reclama la próxima corrida QUEUED de este entorno, exactamente igual que antes."
+        type: string
+        required: false
+
+concurrency:
+  group: data-refresh-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Refresh ${{ inputs.environment }} (${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Release productivo NEXUS V3 - blocker: src/working-hours/db-client.js
+      # (BUILD_WORKING_HOURS, ver scripts/pipeline/run-data-refresh.mjs) exige
+      # ahora verificación TLS estricta (rejectUnauthorized:true) contra
+      # WORKING_HOURS_DB_URL cuando apunta a Supabase - sin una CA de
+      # confianza disponible, Node rechazaría CUALQUIER conexión remota
+      # (correcto, fail-closed) hasta que este paso le entregue una. Nunca se
+      # commitea el PEM: viaja como secret de este Environment
+      # (SUPABASE_DB_CA_B64, distinto de DATABASE_SSL_CA_B64 -esa es del
+      # runtime Netlify de apps/nexus-bi-app, superficie de secretos
+      # separada; puede ser el MISMO material de CA, nunca la misma
+      # variable), se reconstruye a un archivo temporal EFÍMERO del runner
+      # ($RUNNER_TEMP - fuera del working directory, nunca versionado, y
+      # desaparece solo cuando el runner se destruye al terminar el job) y se
+      # expone únicamente vía NODE_EXTRA_CA_CERTS (variable estándar de
+      # Node, leída automáticamente por CUALQUIER conexión TLS de este
+      # proceso - src/working-hours/db-client.js nunca referencia esta
+      # variable ni ninguna ruta de archivo directamente). Nunca se imprime
+      # el contenido del secret, solo la ruta del archivo generado.
+      - name: Configurar CA de Supabase (NODE_EXTRA_CA_CERTS)
+        env:
+          SUPABASE_DB_CA_B64: ${{ secrets.SUPABASE_DB_CA_B64 }}
+        run: |
+          if [ -z "$SUPABASE_DB_CA_B64" ]; then
+            echo "::error::Falta el secret SUPABASE_DB_CA_B64 en el Environment ${{ inputs.environment }} - obligatorio para la verificación TLS estricta de BUILD_WORKING_HOURS contra WORKING_HOURS_DB_URL. Configurarlo (Settings -> Environments -> ${{ inputs.environment }} -> Secrets) antes de reintentar."
+            exit 1
+          fi
+          CA_PATH="${RUNNER_TEMP}/supabase-ca.pem"
+          echo "$SUPABASE_DB_CA_B64" | base64 -d > "$CA_PATH"
+          echo "NODE_EXTRA_CA_CERTS=$CA_PATH" >> "$GITHUB_ENV"
+          echo "CA de Supabase escrita en $CA_PATH (contenido nunca impreso; se descarta con el runner al terminar el job)."
+
+      - name: Ejecutar orquestador compartido
+        env:
+          # Fuentes externas (mismas 3 fuentes que la minería local, ver
+          # src/miners/*.js) - secretos a nivel de Environment.
+          FIELDBEAT_API_BASE_URL: ${{ secrets.FIELDBEAT_API_BASE_URL }}
+          FIELDBEAT_API_USER: ${{ secrets.FIELDBEAT_API_USER }}
+          FIELDBEAT_API_PASS: ${{ secrets.FIELDBEAT_API_PASS }}
+          ZENDESK_URL: ${{ secrets.ZENDESK_URL }}
+          ZENDESK_USER: ${{ secrets.ZENDESK_USER }}
+          ZENDESK_TOKEN: ${{ secrets.ZENDESK_TOKEN }}
+          DOLIBARR_URL: ${{ secrets.DOLIBARR_URL }}
+          DOLIBARR_TOKEN: ${{ secrets.DOLIBARR_TOKEN }}
+          # Destino de escritura real (Supabase V3 del Environment elegido) -
+          # el guard V2/V3 (src/lib/db-safety.js::assertKnownSupabaseProject,
+          # invocado dentro del orquestador antes de escribir) exige que
+          # SUPABASE_PROJECT_REF_V3 coincida con el project ref real de
+          # SUPABASE_DB_URL_DIRECT - un secreto mal configurado aborta ANTES
+          # de tocar Postgres, nunca sincroniza contra el proyecto equivocado.
+          SUPABASE_DB_URL_DIRECT: ${{ secrets.SUPABASE_DB_URL_DIRECT }}
+          SUPABASE_PROJECT_REF_V3: ${{ secrets.SUPABASE_PROJECT_REF_V3 }}
+          # Roles de gobierno de pipeline.refresh_runs (sql/101) - conexión
+          # dedicada por rol, nunca un pool genérico (Gate B B13/B34).
+          GOVERNANCE_PIPELINE_REQUESTER_DB_URL: ${{ secrets.GOVERNANCE_PIPELINE_REQUESTER_DB_URL }}
+          GOVERNANCE_PIPELINE_WORKER_DB_URL: ${{ secrets.GOVERNANCE_PIPELINE_WORKER_DB_URL }}
+          GOVERNANCE_RULE_EVALUATOR_DB_URL: ${{ secrets.GOVERNANCE_RULE_EVALUATOR_DB_URL }}
+          # NEXUS V3 - conexión del builder de horas fuera de jornada (etapa
+          # BUILD_WORKING_HOURS) y del contract-rematch que corre justo
+          # antes de él - nunca SUPABASE_DB_URL_DIRECT (ver
+          # src/working-hours/db-client.js). Sin este secreto configurado en
+          # el Environment, la etapa falla rápido con mensaje claro en vez
+          # de saltarse el módulo en silencio; con un destino Supabase
+          # cloud, además exige la misma política única de escritura que
+          # cualquier otro write V3 (dual confirmation + project ref V3
+          # exacto, ver src/lib/db-safety.js::assertSupabaseWriteAuthorized)
+          # - nunca alcanza con que las URLs "deberían" coincidir.
+          WORKING_HOURS_DB_URL: ${{ secrets.WORKING_HOURS_DB_URL }}
+          # CONFIRM_WRITE_TARGET/CONFIRM_PROTECTED_WRITE_TARGET NO son
+          # secretos de este workflow: el orquestador los calcula él mismo a
+          # partir de SUPABASE_DB_URL_DIRECT (buildWriteConfirmationToken) e
+          # los fija en su propio proceso justo antes de escribir - ver
+          # scripts/pipeline/run-data-refresh.mjs::prepareSupabaseWriteConfirmation.
+          #
+          # REFRESH_ENVIRONMENT/REFRESH_MODE/REFRESH_CONFIRMED/REFRESH_ACTOR/
+          # REFRESH_REASON: los inputs de workflow_dispatch NUNCA se
+          # interpolan directo dentro de `run:` (`${{ inputs.reason }}` ahí
+          # sería splicing de texto en el script ANTES de que la shell lo
+          # parsee - inyección de comandos, ver GitHub "Understanding the
+          # risk of script injection"). `inputs.reason` es texto libre sin
+          # restricción de formato; pasarlo por una variable de entorno lo
+          # convierte en un valor de shell opaco, nunca en código.
+          REFRESH_ENVIRONMENT: ${{ inputs.environment }}
+          REFRESH_MODE: ${{ inputs.mode }}
+          REFRESH_CONFIRMED: ${{ inputs.confirmed }}
+          REFRESH_ACTOR: ${{ github.actor }}
+          REFRESH_RUN_ATTEMPT_ID: "gh-actions:${{ github.run_id }}:${{ github.run_attempt }}"
+          REFRESH_REASON: ${{ inputs.reason }}
+          # Puente NEXUS V3 (POST /api/data-refresh/runs -> workflow_dispatch):
+          # cuando viene lleno, la fila pipeline.refresh_runs YA existe (la
+          # creó ese POST vía pipeline.fn_start_refresh_run) - este job NO
+          # vuelve a llamar --start (evita una segunda llamada redundante a
+          # esa función) y en cambio le pasa el id esperado al orquestador,
+          # que reclama EXACTAMENTE esa fila vía pipeline.fn_claim_refresh_run_by_id
+          # (sql/110, atómico por refresh_run_id - nunca puede tocar otra
+          # corrida). checkRefreshRunClaimMatchesExpectation en
+          # scripts/pipeline/run-data-refresh.mjs se conserva como defensa en
+          # profundidad, ya no como mecanismo principal. Si dos
+          # workflow_dispatch llegan con el mismo refresh_run_id (reintento
+          # del propio POST), solo uno logra reclamarla - el otro sale limpio
+          # sin tocar nada. Vacío en cualquier dispatch manual - mismo
+          # comportamiento de siempre (fn_claim_next_refresh_run, cola).
+          REFRESH_RUN_ID: ${{ inputs.refresh_run_id }}
+        run: |
+          if [ -n "$REFRESH_RUN_ID" ]; then
+            node scripts/pipeline/run-data-refresh.mjs \
+              --environment="$REFRESH_ENVIRONMENT" \
+              --executor-type=GITHUB \
+              --worker-id="$REFRESH_RUN_ATTEMPT_ID" \
+              --expected-refresh-run-id="$REFRESH_RUN_ID"
+          else
+            node scripts/pipeline/run-data-refresh.mjs \
+              --start \
+              --environment="$REFRESH_ENVIRONMENT" \
+              --executor-type=GITHUB \
+              --worker-id="$REFRESH_RUN_ATTEMPT_ID" \
+              --mode="$REFRESH_MODE" \
+              --confirmed="$REFRESH_CONFIRMED" \
+              --actor-role="github-actions-manual-dispatch:$REFRESH_ACTOR" \
+              --reason="$REFRESH_REASON"
+          fi
+
+      # $RUNNER_TEMP ya desaparece solo al destruirse el runner efímero al
+      # terminar el job - este paso es higiene explícita, no una dependencia
+      # real de seguridad. `if: always()` para que corra incluso si el
+      # orquestador de arriba falló.
+      - name: Limpiar CA temporal
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/supabase-ca.pem"

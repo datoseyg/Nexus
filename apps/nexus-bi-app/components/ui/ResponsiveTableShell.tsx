@@ -48,7 +48,7 @@ export function ResponsiveTableShell({
         <div className={styles.titleGroup}>
           <span className={styles.title}>{title}</span>
           {typeof count === "number" && (
-            <span className={styles.count}>
+            <span className={styles.count} role="status" aria-live="polite">
               {count.toLocaleString("es-CL")} {countLabel}
             </span>
           )}
@@ -78,7 +78,18 @@ export function ResponsiveTableShell({
 
       {beforeTable}
 
-      <div className={`${styles.scrollArea} ${density === "compact" ? styles.compact : ""}`} style={{ maxHeight }}>
+      {/* tabIndex+role+aria-label: SC 2.1.1/4.1.2 (axe scrollable-region-focusable,
+          hallado en Phase 3 reapertura §6) - sin esto un usuario de teclado no
+          puede desplazar el contenido cuando es más ancho/alto que el viewport
+          de la tabla. Compartido por toda tabla de la app (Repuestos, Detalle
+          Operativo, Explorador, Auditoría), no solo Reportes. */}
+      <div
+        className={`${styles.scrollArea} ${density === "compact" ? styles.compact : ""}`}
+        style={{ maxHeight }}
+        tabIndex={0}
+        role="region"
+        aria-label={title}
+      >
         {loading ? (
           <div className={styles.state}>Cargando…</div>
         ) : error ? (

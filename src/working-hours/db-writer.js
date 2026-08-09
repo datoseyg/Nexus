@@ -1,8 +1,7 @@
 // Escritura transaccional del builder: consulta fuentes gobernadas, corre
-// task-coverage-builder.js por tarea, puebla staging, valida invariantes
-// pre-publicación (§14), publica (staging + TRUNCATE/INSERT transaccional
-// -ver justificación de estrategia en docs de este builder / reporte
-// 6.6B2), advisory lock, rollback completo ante cualquier fallo.
+// task-coverage-builder.js por tarea, valida invariantes pre-publicación
+// (§14) y publica mediante UPSERT transaccional. Los segmentos conservan
+// historial por builder_run_id; nunca se truncan datos persistentes.
 
 import { STATEMENT_TIMEOUT_MS } from "./db-client.js";
 import { buildTaskCoverage } from "./task-coverage-builder.js";
@@ -69,7 +68,10 @@ export async function loadReferenceData(client) {
     client.query(`SELECT fieldbeat_task_id, equipment_uuid, equipment_internal_id FROM processed.fieldbeat_task_equipments`),
     client.query(`
       SELECT fieldbeat_task_id, field_name, field_value FROM processed.fieldbeat_report_fields
-      WHERE group_name = 'DESCRIPCIÓN DE LA INTERVENCIÓN' AND field_name IN ('HORA DE INICIO DEL TRABAJO', 'HORA DE TERMINO DEL TRABAJO')
+      WHERE (
+        (group_name = 'DESCRIPCIÓN DE LA INTERVENCIÓN' AND field_name IN ('HORA DE INICIO DEL TRABAJO', 'HORA DE TERMINO DEL TRABAJO'))
+        OR (group_name = 'ENTREGA' AND field_name = 'FECHA Y HORA DE ENTREGA')
+      )
         AND field_value IS NOT NULL AND field_value != ''
     `),
     client.query(`
@@ -89,7 +91,15 @@ export async function loadReferenceData(client) {
     // 5.7), el resolver (que usa Array.find) debe encontrar primero la de
     // inicio más reciente que aún aplique a la fecha de la tarea -mismo
     // criterio que "la vigencia más específica gana".
-    client.query(`SELECT contract_version_id, equipment_key, contract_status_code, valid_from, valid_to FROM config.contract_equipment_versions WHERE is_current = true ORDER BY valid_from DESC NULLS LAST`),
+    client.query(`
+      SELECT v.contract_version_id, v.equipment_key, v.contract_status_code,
+             v.requires_review, v.valid_from, v.valid_to,
+             r.effective_date AS source_effective_date
+      FROM config.contract_equipment_versions v
+      JOIN config.contract_import_runs r ON r.import_id = v.source_import_id
+      WHERE v.is_current = true
+      ORDER BY COALESCE(v.valid_from, r.effective_date) DESC, v.contract_version_id DESC
+    `),
     client.query(`SELECT schedule_id, contract_version_id, coverage_type, parse_status FROM config.contract_service_schedules`),
     client.query(`SELECT schedule_id, day_of_week, start_time, end_time, all_day FROM config.contract_service_windows`),
     client.query(`SELECT local_date, jurisdiction FROM config.current_holiday_calendar_entries WHERE jurisdiction = 'CL'`),
@@ -121,11 +131,12 @@ export async function loadReferenceData(client) {
     equipByTask.set(taskId, list);
   }
 
-  const starts = new Map(), ends = new Map();
+  const starts = new Map(), ends = new Map(), deliveries = new Map();
   for (const row of reportFieldsRes.rows) {
     const taskId = String(row.fieldbeat_task_id);
     if (row.field_name === "HORA DE INICIO DEL TRABAJO") starts.set(taskId, row.field_value);
-    else ends.set(taskId, row.field_value);
+    else if (row.field_name === "HORA DE TERMINO DEL TRABAJO") ends.set(taskId, row.field_value);
+    else deliveries.set(taskId, row.field_value);
   }
 
   // "Más reciente gana" por equipment_key (mismo patrón que config.contract_equipment_analysis).
@@ -140,7 +151,14 @@ export async function loadReferenceData(client) {
   const versionsByEquipmentKey = new Map();
   for (const r of versionsRes.rows) {
     const list = versionsByEquipmentKey.get(r.equipment_key) ?? [];
-    list.push({ contractVersionId: r.contract_version_id, validFrom: r.valid_from, validTo: r.valid_to, contractStatusCode: r.contract_status_code });
+    list.push({
+      contractVersionId: r.contract_version_id,
+      validFrom: r.valid_from,
+      validTo: r.valid_to,
+      sourceEffectiveDate: r.source_effective_date,
+      contractStatusCode: r.contract_status_code,
+      requiresReview: r.requires_review
+    });
     versionsByEquipmentKey.set(r.equipment_key, list);
   }
 
@@ -165,7 +183,7 @@ export async function loadReferenceData(client) {
     return holidayDates.has(localDate) ? "CONFIRMED_HOLIDAY" : "CONFIRMED_NOT_HOLIDAY";
   }
 
-  return { tasks: tasksRes.rows, equipByTask, starts, ends, matchByFbKey, versionsByEquipmentKey, scheduleByVersionId, windowsByScheduleId, holidayLookup, clientByKey };
+  return { tasks: tasksRes.rows, equipByTask, starts, ends, deliveries, matchByFbKey, versionsByEquipmentKey, scheduleByVersionId, windowsByScheduleId, holidayLookup, clientByKey };
 }
 
 /**
@@ -217,6 +235,7 @@ export async function runBuild(pool) {
     const result = buildTaskCoverage({
       task: {
         startTimeRaw: task.start_time, reportedStartRaw: refData.starts.get(taskId) ?? null, reportedEndRaw: refData.ends.get(taskId) ?? null,
+        deliveredRaw: refData.deliveries.get(taskId) ?? null,
         durationMinutes: task.duration_minutes === null ? null : Number(task.duration_minutes),
         clientKey: task.client_key, taskType: task.task_type, assignedTo: task.assigned_to
       },
@@ -304,18 +323,48 @@ export function validateBeforePublish(results) {
 }
 
 /**
- * Publica los resultados vía staging + TRUNCATE/INSERT transaccional
- * (estrategia elegida, ver §13 y el reporte de medición de 6.6B2) -advisory
- * lock, validación pre-publicación, rollback completo ante cualquier
- * fallo, recreación de la vista en la MISMA transacción (necesario incluso
- * sin RENAME, para que el plan quede documentado igual en ambos caminos).
+ * NEXUS V3 - guard de cobertura de feriados para el refresh orquestado
+ * (scripts/pipeline/run-data-refresh.mjs, etapa VALIDATE_AFTER_HOURS).
+ * Nunca reimporta feriados (eso sigue siendo exclusivamente manual, ver
+ * `npm run holidays:import` - fechas efectivas reales, nunca inventadas) -
+ * solo verifica que YA exista, para cada año presente en
+ * processed.fieldbeat_tasks, una fila VALIDATED en
+ * config.current_holiday_calendar_coverage que cubra el año calendario
+ * COMPLETO (jurisdiction='CL'). Devuelve los años SIN cobertura completa -
+ * lista vacía = todo cubierto. El caller decide qué hacer con el resultado
+ * (el orquestador lo trata como falla dura: nunca SUCCEEDED en silencio).
+ * @param {import("pg").Pool | import("pg").PoolClient} pool
+ * @returns {Promise<number[]>} años (ascendente) sin cobertura VALIDATED completa
+ */
+export async function findTaskYearsMissingHolidayCoverage(pool) {
+  const result = await pool.query(`
+    WITH task_years AS (
+      SELECT DISTINCT EXTRACT(YEAR FROM start_time)::int AS yr
+      FROM processed.fieldbeat_tasks
+      WHERE start_time IS NOT NULL
+    )
+    SELECT ty.yr
+    FROM task_years ty
+    WHERE NOT EXISTS (
+      SELECT 1 FROM config.current_holiday_calendar_coverage c
+      WHERE c.jurisdiction = 'CL'
+        AND c.coverage_range @> daterange(make_date(ty.yr, 1, 1), make_date(ty.yr + 1, 1, 1))
+    )
+    ORDER BY ty.yr
+  `);
+  return result.rows.map(row => Number(row.yr));
+}
+
+/**
+ * Publica los resultados vía UPSERT transaccional, con advisory lock,
+ * validación pre-publicación y rollback completo ante cualquier fallo.
  * @param {import("pg").Pool} pool
  * @param {object[]} results
  * @param {string} builderRunId uuid ya insertado en audit.pipeline_runs
  */
 // Tamaño de lote para INSERTs multi-fila: medido empíricamente (§13 del
 // reporte de 6.6B2) que un INSERT por fila individual es el verdadero cuello
-// de botella de la ventana de lock (TRUNCATE/INSERT fila-a-fila tomó ~197s
+// de botella de la ventana de lock (INSERT fila-a-fila tomó ~197s
 // a 50.000 filas por ~200.000 round-trips de red, no por el volumen de datos
 // en sí) -agrupar en lotes de VALUES multi-fila reduce eso a segundos sin
 // cambiar de estrategia de publicación. 500 filas/lote mantiene el conteo de
@@ -323,7 +372,11 @@ export function validateBeforePublish(results) {
 // tabla de segmentos (24 columnas x 500 = 12.000).
 const INSERT_BATCH_SIZE = 500;
 
-function buildBulkInsert(table, columns, rows, { returning } = {}) {
+export function buildBulkInsert(table, columns, rows, {
+  returning,
+  conflictTarget,
+  updateColumns
+} = {}) {
   const values = [];
   const placeholders = [];
   let p = 1;
@@ -332,18 +385,21 @@ function buildBulkInsert(table, columns, rows, { returning } = {}) {
     placeholders.push(`(${rowPlaceholders.join(",")})`);
     values.push(...row);
   }
-  const sql = `INSERT INTO ${table} (${columns.join(",")}) VALUES ${placeholders.join(",")}${returning ? ` RETURNING ${returning}` : ""}`;
+  const conflict = conflictTarget?.length
+    ? ` ON CONFLICT (${conflictTarget.join(",")}) DO UPDATE SET ${updateColumns.map(column => `${column} = EXCLUDED.${column}`).join(",")}`
+    : "";
+  const sql = `INSERT INTO ${table} (${columns.join(",")}) VALUES ${placeholders.join(",")}${conflict}${returning ? ` RETURNING ${returning}` : ""}`;
   return { sql, values };
 }
 
-async function bulkInsertChunked(client, table, columns, allRows, { returning } = {}) {
+async function bulkInsertChunked(client, table, columns, allRows, options = {}) {
   const returned = [];
   for (let i = 0; i < allRows.length; i += INSERT_BATCH_SIZE) {
     const chunk = allRows.slice(i, i + INSERT_BATCH_SIZE);
     if (chunk.length === 0) continue;
-    const { sql, values } = buildBulkInsert(table, columns, chunk, { returning });
+    const { sql, values } = buildBulkInsert(table, columns, chunk, options);
     const res = await client.query(sql, values);
-    if (returning) returned.push(...res.rows);
+    if (options.returning) returned.push(...res.rows);
   }
   return returned;
 }
@@ -358,14 +414,16 @@ export async function publishResults(pool, results, builderRunId) {
     await client.query(`SET LOCAL statement_timeout = ${STATEMENT_TIMEOUT_MS}`);
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [BUILD_LOCK_KEY]);
 
-    await client.query("TRUNCATE TABLE marts.fieldbeat_working_hours_equipment_links, marts.fieldbeat_working_hours_analysis_v2, marts.fieldbeat_contract_coverage_segments RESTART IDENTITY CASCADE");
-
     const v2Columns = [
       "fieldbeat_task_id", "client_key", "client_rut", "client_name", "task_type", "assigned_to", "equipment_internal_ids",
       "calculation_status", "coverage_classification", "coverage_reason_code",
       "contractual_attempt_status", "contractual_coverage_classification", "contractual_reason_code", "fallback_used",
       "data_basis", "contract_resolution_confidence", "contract_resolution_label", "confidence_model_version",
       "start_time_utc", "start_time_local", "end_time_utc", "end_time_local", "duration_seconds",
+      "analysis_interval_basis", "analysis_fallback_used", "analysis_fallback_reason",
+      "reported_work_start_utc", "reported_work_start_local", "reported_work_start_raw", "reported_work_start_parse_status",
+      "reported_work_end_utc", "reported_work_end_local", "reported_work_end_raw", "reported_work_end_parse_status",
+      "delivered_at_utc", "delivered_at_local", "delivered_raw", "delivered_parse_status", "temporal_issue_codes",
       "covered_seconds", "outside_coverage_seconds", "after_hours_weekday_seconds", "weekend_seconds", "holiday_seconds",
       "after_hours_total_seconds", "after_hours_rate", "is_after_hours_task",
       "confidence_score", "confidence_label", "confidence_factors", "calculation_method", "builder_run_id"
@@ -376,6 +434,10 @@ export async function publishResults(pool, results, builderRunId) {
       r.contractualAttemptStatus, r.contractualCoverageClassification, r.contractualReasonCode, r.fallbackUsed,
       r.dataBasis, r.contractResolutionConfidence, r.contractResolutionLabel, "contract-v1",
       r.startTimeUtc, formatSantiagoLocalTimestamp(r.startTimeUtc), r.endTimeUtc, formatSantiagoLocalTimestamp(r.endTimeUtc), r.durationSeconds,
+      r.analysisIntervalBasis, r.analysisFallbackUsed, r.analysisFallbackReason,
+      r.reportedWorkStartAt, formatSantiagoLocalTimestamp(r.reportedWorkStartAt), r.reportedWorkStartRaw, r.reportedWorkStartParseStatus,
+      r.reportedWorkEndAt, formatSantiagoLocalTimestamp(r.reportedWorkEndAt), r.reportedWorkEndRaw, r.reportedWorkEndParseStatus,
+      r.deliveredAt, formatSantiagoLocalTimestamp(r.deliveredAt), r.deliveredRaw, r.deliveredParseStatus, r.temporalIssues,
       r.coveredSeconds, r.outsideCoverageSeconds, r.afterHoursWeekdaySeconds, r.weekendSeconds, r.holidaySeconds,
       r.afterHoursTotalSeconds, r.afterHoursRate, r.isAfterHoursTask,
       r.confidenceScore, r.confidenceLabel, r.confidenceFactors, r.calculationMethod, builderRunId
@@ -384,7 +446,11 @@ export async function publishResults(pool, results, builderRunId) {
     // documentada de Postgres para VALUES literales) -se mapea 1:1 de vuelta
     // a `results` para poder construir los hijos (bridge/segmentos) sin una
     // segunda consulta.
-    const returnedIds = await bulkInsertChunked(client, "marts.fieldbeat_working_hours_analysis_v2", v2Columns, v2Rows, { returning: "working_hours_id" });
+    const returnedIds = await bulkInsertChunked(client, "marts.fieldbeat_working_hours_analysis_v2", v2Columns, v2Rows, {
+      conflictTarget: ["fieldbeat_task_id"],
+      updateColumns: v2Columns.filter(column => column !== "fieldbeat_task_id"),
+      returning: "working_hours_id"
+    });
 
     const linkColumns = [
       "working_hours_id", "fieldbeat_equipment_key", "contract_equipment_key", "contract_version_id", "schedule_id",
@@ -415,14 +481,14 @@ export async function publishResults(pool, results, builderRunId) {
       }
     });
 
-    await bulkInsertChunked(client, "marts.fieldbeat_working_hours_equipment_links", linkColumns, linkRows);
+    await bulkInsertChunked(client, "marts.fieldbeat_working_hours_equipment_links", linkColumns, linkRows, {
+      conflictTarget: ["working_hours_id", "fieldbeat_equipment_key"],
+      updateColumns: linkColumns.filter(column => !["working_hours_id", "fieldbeat_equipment_key"].includes(column))
+    });
     await bulkInsertChunked(client, "marts.fieldbeat_contract_coverage_segments", segColumns, segRows);
 
-    // Recrea la vista en la MISMA transacción -necesario porque la vista se
-    // resuelve por OID; TRUNCATE/INSERT preserva el OID de las tablas base
-    // (medido, ver reporte de 6.6B2 §13), pero se re-declara igual para que
-    // el comportamiento quede documentado explícitamente en el código, no
-    // solo implícito en la preservación de OID.
+    // Recrea la vista en la MISMA transacción para mantener su contrato de
+    // columnas sincronizado con la migración vigente.
     const viewSql = await (await import("node:fs/promises")).readFile("sql/082_working_hours_analysis_current_view.sql", "utf8");
     await client.query(viewSql);
 
