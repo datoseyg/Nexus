@@ -95,8 +95,8 @@ before(async () => {
   // tiene un UNIQUE parcial sobre source_sha256 WHERE import_status='SUCCESS'.
   const { randomUUID } = await import("node:crypto");
   const importRes = await pool.query(
-    `INSERT INTO config.contract_import_runs (source_filename, source_sha256, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status)
-     VALUES ('fixture.csv',$1,'2020-01-01',1,1,0,0,'SUCCESS') RETURNING import_id`,
+    `INSERT INTO config.contract_import_runs (source_filename, source_sha256, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, transform_version)
+     VALUES ('fixture.csv',$1,'2020-01-01',1,1,0,0,'SUCCESS','fixture-transform-version') RETURNING import_id`,
     [randomUUID()]
   );
   const importId = importRes.rows[0].import_id;

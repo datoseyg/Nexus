@@ -356,6 +356,30 @@ export async function findTaskYearsMissingHolidayCoverage(pool) {
 }
 
 /**
+ * Blocker de producción NEXUS V3 (VALIDATE_AFTER_HOURS, CONTRACT_CONFIGURATION_EMPTY)
+ * - contracts:import (src/contracts/import-contracts.js) es un bootstrap
+ * manual, nunca disparado por el refresh automático (que sólo hace rematch
+ * sobre contratos YA importados, ver src/contracts/rematch-contracts.js). Si
+ * este bootstrap nunca corrió en un entorno, config.contract_equipment_versions
+ * queda permanentemente vacía y CADA equipo resuelve EQUIPMENT_UNMATCHED
+ * (src/working-hours/contract-resolver.js) - Horas Fuera de Jornada cae al
+ * 100% a LEGACY_SCHEDULE sin que ninguna corrida lo reporte como error.
+ * Cuenta ÚNICAMENTE versiones vigentes (is_current=true) - una tabla con
+ * historial pero sin ninguna fila vigente es indistinguible, para este
+ * propósito, de una tabla completamente vacía. Deliberadamente NO es un
+ * umbral de cobertura ni de degradación: un equipo individual sin contrato
+ * cayendo a LEGACY_SCHEDULE sigue siendo un resultado válido y esperado (ver
+ * test/working-hours/refresh-orchestrator-integration.integration.test.js) -
+ * esto sólo detecta la ausencia TOTAL del bootstrap contractual.
+ * @param {import("pg").Pool | import("pg").PoolClient} pool
+ * @returns {Promise<number>} cantidad de config.contract_equipment_versions con is_current=true
+ */
+export async function countCurrentContractVersions(pool) {
+  const result = await pool.query(`SELECT count(*)::int AS n FROM config.contract_equipment_versions WHERE is_current = true`);
+  return Number(result.rows[0].n);
+}
+
+/**
  * Publica los resultados vía UPSERT transaccional, con advisory lock,
  * validación pre-publicación y rollback completo ante cualquier fallo.
  * @param {import("pg").Pool} pool

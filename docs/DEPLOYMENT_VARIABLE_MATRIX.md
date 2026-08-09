@@ -18,8 +18,14 @@ Esta matriz registra variables consumidas por el código auditado. No contiene v
 | `NEXUS_SHOW_EXPLORER` | Opcional | No | Sí | No | `false` en primera liberación |
 | `NODE_ENV` | Automática | Automática | Automática | No | Next/Node; no configurar como credencial |
 | `GOVERNANCE_PIPELINE_REQUESTER_DB_URL` | Sí | No | Sí | Sí | NEXUS V3 - `POST`/`GET /api/data-refresh/runs*`; rol `nexus_pipeline_requester` (`pipeline.fn_start_refresh_run` + lectura de `pipeline.refresh_runs`). A diferencia de Auditoría, `DataRefreshControl.tsx` se monta siempre en la sidebar (no está detrás de `NEXUS_SHOW_AUDIT`) - esta variable es requerida desde el primer deploy que incluya este cambio, no solo cuando Auditoría se active |
+| `NEXUS_REFRESH_ENVIRONMENT` | No | No | Sí | No | NEXUS V3 - `route.ts::resolveRefreshEnvironment()`; `LOCAL`\|`STAGING`\|`PRODUCTION`. Obligatoria bajo `NODE_ENV=production` (nunca asume `LOCAL` en un deployment real - ver el comentario extenso en `route.ts`); ausente/`LOCAL` bajo `NODE_ENV=production` aborta el `POST` con error explícito |
+| `GITHUB_ACTIONS_DISPATCH_TOKEN` | No | No | Sí | Sí | `lib/github-actions-dispatch.ts::dispatchDataRefreshWorkflow()`; token con permiso `actions:write` (scope `workflow` si es PAT clásico) sobre el repo, para `POST .../actions/workflows/{workflow}/dispatches`. Sin ella, el dispatch nunca llama a la API de GitHub (falla cerrado, la fila `QUEUED` igual se crea) |
+| `GITHUB_ACTIONS_DISPATCH_OWNER` | No | No | Sí | No | Owner/org del repo de GitHub (ej. `datoseyg`) - arma la URL de la API |
+| `GITHUB_ACTIONS_DISPATCH_REPO` | No | No | Sí | No | Nombre del repo de GitHub (ej. `Nexus`) - arma la URL de la API |
+| `GITHUB_ACTIONS_DISPATCH_WORKFLOW` | No | No | Opcional | No | Default `data-refresh.yml` si se omite - nombre de archivo del workflow a disparar |
+| `GITHUB_ACTIONS_DISPATCH_REF` | No | No | Opcional | No | Default `main` si se omite - branch/ref del workflow a disparar |
 
-Notas de scope Netlify (NEXUS V3): `GOVERNANCE_PIPELINE_REQUESTER_DB_URL` solo autoriza encolar/observar corridas (`fn_start_refresh_run`, `SELECT` sobre `pipeline.refresh_runs`/`refresh_run_stages`) - nunca reclamar, avanzar etapas ni completar/fallar una corrida (eso es `GOVERNANCE_PIPELINE_WORKER_DB_URL`, exclusivo del worker local y de GitHub Actions, **nunca** en Netlify). La app desplegada nunca ejecuta el pipeline en sí, solo lo solicita.
+Notas de scope Netlify (NEXUS V3): `GOVERNANCE_PIPELINE_REQUESTER_DB_URL` solo autoriza encolar/observar corridas (`fn_start_refresh_run`, `SELECT` sobre `pipeline.refresh_runs`/`refresh_run_stages`) - nunca reclamar, avanzar etapas ni completar/fallar una corrida (eso es `GOVERNANCE_PIPELINE_WORKER_DB_URL`, exclusivo del worker local y de GitHub Actions, **nunca** en Netlify). La app desplegada nunca ejecuta el pipeline en sí, solo lo solicita. Las 5 variables `GITHUB_ACTIONS_DISPATCH_*`/`NEXUS_REFRESH_ENVIRONMENT` son las que realmente disparan `workflow_dispatch` tras crear esa fila - ver `## GitHub Actions (STAGING/PRODUCTION)` más abajo para lo que ese workflow necesita a su vez, en un Environment de GitHub completamente distinto (nunca en Netlify).
 
 Notas de scope Netlify:
 
@@ -46,6 +52,24 @@ Estas variables pertenecen a una estación/job administrativo aislado. Ninguna d
 | `USER` / `USERNAME` | auditoría de migración | Identidad de sistema registrada como actor; no reutilizar como variable de aplicación |
 
 Antes de ejecutar una operación remota, imprimir y verificar host, puerto, base y usuario sin mostrar contraseña. Los tokens de confirmación autorizan solamente ese destino exacto; no son banderas genéricas.
+
+## GitHub Actions (STAGING/PRODUCTION) - Environment secrets del pipeline
+
+`.github/workflows/data-refresh.yml` (`workflow_dispatch`) resuelve el Environment de GitHub (`STAGING` o `PRODUCTION`, elegido en el input `environment`) y ejecuta `scripts/pipeline/run-data-refresh.mjs` con los secrets de ESE Environment - superficie de secretos completamente separada de Netlify (nunca reutilizar el mismo secret/nombre entre ambas; ver ADR 0001). Configurar en GitHub -> Settings -> Environments -> `STAGING`/`PRODUCTION` -> Secrets, uno por Environment.
+
+| Variable | Consumidor | Uso / restricción |
+|---|---|---|
+| `SUPABASE_DB_URL_DIRECT` | `migrate-to-supabase.js` (SYNC_POSTGRES), `validate-supabase.js` (VALIDATE) | Mismo destino/rol que en la sección "Administración de Supabase" - acá es además el secret real que usa el worker automático, no solo un job manual |
+| `SUPABASE_PROJECT_REF_V3` | `migrateToSupabase()`/`assertKnownSupabaseProject` | Project ref exacto del Supabase V3 de ese Environment - un secret mal configurado aborta ANTES de escribir, nunca sincroniza contra el proyecto equivocado |
+| `GOVERNANCE_PIPELINE_WORKER_DB_URL` | `run-data-refresh.mjs::withPool()` (claim, heartbeat, avance de etapas, `fn_complete_refresh_run`/`fn_fail_refresh_run`) | Rol `nexus_pipeline_worker` - conexión dedicada de gobierno, nunca la misma que `_REQUESTER` (Gate B B13/B34). TLS remoto: `ssl:{rejectUnauthorized:true}`, ver `NODE_EXTRA_CA_CERTS` abajo |
+| `GOVERNANCE_RULE_EVALUATOR_DB_URL` | `run-data-refresh.mjs::reevaluateRules()` (etapa REEVALUATE_RULES, `fn_run_rule_evaluation`) | Rol dedicado, mismo motivo que el de arriba |
+| `WORKING_HOURS_DB_URL` | `src/working-hours/db-client.js` (etapa BUILD_WORKING_HOURS y el contract-rematch previo) | Mismo destino/rol que en la sección "Administración de Supabase" - nunca `SUPABASE_DB_URL_DIRECT`. TLS remoto: `ssl:{rejectUnauthorized:true}` (nunca `false`), ver `NODE_EXTRA_CA_CERTS` abajo |
+| `SUPABASE_DB_CA_B64` | Step `Configurar CA de Supabase (NODE_EXTRA_CA_CERTS)` del workflow | PEM de la CA raíz de Supabase en base64 - **distinta variable** de `DATABASE_SSL_CA_B64` (esa es de Netlify/runtime web; puede ser el mismo material de CA, pero son secrets/superficies separadas, nunca reutilizar el nombre). Obligatoria: si falta o queda vacía, ese step falla con `exit 1` ANTES de llegar a ejecutar el orquestador (bloqueó una corrida productiva real el 2026-08-09, run `31328024412` - la corrida quedó `QUEUED` porque nunca llegó a reclamarse) |
+| `FIELDBEAT_API_BASE_URL` / `FIELDBEAT_API_USER` / `FIELDBEAT_API_PASS` | `src/miners/fieldbeat-all.js` (etapa EXTRACT) | Credenciales de la API FieldBeat |
+| `ZENDESK_URL` / `ZENDESK_USER` / `ZENDESK_TOKEN` | `src/miners/zendesk.js` (etapa EXTRACT) | Credenciales de la API Zendesk |
+| `DOLIBARR_URL` / `DOLIBARR_TOKEN` | `src/miners/dolibarr.js` (etapa EXTRACT) | Credenciales de la API Dolibarr |
+
+`NODE_EXTRA_CA_CERTS`: no es un secret - lo exporta el propio workflow (`$GITHUB_ENV`) a partir de `SUPABASE_DB_CA_B64`, apuntando a un archivo temporal en `$RUNNER_TEMP` que desaparece con el runner. `GOVERNANCE_PIPELINE_WORKER_DB_URL`/`GOVERNANCE_RULE_EVALUATOR_DB_URL`/`WORKING_HOURS_DB_URL` deben ser connection strings **limpias**, sin `sslmode`/`sslrootcert`/`sslcert`/`sslkey` en la query string (node-postgres los usaría para reemplazar el objeto `ssl` explícito del código - ver `src/working-hours/db-client.js`/`scripts/pipeline/run-data-refresh.mjs::withPool()`).
 
 ## Smoke y servidor local
 
