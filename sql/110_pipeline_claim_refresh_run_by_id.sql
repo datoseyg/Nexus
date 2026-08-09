@@ -57,6 +57,105 @@
 -- se ve afectada: esta función nunca inserta filas, solo transiciona una
 -- fila YA QUEUED (ya contada como activa) a CLAIMED (sigue activa) - el
 -- conteo de filas activas por entorno no cambia.
+--
+-- =============================================================================
+-- Corrección post-intento fallido en Cloud - ownership no-superusuario.
+-- =============================================================================
+-- El intento previo de aplicar este archivo contra Cloud falló, pero NO hizo
+-- rollback: la función quedó persistida, con owner=governance_owner,
+-- prosecdef=true y ACL correcta (nexus_pipeline_worker con EXECUTE, PUBLIC
+-- ausente) - exactamente el estado final deseado. La falla real estaba en el
+-- mecanismo de idempotencia de ESTE archivo, no en la función en sí:
+--
+-- El migrador real de Cloud es un rol NO superusuario, miembro de
+-- governance_owner con INHERIT FALSE / SET TRUE (mismo patrón que sql/089
+-- establece para "quien aplique la migración"). INHERIT FALSE significa que
+-- el migrador NO hereda automáticamente los privilegios de governance_owner
+-- -Postgres exige un `SET ROLE governance_owner` explícito para actuar como
+-- tal. La versión anterior de este archivo hacía `CREATE OR REPLACE
+-- FUNCTION` directo como el migrador, seguido de un sweep `ALTER FUNCTION
+-- ... OWNER TO governance_owner` sobre TODO pipeline.* al final (mismo
+-- patrón que sql/101/102). Eso funciona la PRIMERA vez (el migrador acaba
+-- de crear la función, la posee, puede transferirla), pero falla en
+-- cualquier reintento posterior: para entonces la función ya pertenece a
+-- governance_owner, y `CREATE OR REPLACE FUNCTION` ejecutado por el
+-- migrador (sin SET ROLE, por el INHERIT FALSE) ya no cuenta como "es
+-- owner" para Postgres -> "must be owner of function
+-- pipeline.fn_claim_refresh_run_by_id". Reintentar el archivo tal cual
+-- reproduce la misma falla indefinidamente contra el estado real de Cloud.
+--
+-- (Nota aparte, fuera del alcance de esta corrección: sql/101 y sql/102
+-- tienen la MISMA fragilidad estructural en su propio sweep final, pero
+-- nunca se manifestó porque bootstrap-disposable-postgres.mjs -el único
+-- caller de estos archivos en local- siempre conecta como superusuario, que
+-- bypassa cualquier chequeo de ownership. Ningún test de idempotencia local
+-- existente lo detecta por la misma razón. No se toca acá -el pedido actual
+-- es exclusivamente sql/110-, pero queda documentado para quien retome esto.)
+--
+-- Corrección: detectar el owner ACTUAL antes de tocar nada, y nunca asumir
+-- que el migrador es quien la posee.
+--   1. Función inexistente (fresh) -> nada que detectar, se crea más abajo
+--      directamente como governance_owner (vía SET ROLE) - queda con el
+--      owner correcto desde el instante de creación, sin ALTER posterior.
+--   2. owner actual = governance_owner (el estado real observado en Cloud
+--      tras el intento previo) -> NINGÚN ALTER OWNER (sería redundante) -
+--      el SET ROLE + CREATE OR REPLACE de más abajo alcanza solo.
+--   3. owner actual = el propio rol que corre esta migración
+--      ("partial-owned-by-migrator", ej. un intento aún más antiguo que
+--      creó la función pero nunca llegó a transferirla) -> el migrador SÍ
+--      la posee todavía, así que PUEDE hacer ALTER OWNER TO governance_owner
+--      él mismo (no necesita SET ROLE para eso: ALTER OWNER exige poseer el
+--      objeto -cierto acá- y ser miembro del rol destino -cierto por el
+--      GRANT ... SET TRUE de sql/089-, nunca depende de INHERIT). Tras esa
+--      transferencia, queda en el mismo estado que el caso 2.
+--   4. owner actual: cualquier otro rol inesperado (ni governance_owner ni
+--      el migrador) -> FALLA FUERTE Y EXPLÍCITA, nombrando el owner real.
+--      Nunca DROP automático, nunca reasignación silenciosa - exige
+--      revisión manual de cómo llegó a ese estado.
+-- Con los casos 1-3 resueltos (o el 4 ya habiendo abortado), `SET ROLE
+-- governance_owner` es SIEMPRE seguro antes de CREATE OR REPLACE FUNCTION:
+-- la función, si existe, es governance_owner; si no existe, se crea como
+-- governance_owner directamente. Por eso el sweep final sobre TODO
+-- pipeline.* desaparece por completo -era el mecanismo que este archivo
+-- necesitaba cuando dependía de que el migrador fuera el owner transitorio;
+-- ya no aplica.
+DO $$
+DECLARE
+  v_current_owner text;
+  v_migrator text := current_user;
+BEGIN
+  SELECT pg_get_userbyid(p.proowner) INTO v_current_owner
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'pipeline' AND p.proname = 'fn_claim_refresh_run_by_id';
+
+  IF v_current_owner IS NULL THEN
+    -- Caso 1 (fresh): no existe todavía, nada que hacer acá.
+    RETURN;
+  END IF;
+
+  IF v_current_owner = 'governance_owner' THEN
+    -- Caso 2: ya está en el estado final deseado - nunca un ALTER redundante.
+    RETURN;
+  END IF;
+
+  IF v_current_owner = v_migrator THEN
+    -- Caso 3: el propio migrador todavía la posee - transferirla ÉL MISMO
+    -- (puede: la posee + es miembro SET-able de governance_owner).
+    ALTER FUNCTION pipeline.fn_claim_refresh_run_by_id(uuid, text, text, text) OWNER TO governance_owner;
+    RETURN;
+  END IF;
+
+  -- Caso 4: owner inesperado - ni governance_owner ni quien corre esta
+  -- migración. Nunca se repara solo.
+  RAISE EXCEPTION 'pipeline.fn_claim_refresh_run_by_id ya existe con un owner inesperado: "%". Se esperaba "governance_owner" o el rol que corre esta migración ("%"). Revisar manualmente antes de reintentar -nunca DROP automático.', v_current_owner, v_migrator;
+END
+$$;
+
+-- A partir de acá el owner real (si la función ya existía) es SIEMPRE
+-- governance_owner (casos 1/2/3 ya resueltos arriba; el caso 4 abortó antes
+-- de llegar acá) - SET ROLE es seguro incondicionalmente.
+SET ROLE governance_owner;
+
 CREATE OR REPLACE FUNCTION pipeline.fn_claim_refresh_run_by_id(
   p_refresh_run_id uuid,
   p_environment text,
@@ -104,24 +203,12 @@ $$;
 
 -- Mismo rol que fn_claim_next_refresh_run: solo el worker reclama (nunca el
 -- requester, que solo crea/lee corridas) - grant mínimo, un único rol.
+-- Ejecutado bajo contexto governance_owner (dueño real): tiene autoridad de
+-- GRANT/REVOKE sobre su propia función sin necesitar WITH GRANT OPTION.
 REVOKE ALL ON FUNCTION pipeline.fn_claim_refresh_run_by_id(uuid, text, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pipeline.fn_claim_refresh_run_by_id(uuid, text, text, text) TO nexus_pipeline_worker;
 
--- Owner - mismo mecanismo que sql/101 sección 5 / sql/102 sección 3,
--- reaplicado (idempotente, compatible con un migrador no-superuser: la
--- membresía SET ROLE governance_owner y el GRANT CREATE ON SCHEMA pipeline
--- ya quedaron establecidos por sql/089/101, nunca se repiten acá). Vuelve a
--- barrer TODO pipeline.* - sin efecto adicional sobre las funciones ya
--- transferidas por 101/102, transfiere la nueva de este archivo.
-DO $$
-DECLARE v_fn record;
-BEGIN
-  FOR v_fn IN
-    SELECT p.oid::regprocedure AS sig
-    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'pipeline'
-  LOOP
-    EXECUTE format('ALTER FUNCTION %s OWNER TO governance_owner', v_fn.sig);
-  END LOOP;
-END
-$$;
+-- Nunca dejar la sesión corriendo como governance_owner para lo que venga
+-- después en la misma conexión (otros archivos sql/*.sql posteriores,
+-- corridos por el mismo migrador).
+RESET ROLE;
