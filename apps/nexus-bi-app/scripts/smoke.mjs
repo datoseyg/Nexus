@@ -2,7 +2,7 @@ const BASE_URL = process.env.BASE_URL ?? `http://localhost:${process.env.PORT ??
 const TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 5000);
 
 const CHECKS = [
-  { path: "/login", kind: "page", status: 200, marker: "Ingresa a NEXUS" },
+  { path: "/login", kind: "page", status: 200, marker: "Entra a NEXUS" },
   { path: "/", kind: "redirect", status: 307, location: "/login" },
   { path: "/dashboard/fieldbeat", kind: "redirect", status: 307, location: "/login" },
   // Phase 3 - /api/dashboard/fieldbeat (el GOLD fijo de 5 agregados) y
