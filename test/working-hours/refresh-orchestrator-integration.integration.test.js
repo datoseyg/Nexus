@@ -18,7 +18,7 @@ import assert from "node:assert/strict";
 import pg from "pg";
 import { randomUUID } from "node:crypto";
 import { runApply } from "../../src/working-hours/build-working-hours.js";
-import { findTaskYearsMissingHolidayCoverage } from "../../src/working-hours/db-writer.js";
+import { findTaskYearsMissingHolidayCoverage, countCurrentContractVersions } from "../../src/working-hours/db-writer.js";
 import { buildWriteConfirmationToken, describeConnectionTarget, assertDisposableTarget, printConnectionPreflight } from "../../src/lib/db-safety.js";
 
 const TEST_DB_URL = process.env.WORKING_HOURS_TEST_DATABASE_URL;
@@ -32,6 +32,11 @@ const { Pool } = pg;
 const FIXTURE_YEAR = 2031;
 const FIXTURE_TASK_ID = 902001;
 
+// equipment_key exclusivo de esta suite (nunca colisiona con fixtures reales
+// ni con los de test/contracts/*) - ver sección "1B" más abajo
+// (countCurrentContractVersions, CONTRACT_CONFIGURATION_EMPTY).
+const CONTRACT_FIXTURE_EQUIPMENT_KEY = "FIXTURE_REFRESH_ORCHESTRATOR_TEST||EQUIPO-VALIDATE-AFTER-HOURS";
+
 let pool;
 
 before(async () => {
@@ -42,6 +47,9 @@ before(async () => {
   printConnectionPreflight(TEST_DB_URL, { environment: "integration-test", applicationName: `${SUITE_ID}:${TEST_RUN_ID}` });
   pool = new Pool({ connectionString: TEST_DB_URL, max: 5, application_name: `${SUITE_ID}:${TEST_RUN_ID}` });
   await assertDisposableTarget(pool, { expectedRunId: TEST_RUN_ID, expectedSuiteId: SUITE_ID });
+  // Limpieza idempotente de una corrida anterior de ESTA suite - nunca toca
+  // contratos reales ni los de otras suites (equipment_key exclusivo).
+  await pool.query(`DELETE FROM config.contract_equipment_versions WHERE equipment_key = $1`, [CONTRACT_FIXTURE_EQUIPMENT_KEY]);
 
   // runApply() real lee WORKING_HOURS_DB_URL/CONFIRM_WRITE_TARGET de
   // process.env (nunca un parámetro) - se redirige acá al mismo destino
@@ -121,6 +129,70 @@ test("cobertura de feriados PARCIAL (no el año completo) sigue contando como fa
   } finally {
     await pool.query(`DELETE FROM config.holiday_calendar_coverage WHERE coverage_range = daterange($1,$2)`, [`${FIXTURE_YEAR}-01-01`, `${FIXTURE_YEAR}-07-01`]);
   }
+});
+
+// === 1B. countCurrentContractVersions - VALIDATE_AFTER_HOURS,
+// CONTRACT_CONFIGURATION_EMPTY (blocker de producción NEXUS V3) ===
+//
+// Ausencia TOTAL de versiones contractuales vigentes, nunca un umbral de
+// cobertura - un equipo individual sin contrato cayendo a LEGACY_SCHEDULE
+// sigue siendo válido (ver el test de la sección 2 más abajo, que no siembra
+// ningún contrato y espera exactamente ese resultado).
+
+async function seedCurrentContractVersionFixture() {
+  const importRes = await pool.query(
+    `INSERT INTO config.contract_import_runs
+       (source_filename, source_sha256, effective_date, rows_read, rows_accepted, rows_ignored, rows_errored, import_status, transform_version)
+     VALUES ('fixture-refresh-orchestrator-contracts.csv', $1, '2026-01-01', 1, 1, 0, 0, 'SUCCESS', 'fixture-transform-version')
+     RETURNING import_id`,
+    [randomUUID()]
+  );
+  await pool.query(
+    `INSERT INTO config.contract_equipment_versions
+       (equipment_key, client_name_canonical, client_name_raw, client_name_key, equipment_model, installation_date_precision,
+        contract_status_code, spa_tier_code, support_mode_code, parts_coverage_code, hw_refresh_code, updates_code, upgrades_code,
+        valid_from, is_current, source_import_id, source_row_number, source_row_hash, contract_fingerprint)
+     VALUES
+       ($1, 'CLIENTE FIXTURE REFRESH ORCHESTRATOR', 'Cliente Fixture Refresh Orchestrator', 'cliente-fixture-refresh-orchestrator', 'MODELO-FIXTURE', 'UNKNOWN',
+        'ACTIVE_AUTO_RENEW', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN',
+        '2026-01-01', true, $2, 1, $3, $4)`,
+    [CONTRACT_FIXTURE_EQUIPMENT_KEY, importRes.rows[0].import_id, randomUUID(), randomUUID()]
+  );
+}
+
+test("countCurrentContractVersions: sube en exactamente +1 tras sembrar una versión vigente, y vuelve al valor original al borrarla", { skip: !TEST_DB_URL }, async () => {
+  // Delta contra el conteo real ANTES de sembrar - nunca asume que la tabla
+  // parte en 0 (WORKING_HOURS_TEST_DATABASE_URL es un Postgres desechable
+  // dedicado a esta suite, pero esto evita depender de esa suposición de
+  // aislamiento entre suites/corridas para que el test sea válido).
+  const before = await countCurrentContractVersions(pool);
+  await seedCurrentContractVersionFixture();
+  try {
+    const afterSeed = await countCurrentContractVersions(pool);
+    assert.equal(afterSeed, before + 1, "tras insertar exactamente una versión is_current=true, el conteo debe subir en exactamente 1");
+  } finally {
+    await pool.query(`DELETE FROM config.contract_equipment_versions WHERE equipment_key = $1`, [CONTRACT_FIXTURE_EQUIPMENT_KEY]);
+  }
+  const afterCleanup = await countCurrentContractVersions(pool);
+  assert.equal(afterCleanup, before, "tras borrar el fixture, el conteo debe volver exactamente al valor previo");
+});
+
+test("countCurrentContractVersions: coincide con un conteo SQL directo de is_current=true en este instante", { skip: !TEST_DB_URL }, async () => {
+  // Nunca asume un valor absoluto (ni 0 ni cualquier otro) - cuando esta
+  // suite corre como parte de `npm run working-hours:test:integration`
+  // (los 3 archivos de test/working-hours/*.integration.test.js contra el
+  // MISMO Postgres desechable, uno detrás de otro, ver scripts/run-test-suite.mjs),
+  // test/working-hours/db-writer.integration.test.js corre ANTES que este
+  // archivo (orden alfabético) y dejó su propio fixture is_current=true
+  // (equipment_key='SN:TEST1') sin limpiar en su after() - legítimo para ESE
+  // archivo (se limpia solo a sí mismo al INICIO de su propia próxima
+  // corrida), pero significa que este archivo nunca puede asumir que la
+  // tabla empieza en 0. Comparar contra un conteo SQL directo (en vez de un
+  // número fijo) prueba que countCurrentContractVersions cuenta exactamente
+  // lo mismo que la query real, sin importar cuánto haya dejado nadie más.
+  const direct = await pool.query(`SELECT count(*)::int AS n FROM config.contract_equipment_versions WHERE is_current = true`);
+  const count = await countCurrentContractVersions(pool);
+  assert.equal(count, Number(direct.rows[0].n), "countCurrentContractVersions debe coincidir exactamente con el conteo SQL directo");
 });
 
 // === 2. Cobertura completa publicada -> runApply() real calcula la tarea ===

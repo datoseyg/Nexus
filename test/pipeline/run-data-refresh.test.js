@@ -241,3 +241,42 @@ test("guards de escritura protegida (12): prepareAndAuthorizeWorkingHoursWrite/a
   assert.equal(typeof buildPipelineSslConfig, "function");
   assert.equal(typeof assertNoPipelineConnectionStringSslOverrides, "function");
 });
+
+// CONTRACT_CONFIGURATION_EMPTY - blocker de producción NEXUS V3: antes de
+// este cambio, una corrida con config.contract_equipment_versions vacía
+// (contracts:import nunca ejecutado en el entorno) terminaba SUCCEEDED con
+// Horas Fuera de Jornada degradado al 100% a LEGACY_SCHEDULE, sin que nadie
+// lo notara. Verificación estructural (sin DB) de que VALIDATE_AFTER_HOURS
+// llama a countCurrentContractVersions y lanza con el token correcto -
+// la cobertura de COMPORTAMIENTO real (contra Postgres desechable) vive en
+// test/working-hours/refresh-orchestrator-integration.integration.test.js.
+test("VALIDATE_AFTER_HOURS: llama a countCurrentContractVersions y lanza con el token CONTRACT_CONFIGURATION_EMPTY si el conteo es 0, DESPUÉS del chequeo de feriados existente", () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(path.join(__dirname, "..", "..", "scripts", "pipeline", "run-data-refresh.mjs"), "utf8");
+
+  const stageStart = src.indexOf('await enterStage("VALIDATE_AFTER_HOURS")');
+  assert.ok(stageStart >= 0, "no se encontró la etapa VALIDATE_AFTER_HOURS - run-data-refresh.mjs cambió de forma inesperada");
+  const stageEnd = src.indexOf('await enterStage("VALIDATE")', stageStart);
+  assert.ok(stageEnd >= 0, "no se encontró el inicio de la etapa VALIDATE siguiente - no se pudo acotar el cuerpo de VALIDATE_AFTER_HOURS");
+  const stageBody = src.slice(stageStart, stageEnd);
+
+  const holidayThrowIndex = stageBody.indexOf("falta calendario de feriados");
+  const contractCallIndex = stageBody.indexOf("countCurrentContractVersions");
+  const contractThrowIndex = stageBody.indexOf("CONTRACT_CONFIGURATION_EMPTY");
+  assert.ok(holidayThrowIndex >= 0, "el chequeo de feriados existente debe seguir intacto en esta etapa");
+  assert.ok(contractCallIndex >= 0, "VALIDATE_AFTER_HOURS debe llamar a countCurrentContractVersions");
+  assert.ok(contractThrowIndex >= 0, "VALIDATE_AFTER_HOURS debe lanzar con el token CONTRACT_CONFIGURATION_EMPTY");
+  assert.ok(holidayThrowIndex < contractCallIndex, "el chequeo de contratos debe ir DESPUÉS del chequeo de feriados existente, nunca reemplazarlo ni anteponerse");
+
+  assert.match(stageBody, /if\s*\(\s*currentContractVersionCount\s*===\s*0\s*\)\s*\{/, "debe ser una comparación exacta a 0 (ausencia total) - nunca un umbral/porcentaje de cobertura");
+  assert.match(stageBody, /CONTRACT_CONFIGURATION_EMPTY[\s\S]{0,120}is_current=true/, "el mensaje debe nombrar is_current=true - no cualquier historial contractual, sólo vigencia actual");
+
+  // El token debe sobrevivir sanitizeErrorSummary (primera línea, .slice(0,500))
+  // - se extrae el string literal completo del throw y se valida standalone.
+  const throwMatch = stageBody.match(/"VALIDATE_AFTER_HOURS: CONTRACT_CONFIGURATION_EMPTY[\s\S]*?"\s*\)\s*;/);
+  assert.ok(throwMatch, "no se pudo extraer el literal completo del throw de CONTRACT_CONFIGURATION_EMPTY");
+  const concatenatedMessage = [...throwMatch[0].matchAll(/"((?:[^"\\]|\\.)*)"/g)].map(m => m[1]).join("");
+  assert.ok(!concatenatedMessage.includes("\\n"), "el mensaje debe ser una sola línea lógica - sanitizeErrorSummary corta en el primer salto de línea");
+  assert.ok(concatenatedMessage.length <= 500, `el mensaje debe caber en 500 caracteres para no perder texto con sanitizeErrorSummary (longitud actual: ${concatenatedMessage.length})`);
+  assert.ok(concatenatedMessage.indexOf("CONTRACT_CONFIGURATION_EMPTY") < 100, "el token debe estar cerca del principio del mensaje, nunca después del corte de 500 caracteres");
+});

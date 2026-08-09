@@ -132,7 +132,7 @@ import { migrateToSupabase } from "../../src/db/migrate-to-supabase.js";
 import { validateSupabase } from "../../src/db/validate-supabase.js";
 import { refreshContractEquipmentMatches } from "../../src/contracts/rematch-contracts.js";
 import { runApply as runWorkingHoursApply } from "../../src/working-hours/build-working-hours.js";
-import { findTaskYearsMissingHolidayCoverage } from "../../src/working-hours/db-writer.js";
+import { findTaskYearsMissingHolidayCoverage, countCurrentContractVersions } from "../../src/working-hours/db-writer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..", "..");
@@ -503,6 +503,34 @@ export async function executeClaimedRefreshRun({
           `VALIDATE_AFTER_HOURS: falta calendario de feriados (jurisdiction=CL) para el/los año(s) ${missingHolidayYears.join(", ")} ` +
           `- presentes en processed.fieldbeat_tasks pero sin cobertura VALIDATED completa en config.holiday_calendar_coverage. ` +
           `Importar el calendario faltante manualmente (npm run holidays:import, fecha efectiva real) antes de reintentar.`
+        );
+      }
+
+      // Blocker de producción NEXUS V3 - CONTRACT_CONFIGURATION_EMPTY. Nunca
+      // reimporta contratos acá (contracts:import sigue siendo un bootstrap
+      // 100% manual, ver src/contracts/import-contracts.js) - solo detecta
+      // la AUSENCIA TOTAL del bootstrap (config.contract_equipment_versions
+      // sin ninguna fila is_current=true), nunca un umbral de cobertura: un
+      // equipo individual sin contrato cayendo a LEGACY_SCHEDULE sigue
+      // siendo un resultado válido y esperado (ver
+      // contract-resolver.js/task-coverage-builder.js), esto sólo cubre el
+      // caso "nadie corrió el bootstrap nunca en este entorno" - antes de
+      // esto, esa corrida terminaba SUCCEEDED con Horas Fuera de Jornada
+      // degradado al 100% a LEGACY_SCHEDULE, sin que nadie lo notara. El
+      // token CONTRACT_CONFIGURATION_EMPTY va al principio del mensaje para
+      // sobrevivir el truncado a 500 caracteres/primera línea de
+      // sanitizeErrorSummary.
+      const currentContractVersionCount = await withPool(
+        workingHoursDbUrl,
+        "pipeline-refresh-worker:validate-after-hours-contracts",
+        countCurrentContractVersions
+      );
+      if (currentContractVersionCount === 0) {
+        throw new Error(
+          "VALIDATE_AFTER_HOURS: CONTRACT_CONFIGURATION_EMPTY - config.contract_equipment_versions no tiene ninguna versión vigente (is_current=true), " +
+          "Horas Fuera de Jornada está resolviendo el 100% de las tareas por LEGACY_SCHEDULE, nunca por contrato. " +
+          "El bootstrap manual de contratos (npm run contracts:import -- --file=<csv> --apply --effective-date=<fecha>) nunca corrió en este entorno, o la tabla quedó vacía. " +
+          "Importarlo antes de reintentar - nunca se infiere ni se genera un contrato acá."
         );
       }
 
